@@ -94,7 +94,9 @@ AI access must never elevate the user's permissions. Duplicate tool retries must
 
 ## Cross-client behavior
 
-The backend is authoritative. A change made through MCP is visible on the website, and vice versa. The initial refresh strategy and acceptable propagation delay must be chosen and tested before release.
+The backend is authoritative. Active web screens currently refresh every ten seconds and when the window regains focus. Keep that behavior for now.
+
+**Confirmed next milestone: live list updates.** When collaborators have a shared list open, committed task changes should appear in each open view without a manual reload. The same requirement applies when a user has their own list open on the website and adds, edits, completes, reopens, deletes, or reorders tasks through ChatGPT using Wuff MCP. This includes private lists and does not require another user. Live updates must respect current access, recover after reconnecting, and preserve in-progress input. See [the next build](implementation-plan.md#next-build-live-list-updates) for scope and acceptance scenarios. This milestone is planned, not implemented.
 
 Concurrent edits must have a defined outcome. An outdated screen must not silently restore a task deleted by another user. Proposed conflict behavior is documented in the architecture.
 

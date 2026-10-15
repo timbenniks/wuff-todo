@@ -69,7 +69,7 @@ pnpm exec tsx scripts/provision-user.ts --target production --email invited@exam
 
 Use `--target development` for synthetic tests. The selected ignored environment file must contain credentials for the corresponding configured branch.
 
-The recipient visits `/set-password`, enters their invited email, requests a code, and chooses a password in the website. The same page supports recovery. No initial password is sent through chat. The first two production identities and Wuff profiles have been provisioned; mailbox delivery and their completed activation remain user checks.
+The recipient visits `/set-password`, enters their invited email, requests a code, and chooses a password in the website. The same page supports recovery. No initial password is sent through chat. The first two production identities and Wuff profiles have been provisioned. Tim reported successful activation; independent activation and mailbox verification for Joreel remain user checks.
 
 Auth currently uses Neon's shared sender (`Neon Auth`, `auth@mail.myneon.app`) for this initial private setup. Configure custom SMTP before treating email delivery as production-ready. Existing-account list invitations use an in-app inbox; they send no email. See [sharing](sharing.md) for the implemented flow.
 

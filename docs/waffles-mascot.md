@@ -2,7 +2,7 @@
 
 ## Head-and-collar icon
 
-Asset: [transparent icon PNG](../apps/web/public/mascot/waffles-icon.png). Created with the built-in image generation tool using the original mascot as an identity reference. Removes the body and enlarges the two signature charms; the waffle uses four recesses for simpler recognition. Visually checked the head-only composition, collar, waffle, and viewer-left leaf; confirmed PNG transparency. Actual small-size app rendering is not yet verified or integrated.
+Asset: [transparent icon PNG](../apps/web/public/mascot/waffles-icon.png). Created with the built-in image generation tool using the original mascot as an identity reference. Removes the body and enlarges the two signature charms; the waffle uses four recesses for simpler recognition. Visually checked the head-only composition, collar, waffle, and viewer-left leaf; confirmed PNG transparency. This records the initial asset check; subsequent integration and rendering verification are documented below.
 
 Icon generation prompt:
 
@@ -27,7 +27,7 @@ Simplified logo adaptations must preserve the big ears, white face stripe, laven
 
 Asset: [transparent PNG](../apps/web/public/mascot/waffles.png).
 
-Verified October 15, 2026: visually checked the seated pose, fur colors, white stripe, lavender collar, central waffle pendant, and viewer-left leaf charm. PNG alpha channel confirmed. This asset has not yet been wired into the app interface.
+Verified October 15, 2026: visually checked the seated pose, fur colors, white stripe, lavender collar, central waffle pendant, and viewer-left leaf charm. PNG alpha channel confirmed. The later application integration below uses optimized derivatives of the approved artwork.
 
 Created with the built-in image generation tool. Generation prompt:
 

@@ -1,4 +1,4 @@
-# Foundation verification
+# Implementation verification
 
 Date: October 15, 2026
 
@@ -6,13 +6,13 @@ Date: October 15, 2026
 
 The initial technical foundation includes the pnpm monorepo, Next.js web application, managed Neon email/password login, application admission, Drizzle migrations, shared list/task services, a session-authenticated HTTP API, delegated OAuth for MCP, MCP tools, and an embedded MCP App.
 
-This is not the complete first release. Sharing permissions are implemented in the domain and tested with synthetic memberships, but list invitation onboarding and member-management UI/API are not implemented. Personal sidebar ordering, archive/restore, formal external-client certification, mobile authentication, and completed real-user activation remain open.
+Existing-account invitations and sharing UI/API/MCP are now implemented; the sharing section below records their verification. Waffles branding verification is in [mascot details](waffles-mascot.md). Personal sidebar ordering, archive/restore, new-account invitation delivery, full external-client validation, and mobile authentication remain open. Tim reported successful activation and use; independent verification of both real users remains incomplete.
 
 ## Automated evidence
 
 - Workspace and root TypeScript checks pass.
 - Nine unit tests pass (contracts, OAuth redirect policy, list cache races, and session failures).
-- Seven live integration tests pass against the isolated development branch.
+- Nine live integration tests pass against the isolated development branch (including sharing); earlier foundation runs contained seven.
 - The Next.js production build passes, including MCP App bundling.
 
 The integration tests cover private-list isolation, admitted versus unadmitted identities, owner-only management, shared task writes, membership revocation, disabled users, idempotent retries, stale versions, task reordering, and completion/reopening.

@@ -4,7 +4,13 @@ October 15, 2026
 
 Endpoint: `https://wuff-todo.vercel.app/api/mcp`.
 
-## Codex result
+## Current catalog and later sharing checks
+
+The deployed catalog now has 18 tools: the original 11 below plus `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, and `leave_list`. Authenticated production Codex calls validated sharing reads and rejection of self-invitation without mutation; development tests exercised the two-user sharing lifecycle through both HTTP and MCP. See [verification](verification.md#existing-account-sharing--october-15-2026).
+
+Tim also reported successful use in another Codex chat. This does not verify ChatGPT, another person's authorization, or inline rendering in a named host.
+
+## Initial Codex result (before sharing tools)
 
 Codex CLI 0.160.0 successfully authenticated using Dynamic Client Registration, S256 PKCE, the production resource indicator, and the user's interactive Wuff sign-in/consent. The connection is saved as `wuff-todo` in the user's Codex configuration. OAuth credentials are managed by Codex, not copied into the repository or test scripts.
 
@@ -25,7 +31,7 @@ The real Codex app-server MCP runtime then performed these checks against produc
 
 Tool calls used an ephemeral protocol context with no model turn or persistent user chat. This proves Codex runtime interoperability; it is not evidence of a natural-language model selecting every tool correctly. User lists were read only; writes were confined to a newly created disposable validation list, which was deleted afterward. The user's Codex authorization remains connected.
 
-The catalog contains `create_list`, `create_task`, `delete_list`, `delete_task`, `get_list`, `list_lists`, `rename_list`, `reorder_tasks`, `show_list`, `show_lists`, and `update_task`. Catalog discovery is distinct from exercising every tool or permission combination.
+The initial 11-tool catalog contained `create_list`, `create_task`, `delete_list`, `delete_task`, `get_list`, `list_lists`, `rename_list`, `reorder_tasks`, `show_list`, `show_lists`, and `update_task`. Catalog discovery is distinct from exercising every tool or permission combination.
 
 ## Reconnecting Codex
 
@@ -48,6 +54,6 @@ The connection may need a server restart in the desktop client's MCP settings be
 ## Remaining verification
 
 - Render the interactive list view in a real supporting host and test adding/completing tasks through its bridge. Resource retrieval through Codex passed, but desktop inline rendering was not verified. OpenAI documents the iframe experience in ChatGPT: [Add UI to your MCP server](https://developers.openai.com/plugins/build/chatgpt-ui).
-- Test ordinary natural-language requests, such as “Show my Wuff lists,” in the desktop chat after its tool catalog refreshes.
+- Broaden recorded natural-language coverage beyond the user-reported successful Codex use; keep model/tool-selection evidence separate from direct protocol checks.
 - Production token refresh/rotation and user-driven disconnection remain separate checks; synthetic development integration tests cover refresh, revocation, read-only scopes, and permissions. The production validation deliberately preserved the user's working connection.
 - Joreel's own connection, ChatGPT, Claude, and other clients remain unverified. One person's successful consent does not verify another account.

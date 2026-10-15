@@ -1,6 +1,6 @@
 # Wuff Todo
 
-Read `docs/product-spec.md`, `docs/architecture.md`, and `docs/implementation-plan.md` before changing behavior. Preserve confirmed decisions; record technical decisions and verification evidence in `docs/`.
+Start with `docs/implementation-plan.md` for current status and the next planned milestone, then read `docs/product-spec.md` and `docs/architecture.md` before changing behavior. Read `docs/development.md` before running environment, database, or deployment commands, and `docs/verification.md` before making verification claims. Preserve confirmed decisions; record technical decisions and verification evidence in `docs/`.
 
 - First release: invite-only, private/shared basic lists, tasks, ordering, web and MCP/MCP Apps. Mobile and list themes follow later.
 - Only owners rename/delete lists. Every API and MCP operation enforces access in shared server-side domain services.

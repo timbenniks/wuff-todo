@@ -1,6 +1,6 @@
 # Wuff Todo architecture
 
-Status: working architecture; foundation implemented
+Status: implemented web/API/MCP architecture with explicitly marked future scope
 
 Updated: October 15, 2026
 
@@ -14,7 +14,7 @@ The website, HTTP API, and MCP endpoint live in one Next.js application and one 
 
 Use pnpm workspaces. Add build orchestration only when workspace dependencies and build times justify it. Pin supported package versions during implementation rather than treating this planning document as a version lock.
 
-## Intended repository layout
+## Repository layout and future packages
 
 ```text
 apps/
@@ -24,9 +24,9 @@ packages/
   contracts/           Shared validation schemas, DTOs, error contracts
   domain/              Server-side list/task operations and permissions
   db/                  Drizzle schema, database access, migrations
-  client/              Typed HTTP client
-  ui/                  Web components for website and MCP Apps
-  design/              Design tokens, icons, corgi assets
+  client/              Future typed HTTP client
+  ui/                  Future shared web component package
+  design/              Future shared design asset package
 docs/
 ```
 
@@ -65,57 +65,55 @@ The first technical proof must establish:
 
 The implemented OAuth authorization layer delegates MCP access while preserving Neon identity. It uses application-owned OAuth tables and does not install upstream Better Auth plugins into the managed service.
 
-Proposed MCP scopes separate reading, task writes, and list management. Exact scopes and supported clients are selected in the proof. List membership remains authoritative even when a token has a broad write scope.
+Implemented MCP scopes are `lists:read`, `tasks:write`, and `lists:manage`. Codex tool interoperability is verified; other clients and named-host inline UI remain separate checks. List membership remains authoritative even when a token has a broad write scope.
 
 ## Conceptual data model
 
-| Entity               | Responsibility                                                          |
-| -------------------- | ----------------------------------------------------------------------- |
-| User/profile         | Stable link to Neon identity and application preferences                |
-| List                 | Title, owner, lifecycle state, timestamps, version                      |
-| List membership      | Accepted editor membership, unique per list and user                    |
-| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state     |
-| User list preference | Personal sidebar order and future personal preferences                  |
-| Task                 | List, title, order, completion state/time, creator, timestamps, version |
-| Mutation receipt     | Deduplication key, actor, operation fingerprint, stored outcome, expiry |
+| Entity               | Responsibility                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| User/profile         | Stable link to Neon identity and application preferences                               |
+| List                 | Title, owner, lifecycle state, timestamps, version                                     |
+| List membership      | Accepted editor membership, unique per list and user                                   |
+| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                    |
+| User list preference | Future personal sidebar order and preferences; not implemented                         |
+| Task                 | List, title, integer position, completion state, creation time; version is on the list |
+| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                   |
 
 The list owner is authoritative on the list row. Domain queries recognize owner access or accepted membership. Avoid competing sources of truth for ownership.
 
-Auth-managed tables remain owned by the auth service. App schema changes are versioned through Drizzle migrations. Additional OAuth tables depend on the selected authorization solution.
+Auth-managed tables remain owned by the auth service. App schema changes are versioned through Drizzle migrations. The app owns OAuth client, authorization-code, and token tables for the implemented delegated authorization layer.
 
 ## Ordering, concurrency, and retries
 
-Proposed initial behavior:
+Implemented behavior:
 
-- Sidebar position belongs to the user/list relationship.
-- Task position belongs to the task within its list and is shared.
-- Use transactional ordering operations with a deterministic tie-breaker. Choose the concrete position representation during implementation.
-- Mutations include an expected version where stale edits could overwrite another change. Return a conflict with current state instead of silently losing edits.
-- Serialize or version list reorder operations so concurrent moves cannot corrupt ordering.
-- Completion and reopening are explicit state-setting operations, not a blind toggle.
-- Creates and retryable bulk operations accept idempotency keys scoped to actor and operation. Reusing a key with different input is rejected.
-- Membership checks and mutations must have transaction semantics that prevent a concurrent revocation from being bypassed.
+- Task positions are integers shared within a list; queries use task ID as a deterministic tie-breaker. Active-task reorder operations run transactionally.
+- List mutation requests carry the expected list version. Stale writes return a 409 conflict; clients reread current state instead of silently overwriting another user's change.
+- Completion/reopening set explicit state. Reopening appends the task to the active order.
+- Retryable mutations accept actor-scoped operation IDs. Reusing an ID with different input is rejected. Receipts contain identifiers; services recheck current authorization before returning protected snapshots.
+- Task writes and sharing changes serialize on the list row; invitation responses use the same row lock. Revocation cannot be bypassed by an old acceptance or mutation receipt.
+- Personal sidebar ordering remains future work.
 
-Choose polling, refetch-on-focus, or push updates based on deployment suitability and the agreed freshness requirement. No realtime provider is selected yet.
+The website currently polls every ten seconds and refreshes on focus. Live list updates, including changes committed through ChatGPT/MCP to the user's own private list, are the [next planned build](implementation-plan.md#next-build-live-list-updates). Neon Realtime is a candidate to validate at implementation time; no live subscription provider is currently configured by this feature.
 
 ## HTTP API
 
-Use a versioned `/api/v1` interface. Proposed resources are lists, list members, invitations, tasks, and user preferences.
+The implemented `/api/v1` interface exposes lists, members, invitations, tasks, and AI connections. See [development](development.md) for routes. User preferences remain future work.
 
-Publish an OpenAPI description from shared contracts or keep it validated against them. Specify pagination, input limits, stable error codes, conflict responses, and idempotency behavior. Unauthorized callers must not learn private list contents through errors.
+An OpenAPI description remains future work; when added, generate it from shared contracts or validate it against them. Specify pagination, input limits, stable error codes, conflict responses, and idempotency behavior. Unauthorized callers must not learn private list contents through errors.
 
 Keep reorder and membership operations explicit. Do not expose generic database mutation endpoints.
 
 ## MCP and MCP Apps
 
-Proposed endpoint: `/api/mcp`, using the supported remote MCP HTTP transport. The tool catalog maps to domain capabilities, for example:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 18 tools are:
 
 - `list_lists`, `get_list`, `create_list`, `rename_list`, `delete_list`.
-- `list_tasks`, `create_task`, `update_task`, `complete_task`, `reopen_task`, `delete_task`, `reorder_tasks`.
-- Membership/invitation tools once their lifecycle and confirmation behavior are settled.
+- `create_task`, `update_task`, `delete_task`, `reorder_tasks`. `get_list` includes tasks; `update_task` explicitly sets completion/reopening.
+- `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, `leave_list`.
 - Interactive `show_lists` and `show_list` tools for MCP Apps.
 
-Final names and granularity are decided during the proof. Return structured results plus concise text so tools remain useful without UI support. UI tool calls pass through the same authentication, permission, validation, and concurrency rules.
+Tools return structured results plus concise text independently of UI support. All tool calls enforce the same authentication, permission, validation, and concurrency rules as the website. The embedded UI handles lists/tasks; sharing tools return structured data and the website provides sharing controls.
 
 MCP App packaging must respect host sandboxing and resource policies. Do not embed secrets in UI resources. Test an agreed client matrix rather than claiming support for every AI client.
 
