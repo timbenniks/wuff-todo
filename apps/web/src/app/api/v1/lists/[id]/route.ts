@@ -1,16 +1,12 @@
-import { webActor } from "@/lib/auth/server";
-import { failure, jsonInput, privateJson, sameOrigin } from "@/lib/http";
+import { failure, jsonInput, sameOrigin } from "@/lib/http";
+import { listResponse } from "@/lib/list-response";
 import { deleteList, getList, renameList } from "@wuff/domain";
 import { idSchema } from "@wuff/contracts";
 type Context = { params: Promise<{ id: string }> };
 export async function GET(_: Request, context: Context) {
   try {
-    return privateJson(
-      await getList(
-        await webActor(),
-        idSchema.parse((await context.params).id),
-      ),
-    );
+    const id = idSchema.parse((await context.params).id);
+    return await listResponse((actor) => getList(actor, id));
   } catch (error) {
     return failure(error);
   }
@@ -19,10 +15,11 @@ export async function PATCH(request: Request, context: Context) {
   try {
     sameOrigin(request);
     const data = await jsonInput(request);
-    return privateJson(
-      await renameList(await webActor(), {
+    const listId = (await context.params).id;
+    return await listResponse((actor) =>
+      renameList(actor, {
         ...data,
-        listId: (await context.params).id,
+        listId,
       }),
     );
   } catch (error) {
@@ -33,10 +30,11 @@ export async function DELETE(request: Request, context: Context) {
   try {
     sameOrigin(request);
     const data = await jsonInput(request);
-    return privateJson(
-      await deleteList(await webActor(), {
+    const listId = (await context.params).id;
+    return await listResponse((actor) =>
+      deleteList(actor, {
         ...data,
-        listId: (await context.params).id,
+        listId,
       }),
     );
   } catch (error) {

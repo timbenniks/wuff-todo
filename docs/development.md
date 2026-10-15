@@ -13,6 +13,8 @@ Updated: October 15, 2026
 - Development branch: `br-plain-field-b9ubcjv4`.
 - App and database compute are configured in Frankfurt.
 
+The Vercel project default and both root/app configuration files pin `fra1`. From the monorepo root, deploy with `vercel deploy --prod --yes --regions fra1 --scope tim-benniks-projects-1b967033`, then inspect the actual deployment's regions. A prior CLI deployment fell back to `iad1` despite the app-level build configuration containing `fra1`; see [performance findings](performance.md).
+
 Database provisioning, project connection, environment retrieval, and deployment use the Vercel CLI. Neon CLI authentication was subsequently completed for auth controls and development-branch management that the Vercel CLI does not expose.
 
 ## Local environment

@@ -11,7 +11,7 @@ This is not the complete first release. Sharing permissions are implemented in t
 ## Automated evidence
 
 - Workspace and root TypeScript checks pass.
-- Four unit tests pass (contracts and OAuth redirect policy).
+- Eight unit tests pass (contracts, OAuth redirect policy, and list cache races).
 - Seven live integration tests pass against the isolated development branch.
 - The Next.js production build passes, including MCP App bundling.
 
@@ -38,6 +38,8 @@ Screenshots:
 - [MCP App test host](screenshots/mcp-app.jpg)
 
 The test host is real protocol integration evidence, not a claim of testing ChatGPT, Claude, Cursor, or other named hosts. Those client checks remain required before advertising compatibility. Automated accessibility certification and a full manual keyboard/screen-reader review have not been completed.
+
+Slow-save and retry browser checks, latency findings, and region corrections are recorded in [performance](performance.md). The user subsequently reported that account activation and production web usage work; this is not independent verification of both recipients' accounts.
 
 ## Production boundary
 

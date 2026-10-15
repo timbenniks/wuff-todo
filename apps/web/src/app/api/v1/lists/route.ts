@@ -1,9 +1,9 @@
-import { webActor } from "@/lib/auth/server";
-import { failure, jsonInput, privateJson, sameOrigin } from "@/lib/http";
+import { failure, jsonInput, sameOrigin } from "@/lib/http";
+import { listResponse } from "@/lib/list-response";
 import { createList, listLists } from "@wuff/domain";
 export async function GET() {
   try {
-    return privateJson(await listLists(await webActor()));
+    return await listResponse(listLists);
   } catch (error) {
     return failure(error);
   }
@@ -11,9 +11,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     sameOrigin(request);
-    return privateJson(
-      await createList(await webActor(), await jsonInput(request)),
-    );
+    const input = await jsonInput(request);
+    return await listResponse((actor) => createList(actor, input));
   } catch (error) {
     return failure(error);
   }

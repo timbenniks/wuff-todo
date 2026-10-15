@@ -2,6 +2,7 @@ import { createNeonAuth } from "@neondatabase/auth/next/server";
 import { database, users } from "@wuff/db";
 import { eq } from "drizzle-orm";
 import { Actor, AppError, scopes } from "@wuff/contracts";
+import { cache } from "react";
 
 let instance: ReturnType<typeof createNeonAuth> | undefined;
 export function neonAuth() {
@@ -13,13 +14,13 @@ export function neonAuth() {
     logLevel: "silent",
   }));
 }
-export async function webIdentity() {
+export const webIdentity = cache(async () => {
   const { data, error } = await neonAuth().getSession({
     query: { disableCookieCache: "true" },
   });
   if (error || !data?.user) return null;
   return data.user;
-}
+});
 export async function webActor(): Promise<Actor> {
   const identity = await webIdentity();
   if (!identity) throw new AppError("unauthorized", "Please sign in.", 401);

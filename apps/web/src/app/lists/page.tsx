@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { webActor, webIdentity } from "@/lib/auth/server";
 import { AppError } from "@wuff/contracts";
-import { listLists } from "@wuff/domain";
+import type { TodoList } from "@wuff/contracts";
+import { getList, listLists } from "@wuff/domain";
 import { ListApp } from "./list-app";
 export const dynamic = "force-dynamic";
 export default async function ListsPage() {
@@ -9,11 +10,23 @@ export default async function ListsPage() {
   if (!identity) redirect("/sign-in");
   try {
     const actor = await webActor();
+    const initialLists = await listLists(actor);
+    let initialList: TodoList | null = null;
+    if (initialLists[0]) {
+      try {
+        initialList = await getList(actor, initialLists[0].id);
+      } catch (error) {
+        // A concurrent delete/revocation is reconciled by the client's fresh read.
+        if (!(error instanceof AppError && error.status === 404)) throw error;
+      }
+    }
     return (
       <ListApp
+        key={actor.id}
         userId={actor.id}
         name={identity.name}
-        initialLists={await listLists(actor)}
+        initialLists={initialLists}
+        initialList={initialList}
       />
     );
   } catch (error) {

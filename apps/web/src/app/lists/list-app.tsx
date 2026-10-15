@@ -14,6 +14,22 @@ import type { ListSummary, Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { authClient } from "@/lib/auth/client";
+import { ListCache } from "@/lib/list-cache";
+
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+type PendingCreate = {
+  id: string;
+  title: string;
+  operationId: string;
+  status: "saving" | "failed";
+};
 
 async function api<T>(
   path: string,
@@ -28,55 +44,148 @@ async function api<T>(
   });
   const data = await response.json();
   if (!response.ok)
-    throw new Error(data.error?.message ?? "Couldn’t save your change.");
+    throw new ApiError(
+      data.error?.message ?? "Couldn’t save your change.",
+      response.status,
+    );
   return data;
 }
 export function ListApp({
   userId,
   name,
   initialLists,
+  initialList,
 }: {
   userId: string;
   name: string;
   initialLists: ListSummary[];
+  initialList: TodoList | null;
 }) {
   const [summaries, setSummaries] = useState(initialLists),
     [selectedId, setSelectedId] = useState(initialLists[0]?.id ?? "");
-  const [list, setList] = useState<TodoList | null>(null),
+  const [list, setList] = useState<TodoList | null>(initialList),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(false),
     [creating, setCreating] = useState(false);
+  const [cache] = useState(() => new ListCache(initialList));
+  const [pendingCreate, setPendingCreate] = useState<PendingCreate | null>(
+    null,
+  );
+  const pending = useRef<PendingCreate | null>(null);
+  const mutating = useRef(false);
+  const skipSelectionRead = useRef(initialList?.id ?? "");
+  const summaryEpoch = useRef(0);
+  const summariesRef = useRef(summaries);
+  summariesRef.current = summaries;
   const selected = useRef(selectedId);
   selected.current = selectedId;
-  const reload = useCallback(async (id: string) => {
-    const next = await api<TodoList>(`/api/v1/lists/${id}`);
-    if (selected.current === id)
-      setList((previous) =>
-        previous?.id === next.id && previous.version > next.version
-          ? previous
-          : next,
-      );
-  }, []);
-  useEffect(() => {
-    setList(null);
-    setError("");
-    if (!selectedId) return;
-    setLoading(true);
-    reload(selectedId)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [selectedId, reload]);
-  useEffect(() => {
-    const refresh = async () => {
-      if (document.hidden) return;
-      try {
-        setSummaries(await api<ListSummary[]>("/api/v1/lists"));
-        if (selected.current) await reload(selected.current);
-      } catch (e) {
+  const readError = useCallback(
+    (id: string, error: unknown) => {
+      if (error instanceof ApiError && [401, 403].includes(error.status)) {
+        summaryEpoch.current++;
+        cache.clear();
+        pending.current = null;
+        setPendingCreate(null);
+        setList(null);
+        setSummaries([]);
+        selected.current = "";
+        setSelectedId("");
+      } else if (error instanceof ApiError && error.status === 404) {
+        cache.forget(id);
+        setSummaries((items) => items.filter((item) => item.id !== id));
+        if (selected.current === id) {
+          setList(null);
+          selected.current = "";
+          setSelectedId("");
+        }
+      }
+      if (
+        selected.current === id ||
+        (error instanceof ApiError && [401, 403, 404].includes(error.status))
+      )
         setError(
-          e instanceof Error ? e.message : "Couldn’t refresh your lists.",
+          error instanceof Error ? error.message : "Couldn’t load your list.",
         );
+    },
+    [cache],
+  );
+  const reload = useCallback(
+    async (id: string) => {
+      if (pending.current?.id === id) return;
+      try {
+        const next = await cache.load(id, () =>
+          api<TodoList>(`/api/v1/lists/${id}`),
+        );
+        if (selected.current === id) setList(next);
+      } catch (error) {
+        readError(id, error);
+        throw error;
+      }
+    },
+    [cache, readError],
+  );
+  function chooseList(id: string) {
+    selected.current = id;
+    setSelectedId(id);
+    const cached = cache.get(id);
+    setList(cached);
+    setLoading(!!id && !cached);
+    setError("");
+  }
+  useEffect(() => {
+    const skipRead = skipSelectionRead.current === selectedId;
+    skipSelectionRead.current = "";
+    const cached = cache.get(selectedId);
+    setList(cached);
+    if (
+      !selectedId ||
+      pending.current?.id === selectedId ||
+      (skipRead && cached)
+    ) {
+      setLoading(false);
+      return;
+    }
+    setLoading(!cached);
+    reload(selectedId)
+      .catch(() => {})
+      .finally(() => {
+        if (selected.current === selectedId) setLoading(false);
+      });
+  }, [selectedId, reload, cache]);
+  useEffect(() => {
+    let refreshing = false;
+    const refresh = async () => {
+      if (document.hidden || mutating.current || refreshing) return;
+      refreshing = true;
+      const epoch = summaryEpoch.current;
+      try {
+        await Promise.all([
+          api<ListSummary[]>("/api/v1/lists").then((next) => {
+            if (mutating.current || summaryEpoch.current !== epoch) return;
+            // Preserve the visibly pending create until its own request settles.
+            const pendingList =
+              pending.current && cache.get(pending.current.id);
+            setSummaries(pendingList ? [...next, pendingList] : next);
+            for (const current of summariesRef.current)
+              if (
+                current.id !== pending.current?.id &&
+                !next.some((s) => s.id === current.id)
+              )
+                cache.forget(current.id);
+            if (
+              selected.current &&
+              selected.current !== pending.current?.id &&
+              !next.some((s) => s.id === selected.current)
+            )
+              chooseList("");
+          }),
+          selected.current ? reload(selected.current) : Promise.resolve(),
+        ]);
+      } catch (e) {
+        readError(selected.current, e);
+      } finally {
+        refreshing = false;
       }
     };
     const timer = setInterval(refresh, 10_000);
@@ -85,12 +194,100 @@ export function ListApp({
       clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, [reload]);
+  }, [reload, cache, readError]);
+  function remember(result: TodoList) {
+    const current = cache.write(result);
+    if (selected.current === current.id) setList(current);
+    setSummaries((items) =>
+      items.map((item) =>
+        item.id === current.id
+          ? {
+              id: current.id,
+              title: current.title,
+              ownerId: current.ownerId,
+              version: current.version,
+            }
+          : item,
+      ),
+    );
+  }
+  async function create(title?: string) {
+    if (mutating.current) return;
+    let request = pending.current;
+    if (!request) {
+      const operationId = crypto.randomUUID();
+      request = {
+        id: `pending-${operationId}`,
+        operationId,
+        title: (title ?? "").trim(),
+        status: "saving",
+      };
+      if (!request.title) return;
+      const preview = {
+        id: request.id,
+        title: request.title,
+        ownerId: userId,
+        version: 0,
+        tasks: [],
+      };
+      cache.write(preview);
+      setSummaries((items) => [...items, preview]);
+      chooseList(request.id);
+      setCreating(false);
+    }
+    request = { ...request, status: "saving" };
+    pending.current = request;
+    setPendingCreate(request);
+    mutating.current = true;
+    summaryEpoch.current++;
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api<TodoList>("/api/v1/lists", "POST", {
+        title: request.title,
+        operationId: request.operationId,
+      });
+      cache.forget(request.id);
+      cache.write(created);
+      setSummaries((items) => [
+        ...items.filter(
+          (item) => item.id !== request.id && item.id !== created.id,
+        ),
+        {
+          id: created.id,
+          title: created.title,
+          ownerId: created.ownerId,
+          version: created.version,
+        },
+      ]);
+      pending.current = null;
+      setPendingCreate(null);
+      if (selected.current === request.id) {
+        skipSelectionRead.current = created.id;
+        chooseList(created.id);
+      }
+    } catch (error) {
+      if (error instanceof ApiError && [401, 403].includes(error.status)) {
+        readError(request.id, error);
+        return;
+      }
+      const failed = { ...request, status: "failed" as const };
+      pending.current = failed;
+      setPendingCreate(failed);
+    } finally {
+      mutating.current = false;
+      setBusy(false);
+    }
+  }
   async function change(
     path: string,
     method: string,
     body: Record<string, unknown>,
   ) {
+    if (mutating.current) return false;
+    mutating.current = true;
+    summaryEpoch.current++;
+    if (typeof body.listId === "string") cache.supersede(body.listId);
     setBusy(true);
     setError("");
     try {
@@ -98,17 +295,18 @@ export function ListApp({
         ...body,
         operationId: crypto.randomUUID(),
       });
-      if (selected.current === result.id) setList(result);
-      setSummaries(await api<ListSummary[]>("/api/v1/lists"));
+      remember(result);
       return true;
     } catch (e) {
       setError((e as Error).message);
       if (selected.current) await reload(selected.current).catch(() => {});
       return false;
     } finally {
+      mutating.current = false;
       setBusy(false);
     }
   }
+  const isPending = list?.id === pendingCreate?.id;
   async function move(task: Task, direction: number) {
     if (!list) return;
     const ids = list.tasks.filter((t) => !t.completed).map((t) => t.id),
@@ -137,6 +335,7 @@ export function ListApp({
             size="icon"
             variant="ghost"
             aria-label="Create list"
+            disabled={busy || !!pendingCreate}
             onClick={() => setCreating((v) => !v)}
           >
             <Plus size={18} />
@@ -147,23 +346,7 @@ export function ListApp({
             className="mb-4 grid gap-2"
             onSubmit={async (e) => {
               e.preventDefault();
-              const form = e.currentTarget;
-              const title = String(new FormData(form).get("title"));
-              setBusy(true);
-              setError("");
-              try {
-                const created = await api<TodoList>("/api/v1/lists", "POST", {
-                  title,
-                  operationId: crypto.randomUUID(),
-                });
-                setSummaries(await api("/api/v1/lists"));
-                setSelectedId(created.id);
-                setCreating(false);
-              } catch (e) {
-                setError((e as Error).message);
-              } finally {
-                setBusy(false);
-              }
+              await create(String(new FormData(e.currentTarget).get("title")));
             }}
           >
             <input
@@ -183,12 +366,23 @@ export function ListApp({
           {summaries.map((s) => (
             <button
               key={s.id}
-              onClick={() => setSelectedId(s.id)}
+              onClick={() => chooseList(s.id)}
+              onPointerEnter={() => {
+                if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+              }}
+              onFocus={() => {
+                if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+              }}
               aria-current={s.id === selectedId ? "page" : undefined}
               className={`flex items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "bg-white shadow-sm font-semibold" : "hover:bg-white/60"}`}
             >
               <ListTodo size={17} />
               <span className="truncate">{s.title}</span>
+              {s.id === pendingCreate?.id && (
+                <span className="text-xs text-slate-500">
+                  {pendingCreate.status === "saving" ? "Saving…" : "Retry"}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -206,6 +400,7 @@ export function ListApp({
               variant="ghost"
               size="icon"
               onClick={async () => {
+                cache.clear();
                 await authClient.signOut();
                 window.location.assign("/sign-in");
               }}
@@ -248,7 +443,7 @@ export function ListApp({
           <>
             <div className="flex items-start justify-between gap-4 mb-2">
               <h1 className="text-4xl font-bold break-words">{list.title}</h1>
-              {list.ownerId === userId && (
+              {list.ownerId === userId && !isPending && (
                 <div className="flex">
                   <Button
                     variant="ghost"
@@ -278,19 +473,27 @@ export function ListApp({
                         )
                       )
                         return;
+                      if (mutating.current) return;
                       setBusy(true);
+                      mutating.current = true;
+                      summaryEpoch.current++;
+                      cache.supersede(list.id);
                       try {
                         await api(`/api/v1/lists/${list.id}`, "DELETE", {
                           version: list.version,
                           operationId: crypto.randomUUID(),
                         });
-                        const next = await api<ListSummary[]>("/api/v1/lists");
+                        cache.forget(list.id);
+                        const next = summariesRef.current.filter(
+                          (item) => item.id !== list.id,
+                        );
                         setSummaries(next);
-                        setSelectedId(next[0]?.id ?? "");
-                        setList(null);
+                        if (selected.current === list.id)
+                          chooseList(next[0]?.id ?? "");
                       } catch (e) {
                         setError((e as Error).message);
                       } finally {
+                        mutating.current = false;
                         setBusy(false);
                       }
                     }}
@@ -300,146 +503,172 @@ export function ListApp({
                 </div>
               )}
             </div>
-            <p className="text-sm text-slate-500 mb-10">
-              {list.tasks.filter((t) => !t.completed).length} things to do
-            </p>
-            <ul aria-label="Active tasks" className="divide-y divide-border">
-              {list.tasks
-                .filter((t) => !t.completed)
-                .map((task, i, active) => (
-                  <li
-                    key={task.id}
-                    className="group flex items-center gap-3 py-3"
-                  >
-                    <button
-                      aria-label={`Complete ${task.title}`}
-                      disabled={busy}
-                      className="h-6 w-6 shrink-0 rounded-full border-2 border-[#aabdcf] hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary"
-                      onClick={() =>
-                        change("/api/v1/tasks", "PATCH", {
-                          listId: list.id,
-                          taskId: task.id,
-                          version: list.version,
-                          completed: true,
-                        })
-                      }
-                    />
-                    <button
-                      disabled={busy}
-                      className="text-left min-w-0 flex-1 py-2 break-words"
-                      aria-label={`Edit ${task.title}`}
-                      onClick={() => {
-                        const title = window.prompt("Task name", task.title);
-                        if (title?.trim())
-                          change("/api/v1/tasks", "PATCH", {
-                            listId: list.id,
-                            taskId: task.id,
-                            version: list.version,
-                            title,
-                          });
-                      }}
-                    >
-                      {task.title}
-                    </button>
-                    <div className="flex">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label={`Move ${task.title} up`}
-                        disabled={busy || i === 0}
-                        onClick={() => move(task, -1)}
+            {isPending ? (
+              <div className="mt-6 text-sm text-slate-500">
+                {pendingCreate?.status === "saving" ? (
+                  <p role="status">Saving your list…</p>
+                ) : (
+                  <div role="alert" className="grid gap-4 justify-items-start">
+                    <p>
+                      We couldn’t confirm your list was saved. Retry to check
+                      and finish the same request.
+                    </p>
+                    <Button disabled={busy} onClick={() => create()}>
+                      Retry saving list
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-slate-500 mb-10">
+                  {list.tasks.filter((t) => !t.completed).length} things to do
+                </p>
+                <ul
+                  aria-label="Active tasks"
+                  className="divide-y divide-border"
+                >
+                  {list.tasks
+                    .filter((t) => !t.completed)
+                    .map((task, i, active) => (
+                      <li
+                        key={task.id}
+                        className="group flex items-center gap-3 py-3"
                       >
-                        <ArrowUp size={15} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label={`Move ${task.title} down`}
-                        disabled={busy || i === active.length - 1}
-                        onClick={() => move(task, 1)}
-                      >
-                        <ArrowDown size={15} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label={`Delete ${task.title}`}
-                        disabled={busy}
-                        onClick={() =>
-                          change("/api/v1/tasks", "DELETE", {
-                            listId: list.id,
-                            taskId: task.id,
-                            version: list.version,
-                          })
-                        }
-                      >
-                        <Trash2 size={15} />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-            </ul>
-            <form
-              className="flex gap-2 mt-5"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                if (
-                  await change("/api/v1/tasks", "POST", {
-                    listId: list.id,
-                    version: list.version,
-                    title: String(new FormData(form).get("title")),
-                  })
-                )
-                  form.reset();
-              }}
-            >
-              <input
-                name="title"
-                aria-label="New task"
-                placeholder="Add a little thing to do…"
-                maxLength={300}
-                required
-                className="flex-1"
-              />
-              <Button disabled={busy} type="submit" aria-label="Add task">
-                <Plus size={20} />
-              </Button>
-            </form>
-            <details className="mt-10">
-              <summary className="text-sm text-slate-500 py-3">
-                Completed ({list.tasks.filter((t) => t.completed).length})
-              </summary>
-              <ul>
-                {list.tasks
-                  .filter((t) => t.completed)
-                  .map((task) => (
-                    <li
-                      key={task.id}
-                      className="flex gap-3 items-center py-3 text-slate-500"
-                    >
-                      <button
-                        aria-label={`Reopen ${task.title}`}
-                        disabled={busy}
-                        onClick={() =>
-                          change("/api/v1/tasks", "PATCH", {
-                            listId: list.id,
-                            taskId: task.id,
-                            version: list.version,
-                            completed: false,
-                          })
-                        }
-                        className="rounded-full bg-primary text-white w-6 h-6 flex items-center justify-center"
-                      >
-                        <Check size={15} />
-                      </button>
-                      <span className="line-through break-words">
-                        {task.title}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            </details>
+                        <button
+                          aria-label={`Complete ${task.title}`}
+                          disabled={busy}
+                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#aabdcf] hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary"
+                          onClick={() =>
+                            change("/api/v1/tasks", "PATCH", {
+                              listId: list.id,
+                              taskId: task.id,
+                              version: list.version,
+                              completed: true,
+                            })
+                          }
+                        />
+                        <button
+                          disabled={busy}
+                          className="text-left min-w-0 flex-1 py-2 break-words"
+                          aria-label={`Edit ${task.title}`}
+                          onClick={() => {
+                            const title = window.prompt(
+                              "Task name",
+                              task.title,
+                            );
+                            if (title?.trim())
+                              change("/api/v1/tasks", "PATCH", {
+                                listId: list.id,
+                                taskId: task.id,
+                                version: list.version,
+                                title,
+                              });
+                          }}
+                        >
+                          {task.title}
+                        </button>
+                        <div className="flex">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Move ${task.title} up`}
+                            disabled={busy || i === 0}
+                            onClick={() => move(task, -1)}
+                          >
+                            <ArrowUp size={15} />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Move ${task.title} down`}
+                            disabled={busy || i === active.length - 1}
+                            onClick={() => move(task, 1)}
+                          >
+                            <ArrowDown size={15} />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Delete ${task.title}`}
+                            disabled={busy}
+                            onClick={() =>
+                              change("/api/v1/tasks", "DELETE", {
+                                listId: list.id,
+                                taskId: task.id,
+                                version: list.version,
+                              })
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+                <form
+                  className="flex gap-2 mt-5"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget;
+                    if (
+                      await change("/api/v1/tasks", "POST", {
+                        listId: list.id,
+                        version: list.version,
+                        title: String(new FormData(form).get("title")),
+                      })
+                    )
+                      form.reset();
+                  }}
+                >
+                  <input
+                    name="title"
+                    aria-label="New task"
+                    placeholder="Add a little thing to do…"
+                    maxLength={300}
+                    required
+                    className="flex-1"
+                  />
+                  <Button disabled={busy} type="submit" aria-label="Add task">
+                    <Plus size={20} />
+                  </Button>
+                </form>
+                <details className="mt-10">
+                  <summary className="text-sm text-slate-500 py-3">
+                    Completed ({list.tasks.filter((t) => t.completed).length})
+                  </summary>
+                  <ul>
+                    {list.tasks
+                      .filter((t) => t.completed)
+                      .map((task) => (
+                        <li
+                          key={task.id}
+                          className="flex gap-3 items-center py-3 text-slate-500"
+                        >
+                          <button
+                            aria-label={`Reopen ${task.title}`}
+                            disabled={busy}
+                            onClick={() =>
+                              change("/api/v1/tasks", "PATCH", {
+                                listId: list.id,
+                                taskId: task.id,
+                                version: list.version,
+                                completed: false,
+                              })
+                            }
+                            className="rounded-full bg-primary text-white w-6 h-6 flex items-center justify-center"
+                          >
+                            <Check size={15} />
+                          </button>
+                          <span className="line-through break-words">
+                            {task.title}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              </>
+            )}
           </>
         )}
       </main>
