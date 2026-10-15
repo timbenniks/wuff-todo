@@ -1,5 +1,6 @@
 import { Corgi } from "@/components/corgi";
 import { SignIn } from "./sign-in";
+import Link from "next/link";
 export default async function SignInPage({
   searchParams,
 }: {
@@ -24,6 +25,12 @@ export default async function SignInPage({
           Your lists are right where you left them.
         </p>
         <SignIn next={safeNext} />
+        <Link
+          href="/set-password"
+          className="block text-sm font-semibold underline underline-offset-4 mt-6"
+        >
+          First visit or forgot your password?
+        </Link>
         <p className="text-sm text-slate-500 mt-8 border-t border-border pt-6">
           Wuff is a private space for friends and family. You’ll need an
           invitation to join.

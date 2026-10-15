@@ -47,13 +47,29 @@ Its `/login` route on port 4173 establishes a real synthetic-user session on loc
 
 The initial synthetic accounts were created on development with verification emails off, then managed public sign-up was closed again. `scripts/seed-development.ts` is restricted to that branch and uses reserved `example.invalid` addresses. It is not an invitation or production bootstrap mechanism.
 
+The activation test additionally requires a dedicated synthetic identity, provisioned with the operator command below using target `development`, email `activation-fixture@example.invalid`, and name `Activation fixture`. This test asks managed Auth to create an expiring challenge for a reserved, non-deliverable address; it does not prove mailbox delivery or successful code redemption.
+
 ## Authentication boundary
 
-The first milestone supports email/password login for pre-provisioned identities. Public email/password sign-up is disabled in managed Neon Auth on both main and development, and rejected by the application's auth proxy. Default shared Google OAuth was removed from both branches; magic-link and phone login remain disabled. The proxy only exposes email sign-in, session reading, and sign-out.
+The first milestone supports email/password login for pre-provisioned identities. Public email/password sign-up is disabled in managed Neon Auth on both main and development, and rejected by the application's auth proxy. Default shared Google OAuth was removed from both branches; magic-link and phone login remain disabled. The proxy exposes email sign-in, session reading, sign-out, and admission-gated password activation/recovery.
 
 An authenticated Neon identity also needs an enabled `wuff_users` profile before it can access lists, receive an OAuth grant, or call MCP tools. Identity alone never grants application access. Testing separately proved that an authenticated, unadmitted identity is denied.
 
-The upstream email-OTP service is not exposed by Wuff's proxy. Its behavior for creating identities has not been tested with a real mailbox; do not claim that every upstream identity-creation route is disabled. Application admission is enforced independently. Initial-user provisioning, email verification, password recovery, invitation delivery/acceptance, and production SMTP are still required before the couple's real onboarding.
+Wuff exposes only `email-otp/request-password-reset` and `email-otp/reset-password`, using the managed service's live OpenAPI contract. Both are POST-only, same-origin, validated, and restricted to enabled application profiles. Requests for unknown/disabled emails return a generic success without forwarding to Neon. Resetting requires the email code and an 8–128 character password. Neon enforces challenge expiry, attempt limits, and request throttling. Email-OTP sign-in/registration and all other OTP endpoints remain blocked at the proxy; upstream identity creation is not exhaustively tested. Application admission is enforced independently.
+
+### Provision an invited account
+
+An operator creates a managed identity through the Neon CLI, then an enabled Wuff profile linked to that identity. No public bootstrap endpoint exists. The command checks for existing identities and profiles, reconciles unknown CLI outcomes, preserves existing disabled profiles, validates the target environment, and never displays passwords or codes. It reads managed tables for identity reconciliation but never writes them.
+
+```sh
+pnpm exec tsx scripts/provision-user.ts --target production --email invited@example.com --name 'Invited person'
+```
+
+Use `--target development` for synthetic tests. The selected ignored environment file must contain credentials for the corresponding configured branch.
+
+The recipient visits `/set-password`, enters their invited email, requests a code, and chooses a password in the website. The same page supports recovery. No initial password is sent through chat. The first two production identities and Wuff profiles have been provisioned; mailbox delivery and their completed activation remain user checks.
+
+Auth currently uses Neon's shared sender (`Neon Auth`, `auth@mail.myneon.app`) for this initial private setup. Configure custom SMTP before treating email delivery as production-ready. List invitations and their delivery/acceptance remain a separate, unfinished feature.
 
 MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity. Public clients register via DCR and receive only the `authorization_code` and `refresh_token` grants. Authorization requires explicit consent, S256 PKCE, state, exact registered redirect matching, and the MCP resource. Tokens are opaque, stored as SHA-256 digests, resource/issuer-bound, short-lived, and revocable. Every token use checks application admission. Refresh tokens rotate. Client ID Metadata Documents and native custom callback schemes are not implemented yet.
 

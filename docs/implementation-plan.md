@@ -4,7 +4,7 @@ Status: foundation implemented; remaining milestones below
 
 Updated: October 15, 2026
 
-The first technical proof and part of Phase 1 are implemented. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Initial-user onboarding, external named-host checks, native auth validation, sharing controls, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
+The first technical proof and part of Phase 1 are implemented. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning and email-code password setup are implemented; completed real-user activation, external named-host checks, native auth validation, sharing controls, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Phase 0: resolve architectural risks
 
@@ -58,20 +58,20 @@ Add themes, custom colors, and images after the basic workflow is proven. Decide
 
 ## Open decisions
 
-| Decision                              | Proposed starting point                                                     | Needed by |
-| ------------------------------------- | --------------------------------------------------------------------------- | --------- |
-| Initial sign-in methods               | Choose after checking current Neon capabilities                             | Phase 0   |
-| Initial owner bootstrap               | Controlled provisioning; no public bootstrap route                          | Phase 0   |
-| Who may invite new people             | List owners, subject to an explicit app invitation policy                   | Phase 0   |
-| Invitation delivery and expiry        | Email-bound, expiring, revocable invitations                                | Phase 0   |
-| MCP OAuth integration                 | Keep Neon identity; prove compatible delegated authorization                | Phase 0   |
-| Supported MCP clients                 | At least one UI-capable host and a tool-only configuration; names to choose | Phase 0   |
-| Sidebar/task ordering                 | Personal sidebar, shared task order                                         | Phase 1   |
-| Conflict handling                     | Version checks and explicit conflict responses                              | Phase 1   |
-| Archive and permanent deletion        | Owner-only; confirm permanent deletion                                      | Phase 2   |
-| Cross-client freshness                | Select a measurable target and refresh mechanism                            | Phase 2   |
-| Corgi artwork and final visual design | Shared assets with a calm task interface                                    | Phase 2   |
-| Mobile offline support                | Separate mobile design decision                                             | Phase 4   |
+| Decision                              | Proposed starting point                                                     | Needed by                            |
+| ------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
+| Initial sign-in methods               | Email/password; admitted users set/reset passwords using emailed codes      | Implemented; real mailbox check open |
+| Initial owner bootstrap               | Operator-only Neon CLI provisioning and Wuff admission                      | Implemented                          |
+| Who may invite new people             | List owners, subject to an explicit app invitation policy                   | Phase 0                              |
+| Invitation delivery and expiry        | Email-bound, expiring, revocable invitations                                | Phase 0                              |
+| MCP OAuth integration                 | Keep Neon identity; prove compatible delegated authorization                | Phase 0                              |
+| Supported MCP clients                 | At least one UI-capable host and a tool-only configuration; names to choose | Phase 0                              |
+| Sidebar/task ordering                 | Personal sidebar, shared task order                                         | Phase 1                              |
+| Conflict handling                     | Version checks and explicit conflict responses                              | Phase 1                              |
+| Archive and permanent deletion        | Owner-only; confirm permanent deletion                                      | Phase 2                              |
+| Cross-client freshness                | Select a measurable target and refresh mechanism                            | Phase 2                              |
+| Corgi artwork and final visual design | Shared assets with a calm task interface                                    | Phase 2                              |
+| Mobile offline support                | Separate mobile design decision                                             | Phase 4                              |
 
 ## Verification strategy
 

@@ -29,7 +29,7 @@ The first release focuses on lists, tasks, and ordering. It should feel fast and
 
 Each user has their own identity and session. New accounts require a valid invitation. Knowing an email address, list ID, or URL must never grant access by itself.
 
-The first two users need a controlled bootstrap path. The exact initial-account provisioning method and sign-in methods remain open.
+The first two users use an operator-only bootstrap: managed identities are provisioned through the Neon CLI, then admitted to Wuff. Each recipient requests an email code at `/set-password` and chooses their own password. Public registration stays disabled. Subsequent login uses email/password; the same email-code page handles recovery. General list invitation acceptance remains planned.
 
 ### Lists
 

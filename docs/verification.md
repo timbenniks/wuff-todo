@@ -6,18 +6,20 @@ Date: October 15, 2026
 
 The initial technical foundation includes the pnpm monorepo, Next.js web application, managed Neon email/password login, application admission, Drizzle migrations, shared list/task services, a session-authenticated HTTP API, delegated OAuth for MCP, MCP tools, and an embedded MCP App.
 
-This is not the complete first release. Sharing permissions are implemented in the domain and tested with synthetic memberships, but invitation onboarding and member-management UI/API are not implemented. Personal sidebar ordering, archive/restore, formal external-client certification, mobile authentication, and production onboarding remain open.
+This is not the complete first release. Sharing permissions are implemented in the domain and tested with synthetic memberships, but list invitation onboarding and member-management UI/API are not implemented. Personal sidebar ordering, archive/restore, formal external-client certification, mobile authentication, and completed real-user activation remain open.
 
 ## Automated evidence
 
 - Workspace and root TypeScript checks pass.
 - Four unit tests pass (contracts and OAuth redirect policy).
-- Six live integration tests pass against the isolated development branch.
+- Seven live integration tests pass against the isolated development branch.
 - The Next.js production build passes, including MCP App bundling.
 
 The integration tests cover private-list isolation, admitted versus unadmitted identities, owner-only management, shared task writes, membership revocation, disabled users, idempotent retries, stale versions, task reordering, and completion/reopening.
 
 HTTP/MCP tests cover Neon login, session restoration, logout, denied public signup at the proxy and managed email/password endpoint, unauthenticated requests, OAuth discovery, explicit consent, PKCE rejection, resource mismatch, one-time authorization codes, MCP initialize/tool discovery, cross-surface writes, MCP UI resource retrieval, read-only scopes, refresh rotation, and connection revocation.
+
+Password activation/recovery tests cover origin and method restrictions, strict payload validation, normalized email, unknown and disabled account gating, a managed expiring OTP challenge for a reserved synthetic address, and rejection of incorrect codes without changing credentials. Successful code redemption and real mailbox delivery have not been verified. The activation page was visually inspected in the local browser.
 
 ## Browser evidence
 
@@ -39,6 +41,6 @@ The test host is real protocol integration evidence, not a claim of testing Chat
 
 ## Production boundary
 
-Production is deployed at [wuff-todo.vercel.app](https://wuff-todo.vercel.app), with its own empty application schema and managed auth branch. Vercel reports the initial deployment ready, with functions in Frankfurt. Production smoke checks confirm the sign-in page returns 200, unauthenticated API and MCP requests return 401, the signup proxy returns 403, and OAuth discovery advertises the production origin.
+Production is deployed at [wuff-todo.vercel.app](https://wuff-todo.vercel.app), with its own application schema and managed auth branch. Vercel reports the initial deployment ready, with functions in Frankfurt. Production smoke checks confirm the sign-in page returns 200, unauthenticated API and MCP requests return 401, the signup proxy returns 403, and OAuth discovery advertises the production origin.
 
-Real-user onboarding has not happened. Authenticated integration evidence comes from development. Production authenticated flows and named external AI clients still need verification after account onboarding.
+The two requested real identities and enabled application profiles are provisioned through the operator command. No real passwords were chosen or displayed by the agent. Each recipient must complete `/set-password` using their mailbox. Authenticated integration evidence comes from development. Production authenticated flows, successful OTP redemption, custom SMTP, and named external AI clients still need verification.
