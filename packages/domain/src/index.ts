@@ -99,14 +99,12 @@ async function mutate(
       return receipt.result as { id: string };
     }
     const result = (await fn(tx)) as { id: string };
-    await tx
-      .insert(receipts)
-      .values({
-        actorId: actor.id,
-        operationId: input.operationId,
-        fingerprint,
-        result,
-      });
+    await tx.insert(receipts).values({
+      actorId: actor.id,
+      operationId: input.operationId,
+      fingerprint,
+      result,
+    });
     return result;
   });
 }
@@ -226,13 +224,11 @@ export async function createTask(actor: Actor, data: unknown) {
         .where(eq(tasks.listId, input.listId));
       if (existing.length >= 1000)
         fail("limit_reached", "A list can contain up to 1,000 tasks.", 400);
-      await tx
-        .insert(tasks)
-        .values({
-          listId: input.listId,
-          title: input.title,
-          position: Math.max(-1, ...existing.map((t) => t.position)) + 1,
-        });
+      await tx.insert(tasks).values({
+        listId: input.listId,
+        title: input.title,
+        position: Math.max(-1, ...existing.map((t) => t.position)) + 1,
+      });
       return { id: input.listId };
     },
   );

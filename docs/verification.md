@@ -11,7 +11,7 @@ This is not the complete first release. Sharing permissions are implemented in t
 ## Automated evidence
 
 - Workspace and root TypeScript checks pass.
-- Three contract tests pass.
+- Four unit tests pass (contracts and OAuth redirect policy).
 - Six live integration tests pass against the isolated development branch.
 - The Next.js production build passes, including MCP App bundling.
 
@@ -39,4 +39,6 @@ The test host is real protocol integration evidence, not a claim of testing Chat
 
 ## Production boundary
 
-Production has its own empty application schema and managed auth branch. Real-user onboarding has not happened. Authenticated integration evidence in this document comes from development; deployment and unauthenticated production checks must be recorded separately after the deployment is ready.
+Production is deployed at [wuff-todo.vercel.app](https://wuff-todo.vercel.app), with its own empty application schema and managed auth branch. Vercel reports the initial deployment ready, with functions in Frankfurt. Production smoke checks confirm the sign-in page returns 200, unauthenticated API and MCP requests return 401, the signup proxy returns 403, and OAuth discovery advertises the production origin.
+
+Real-user onboarding has not happened. Authenticated integration evidence comes from development. Production authenticated flows and named external AI clients still need verification after account onboarding.

@@ -275,13 +275,17 @@ export function unauthorizedMcp() {
 }
 
 export function validateRedirectUri(value: string) {
-  const url = new URL(value);
-  if (url.username || url.password || url.hash) return false;
-  return (
-    url.protocol === "https:" ||
-    (url.protocol === "http:" &&
-      ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
-  );
+  try {
+    const url = new URL(value);
+    if (url.username || url.password || url.hash) return false;
+    return (
+      url.protocol === "https:" ||
+      (url.protocol === "http:" &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+    );
+  } catch {
+    return false;
+  }
 }
 export async function registerClient(name: string, redirectUris: string[]) {
   // Persistent global ceiling is sufficient for the initial private beta.

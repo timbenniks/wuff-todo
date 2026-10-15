@@ -9,7 +9,7 @@
     "dev": "pnpm build:mcp && pnpm --filter @wuff/web dev",
     "build": "pnpm build:mcp && pnpm --filter @wuff/web build",
     "typecheck": "pnpm -r typecheck && tsc --noEmit",
-    "test": "node --import tsx --test tests/contracts.test.ts",
+    "test": "node --import tsx --test tests/contracts.test.ts tests/oauth-policy.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build",

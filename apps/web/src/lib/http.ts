@@ -40,14 +40,6 @@ export function failure(error: unknown) {
   console.error("Request failed", {
     requestId,
     name: error instanceof Error ? error.name : "UnknownError",
-    ...(process.env.NODE_ENV === "development" && error instanceof Error
-      ? {
-          detail: error.message.replace(
-            /https?:\/\/\S+|postgres(?:ql)?:\/\/\S+|[A-Za-z0-9_-]{40,}/g,
-            "[redacted]",
-          ),
-        }
-      : {}),
   });
   return Response.json(
     {
