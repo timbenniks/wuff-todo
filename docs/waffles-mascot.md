@@ -57,3 +57,4 @@ Regenerate exports from the approved original with `node scripts/generate-brand-
 - Native device installation and social-platform preview caches were not tested. At 16px, the face/colors remain the identity; charm details naturally become tiny.
 
 - Production build (`pnpm build`) passed, including the manifest route. Native square icon exports have no alpha channel.
+- Vercel CLI production deployment `dpl_4jDY8EwfxoBhS7ZXEPyg3mEQEU8q` reached READY and aliased to `https://wuff-todo.vercel.app`. Public sign-in returned the Waffles image and production absolute share-image metadata; favicon, manifest, share card, WebP, and Apple icon returned HTTP 200. Sharing work from the other chat was preserved in its separate commit.
