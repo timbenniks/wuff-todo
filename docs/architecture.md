@@ -117,6 +117,18 @@ Tools return structured results plus concise text independently of UI support. A
 
 MCP App packaging must respect host sandboxing and resource policies. Do not embed secrets in UI resources. Test an agreed client matrix rather than claiming support for every AI client.
 
+## Web and mobile offline boundary
+
+Confirmed October 15, 2026: preserve the website’s current online behavior. Its manifest and icon assets provide identity; do not extend them into offline-first PWA behavior. No service worker, durable offline task cache, or disconnected mutation queue is part of the current web scope. Transient in-memory list snapshots and retrying an uncertain online request are separate from offline editing. Live updates and reconnect reconciliation remain the next planned online feature.
+
+When React Native/Expo mobile planning starts, explicitly compare:
+
+- Online-only operations with clear network failures.
+- Cached read access while offline, with visible freshness and access/privacy rules.
+- Queued offline edits, including retry/idempotency, conflict resolution, and honest pending/error states.
+
+Choose based on actual iPhone/Android needs and the user’s experience with PWA/offline tradeoffs. Native offline-first behavior is not decided or promised. Evaluate secure local storage, account switching/sign-out cleanup, and what happens to cached data or queued edits after shared-list access is revoked. Record the decision before implementing persistence or synchronization.
+
 ## Environments and delivery
 
 - Use local development, preview, and production environments with isolated credentials and data.

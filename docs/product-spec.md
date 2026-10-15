@@ -100,7 +100,9 @@ The backend is authoritative. Active web screens currently refresh every ten sec
 
 Concurrent edits must have a defined outcome. An outdated screen must not silently restore a task deleted by another user. Proposed conflict behavior is documented in the architecture.
 
-Native mobile offline editing is deferred. The first web release should show network failures clearly and never imply that an unsaved change succeeded.
+**Confirmed web/offline boundary — October 15, 2026:** keep the website’s current online behavior. Do not add an offline-first PWA, service-worker caching, persistent offline list storage, or queued offline writes. Existing manifest, icons, and home-screen identity stay as they are; those assets do not imply offline support. Network failures must remain visible, and unsaved changes must never appear confirmed.
+
+Revisit offline behavior when planning the React Native/Expo iPhone and Android apps. The user has mixed experiences with PWAs and offline-first systems, so native offline support is an open product decision, not an assumed requirement. Compare online-only operation, cached read access, and queued offline editing against actual mobile use cases before choosing. This deliberation does not change the next planned milestone of live updates for connected web views, including changes made through MCP.
 
 ## Future scope
 

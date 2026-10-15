@@ -13,6 +13,7 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 - **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 18 tools. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
 - **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
 - **Freshness today:** open web views poll every ten seconds and refresh on focus. Live subscriptions are not implemented.
+- **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
 - **Verification:** 9 unit tests and 9 development integration tests passed for sharing; production Codex tool checks passed. Tim reported working activation, Codex use, and sharing. Joreel's independent activation/client connection, ChatGPT end-to-end, and named-host interactive MCP UI remain unverified. See [verification](verification.md) and [MCP validation](mcp-validation.md).
 - **Later scope:** personal sidebar ordering, archive/restore, new-account invitation delivery, native apps/auth, offline editing, themes, and richer task scheduling/details. Custom SMTP remains an operational follow-up.
 
@@ -78,7 +79,9 @@ Exit criteria: all first-release acceptance criteria pass, supported clients are
 
 Add an Expo application targeting iPhone and Android. Reuse contracts, the API client, design tokens, and assets. Build native components with the same visual identity.
 
-Decide offline behavior, secure session storage, synchronization, distribution, and release workflows before implementation. Widgets, notifications, and share extensions require separate scope decisions.
+Before mobile implementation, revisit the PWA/offline deliberation confirmed October 15, 2026. The user has mixed experiences with PWAs and offline-first systems; compare online-only use, cached reads, and queued offline edits against real mobile use cases instead of defaulting to offline-first. Decide secure local storage/session handling, conflict and retry behavior, revoked access, account cleanup, synchronization, distribution, and release workflows. See [the architecture boundary](architecture.md#web-and-mobile-offline-boundary).
+
+This is future React Native/Expo design work. Preserve current website behavior; the next build remains live updates for connected web views and changes made through ChatGPT/MCP. Widgets, notifications, and share extensions require separate scope decisions.
 
 ## Phase 5: list personalization
 
@@ -98,7 +101,7 @@ Add themes, custom colors, and images after the basic workflow is proven. Decide
 | Cross-client freshness        | Polling/focus refresh implemented; live updates are the next build described above                                    |
 | Archive and deletion          | Owner-only permanent deletion implemented; archive/restore deferred                                                   |
 | Corgi branding                | Waffles integrated; see mascot asset and verification documentation                                                   |
-| Native and offline support    | Future Expo/mobile design and verification work                                                                       |
+| Native and offline support    | Revisit online-only, cached reads, and offline edits during React Native/Expo planning; website stays online          |
 
 ## Verification strategy
 
