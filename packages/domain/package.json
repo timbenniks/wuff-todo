@@ -1,0 +1,16 @@
+{
+  "name": "@wuff/domain",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wuff/contracts": "workspace:*",
+    "@wuff/db": "workspace:*",
+    "drizzle-orm": "^0.45.4"
+  }
+}

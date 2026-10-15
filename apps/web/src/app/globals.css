@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@theme inline {
+  --color-background: #f7fafc;
+  --color-foreground: #263e55;
+  --color-primary: #315f9b;
+  --color-accent: #e7f0f8;
+  --color-border: #dce5ed;
+  --font-sans: "Avenir Next", "Segoe UI", sans-serif;
+}
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+input:not([type="checkbox"]) {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  background: white;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  outline-offset: 3px;
+}
+input:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+h1,
+h2,
+.wordmark {
+  font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+  letter-spacing: -0.035em;
+}
+::selection {
+  background: #dceafb;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

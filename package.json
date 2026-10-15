@@ -1,0 +1,37 @@
+{
+  "name": "wuff-todo",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm build:mcp && pnpm --filter @wuff/web dev",
+    "build": "pnpm build:mcp && pnpm --filter @wuff/web build",
+    "typecheck": "pnpm -r typecheck && tsc --noEmit",
+    "test": "node --import tsx --test tests/contracts.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "build:mcp": "node scripts/build-mcp.mjs",
+    "test:integration": "node --env-file=.env.local --import tsx --test tests/*.integration.test.ts",
+    "format": "prettier --write . --ignore-path .gitignore",
+    "format:check": "prettier --check . --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@wuff/contracts": "workspace:*",
+    "@wuff/db": "workspace:*",
+    "@wuff/domain": "workspace:*",
+    "dotenv": "^18.0.8",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.4",
+    "esbuild": "^0.28.2",
+    "pg": "^8.23.1",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "type": "module"
+}
