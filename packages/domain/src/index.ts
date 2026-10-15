@@ -1,8 +1,22 @@
-import { createHash } from "node:crypto";
-import { and, asc, eq, exists, or, sql } from "drizzle-orm";
-import { database, lists, members, receipts, tasks, users } from "@wuff/db";
+import { createHash, randomUUID } from "node:crypto";
+import { and, asc, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
+import {
+  database,
+  invitations,
+  lists,
+  members,
+  receipts,
+  tasks,
+  users,
+} from "@wuff/db";
 import {
   Actor,
+  inviteSchema,
+  invitationResponseSchema,
+  cancelInvitationSchema,
+  removeMemberSchema,
+  type ListSharing,
+  type IncomingInvitation,
   AppError,
   createListSchema,
   createTaskSchema,
@@ -308,4 +322,308 @@ export async function reorderTasks(actor: Actor, data: unknown) {
     },
   );
   return getList(actor, input.listId);
+}
+
+// Sharing and task writes lock the same list row. Revocation cannot race a
+// permission check and allow a later task commit under the old membership.
+async function ownerList(tx: Tx | Db, actor: Actor, listId: string) {
+  const list = await accessible(tx, actor, listId);
+  if (list.ownerId !== actor.id)
+    fail("owner_required", "Only the owner can manage sharing.", 403);
+  return list;
+}
+async function sharingSnapshot(
+  tx: Tx,
+  actor: Actor,
+  listId: string,
+): Promise<ListSharing> {
+  const list = await accessible(tx, actor, listId);
+  const [owner] = await tx
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, list.ownerId));
+  const editors = await tx
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(members)
+    .innerJoin(users, eq(members.userId, users.id))
+    .where(eq(members.listId, listId))
+    .orderBy(asc(members.createdAt));
+  const pending =
+    list.ownerId === actor.id
+      ? await tx
+          .select({
+            id: invitations.id,
+            email: invitations.email,
+            expiresAt: invitations.expiresAt,
+          })
+          .from(invitations)
+          .where(
+            and(
+              eq(invitations.listId, listId),
+              isNull(invitations.closedAt),
+              isNull(invitations.acceptedBy),
+              gt(invitations.expiresAt, new Date()),
+            ),
+          )
+          .orderBy(asc(invitations.createdAt))
+      : [];
+  return {
+    listId,
+    version: list.version,
+    owner,
+    members: editors,
+    invitations: pending.map((i) => ({
+      ...i,
+      expiresAt: i.expiresAt.toISOString(),
+    })),
+  };
+}
+export async function getListSharing(actor: Actor, listId: string) {
+  requireScope(actor, "lists:read");
+  return database().db.transaction((tx) => sharingSnapshot(tx, actor, listId), {
+    isolationLevel: "repeatable read",
+    accessMode: "read only",
+  });
+}
+export async function listInvitations(
+  actor: Actor,
+): Promise<IncomingInvitation[]> {
+  requireScope(actor, "lists:read");
+  const db = database().db;
+  await admission(db, actor);
+  const rows = await db
+    .select({
+      id: invitations.id,
+      listId: lists.id,
+      listTitle: lists.title,
+      ownerName: users.name,
+      ownerEmail: users.email,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .innerJoin(lists, eq(invitations.listId, lists.id))
+    .innerJoin(users, eq(lists.ownerId, users.id))
+    .where(
+      and(
+        eq(invitations.recipientId, actor.id),
+        isNull(invitations.closedAt),
+        isNull(invitations.acceptedBy),
+        gt(invitations.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(asc(invitations.createdAt));
+  return rows.map((i) => ({ ...i, expiresAt: i.expiresAt.toISOString() }));
+}
+export async function inviteToList(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = inviteSchema.parse(data);
+  await ownerList(database().db, actor, input.listId);
+  await mutate(
+    actor,
+    { ...input, kind: "invite_to_list" } as typeof input,
+    async (tx) => {
+      const list = await locked(tx, actor, input, true);
+      const [recipient] = await tx
+        .select()
+        .from(users)
+        .where(and(eq(users.email, input.email), eq(users.enabled, true)));
+      if (!recipient)
+        fail(
+          "unavailable_recipient",
+          "This person needs an existing Wuff account before you can invite them.",
+          400,
+        );
+      if (recipient.id === list.ownerId)
+        fail("already_member", "You already own this list.", 400);
+      const [member] = await tx
+        .select()
+        .from(members)
+        .where(
+          and(eq(members.listId, list.id), eq(members.userId, recipient.id)),
+        );
+      if (member)
+        fail("already_member", "This person already has access.", 409);
+      const pending = await tx
+        .select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.listId, list.id),
+            isNull(invitations.closedAt),
+            isNull(invitations.acceptedBy),
+          ),
+        );
+      const now = new Date();
+      for (const invite of pending)
+        if (invite.expiresAt <= now)
+          await tx
+            .update(invitations)
+            .set({ closedAt: now })
+            .where(eq(invitations.id, invite.id));
+      if (
+        pending.some((i) => i.recipientId === recipient.id && i.expiresAt > now)
+      )
+        return { id: list.id };
+      if (pending.filter((i) => i.expiresAt > now).length >= 100)
+        fail(
+          "limit_reached",
+          "A list can have up to 100 pending invitations.",
+          400,
+        );
+      await tx
+        .insert(invitations)
+        .values({
+          listId: list.id,
+          email: recipient.email,
+          recipientId: recipient.id,
+          tokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
+          expiresAt: new Date(now.getTime() + 7 * 86400000),
+        });
+      return { id: list.id };
+    },
+  );
+  await ownerList(database().db, actor, input.listId);
+  return getListSharing(actor, input.listId);
+}
+export async function respondToInvitation(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = invitationResponseSchema.parse(data);
+  const result = await mutate(
+    actor,
+    { ...input, kind: "respond_to_invitation" } as typeof input,
+    async (tx) => {
+      // Read the target, then lock the list before re-reading the invitation.
+      const [target] = await tx
+        .select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.id, input.invitationId),
+            eq(invitations.recipientId, actor.id),
+          ),
+        );
+      if (!target) return fail("not_found", "Invitation not found.", 404);
+      const [list] = await tx
+        .select()
+        .from(lists)
+        .where(eq(lists.id, target.listId))
+        .for("update");
+      if (!list) return fail("not_found", "Invitation not found.", 404);
+      const [invite] = await tx
+        .select()
+        .from(invitations)
+        .where(eq(invitations.id, target.id));
+      if (
+        !invite ||
+        invite.closedAt ||
+        invite.acceptedBy ||
+        invite.expiresAt <= new Date()
+      )
+        fail(
+          "invitation_closed",
+          "This invitation has expired or is no longer available.",
+          409,
+        );
+      if (input.accept)
+        await tx
+          .insert(members)
+          .values({ listId: list.id, userId: actor.id })
+          .onConflictDoNothing();
+      await tx
+        .update(invitations)
+        .set({
+          closedAt: new Date(),
+          acceptedBy: input.accept ? actor.id : null,
+        })
+        .where(eq(invitations.id, invite.id));
+      await tx
+        .update(lists)
+        .set({ version: list.version + 1 })
+        .where(eq(lists.id, list.id));
+      return { id: list.id };
+    },
+  );
+  // A receipt is never authority to restore revoked access or disclose a snapshot.
+  if (input.accept) await accessible(database().db, actor, result.id);
+  return { listId: result.id, accepted: input.accept };
+}
+export async function cancelInvitation(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = cancelInvitationSchema.parse(data);
+  await ownerList(database().db, actor, input.listId);
+  await mutate(
+    actor,
+    { ...input, kind: "cancel_invitation" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true);
+      const [invite] = await tx
+        .select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.id, input.invitationId),
+            eq(invitations.listId, input.listId),
+          ),
+        );
+      if (!invite) fail("not_found", "Invitation not found.", 404);
+      if (invite.closedAt || invite.acceptedBy)
+        fail(
+          "invitation_closed",
+          "This invitation is no longer pending. Refresh sharing settings.",
+          409,
+        );
+      await tx
+        .update(invitations)
+        .set({ closedAt: new Date() })
+        .where(eq(invitations.id, invite.id));
+      return { id: input.listId };
+    },
+  );
+  await ownerList(database().db, actor, input.listId);
+  return getListSharing(actor, input.listId);
+}
+export async function removeListMember(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = removeMemberSchema.parse(data);
+  await ownerList(database().db, actor, input.listId);
+  await mutate(
+    actor,
+    { ...input, kind: "remove_list_member" } as typeof input,
+    async (tx) => {
+      const list = await locked(tx, actor, input, true);
+      if (input.userId === list.ownerId)
+        fail("owner_required", "The owner cannot be removed.", 400);
+      await tx
+        .delete(members)
+        .where(
+          and(
+            eq(members.listId, input.listId),
+            eq(members.userId, input.userId),
+          ),
+        );
+      return { id: input.listId };
+    },
+  );
+  await ownerList(database().db, actor, input.listId);
+  return getListSharing(actor, input.listId);
+}
+export async function leaveList(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = listMutationSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "leave_list" } as typeof input,
+    async (tx) => {
+      const list = await locked(tx, actor, input);
+      if (list.ownerId === actor.id)
+        fail("owner_required", "The owner cannot leave their own list.", 400);
+      await tx
+        .delete(members)
+        .where(
+          and(eq(members.listId, input.listId), eq(members.userId, actor.id)),
+        );
+      return { id: input.listId };
+    },
+  );
+  return { listId: input.listId, left: true };
 }

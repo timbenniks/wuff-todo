@@ -14,16 +14,11 @@ import type { ListSummary, Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { authClient } from "@/lib/auth/client";
+import { api, ApiError } from "@/lib/api";
+import { InvitationInbox, SharingDialog } from "./sharing";
+import type { IncomingInvitation } from "@wuff/contracts";
 import { ListCache } from "@/lib/list-cache";
 
-class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-  ) {
-    super(message);
-  }
-}
 type PendingCreate = {
   id: string;
   title: string;
@@ -31,35 +26,18 @@ type PendingCreate = {
   status: "saving" | "failed";
 };
 
-async function api<T>(
-  path: string,
-  method = "GET",
-  body?: unknown,
-): Promise<T> {
-  const response = await fetch(path, {
-    method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw new ApiError(
-      data.error?.message ?? "Couldn’t save your change.",
-      response.status,
-    );
-  return data;
-}
 export function ListApp({
   userId,
   name,
   initialLists,
   initialList,
+  initialInvitations,
 }: {
   userId: string;
   name: string;
   initialLists: ListSummary[];
   initialList: TodoList | null;
+  initialInvitations: IncomingInvitation[];
 }) {
   const [summaries, setSummaries] = useState(initialLists),
     [selectedId, setSelectedId] = useState(initialLists[0]?.id ?? "");
@@ -306,6 +284,21 @@ export function ListApp({
       setBusy(false);
     }
   }
+  async function sharingChanged(id: string, left = false) {
+    summaryEpoch.current++;
+    cache.supersede(id);
+    if (left) {
+      cache.forget(id);
+      setSummaries((items) => items.filter((item) => item.id !== id));
+      if (selected.current === id) chooseList("");
+    } else await reload(id).catch(() => {});
+  }
+  async function joinedList(id: string) {
+    summaryEpoch.current++;
+    const next = await api<ListSummary[]>("/api/v1/lists");
+    setSummaries(next);
+    chooseList(id);
+  }
   const isPending = list?.id === pendingCreate?.id;
   async function move(task: Task, direction: number) {
     if (!list) return;
@@ -411,6 +404,7 @@ export function ListApp({
         </div>
       </aside>
       <main className="px-6 py-10 md:px-16 md:py-16 max-w-4xl w-full mx-auto">
+        <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
         {error && (
           <div
             role="alert"
@@ -441,8 +435,24 @@ export function ListApp({
         )}
         {list && (
           <>
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <h1 className="text-4xl font-bold break-words">{list.title}</h1>
+            <div className="flex flex-wrap items-start gap-2 mb-2 [&>div:first-child]:flex-1 [&>div:first-child]:basis-40">
+              <div className="min-w-0">
+                <h1 className="text-4xl font-bold break-words">{list.title}</h1>
+                {!isPending && (
+                  <p className="text-xs text-slate-500 mt-2">
+                    {list.ownerId === userId ? "Your list" : "Shared with you"}
+                  </p>
+                )}
+              </div>
+              {!isPending && (
+                <SharingDialog
+                  key={list.id}
+                  list={list}
+                  userId={userId}
+                  disabled={busy}
+                  onChanged={sharingChanged}
+                />
+              )}
               {list.ownerId === userId && !isPending && (
                 <div className="flex">
                   <Button

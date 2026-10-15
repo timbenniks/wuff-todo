@@ -71,7 +71,7 @@ Use `--target development` for synthetic tests. The selected ignored environment
 
 The recipient visits `/set-password`, enters their invited email, requests a code, and chooses a password in the website. The same page supports recovery. No initial password is sent through chat. The first two production identities and Wuff profiles have been provisioned; mailbox delivery and their completed activation remain user checks.
 
-Auth currently uses Neon's shared sender (`Neon Auth`, `auth@mail.myneon.app`) for this initial private setup. Configure custom SMTP before treating email delivery as production-ready. List invitations and their delivery/acceptance remain a separate, unfinished feature.
+Auth currently uses Neon's shared sender (`Neon Auth`, `auth@mail.myneon.app`) for this initial private setup. Configure custom SMTP before treating email delivery as production-ready. Existing-account list invitations use an in-app inbox; they send no email. See [sharing](sharing.md) for the implemented flow.
 
 MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity. Public clients register via DCR and receive only the `authorization_code` and `refresh_token` grants. Authorization requires explicit consent, S256 PKCE, state, exact registered redirect matching, and the MCP resource. Tokens are opaque, stored as SHA-256 digests, resource/issuer-bound, short-lived, and revocable. Every token use checks application admission. Refresh tokens rotate. Client ID Metadata Documents and native custom callback schemes are not implemented yet.
 
@@ -98,3 +98,19 @@ Generate schema changes with Drizzle, review the SQL, and test against developme
 Migrations are explicit operations, not part of request handling or automatic application builds. The initial migration was tested on development before being applied to the empty main database.
 
 Build and deploy using the repository's configured Vercel project. `.vercelignore` excludes local credentials, fixture state, caches, and test screenshots. GitHub pushes to main also trigger the connected Vercel project. Do not promise preview branch isolation until automatic branch-per-preview configuration has been verified; currently main is the integration default and local development is isolated explicitly.
+
+## Sharing endpoints
+
+All sharing writes accept an `operationId` UUID for identical retries. Owner changes and leaving also require the current list `version`; stale versions return 409. Website mutations require the existing same-origin cookie session.
+
+| Endpoint                                      | Method | Purpose                                                      |
+| --------------------------------------------- | ------ | ------------------------------------------------------------ |
+| `/api/v1/invitations`                         | GET    | Current recipient’s pending invitations                      |
+| `/api/v1/invitations/:id`                     | POST   | Accept or decline with `accept: boolean`                     |
+| `/api/v1/lists/:id/sharing`                   | GET    | Owner and editors; pending invitations visible only to owner |
+| `/api/v1/lists/:id/invitations`               | POST   | Owner invites an existing Wuff email                         |
+| `/api/v1/lists/:id/invitations/:invitationId` | DELETE | Owner cancels a pending invitation                           |
+| `/api/v1/lists/:id/members/:userId`           | DELETE | Owner revokes editor access                                  |
+| `/api/v1/lists/:id/leave`                     | POST   | Editor leaves list                                           |
+
+Migration `0001_free_wild_pack.sql` adds nullable recipient/closed-state columns and two indexes. It preserves existing invitation columns and all list/task data. Legacy invitations without a recipient ID cannot be accepted through this flow. Reads use `lists:read`; sharing mutations require `lists:manage` and current application admission/membership. No new OAuth scope is required for existing connections.

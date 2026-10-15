@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { webActor, webIdentity } from "@/lib/auth/server";
 import { AppError } from "@wuff/contracts";
 import type { TodoList } from "@wuff/contracts";
-import { getList, listLists } from "@wuff/domain";
+import { getList, listLists, listInvitations } from "@wuff/domain";
 import { ListApp } from "./list-app";
 export const dynamic = "force-dynamic";
 export default async function ListsPage() {
@@ -10,7 +10,10 @@ export default async function ListsPage() {
     const identity = await webIdentity();
     if (!identity) redirect("/sign-in");
     const actor = await webActor();
-    const initialLists = await listLists(actor);
+    const [initialLists, initialInvitations] = await Promise.all([
+      listLists(actor),
+      listInvitations(actor),
+    ]);
     let initialList: TodoList | null = null;
     if (initialLists[0]) {
       try {
@@ -27,6 +30,7 @@ export default async function ListsPage() {
         name={identity.name}
         initialLists={initialLists}
         initialList={initialList}
+        initialInvitations={initialInvitations}
       />
     );
   } catch (error) {

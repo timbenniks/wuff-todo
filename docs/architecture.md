@@ -4,7 +4,7 @@ Status: working architecture; foundation implemented
 
 Updated: October 15, 2026
 
-The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Requirements below that concern invitations, native authentication, sidebar ordering, or future packages remain planned.
+The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Native authentication, new-account invitation delivery, sidebar ordering, and future packages remain planned.
 
 ## Stack and deployment
 
@@ -63,21 +63,21 @@ The first technical proof must establish:
 5. A user can revoke a client connection.
 6. The selected integration has a viable native authentication path; mobile implementation remains deferred.
 
-Whether an additional OAuth authorization layer is required is unresolved. Preserve Neon identity while evaluating this. Do not assume Neon exposes arbitrary upstream Better Auth plugins. Any change to the agreed auth stack requires an explicit architecture decision.
+The implemented OAuth authorization layer delegates MCP access while preserving Neon identity. It uses application-owned OAuth tables and does not install upstream Better Auth plugins into the managed service.
 
 Proposed MCP scopes separate reading, task writes, and list management. Exact scopes and supported clients are selected in the proof. List membership remains authoritative even when a token has a broad write scope.
 
 ## Conceptual data model
 
-| Entity               | Responsibility                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| User/profile         | Stable link to Neon identity and application preferences                           |
-| List                 | Title, owner, lifecycle state, timestamps, version                                 |
-| List membership      | Accepted editor membership, unique per list and user                               |
-| Invitation           | Invited identity, list, inviter, token digest, expiry, acceptance/revocation state |
-| User list preference | Personal sidebar order and future personal preferences                             |
-| Task                 | List, title, order, completion state/time, creator, timestamps, version            |
-| Mutation receipt     | Deduplication key, actor, operation fingerprint, stored outcome, expiry            |
+| Entity               | Responsibility                                                          |
+| -------------------- | ----------------------------------------------------------------------- |
+| User/profile         | Stable link to Neon identity and application preferences                |
+| List                 | Title, owner, lifecycle state, timestamps, version                      |
+| List membership      | Accepted editor membership, unique per list and user                    |
+| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state     |
+| User list preference | Personal sidebar order and future personal preferences                  |
+| Task                 | List, title, order, completion state/time, creator, timestamps, version |
+| Mutation receipt     | Deduplication key, actor, operation fingerprint, stored outcome, expiry |
 
 The list owner is authoritative on the list row. Domain queries recognize owner access or accepted membership. Avoid competing sources of truth for ownership.
 
@@ -142,3 +142,9 @@ Research reviewed October 15, 2026. Current integration evidence is recorded in 
 - [MCP Apps authorization](https://apps.extensions.modelcontextprotocol.io/api/documents/authorization.html)
 - [Expo documentation](https://docs.expo.dev/)
 - [shadcn/ui documentation](https://ui.shadcn.com/docs)
+
+## Existing-account sharing
+
+The list owner controls invitations and membership. A recipient must already have an enabled Wuff profile; managed identity alone is insufficient. Invitations reference the recipient ID and are accepted only by that actor. Legacy token hashes remain stored for schema compatibility but are not authorization credentials, are never exposed, and are not used by the in-app flow.
+
+All sharing mutations and task writes lock the same list row and use its version. Acceptance/decline lock the list before rechecking invitation state. Cancellation and acceptance cannot both commit; a concurrent task write and revocation either serialize or fail with a stale-version conflict. Operation receipts store identifiers, and acceptance retries recheck current access instead of recreating membership. Read snapshots use repeatable-read transactions where multi-query consistency is required.

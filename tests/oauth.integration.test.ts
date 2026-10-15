@@ -135,7 +135,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     400,
   );
   const cookie = await login();
-  async function grant(scope: string) {
+  async function grant(scope: string, sessionCookie = cookie) {
     const verifier = randomBytes(32).toString("base64url");
     const query = new URLSearchParams({
       client_id: client.client_id,
@@ -148,14 +148,14 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       resource,
     });
     const consent = await fetch(`${origin}/oauth/authorize?${query}`, {
-      headers: { Cookie: cookie },
+      headers: { Cookie: sessionCookie },
     });
     assert.equal(consent.status, 200);
     assert.ok((await consent.text()).includes("Allow connection"));
     const decision = await post(
       "/oauth/authorize/decision",
       { query: query.toString(), accept: true },
-      cookie,
+      sessionCookie,
     );
     const data = await decision.json();
     assert.equal(decision.status, 200, JSON.stringify(data));
@@ -242,6 +242,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
   });
   assert.ok(!created.body.result.isError, "MCP list creation succeeds");
   let list = created.body.result.structuredContent.list;
+  let editorCookie = "";
   try {
     const onWeb = await fetch(`${origin}/api/v1/lists/${list.id}`, {
       headers: { Cookie: cookie },
@@ -286,6 +287,298 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       })
     ).json();
     assert.equal(webState.tasks[0].completed, true);
+    // Two independent synthetic identities exercise the actual HTTP and MCP adapters.
+    editorCookie = await login(1);
+    const editorGrant = await grant(
+      "lists:read tasks:write lists:manage",
+      editorCookie,
+    );
+    const editorResponse = await exchange({
+      grant_type: "authorization_code",
+      code: editorGrant.code,
+      code_verifier: editorGrant.verifier,
+      redirect_uri: client.redirect_uris[0],
+    });
+    assert.equal(editorResponse.status, 200);
+    const editorToken = await editorResponse.json();
+    async function call(
+      tokenValue: string,
+      name: string,
+      args: Record<string, unknown>,
+    ) {
+      const response = await rpc(tokenValue, "tools/call", {
+        name,
+        arguments: args,
+      });
+      assert.equal(response.status, 200);
+      return response.body.result;
+    }
+    const toolNames = tools.body.result.tools.map(
+      (tool: { name: string }) => tool.name,
+    );
+    for (const name of [
+      "get_list_sharing",
+      "list_invitations",
+      "invite_to_list",
+      "respond_to_invitation",
+      "cancel_invitation",
+      "remove_list_member",
+      "leave_list",
+    ])
+      assert.ok(toolNames.includes(name), `MCP exposes ${name}`);
+    assert.equal(
+      (
+        await fetch(`${origin}/api/v1/lists/${list.id}/sharing`, {
+          headers: { Cookie: editorCookie },
+        })
+      ).status,
+      404,
+    );
+    const invited = await call(token.access_token, "invite_to_list", {
+      listId: list.id,
+      version: webState.version,
+      email: fixtures[1].email,
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(!invited.isError);
+    let sharing = invited.structuredContent.sharing;
+    const invitationId = sharing.invitations[0].id;
+    const inbox = await (
+      await fetch(`${origin}/api/v1/invitations`, {
+        headers: { Cookie: editorCookie },
+      })
+    ).json();
+    assert.ok(inbox.some((item: { id: string }) => item.id === invitationId));
+    assert.ok(
+      (await call(editorToken.access_token, "get_list", { listId: list.id }))
+        .isError,
+    );
+    assert.equal(
+      (
+        await post(
+          `/api/v1/invitations/${invitationId}`,
+          { accept: true, operationId: crypto.randomUUID() },
+          cookie,
+        )
+      ).status,
+      404,
+    );
+    const accepted = { accept: true, operationId: crypto.randomUUID() };
+    for (let retry = 0; retry < 2; retry++)
+      assert.equal(
+        (
+          await post(
+            `/api/v1/invitations/${invitationId}`,
+            accepted,
+            editorCookie,
+          )
+        ).status,
+        200,
+      );
+    list = (
+      await call(editorToken.access_token, "get_list", { listId: list.id })
+    ).structuredContent.list;
+    const edited = await call(editorToken.access_token, "create_task", {
+      listId: list.id,
+      version: list.version,
+      title: "Shared through MCP",
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(!edited.isError);
+    list = edited.structuredContent.list;
+    assert.equal(
+      (
+        await post(
+          `/api/v1/lists/${list.id}/invitations`,
+          {
+            version: list.version,
+            email: fixtures[0].email,
+            operationId: crypto.randomUUID(),
+          },
+          editorCookie,
+        )
+      ).status,
+      403,
+    );
+    assert.ok(
+      (
+        await call(editorToken.access_token, "rename_list", {
+          listId: list.id,
+          version: list.version,
+          title: "Not the owner",
+          operationId: crypto.randomUUID(),
+        })
+      ).isError,
+    );
+    assert.equal(
+      (
+        await fetch(
+          `${origin}/api/v1/lists/${list.id}/members/${encodeURIComponent(fixtures[1].id)}`,
+          {
+            method: "DELETE",
+            headers: {
+              ...jsonHeaders,
+              Cookie: cookie,
+              Origin: "https://other.example",
+            },
+            body: JSON.stringify({
+              version: list.version,
+              operationId: crypto.randomUUID(),
+            }),
+          },
+        )
+      ).status,
+      403,
+      "Sharing mutations reject cross-origin requests",
+    );
+    const revoked = await fetch(
+      `${origin}/api/v1/lists/${list.id}/members/${encodeURIComponent(fixtures[1].id)}`,
+      {
+        method: "DELETE",
+        headers: { ...jsonHeaders, Cookie: cookie },
+        body: JSON.stringify({
+          version: list.version,
+          operationId: crypto.randomUUID(),
+        }),
+      },
+    );
+    assert.equal(revoked.status, 200);
+    sharing = await revoked.json();
+    assert.equal(
+      (
+        await fetch(`${origin}/api/v1/lists/${list.id}`, {
+          headers: { Cookie: editorCookie },
+        })
+      ).status,
+      404,
+    );
+    assert.ok(
+      (await call(editorToken.access_token, "get_list", { listId: list.id }))
+        .isError,
+      "Existing MCP token loses revoked list access",
+    );
+    assert.ok(
+      (
+        await call(editorToken.access_token, "create_task", {
+          listId: list.id,
+          version: sharing.version,
+          title: "Denied after revocation",
+          operationId: crypto.randomUUID(),
+        })
+      ).isError,
+    );
+    assert.equal(
+      (
+        await post(
+          `/api/v1/invitations/${invitationId}`,
+          accepted,
+          editorCookie,
+        )
+      ).status,
+      404,
+      "Acceptance retry cannot revive membership",
+    );
+    const reinvited = await post(
+      `/api/v1/lists/${list.id}/invitations`,
+      {
+        version: sharing.version,
+        email: fixtures[1].email,
+        operationId: crypto.randomUUID(),
+      },
+      cookie,
+    );
+    assert.equal(reinvited.status, 200);
+    sharing = await reinvited.json();
+    const canceled = await call(token.access_token, "cancel_invitation", {
+      listId: list.id,
+      version: sharing.version,
+      invitationId: sharing.invitations[0].id,
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(!canceled.isError);
+    sharing = canceled.structuredContent.sharing;
+    const invitedAgain = await call(token.access_token, "invite_to_list", {
+      listId: list.id,
+      version: sharing.version,
+      email: fixtures[1].email,
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(!invitedAgain.isError);
+    const mcpAcceptance = {
+      invitationId: invitedAgain.structuredContent.sharing.invitations[0].id,
+      accept: true,
+      operationId: crypto.randomUUID(),
+    };
+    assert.ok(
+      !(
+        await call(
+          editorToken.access_token,
+          "respond_to_invitation",
+          mcpAcceptance,
+        )
+      ).isError,
+    );
+    sharing = (
+      await call(token.access_token, "get_list_sharing", { listId: list.id })
+    ).structuredContent.sharing;
+    assert.ok(
+      !(
+        await call(token.access_token, "remove_list_member", {
+          listId: list.id,
+          version: sharing.version,
+          userId: fixtures[1].id,
+          operationId: crypto.randomUUID(),
+        })
+      ).isError,
+    );
+    assert.ok(
+      (
+        await call(
+          editorToken.access_token,
+          "respond_to_invitation",
+          mcpAcceptance,
+        )
+      ).isError,
+    );
+    sharing = (
+      await call(token.access_token, "get_list_sharing", { listId: list.id })
+    ).structuredContent.sharing;
+    const finalInvite = await post(
+      `/api/v1/lists/${list.id}/invitations`,
+      {
+        version: sharing.version,
+        email: fixtures[1].email,
+        operationId: crypto.randomUUID(),
+      },
+      cookie,
+    );
+    sharing = await finalInvite.json();
+    assert.equal(finalInvite.status, 200);
+    assert.ok(
+      !(
+        await call(editorToken.access_token, "respond_to_invitation", {
+          invitationId: sharing.invitations[0].id,
+          accept: true,
+          operationId: crypto.randomUUID(),
+        })
+      ).isError,
+    );
+    list = (
+      await call(editorToken.access_token, "get_list", { listId: list.id })
+    ).structuredContent.list;
+    assert.ok(
+      !(
+        await call(editorToken.access_token, "leave_list", {
+          listId: list.id,
+          version: list.version,
+          operationId: crypto.randomUUID(),
+        })
+      ).isError,
+    );
+    assert.ok(
+      (await call(editorToken.access_token, "get_list", { listId: list.id }))
+        .isError,
+    );
     const readGrant = await grant("lists:read"),
       readToken = await (
         await exchange({
@@ -300,6 +593,17 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       arguments: { title: "Denied", operationId: crypto.randomUUID() },
     });
     assert.equal(denied.body.result.isError, true);
+    const sharingDenied = await call(readToken.access_token, "invite_to_list", {
+      listId: list.id,
+      version: list.version,
+      email: fixtures[1].email,
+      operationId: crypto.randomUUID(),
+    });
+    assert.equal(
+      sharingDenied.isError,
+      true,
+      "Read-only MCP scope cannot invite",
+    );
     const refresh = await exchange({
       grant_type: "refresh_token",
       refresh_token: token.refresh_token,
@@ -332,6 +636,12 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       401,
     );
   } finally {
+    if (editorCookie)
+      await fetch(`${origin}/api/v1/connections`, {
+        method: "DELETE",
+        headers: { ...jsonHeaders, Cookie: editorCookie },
+        body: JSON.stringify({ clientId: client.client_id }),
+      });
     const latest = await (
       await fetch(`${origin}/api/v1/lists/${list.id}`, {
         headers: { Cookie: cookie },

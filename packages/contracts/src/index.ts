@@ -30,8 +30,39 @@ export const reorderTasksSchema = listMutationSchema.extend({
   taskIds: z.array(idSchema).max(1000),
 });
 export const inviteSchema = listMutationSchema.extend({
-  email: z.email().trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
 });
+export const invitationResponseSchema = operationSchema.extend({
+  invitationId: idSchema,
+  accept: z.boolean(),
+});
+export const cancelInvitationSchema = listMutationSchema.extend({
+  invitationId: idSchema,
+});
+export const removeMemberSchema = listMutationSchema.extend({
+  userId: z.string().min(1).max(200),
+});
+export type SharedPerson = { id: string; name: string; email: string };
+export type PendingInvitation = {
+  id: string;
+  email: string;
+  expiresAt: string;
+};
+export type ListSharing = {
+  listId: string;
+  version: number;
+  owner: SharedPerson;
+  members: SharedPerson[];
+  invitations: PendingInvitation[];
+};
+export type IncomingInvitation = {
+  id: string;
+  listId: string;
+  listTitle: string;
+  ownerName: string;
+  ownerEmail: string;
+  expiresAt: string;
+};
 
 export type Task = {
   id: string;

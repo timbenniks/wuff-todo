@@ -9,6 +9,10 @@ import {
 import { z } from "zod";
 import {
   Actor,
+  inviteSchema,
+  invitationResponseSchema,
+  cancelInvitationSchema,
+  removeMemberSchema,
   AppError,
   createListSchema,
   createTaskSchema,
@@ -170,6 +174,82 @@ export function createMcpServer(actor: Actor) {
           const value = await action(actor, data);
           return name === "delete_list" ? { deleted: value } : { list: value };
         }),
+    );
+  server.registerTool(
+    "get_list_sharing",
+    {
+      description:
+        "Read a list's owner and editors. Only the owner sees pending invitations. Returns the current version for sharing changes.",
+      inputSchema: { listId: idSchema },
+      annotations: read,
+    },
+    async ({ listId }) =>
+      result(async () => ({
+        sharing: await domain.getListSharing(actor, listId),
+      })),
+  );
+  server.registerTool(
+    "list_invitations",
+    {
+      description:
+        "Read pending invitations addressed to your Wuff account. These do not grant access until accepted.",
+      inputSchema: {},
+      annotations: read,
+    },
+    async () =>
+      result(async () => ({
+        invitations: await domain.listInvitations(actor),
+      })),
+  );
+  const sharingOperations = [
+    [
+      "invite_to_list",
+      "Owner only: invite an existing Wuff account by email. Creates an in-app invitation that expires in seven days; sends no email. Read the current list version first. Use an operationId UUID for safe retries.",
+      inviteSchema,
+      domain.inviteToList,
+      write,
+    ],
+    [
+      "respond_to_invitation",
+      "Accept (accept=true) or decline (accept=false) an invitation addressed to you. Use an operationId UUID for safe retries.",
+      invitationResponseSchema,
+      domain.respondToInvitation,
+      write,
+    ],
+    [
+      "cancel_invitation",
+      "Owner only: cancel a pending invitation for a list. Read the current list version first. Use an operationId UUID for safe retries.",
+      cancelInvitationSchema,
+      domain.cancelInvitation,
+      { ...write, destructiveHint: true },
+    ],
+    [
+      "remove_list_member",
+      "Owner only: revoke an editor's list access across web and MCP. Read the current list version first. Use an operationId UUID for safe retries.",
+      removeMemberSchema,
+      domain.removeListMember,
+      { ...write, destructiveHint: true },
+    ],
+    [
+      "leave_list",
+      "Leave a shared list you do not own. Read the current list version first. Use an operationId UUID for safe retries.",
+      listMutationSchema,
+      domain.leaveList,
+      { ...write, destructiveHint: true },
+    ],
+  ] as const;
+  for (const [
+    name,
+    description,
+    schema,
+    action,
+    annotations,
+  ] of sharingOperations)
+    server.registerTool(
+      name,
+      { description, inputSchema: schema, annotations },
+      async (data: unknown) =>
+        result(async () => ({ sharing: await action(actor, data) })),
     );
   registerAppResource(
     server,

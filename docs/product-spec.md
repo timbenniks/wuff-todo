@@ -29,7 +29,7 @@ The first release focuses on lists, tasks, and ordering. It should feel fast and
 
 Each user has their own identity and session. New accounts require a valid invitation. Knowing an email address, list ID, or URL must never grant access by itself.
 
-The first two users use an operator-only bootstrap: managed identities are provisioned through the Neon CLI, then admitted to Wuff. Each recipient requests an email code at `/set-password` and chooses their own password. Public registration stays disabled. Subsequent login uses email/password; the same email-code page handles recovery. General list invitation acceptance remains planned.
+The first two users use an operator-only bootstrap: managed identities are provisioned through the Neon CLI, then admitted to Wuff. Each recipient requests an email code at `/set-password` and chooses their own password. Public registration stays disabled. Subsequent login uses email/password; the same email-code page handles recovery. Existing admitted accounts can now receive and accept in-app list invitations. Inviting a new person into Wuff itself remains separate operator provisioning.
 
 ### Lists
 
@@ -51,7 +51,7 @@ Task descriptions, subtasks, labels, priorities, dates, recurrence, and reminder
 
 ### Sharing and invitations
 
-**Proposed permission model:**
+**Implemented sharing permission model:**
 
 | Action                                             | Owner                           | Editor | Non-member     |
 | -------------------------------------------------- | ------------------------------- | ------ | -------------- |
@@ -63,11 +63,13 @@ Task descriptions, subtasks, labels, priorities, dates, recurrence, and reminder
 | Leave shared list                                  | Not without resolving ownership | Yes    | Not applicable |
 | Reorder own sidebar                                | Yes                             | Yes    | Not applicable |
 
-Owner-only rename and deletion are confirmed. The remaining permission details are proposed defaults. Ownership transfer and reader-only membership are deferred.
+Owner-only rename, deletion, invitations, and access revocation are confirmed and implemented. Editors may leave. Archive/restore and personal sidebar ordering remain proposed, unimplemented features. Ownership transfer and reader-only membership are deferred.
 
-**Proposed invitation behavior:** an owner invites an email address to a list. An existing user accepts while signed in to the matching verified identity. A new user can establish an account using the invitation, then accept list membership. An invitation does not expose list contents before acceptance.
+An owner invites an existing, enabled Wuff account by email. Wuff binds the invitation to that account’s stable user ID. The recipient sees the list title and owner in their invitation inbox, then accepts or declines while signed in. An invitation never exposes tasks or grants editing access before acceptance. No invitation email is sent.
 
-Invitations should expire, be revocable, and be safe to accept only once. Repeating an already successful acceptance should return the existing membership rather than create duplicates. Owners can see pending invitations. Email delivery and the policy for who may invite new users still need decisions.
+Invitations expire after seven days. Owners can cancel pending invitations, remove editors, and invite someone again after expiry, cancellation, decline, or removal. A list supports up to 100 pending invitations. Duplicate invitations do not create duplicate pending records or memberships. Identical mutation retries reuse their operation ID; retrying an old acceptance after revocation cannot restore access.
+
+Accepted members share task changes and task order. Only the owner can manage access or rename/delete the list. Every API and MCP call checks current membership; active web screens refresh on focus and every ten seconds. Account admission and invitations to people without accounts remain operator-only / future work.
 
 ### Web experience
 

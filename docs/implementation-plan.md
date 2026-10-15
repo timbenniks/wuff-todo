@@ -4,7 +4,7 @@ Status: foundation implemented; remaining milestones below
 
 Updated: October 15, 2026
 
-The first technical proof and part of Phase 1 are implemented. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning and email-code password setup are implemented; completed real-user activation, external named-host checks, native auth validation, sharing controls, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
+The first technical proof and part of Phase 1 are implemented. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification, native auth validation, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Phase 0: resolve architectural risks
 
@@ -29,7 +29,7 @@ Exit criteria: two test accounts have isolated private lists; API and MCP implem
 
 - Build the responsive list/task interface and Wuff visual identity.
 - Add manual list and task ordering, completion, and reopening.
-- Implement invitations, acceptance, membership revocation, and leaving a list.
+- Implemented: existing-account invitations, acceptance/decline, cancellation, membership revocation, and leaving a list; new-account onboarding invitations remain future work.
 - Implement owner-only list management and the agreed archive/deletion behavior.
 - Add loading, conflict, offline-error, and empty states.
 - Choose and implement the cross-client refresh strategy.
@@ -58,20 +58,20 @@ Add themes, custom colors, and images after the basic workflow is proven. Decide
 
 ## Open decisions
 
-| Decision                              | Proposed starting point                                                     | Needed by                            |
-| ------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
-| Initial sign-in methods               | Email/password; admitted users set/reset passwords using emailed codes      | Implemented; real mailbox check open |
-| Initial owner bootstrap               | Operator-only Neon CLI provisioning and Wuff admission                      | Implemented                          |
-| Who may invite new people             | List owners, subject to an explicit app invitation policy                   | Phase 0                              |
-| Invitation delivery and expiry        | Email-bound, expiring, revocable invitations                                | Phase 0                              |
-| MCP OAuth integration                 | Keep Neon identity; prove compatible delegated authorization                | Phase 0                              |
-| Supported MCP clients                 | At least one UI-capable host and a tool-only configuration; names to choose | Phase 0                              |
-| Sidebar/task ordering                 | Personal sidebar, shared task order                                         | Phase 1                              |
-| Conflict handling                     | Version checks and explicit conflict responses                              | Phase 1                              |
-| Archive and permanent deletion        | Owner-only; confirm permanent deletion                                      | Phase 2                              |
-| Cross-client freshness                | Select a measurable target and refresh mechanism                            | Phase 2                              |
-| Corgi artwork and final visual design | Shared assets with a calm task interface                                    | Phase 2                              |
-| Mobile offline support                | Separate mobile design decision                                             | Phase 4                              |
+| Decision                              | Proposed starting point                                                                | Needed by                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Initial sign-in methods               | Email/password; admitted users set/reset passwords using emailed codes                 | Implemented; real mailbox check open          |
+| Initial owner bootstrap               | Operator-only Neon CLI provisioning and Wuff admission                                 | Implemented                                   |
+| Who may invite new people             | List owners, subject to an explicit app invitation policy                              | Phase 0                                       |
+| Invitation delivery and expiry        | Existing-account in-app inbox, seven-day expiry, owner cancellation; no email delivery | Implemented; new-account invitations deferred |
+| MCP OAuth integration                 | Keep Neon identity; prove compatible delegated authorization                           | Phase 0                                       |
+| Supported MCP clients                 | At least one UI-capable host and a tool-only configuration; names to choose            | Phase 0                                       |
+| Sidebar/task ordering                 | Personal sidebar, shared task order                                                    | Phase 1                                       |
+| Conflict handling                     | Version checks and explicit conflict responses                                         | Phase 1                                       |
+| Archive and permanent deletion        | Owner-only; confirm permanent deletion                                                 | Phase 2                                       |
+| Cross-client freshness                | Select a measurable target and refresh mechanism                                       | Phase 2                                       |
+| Corgi artwork and final visual design | Shared assets with a calm task interface                                               | Phase 2                                       |
+| Mobile offline support                | Separate mobile design decision                                                        | Phase 4                                       |
 
 ## Verification strategy
 

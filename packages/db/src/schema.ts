@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  index,
   jsonb,
   pgTable,
   primaryKey,
@@ -64,17 +65,27 @@ export const receipts = pgTable(
   },
   (t) => [primaryKey({ columns: [t.actorId, t.operationId] })],
 );
-export const invitations = pgTable("wuff_invitations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  listId: uuid("list_id")
-    .notNull()
-    .references(() => lists.id, { onDelete: "cascade" }),
-  email: text("email").notNull(),
-  tokenHash: text("token_hash").notNull().unique(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  acceptedBy: text("accepted_by"),
-  createdAt: time("created_at"),
-});
+export const invitations = pgTable(
+  "wuff_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedBy: text("accepted_by"),
+    // Legacy token hashes are retained for compatibility, never used as authority.
+    recipientId: text("recipient_id").references(() => users.id),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    createdAt: time("created_at"),
+  },
+  (t) => [
+    index("wuff_invitations_recipient_idx").on(t.recipientId),
+    index("wuff_invitations_list_idx").on(t.listId),
+  ],
+);
 export const oauthClients = pgTable("wuff_oauth_clients", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
