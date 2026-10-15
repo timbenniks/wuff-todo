@@ -1,0 +1,53 @@
+# Production MCP validation
+
+October 15, 2026
+
+Endpoint: `https://wuff-todo.vercel.app/api/mcp`.
+
+## Codex result
+
+Codex CLI 0.160.0 successfully authenticated using Dynamic Client Registration, S256 PKCE, the production resource indicator, and the user's interactive Wuff sign-in/consent. The connection is saved as `wuff-todo` in the user's Codex configuration. OAuth credentials are managed by Codex, not copied into the repository or test scripts.
+
+The real Codex app-server MCP runtime then performed these checks against production:
+
+| Check                                       | Result                                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Unauthenticated GET/POST                    | 401 with protected-resource metadata challenge                                     |
+| Resource and authorization-server discovery | Production issuer/resource and supported endpoints/scopes correct                  |
+| Invalid token exchange and foreign Origin   | Rejected                                                                           |
+| Authenticated initialization/tool discovery | 11 tools discovered; no discovery error                                            |
+| MCP App resource retrieval                  | `ui://wuff/lists.html`, `text/html;profile=mcp-app`, self-contained HTML delivered |
+| `list_lists`                                | Accessible lists read successfully; contents not logged                            |
+| `create_list` and identical retry           | One disposable list; retry returned the same ID                                    |
+| `create_task`, `update_task`, `show_list`   | Task added, completed, and completion read back                                    |
+| Stale-version mutation                      | Rejected                                                                           |
+| `get_list`, `delete_list`                   | Disposable list reread and cleaned up with its task                                |
+
+Tool calls used an ephemeral protocol context with no model turn or persistent user chat. This proves Codex runtime interoperability; it is not evidence of a natural-language model selecting every tool correctly. User lists were read only; writes were confined to a newly created disposable validation list, which was deleted afterward. The user's Codex authorization remains connected.
+
+The catalog contains `create_list`, `create_task`, `delete_list`, `delete_task`, `get_list`, `list_lists`, `rename_list`, `reorder_tasks`, `show_list`, `show_lists`, and `update_task`. Catalog discovery is distinct from exercising every tool or permission combination.
+
+## Reconnecting Codex
+
+For a new installation:
+
+```sh
+codex mcp add wuff-todo --url https://wuff-todo.vercel.app/api/mcp
+```
+
+For an existing configuration needing login:
+
+```sh
+codex mcp login wuff-todo --oauth-client-registration dcr
+```
+
+Let Codex discover the resource. In the installed CLI, supplying `--oauth-resource` persisted an `oauth_resource` override and produced duplicate `resource` parameters alongside automatic discovery. Wuff correctly rejected that ambiguous request. Removing the redundant override from the Wuff-only configuration entry resolved it; no server validation was weakened.
+
+The connection may need a server restart in the desktop client's MCP settings before it appears in an already-open chat. See [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+## Remaining verification
+
+- Render the interactive list view in a real supporting host and test adding/completing tasks through its bridge. Resource retrieval through Codex passed, but desktop inline rendering was not verified. OpenAI documents the iframe experience in ChatGPT: [Add UI to your MCP server](https://developers.openai.com/plugins/build/chatgpt-ui).
+- Test ordinary natural-language requests, such as “Show my Wuff lists,” in the desktop chat after its tool catalog refreshes.
+- Production token refresh/rotation and user-driven disconnection remain separate checks; synthetic development integration tests cover refresh, revocation, read-only scopes, and permissions. The production validation deliberately preserved the user's working connection.
+- Joreel's own connection, ChatGPT, Claude, and other clients remain unverified. One person's successful consent does not verify another account.

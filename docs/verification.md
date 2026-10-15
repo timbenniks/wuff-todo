@@ -37,7 +37,7 @@ Screenshots:
 - [Web mobile](screenshots/web-mobile.jpg)
 - [MCP App test host](screenshots/mcp-app.jpg)
 
-The test host is real protocol integration evidence, not a claim of testing ChatGPT, Claude, Cursor, or other named hosts. Those client checks remain required before advertising compatibility. Automated accessibility certification and a full manual keyboard/screen-reader review have not been completed.
+The browser test host is real protocol integration evidence, not a claim of testing named hosts. Subsequent production checks through Codex CLI's MCP runtime are recorded in [MCP validation](mcp-validation.md). ChatGPT, Claude, Cursor, and inline rendering in a named host remain unverified. Automated accessibility certification and a full manual keyboard/screen-reader review have not been completed.
 
 Slow-save and retry browser checks, latency findings, and region corrections are recorded in [performance](performance.md). The user subsequently reported that account activation and production web usage work; this is not independent verification of both recipients' accounts.
 
@@ -45,4 +45,4 @@ Slow-save and retry browser checks, latency findings, and region corrections are
 
 Production is deployed at [wuff-todo.vercel.app](https://wuff-todo.vercel.app), with its own application schema and managed auth branch. Vercel reports the initial deployment ready, with functions in Frankfurt. Production smoke checks confirm the sign-in page returns 200, unauthenticated API and MCP requests return 401, the signup proxy returns 403, and OAuth discovery advertises the production origin.
 
-The two requested real identities and enabled application profiles are provisioned through the operator command. No real passwords were chosen or displayed by the agent. Each recipient must complete `/set-password` using their mailbox. Authenticated integration evidence comes from development. Production authenticated flows, successful OTP redemption, custom SMTP, and named external AI clients still need verification.
+The two requested real identities and enabled application profiles are provisioned through the operator command. No real passwords were chosen or displayed by the agent. The user reported successful activation and production web usage, then completed Wuff sign-in and OAuth consent for Codex. Authenticated production MCP discovery, reads, controlled writes, idempotent retries, and UI resource delivery passed through the Codex runtime. See [MCP validation](mcp-validation.md) for evidence and limits. Independent activation/connection for the other recipient, custom SMTP, production refresh/revocation, and real-host interactive UI still need verification.
