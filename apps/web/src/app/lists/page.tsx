@@ -6,9 +6,9 @@ import { getList, listLists } from "@wuff/domain";
 import { ListApp } from "./list-app";
 export const dynamic = "force-dynamic";
 export default async function ListsPage() {
-  const identity = await webIdentity();
-  if (!identity) redirect("/sign-in");
   try {
+    const identity = await webIdentity();
+    if (!identity) redirect("/sign-in");
     const actor = await webActor();
     const initialLists = await listLists(actor);
     let initialList: TodoList | null = null;
@@ -30,6 +30,16 @@ export default async function ListsPage() {
       />
     );
   } catch (error) {
+    if (error instanceof AppError && [429, 503].includes(error.status))
+      return (
+        <main className="max-w-md mx-auto px-6 py-24">
+          <h1 className="text-3xl font-bold mb-4">Wuff needs a moment.</h1>
+          <p className="mb-6">{error.message}</p>
+          <a href="/lists" className="font-semibold text-primary underline">
+            Try again
+          </a>
+        </main>
+      );
     if (error instanceof AppError && error.status === 403)
       return (
         <main className="max-w-md mx-auto px-6 py-24">

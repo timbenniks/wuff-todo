@@ -3,6 +3,7 @@ import { database, users } from "@wuff/db";
 import { eq } from "drizzle-orm";
 import { Actor, AppError, scopes } from "@wuff/contracts";
 import { cache } from "react";
+import { sessionIdentity } from "./session-result";
 
 let instance: ReturnType<typeof createNeonAuth> | undefined;
 export function neonAuth() {
@@ -15,11 +16,10 @@ export function neonAuth() {
   }));
 }
 export const webIdentity = cache(async () => {
-  const { data, error } = await neonAuth().getSession({
+  const result = await neonAuth().getSession({
     query: { disableCookieCache: "true" },
   });
-  if (error || !data?.user) return null;
-  return data.user;
+  return sessionIdentity(result);
 });
 export async function webActor(): Promise<Actor> {
   const identity = await webIdentity();

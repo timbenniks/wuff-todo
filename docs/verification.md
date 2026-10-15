@@ -11,7 +11,7 @@ This is not the complete first release. Sharing permissions are implemented in t
 ## Automated evidence
 
 - Workspace and root TypeScript checks pass.
-- Eight unit tests pass (contracts, OAuth redirect policy, and list cache races).
+- Nine unit tests pass (contracts, OAuth redirect policy, list cache races, and session failures).
 - Seven live integration tests pass against the isolated development branch.
 - The Next.js production build passes, including MCP App bundling.
 

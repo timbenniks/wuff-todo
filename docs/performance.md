@@ -21,10 +21,11 @@ A synthetic isolated-development benchmark from the local European machine measu
 - Visited lists display from memory while revalidating. Pointer/focus intent can prefetch an unvisited list; concurrent reads deduplicate. No private snapshots enter localStorage or a shared server cache.
 - Polling still checks every ten seconds and on focus, in parallel. Mutation generations and list versions protect against late responses; denied/deleted lists clear cached content. Sign-out clears the cache.
 - Successful list API responses provide duration-only `Server-Timing` headers for authentication/admission and domain work, plus `X-Wuff-Region`. These contain no list contents or credentials.
+- The stress test also exposed a transient Auth 429 being misclassified as a signed-out user. Rate limits now remain 429 and service/network failures become 503, preserving visible cached content and showing a retryable error. Actual missing/revoked sessions still deny access.
 
 ## Verification
 
-Eight unit tests and seven isolated-development integration tests pass, as do workspace type checks and the production build. Cache tests cover immediate reads, request deduplication, stale reads after writes, revoked/deleted data, sign-out, and retry after read failure.
+Nine unit tests and seven isolated-development integration tests pass, as do workspace type checks and the production build. Cache tests cover immediate reads, request deduplication, stale reads after writes, revoked/deleted data, sign-out, and retry after read failure. Session-result tests distinguish true unauthenticated sessions from transient service errors.
 
 A temporary loopback-only test proxy added a 2.5-second delay and rejected the first create request. Browser checks observed the new list immediately with “Saving your list…”, then an explicit failure and retry action. Retry used exactly the same operation ID and successfully created one list. The proxy is not part of the app or deployment.
 
