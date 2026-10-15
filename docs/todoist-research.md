@@ -1,6 +1,7 @@
 # Todoist reference research
 
-Reviewed: October 15, 2026  
+Reviewed: October 15, 2026
+
 Purpose: identify useful task-management patterns and future possibilities, not define feature parity.
 
 ## Findings

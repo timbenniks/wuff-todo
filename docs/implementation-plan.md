@@ -1,6 +1,7 @@
 # Wuff Todo implementation plan
 
-Status: foundation implemented; remaining milestones below  
+Status: foundation implemented; remaining milestones below
+
 Updated: October 15, 2026
 
 The first technical proof and part of Phase 1 are implemented. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Initial-user onboarding, external named-host checks, native auth validation, sharing controls, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.

@@ -1,6 +1,7 @@
 # Wuff Todo architecture
 
-Status: working architecture; foundation implemented  
+Status: working architecture; foundation implemented
+
 Updated: October 15, 2026
 
 The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Requirements below that concern invitations, native authentication, sidebar ordering, or future packages remain planned.

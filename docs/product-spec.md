@@ -1,6 +1,7 @@
 # Wuff Todo product specification
 
-Status: working specification, version 0.1  
+Status: working specification, version 0.1
+
 Updated: October 15, 2026
 
 ## Purpose
