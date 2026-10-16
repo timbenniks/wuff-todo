@@ -75,7 +75,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 
 ### Web experience
 
-The responsive [mobile website layout](mobile-web-ui.md) keeps names and editors readable, collapses list navigation on phones, and uses single-line task rows and rename fields on phones, with one actions disclosure for task controls. Desktop Edit/Notes controls remain direct.
+The responsive [mobile website layout](mobile-web-ui.md) keeps names and editors readable, collapses list navigation on phones, and uses single-line task rows and rename fields on phones, with direct Delete and drag controls alongside a disclosure for secondary task actions. Desktop Edit/Notes controls remain direct.
 
 Routine controls favour familiar icons, accessible names and tooltips over repeated button words. Use quiet neutral/transparent buttons rather than solid-blue blocks. Keep meaningful date choices, consequence explanations and error/retry guidance readable.
 

@@ -202,6 +202,10 @@ export function TaskRow({
             className="flex shrink-0 items-center task-actions"
             data-editing={editing}
             data-expanded={moreOpen}
+            onPointerDownCapture={(event) => {
+              if ((event.target as HTMLElement).closest(".drag-handle"))
+                setMoreOpen(false);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Escape" && moreOpen) {
                 e.preventDefault();
@@ -303,7 +307,6 @@ export function TaskRow({
                 <FileText size={16} />
                 <span className="task-action-label">Notes</span>
               </Button>
-              {dragHandle}
               <div className="task-secondary-actions">
                 {list.sections.length > 0 &&
                   !task.parentTaskId &&
@@ -386,27 +389,28 @@ export function TaskRow({
                   <CalendarDays size={16} />
                   <span className="task-action-label">Date</span>
                 </Button>
-                {!list.archived && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="task-delete task-secondary h-8 w-8 text-slate-400 hover:text-red-700"
-                    title="Delete task"
-                    aria-label={`Delete ${task.title}`}
-                    disabled={busy || editing}
-                    onClick={() =>
-                      children.length
-                        ? setConfirmDelete(true)
-                        : change("/api/v1/tasks", "DELETE", body)
-                    }
-                  >
-                    <Trash2 size={16} />
-                    <span className="task-action-label">Delete</span>
-                  </Button>
-                )}
               </div>
             </div>
+            {!list.archived && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="task-delete task-secondary h-8 w-8 text-slate-400 hover:text-red-700"
+                title="Delete task"
+                aria-label={`Delete ${task.title}`}
+                disabled={busy || editing}
+                onClick={() => {
+                  setMoreOpen(false);
+                  if (children.length) setConfirmDelete(true);
+                  else void change("/api/v1/tasks", "DELETE", body);
+                }}
+              >
+                <Trash2 size={16} />
+                <span className="task-action-label">Delete</span>
+              </Button>
+            )}
+            {dragHandle}
           </div>
         )}
       />

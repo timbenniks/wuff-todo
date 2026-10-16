@@ -29,12 +29,6 @@ summary {
   cursor: pointer;
 }
 a:focus-visible,
-select:focus-visible {
-  outline: 1px solid var(--color-primary);
-  outline-offset: 1px;
-  border-color: var(--color-primary);
-}
-a:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
@@ -47,7 +41,9 @@ h2,
 }
 ::selection {
   background: #dceafb;
+  color: #263e55;
 }
+.task-due-icon,
 .task-more,
 .task-action-label {
   display: none;
@@ -85,11 +81,11 @@ h2,
 .task-actions[data-editing="true"] {
   display: none;
 }
-/* Phone rows keep completion, title, date and one disclosure on one line. */
+/* Phone rows expose delete and drag alongside the secondary-actions disclosure. */
 @media (width < 40rem) {
   .task-row {
     display: grid;
-    grid-template-columns: 32px minmax(0, 1fr) 44px;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
     column-gap: 4px;
     row-gap: 0;
     padding-block: 4px;
@@ -115,15 +111,24 @@ h2,
     text-overflow: ellipsis;
     flex: 1;
   }
-  .task-name > p {
+  .task-name > time {
     flex-shrink: 0;
     margin: 0;
-    max-width: 82px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 11px;
     font-weight: 500;
+  }
+  .task-due-icon {
+    display: block;
+  }
+  .task-name .task-due-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .task-name:has(form) {
     grid-column: 2 / -1;
@@ -135,6 +140,12 @@ h2,
     position: relative;
     align-self: center;
     margin: 0;
+  }
+  .task-actions > .task-delete,
+  .task-actions > .drag-handle {
+    width: 44px;
+    height: 44px;
+    color: #536c82;
   }
   .task-more {
     display: inline-flex;

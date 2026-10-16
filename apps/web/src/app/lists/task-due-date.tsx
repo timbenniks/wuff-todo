@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input";
 
 import { useRef, useState } from "react";
-import { Check, Eraser, X } from "lucide-react";
+import { CalendarDays, Check, Eraser, X } from "lucide-react";
 import { dueDateSchema, type Task, type TodoList } from "@wuff/contracts";
 import {
   calendarDay,
@@ -22,13 +22,15 @@ export function DueDateBadge({
   if (!task.dueDate) return null;
   const display = dueDatePresentation(task.dueDate, task.completed, today);
   return (
-    <p
+    <time
+      dateTime={task.dueDate}
       className={`mt-1 text-xs font-semibold break-words ${display.tone === "overdue" ? "text-red-700" : display.tone === "today" ? "text-primary" : "text-slate-500"}`}
       title={display.detail}
       aria-label={display.detail}
     >
-      {display.label}
-    </p>
+      <CalendarDays className="task-due-icon" size={14} aria-hidden="true" />
+      <span className="task-due-text">{display.label}</span>
+    </time>
   );
 }
 export function TaskDueDate({
