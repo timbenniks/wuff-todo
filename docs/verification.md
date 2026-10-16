@@ -105,3 +105,5 @@ Release source `e314a19` passed GitHub run `38924450343`; CLI deployment `dpl_8s
 ## Mobile website layout — October 16, 2026
 
 See [mobile website layout](mobile-web-ui.md) for responsive decisions, 320/390px editor measurements, desktop checks, browser saves and independent persistence verification. This website-only milestone does not change API/MCP/domain contracts or the native/offline decision.
+
+Source `450eea8` passed GitHub run `38948658330`; CLI deployment `dpl_9Y9KSsAdm6Q5QkzENWs3oTya5EAE` is READY in `fra1` and has the canonical alias. Production browser subtask rename, bold notes, reopening and combined phone editing passed at 390px without document overflow. A server reread verified exact persisted text and preserved dates/completion. Disposable production/development lists were removed and confirmed inaccessible. Twenty-five unit tests, TypeScript, optimized builds and the browser-bundle secret scan passed; no backend integration rerun or physical-device certification is claimed.
