@@ -24,6 +24,8 @@ export function InlineName({
   afterName,
   additionalDirty = false,
   className = "",
+  compact = false,
+  focusFallback,
 }: {
   value: string;
   label: string;
@@ -37,6 +39,8 @@ export function InlineName({
   afterName?: ReactNode;
   additionalDirty?: boolean;
   className?: string;
+  compact?: boolean;
+  focusFallback?: RefObject<HTMLButtonElement | null>;
   renderActions?: (props: {
     edit: () => void;
     editing: boolean;
@@ -58,10 +62,12 @@ export function InlineName({
       input.current?.focus();
       input.current?.select();
     } else if (restoreFocus.current) {
-      trigger.current?.focus();
+      const target = trigger.current;
+      if (target?.getClientRects().length) target.focus();
+      else focusFallback?.current?.focus();
       restoreFocus.current = false;
     }
-  }, [editing, editable]);
+  }, [editing, editable, focusFallback]);
   function finish() {
     restoreFocus.current = true;
     setEditing(false);
@@ -119,7 +125,7 @@ export function InlineName({
         {editing && editable ? (
           <form
             noValidate
-            className="grid gap-2 py-1"
+            className={`inline-name-form grid gap-2 py-1 ${compact ? "inline-name-compact" : ""}`}
             aria-label={`Edit ${label.toLowerCase()}`}
             onSubmit={async (e) => {
               e.preventDefault();
@@ -159,7 +165,7 @@ export function InlineName({
           >
             <label
               htmlFor={id}
-              className="text-xs font-semibold text-slate-500"
+              className="inline-name-label text-xs font-semibold text-slate-500"
             >
               {label}
             </label>
@@ -187,7 +193,9 @@ export function InlineName({
                 }
               }}
             />
-            {additionalFields}
+            {additionalFields && (
+              <div className="inline-name-extra">{additionalFields}</div>
+            )}
             {(error || changed) && (
               <p
                 id={`${id}-notice`}
@@ -198,14 +206,24 @@ export function InlineName({
                   `New de-tails! The name changed to “${value}” while you were editing. Keep your draft or cancel to use the latest name.`}
               </p>
             )}
-            <div className="flex flex-wrap items-center gap-1">
-              <Button type="submit" size="sm" disabled={disabled || saving}>
+            <div className="inline-name-buttons flex flex-wrap items-center gap-1">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={disabled || saving}
+                aria-label={
+                  compact ? (changed ? "Save my name" : "Save name") : undefined
+                }
+                title={compact ? "Save name" : undefined}
+              >
                 <Check size={14} aria-hidden="true" />
-                {saving
-                  ? "Saving, paws a moment…"
-                  : changed
-                    ? "Save my name"
-                    : "Save"}
+                <span>
+                  {saving
+                    ? "Saving, paws a moment…"
+                    : changed
+                      ? "Save my name"
+                      : "Save"}
+                </span>
               </Button>
               <Button
                 type="button"
@@ -213,9 +231,11 @@ export function InlineName({
                 size="sm"
                 disabled={disabled || saving}
                 onClick={finish}
+                aria-label={compact ? "Cancel name edit" : undefined}
+                title={compact ? "Cancel name edit" : undefined}
               >
                 <X size={14} aria-hidden="true" />
-                Cancel
+                <span>Cancel</span>
               </Button>
             </div>
           </form>
