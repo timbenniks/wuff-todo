@@ -3,6 +3,7 @@ import { database, users } from "@wuff/db";
 import { eq } from "drizzle-orm";
 import { Actor, AppError, scopes } from "@wuff/contracts";
 import { cache } from "react";
+import { headers } from "next/headers";
 import { sessionIdentity } from "./session-result";
 
 let instance: ReturnType<typeof createNeonAuth> | undefined;
@@ -33,6 +34,13 @@ export async function webActor(): Promise<Actor> {
       "invite_required",
       "Your account needs a Wuff invitation.",
       403,
+    );
+  const expectedUser = (await headers()).get("X-Wuff-User");
+  if (expectedUser && expectedUser !== user.id)
+    throw new AppError(
+      "account_changed",
+      "Your signed-in account changed. Reload Wuff to continue.",
+      409,
     );
   return { id: user.id, scopes };
 }

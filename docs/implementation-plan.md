@@ -1,8 +1,8 @@
 # Wuff Todo implementation plan
 
-Status: web, existing-account sharing, MCP, and branding deployed; live list updates next
+Status: web, sharing, MCP, branding, and live list updates implemented
 
-Updated: October 15, 2026
+Updated: October 16, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification, native auth validation, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
@@ -12,18 +12,18 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
 - **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 18 tools. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
 - **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
-- **Freshness today:** open web views poll every ten seconds and refresh on focus. Live subscriptions are not implemented.
+- **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
 - **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
-- **Verification:** 9 unit tests and 9 development integration tests passed for sharing; production Codex tool checks passed. Tim reported working activation, Codex use, and sharing. Joreel's independent activation/client connection, ChatGPT end-to-end, and named-host interactive MCP UI remain unverified. See [verification](verification.md) and [MCP validation](mcp-validation.md).
+- **Verification:** 12 unit tests, 10 development integration tests, TypeScript checks, and a production build passed for live updates; production Codex tool checks for the earlier sharing milestone passed. Tim reported working activation, Codex use, and sharing. Joreel's independent activation/client connection, ChatGPT end-to-end, and named-host interactive MCP UI remain unverified. See [verification](verification.md) and [MCP validation](mcp-validation.md).
 - **Later scope:** personal sidebar ordering, archive/restore, new-account invitation delivery, native apps/auth, offline editing, themes, and richer task scheduling/details. Custom SMTP remains an operational follow-up.
 
 Before resuming, inspect `git status`, read the operating instructions in [development](development.md), and check the actual code and available tools. The ignored local environment and synthetic fixture files are machine-local; a fresh clone needs setup. Provision Neon through Vercel, preserve the isolated development branch, and verify `fra1` on actual deployments. Do not recreate accounts/resources or rerun migrations merely because this is a new chat. Past verification is dated evidence; rerun checks relevant to the change before making new claims.
 
-## Next build: live list updates
+## Live list updates — implemented October 16, 2026
 
-Confirmed October 15, 2026. Planned, not implemented. Keep the current ten-second polling and refresh-on-focus behavior for now.
+Confirmed October 15 and implemented October 16, 2026. [Live-update design and verification](live-updates.md) record the current implementation. Polling and focus refresh remain active as fallback.
 
-The next milestone is live updates for open lists, covering both collaboration and changes made through AI clients:
+The implemented milestone covers both collaboration and changes made through AI clients:
 
 - When two people have a shared list open, additions, edits, completion/reopening, deletion, and task ordering changes appear in the other person's view without a manual reload.
 - When a user has a list open on the website and changes that same list through ChatGPT using Wuff's MCP connection, the open website updates too. This applies to the user's private lists as well as shared lists; it does not require a second user.
@@ -31,9 +31,13 @@ The next milestone is live updates for open lists, covering both collaboration a
 - Live subscriptions respect account admission, ownership, and current membership. Revoking access must also remove the list from an open view and stop further live data delivery.
 - Recover after disconnects and refresh authoritative state on reconnect. Keep the existing polling/focus refresh as a fallback, and preserve in-progress user input when remote changes arrive.
 
-Evaluate Neon Realtime against the existing Vercel-managed database when this milestone starts. Realtime support and the subscription design need implementation-time validation; no infrastructure or application behavior changes are part of recording this plan.
+Neon Realtime is enabled on the existing Vercel-managed project’s isolated development and production branches. No database project was replaced and no application schema migration was needed. Short-lived capabilities are sealed by the authenticated web backend; admission and membership remain live SQL dependencies.
 
-Acceptance scenarios: two synthetic users edit one shared list and see each other's changes; one user edits an open private list through an authorized MCP client and sees the website update; membership revocation and reconnects reconcile correctly. Include a ChatGPT end-to-end check when its Wuff connection is available, and distinguish that result from Codex-only validation.
+Verified scenarios: synthetic shared-list changes arrive through the live transport; MCP additions/completion update an open shared and private web view; access revocation removes the open list; subscription renewal, dropped-connection recovery, and pending-input preservation work. Actual ChatGPT host usage remains a separate check; authenticated MCP protocol tests do not certify every client.
+
+## Next milestone
+
+No follow-up feature has been selected yet. Discuss remaining priorities before starting another milestone. Preserve the current online website/offline boundary; native and offline behavior still belong to future React Native/Expo planning.
 
 ## Phase 0: resolve architectural risks
 
@@ -81,7 +85,7 @@ Add an Expo application targeting iPhone and Android. Reuse contracts, the API c
 
 Before mobile implementation, revisit the PWA/offline deliberation confirmed October 15, 2026. The user has mixed experiences with PWAs and offline-first systems; compare online-only use, cached reads, and queued offline edits against real mobile use cases instead of defaulting to offline-first. Decide secure local storage/session handling, conflict and retry behavior, revoked access, account cleanup, synchronization, distribution, and release workflows. See [the architecture boundary](architecture.md#web-and-mobile-offline-boundary).
 
-This is future React Native/Expo design work. Preserve current website behavior; the next build remains live updates for connected web views and changes made through ChatGPT/MCP. Widgets, notifications, and share extensions require separate scope decisions.
+This is future React Native/Expo design work. Preserve current website behavior; live updates for connected web views and changes made through ChatGPT/MCP are implemented. Widgets, notifications, and share extensions require separate scope decisions.
 
 ## Phase 5: list personalization
 
@@ -98,7 +102,7 @@ Add themes, custom colors, and images after the basic workflow is proven. Decide
 | Client verification           | Codex tools validated; ChatGPT and other named hosts, inline UI, and Joreel's independent connection remain to verify |
 | Ordering                      | Shared task order implemented; personal sidebar order deferred                                                        |
 | Concurrent mutations          | List versions, transactional permission checks, and actor-scoped operation receipts implemented                       |
-| Cross-client freshness        | Polling/focus refresh implemented; live updates are the next build described above                                    |
+| Cross-client freshness        | Polling/focus refresh implemented; live updates are implemented with polling/focus fallback                           |
 | Archive and deletion          | Owner-only permanent deletion implemented; archive/restore deferred                                                   |
 | Corgi branding                | Waffles integrated; see mascot asset and verification documentation                                                   |
 | Native and offline support    | Revisit online-only, cached reads, and offline edits during React Native/Expo planning; website stays online          |

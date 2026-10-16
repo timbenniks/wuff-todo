@@ -7,11 +7,14 @@ import type {
   TodoList,
 } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+
+import { useActorApi } from "./actor-api";
 
 type Request = { path: string; method: string; body: Record<string, unknown> };
 // An uncertain response retains the exact operation ID and payload for retry.
 function useSharingMutation<T>(saved: (value: T) => Promise<void>) {
+  const api = useActorApi();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState<Request | null>(null);
@@ -68,6 +71,7 @@ export function InvitationInbox({
   initial: IncomingInvitation[];
   onJoined: (id: string) => Promise<void>;
 }) {
+  const api = useActorApi();
   const [items, setItems] = useState(initial);
   const [readError, setReadError] = useState("");
   const revision = useRef(0);
@@ -112,7 +116,7 @@ export function InvitationInbox({
       clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, [mutation.pending]);
+  }, [mutation.pending, api]);
   return (
     <>
       {(items.length > 0 || mutation.error) && (
@@ -187,6 +191,7 @@ export function SharingDialog({
   disabled: boolean;
   onChanged: (id: string, left?: boolean) => Promise<void>;
 }) {
+  const api = useActorApi();
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState<ListSharing | null>(null);
@@ -225,7 +230,7 @@ export function SharingDialog({
           setSharing(null);
       }
     }
-  }, [list.id]);
+  }, [list.id, api]);
   useEffect(() => {
     if (!open) return;
     dialog.current?.showModal();

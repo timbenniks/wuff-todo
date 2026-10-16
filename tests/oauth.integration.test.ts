@@ -1,29 +1,17 @@
+import { loginFixture } from "./helpers/login";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { createRealtimeClient, waitForLive } from "./helpers/live";
+import type { ListSummary } from "@wuff/contracts";
+import type { SealedLiveQuery } from "@neon/realtime/client";
 const origin = "http://localhost:3000",
   resource = `${origin}/api/mcp`;
 const fixtures = JSON.parse(await readFile(".vercel/dev-users.json", "utf8"));
 const jsonHeaders = { Origin: origin, "Content-Type": "application/json" };
 async function login(index = 0) {
-  const response = await fetch(`${origin}/api/auth/sign-in/email`, {
-    method: "POST",
-    headers: jsonHeaders,
-    body: JSON.stringify({
-      email: fixtures[index].email,
-      password: fixtures[index].password,
-    }),
-  });
-  assert.equal(
-    response.status,
-    200,
-    "Synthetic user can sign in through Neon proxy",
-  );
-  return response.headers
-    .getSetCookie()
-    .map((cookie) => cookie.split(";")[0])
-    .join("; ");
+  return loginFixture(fixtures[index]);
 }
 async function post(path: string, body: unknown, cookie: string) {
   return fetch(`${origin}${path}`, {
@@ -243,7 +231,26 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
   assert.ok(!created.body.result.isError, "MCP list creation succeeds");
   let list = created.body.result.structuredContent.list;
   let editorCookie = "";
+  const liveResponse = await post(
+    "/api/v1/live",
+    { userId: fixtures[0].id },
+    cookie,
+  );
+  assert.equal(liveResponse.status, 200);
+  const liveConfig = await liveResponse.json();
+  const liveClient = createRealtimeClient({
+    url: liveConfig.url,
+    logLevel: "silent",
+  });
+  const liveSubscription = liveClient.subscribe(
+    liveConfig.query as SealedLiveQuery<ListSummary>,
+  );
   try {
+    await waitForLive(
+      liveSubscription,
+      (rows) => rows.some((row) => row.id === list.id),
+      20000,
+    );
     const onWeb = await fetch(`${origin}/api/v1/lists/${list.id}`, {
       headers: { Cookie: cookie },
     });
@@ -281,6 +288,11 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.ok(!completed.body.result.isError);
+    await waitForLive(liveSubscription, (rows) =>
+      rows.some(
+        (row) => row.id === list.id && row.version === list.version + 1,
+      ),
+    );
     const webState = await (
       await fetch(`${origin}/api/v1/lists/${list.id}`, {
         headers: { Cookie: cookie },
@@ -386,6 +398,9 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     });
     assert.ok(!edited.isError);
     list = edited.structuredContent.list;
+    await waitForLive(liveSubscription, (rows) =>
+      rows.some((row) => row.id === list.id && row.version === list.version),
+    );
     assert.equal(
       (
         await post(
@@ -636,6 +651,8 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       401,
     );
   } finally {
+    liveSubscription.unsubscribe();
+    liveClient.close();
     if (editorCookie)
       await fetch(`${origin}/api/v1/connections`, {
         method: "DELETE",

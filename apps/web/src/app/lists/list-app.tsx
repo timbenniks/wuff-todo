@@ -14,10 +14,15 @@ import type { ListSummary, Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { authClient } from "@/lib/auth/client";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { InvitationInbox, SharingDialog } from "./sharing";
 import type { IncomingInvitation } from "@wuff/contracts";
 import { ListCache } from "@/lib/list-cache";
+
+import { useActorApi } from "./actor-api";
+import { LiveUpdates } from "./live-updates";
+import type { LiveLists } from "@/lib/live-types";
+import { LiveRefreshQueue } from "@/lib/live-refresh";
 
 type PendingCreate = {
   id: string;
@@ -32,13 +37,19 @@ export function ListApp({
   initialLists,
   initialList,
   initialInvitations,
+  liveConfig,
 }: {
   userId: string;
   name: string;
   initialLists: ListSummary[];
   initialList: TodoList | null;
   initialInvitations: IncomingInvitation[];
+  liveConfig: LiveLists | null;
 }) {
+  const api = useActorApi();
+  const [liveStatus, setLiveStatus] = useState("connecting");
+  const [readFailure, setReadFailure] = useState("");
+  const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
     [selectedId, setSelectedId] = useState(initialLists[0]?.id ?? "");
   const [list, setList] = useState<TodoList | null>(initialList),
@@ -82,9 +93,12 @@ export function ListApp({
         selected.current === id ||
         (error instanceof ApiError && [401, 403, 404].includes(error.status))
       )
-        setError(
-          error instanceof Error ? error.message : "Couldn’t load your list.",
-        );
+        if (error instanceof ApiError && [429, 503].includes(error.status))
+          setReadFailure(error.message);
+        else
+          setError(
+            error instanceof Error ? error.message : "Couldn’t load your list.",
+          );
     },
     [cache],
   );
@@ -95,13 +109,16 @@ export function ListApp({
         const next = await cache.load(id, () =>
           api<TodoList>(`/api/v1/lists/${id}`),
         );
-        if (selected.current === id) setList(next);
+        if (selected.current === id) {
+          setList(next);
+          setReadFailure("");
+        }
       } catch (error) {
         readError(id, error);
         throw error;
       }
     },
-    [cache, readError],
+    [cache, readError, api],
   );
   function chooseList(id: string) {
     selected.current = id;
@@ -110,6 +127,7 @@ export function ListApp({
     setList(cached);
     setLoading(!!id && !cached);
     setError("");
+    setReadFailure("");
   }
   useEffect(() => {
     const skipRead = skipSelectionRead.current === selectedId;
@@ -132,15 +150,15 @@ export function ListApp({
       });
   }, [selectedId, reload, cache]);
   useEffect(() => {
-    let refreshing = false;
+    let active = true;
     const refresh = async () => {
-      if (document.hidden || mutating.current || refreshing) return;
-      refreshing = true;
+      if (!active || document.hidden || mutating.current) return;
       const epoch = summaryEpoch.current;
       try {
         await Promise.all([
           api<ListSummary[]>("/api/v1/lists").then((next) => {
-            if (mutating.current || summaryEpoch.current !== epoch) return;
+            if (!active || mutating.current || summaryEpoch.current !== epoch)
+              return;
             // Preserve the visibly pending create until its own request settles.
             const pendingList =
               pending.current && cache.get(pending.current.id);
@@ -162,17 +180,28 @@ export function ListApp({
         ]);
       } catch (e) {
         readError(selected.current, e);
-      } finally {
-        refreshing = false;
       }
     };
-    const timer = setInterval(refresh, 10_000);
-    window.addEventListener("focus", refresh);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("focus", refresh);
+    const queue = new LiveRefreshQueue(
+      refresh,
+      () => mutating.current || document.hidden,
+    );
+    liveRefresh.current = queue;
+    const focused = () => {
+      void queue.notify();
     };
-  }, [reload, cache, readError]);
+    const timer = setInterval(focused, 10_000);
+    window.addEventListener("focus", focused);
+    document.addEventListener("visibilitychange", focused);
+    return () => {
+      active = false;
+      queue.stop();
+      if (liveRefresh.current === queue) liveRefresh.current = null;
+      clearInterval(timer);
+      window.removeEventListener("focus", focused);
+      document.removeEventListener("visibilitychange", focused);
+    };
+  }, [reload, cache, readError, api]);
   function remember(result: TodoList) {
     const current = cache.write(result);
     if (selected.current === current.id) setList(current);
@@ -255,6 +284,7 @@ export function ListApp({
     } finally {
       mutating.current = false;
       setBusy(false);
+      void liveRefresh.current?.flush();
     }
   }
   async function change(
@@ -282,6 +312,7 @@ export function ListApp({
     } finally {
       mutating.current = false;
       setBusy(false);
+      void liveRefresh.current?.flush();
     }
   }
   async function sharingChanged(id: string, left = false) {
@@ -315,6 +346,17 @@ export function ListApp({
   }
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[260px_1fr]">
+      {liveConfig && (
+        <LiveUpdates
+          config={liveConfig}
+          userId={userId}
+          onChange={() => {
+            summaryEpoch.current++;
+            void liveRefresh.current?.notify();
+          }}
+          onStatus={setLiveStatus}
+        />
+      )}
       <aside className="bg-[#edf4fa] border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 md:min-h-dvh flex flex-col">
         <div className="flex gap-3 items-center mb-4 md:mb-8">
           <Corgi size={48} />
@@ -404,7 +446,21 @@ export function ListApp({
         </div>
       </aside>
       <main className="px-6 py-10 md:px-16 md:py-16 max-w-4xl w-full mx-auto">
+        {liveConfig && (
+          <p role="status" className="text-xs text-slate-500 mb-4">
+            {liveStatus === "live"
+              ? "Live updates connected"
+              : liveStatus === "connecting"
+                ? "Connecting live updates. Regular refresh is active."
+                : "Live updates reconnecting. Regular refresh is active."}
+          </p>
+        )}
         <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
+        {readFailure && (
+          <p role="status" className="text-sm text-slate-500 mb-4">
+            {readFailure}
+          </p>
+        )}
         {error && (
           <div
             role="alert"
@@ -505,6 +561,7 @@ export function ListApp({
                       } finally {
                         mutating.current = false;
                         setBusy(false);
+                        void liveRefresh.current?.flush();
                       }
                     }}
                   >

@@ -1,3 +1,4 @@
+import { liveQueryDefinition } from "./live-query";
 import { createHash, randomUUID } from "node:crypto";
 import { and, asc, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
 import {
@@ -470,15 +471,13 @@ export async function inviteToList(actor: Actor, data: unknown) {
           "A list can have up to 100 pending invitations.",
           400,
         );
-      await tx
-        .insert(invitations)
-        .values({
-          listId: list.id,
-          email: recipient.email,
-          recipientId: recipient.id,
-          tokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
-          expiresAt: new Date(now.getTime() + 7 * 86400000),
-        });
+      await tx.insert(invitations).values({
+        listId: list.id,
+        email: recipient.email,
+        recipientId: recipient.id,
+        tokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
+        expiresAt: new Date(now.getTime() + 7 * 86400000),
+      });
       return { id: list.id };
     },
   );
@@ -626,4 +625,12 @@ export async function leaveList(actor: Actor, data: unknown) {
     },
   );
   return { listId: input.listId, left: true };
+}
+
+// Capabilities are issued only after current admission/access checks. The SQL
+// also includes those dependencies so authorization stays live after issuance.
+export async function getLiveQuery(actor: Actor) {
+  requireScope(actor, "lists:read");
+  await admission(database().db, actor);
+  return liveQueryDefinition(actor.id);
 }

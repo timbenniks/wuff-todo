@@ -39,7 +39,7 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
-Integration tests require the local application on port 3000 and `.vercel/dev-users.json`. They verify real Neon sessions and database operations using disposable synthetic identities. They must never target production. The loopback-only browser fixture can be started with:
+Integration tests require the local application on port 3000, `.vercel/dev-users.json`, and development Realtime configuration. Test files run serially to avoid shared-service auth throttling; explicit concurrency cases still run within tests. Synthetic sign-in setup honors bounded retry delays after HTTP 429. They verify real Neon sessions and database operations using disposable synthetic identities. They must never target production. The loopback-only browser fixture can be started with:
 
 ```sh
 node --env-file=.env.local --import tsx scripts/browser-fixture.ts
@@ -114,3 +114,15 @@ All sharing writes accept an `operationId` UUID for identical retries. Owner cha
 | `/api/v1/lists/:id/leave`                     | POST   | Editor leaves list                                           |
 
 Migration `0001_free_wild_pack.sql` adds nullable recipient/closed-state columns and two indexes. It preserves existing invitation columns and all list/task data. Legacy invitations without a recipient ID cannot be accepted through this flow. Reads use `lists:read`; sharing mutations require `lists:manage` and current application admission/membership. No new OAuth scope is required for existing connections.
+
+## Live updates
+
+Neon Realtime is enabled on the existing Vercel-managed development and production branches. Browser origins are restricted to `http://localhost:3000` for development and `https://wuff-todo.vercel.app` for production. No application schema migration is required. Preview Realtime configuration/origins are not set up automatically.
+
+`NEON_REALTIME_URL` and server-only `NEON_REALTIME_SECRET` must target the same branch as `DATABASE_URL`. The server passes only the WebSocket URL and an encrypted, short-lived query capability to the browser. Never log capabilities or persist them in local storage. Do not expose the secret using a public environment-variable prefix.
+
+Feature enablement uses the Neon CLI against the existing Vercel-managed project; Vercel continues to manage the database integration and production environment variables. Pull only Realtime variables into a separate ignored file, with an explicit branch, then merge just those two values into the matching local environment. Do not overwrite development database/auth values with a general `env pull`. Restart the local Next.js server after changing root environment variables or installing dependencies.
+
+The authenticated, same-origin `POST /api/v1/live` endpoint accepts `{ userId }`, checks it against the current admitted actor, and returns a non-cacheable sealed subscription. Missing configuration leaves the website on regular refresh; the endpoint returns 503. The list-page API sends `X-Wuff-User` to reject requests from an old page after an account switch. The existing MCP transport remains unchanged and does not need new scopes or tools.
+
+See [live updates](live-updates.md) for permission boundaries, retry/reconnect behavior, and verification limits.

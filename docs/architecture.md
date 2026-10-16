@@ -2,7 +2,7 @@
 
 Status: implemented web/API/MCP architecture with explicitly marked future scope
 
-Updated: October 15, 2026
+Updated: October 16, 2026
 
 The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Native authentication, new-account invitation delivery, sidebar ordering, and future packages remain planned.
 
@@ -94,7 +94,9 @@ Implemented behavior:
 - Task writes and sharing changes serialize on the list row; invitation responses use the same row lock. Revocation cannot be bypassed by an old acceptance or mutation receipt.
 - Personal sidebar ordering remains future work.
 
-The website currently polls every ten seconds and refreshes on focus. Live list updates, including changes committed through ChatGPT/MCP to the user's own private list, are the [next planned build](implementation-plan.md#next-build-live-list-updates). Neon Realtime is a candidate to validate at implementation time; no live subscription provider is currently configured by this feature.
+The website uses Neon Realtime to subscribe to accessible list summaries and versions. The SQL definition lives in the domain package and includes enabled-profile and owner/member predicates, so removing membership removes the row from an existing subscription. Authenticated `POST /api/v1/live` seals the query for the verified actor; the secret stays on the server and capabilities stay in memory. Renewals check the page’s expected user ID, and list-page API requests also pin writes/reads to that identity to prevent an old tab operating under a newly signed-in account.
+
+Live snapshots act as invalidation signals: a coalescing queue fetches authoritative API snapshots, defers during local writes, and repeats if another event arrives during a read. This preserves existing list-version and cache-generation safeguards instead of rendering potentially delayed replica state over newer local edits. Polling every ten seconds and focus/visibility refresh remain independent fallback paths. The SDK renews capabilities and reconnects; terminal subscription errors trigger a fresh subscription attempt. See [live updates](live-updates.md).
 
 ## HTTP API
 
@@ -119,7 +121,7 @@ MCP App packaging must respect host sandboxing and resource policies. Do not emb
 
 ## Web and mobile offline boundary
 
-Confirmed October 15, 2026: preserve the website’s current online behavior. Its manifest and icon assets provide identity; do not extend them into offline-first PWA behavior. No service worker, durable offline task cache, or disconnected mutation queue is part of the current web scope. Transient in-memory list snapshots and retrying an uncertain online request are separate from offline editing. Live updates and reconnect reconciliation remain the next planned online feature.
+Confirmed October 15, 2026: preserve the website’s current online behavior. Its manifest and icon assets provide identity; do not extend them into offline-first PWA behavior. No service worker, durable offline task cache, or disconnected mutation queue is part of the current web scope. Transient in-memory list snapshots and retrying an uncertain online request are separate from offline editing. Live updates and reconnect reconciliation are implemented online features.
 
 When React Native/Expo mobile planning starts, explicitly compare:
 

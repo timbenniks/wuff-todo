@@ -6,13 +6,13 @@ Web and MCP ship first. iPhone and Android apps follow using the same backend.
 
 ## Project documents
 
-- [Start here: current status and next build](docs/implementation-plan.md): handoff for a new agent; live list updates are next.
+- [Start here: current status and next build](docs/implementation-plan.md): handoff for a new agent; current scope and remaining work.
 - [Product specification](docs/product-spec.md): confirmed scope, permissions, behavior, and acceptance criteria.
 - [Architecture](docs/architecture.md): monorepo layout, backend boundaries, authentication, and deployment.
 - [Implementation plan](docs/implementation-plan.md): delivery phases, validation, and unresolved decisions.
 - [Todoist research](docs/todoist-research.md): reference features and deferred ideas.
 
-The deployed app includes private/shared lists, task editing/ordering, Neon login for admitted users, in-app invitations and owner-managed sharing, OAuth-protected MCP with 18 tools, an embedded list/task UI, and Waffles branding. Live list updates are the next planned build: both collaborator edits and ChatGPT/MCP changes should appear in an open website, including private lists. Current ten-second polling and focus refresh stay in place until that work is authorized and implemented.
+The deployed app includes private/shared lists, task editing/ordering, Neon login for admitted users, in-app invitations and owner-managed sharing, OAuth-protected MCP with 18 tools, an embedded list/task UI, and Waffles branding. Live list updates now cover collaborator edits and authenticated MCP changes to open shared/private web views, with polling and focus refresh as fallback. See [live-update design and verification](docs/live-updates.md). PWA/offline behavior remains deferred to native-mobile planning.
 
 - [Development and operations](docs/development.md)
 - [Verification evidence and limitations](docs/verification.md)

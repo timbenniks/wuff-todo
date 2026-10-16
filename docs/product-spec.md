@@ -2,7 +2,7 @@
 
 Status: working specification, version 0.1
 
-Updated: October 15, 2026
+Updated: October 16, 2026
 
 ## Purpose
 
@@ -69,7 +69,7 @@ An owner invites an existing, enabled Wuff account by email. Wuff binds the invi
 
 Invitations expire after seven days. Owners can cancel pending invitations, remove editors, and invite someone again after expiry, cancellation, decline, or removal. A list supports up to 100 pending invitations. Duplicate invitations do not create duplicate pending records or memberships. Identical mutation retries reuse their operation ID; retrying an old acceptance after revocation cannot restore access.
 
-Accepted members share task changes and task order. Only the owner can manage access or rename/delete the list. Every API and MCP call checks current membership; active web screens refresh on focus and every ten seconds. Account admission and invitations to people without accounts remain operator-only / future work.
+Accepted members share task changes and task order. Only the owner can manage access or rename/delete the list. Every API and MCP call checks current membership; active web screens receive live list-change signals and refresh on focus and every ten seconds as fallback. Account admission and invitations to people without accounts remain operator-only / future work.
 
 ### Web experience
 
@@ -94,15 +94,15 @@ AI access must never elevate the user's permissions. Duplicate tool retries must
 
 ## Cross-client behavior
 
-The backend is authoritative. Active web screens currently refresh every ten seconds and when the window regains focus. Keep that behavior for now.
+The backend is authoritative. Active web views use Neon Realtime list/version signals to fetch current, authorized snapshots. Ten-second polling and focus/visibility refresh remain active as fallback.
 
-**Confirmed next milestone: live list updates.** When collaborators have a shared list open, committed task changes should appear in each open view without a manual reload. The same requirement applies when a user has their own list open on the website and adds, edits, completes, reopens, deletes, or reorders tasks through ChatGPT using Wuff MCP. This includes private lists and does not require another user. Live updates must respect current access, recover after reconnecting, and preserve in-progress input. See [the next build](implementation-plan.md#next-build-live-list-updates) for scope and acceptance scenarios. This milestone is planned, not implemented.
+**Live list updates are implemented (October 16, 2026).** Collaborator edits appear in open shared lists without a manual reload. The same mechanism applies when the user changes an open private or shared list through an authenticated ChatGPT/MCP connection: additions, edits, completion/reopening, deletion, and ordering all advance the list version. Tests exercised real authenticated MCP protocol calls and synthetic browser sessions; actual ChatGPT host usage remains a separate verification step. Current admission and membership filter the subscription, reconnects reconcile through the API, and remote refreshes preserve in-progress task input. See [live updates](live-updates.md) for design and evidence.
 
 Concurrent edits must have a defined outcome. An outdated screen must not silently restore a task deleted by another user. Proposed conflict behavior is documented in the architecture.
 
 **Confirmed web/offline boundary — October 15, 2026:** keep the website’s current online behavior. Do not add an offline-first PWA, service-worker caching, persistent offline list storage, or queued offline writes. Existing manifest, icons, and home-screen identity stay as they are; those assets do not imply offline support. Network failures must remain visible, and unsaved changes must never appear confirmed.
 
-Revisit offline behavior when planning the React Native/Expo iPhone and Android apps. The user has mixed experiences with PWAs and offline-first systems, so native offline support is an open product decision, not an assumed requirement. Compare online-only operation, cached read access, and queued offline editing against actual mobile use cases before choosing. This deliberation does not change the next planned milestone of live updates for connected web views, including changes made through MCP.
+Revisit offline behavior when planning the React Native/Expo iPhone and Android apps. The user has mixed experiences with PWAs and offline-first systems, so native offline support is an open product decision, not an assumed requirement. Compare online-only operation, cached read access, and queued offline editing against actual mobile use cases before choosing. This deliberation does not add offline behavior to the implemented live updates for connected web views, including changes made through MCP.
 
 ## Future scope
 

@@ -200,18 +200,17 @@ test("concurrent writes reject stale versions and ordering survives completion/r
   }
 });
 test("disabled users lose access", async () => {
+  const id = "domain-disabled-fixture";
   await database()
-    .db.update(users)
-    .set({ enabled: false })
-    .where(eq(users.id, b.id));
-  try {
-    await assert.rejects(listLists(b), { code: "invite_required" });
-  } finally {
-    await database()
-      .db.update(users)
-      .set({ enabled: true })
-      .where(eq(users.id, b.id));
-  }
+    .db.insert(users)
+    .values({
+      id,
+      email: `${id}@example.invalid`,
+      name: "Disabled domain fixture",
+      enabled: false,
+    })
+    .onConflictDoNothing();
+  await assert.rejects(listLists({ id, scopes }), { code: "invite_required" });
 });
 
 test("identity-bound invitations: expiry, decline, cancellation, acceptance, and retries", async () => {

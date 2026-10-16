@@ -3,6 +3,8 @@ import { webActor, webIdentity } from "@/lib/auth/server";
 import { AppError } from "@wuff/contracts";
 import type { TodoList } from "@wuff/contracts";
 import { getList, listLists, listInvitations } from "@wuff/domain";
+import { sealLiveLists } from "@/lib/live-server";
+import { ActorApiProvider } from "./actor-api";
 import { ListApp } from "./list-app";
 export const dynamic = "force-dynamic";
 export default async function ListsPage() {
@@ -23,15 +25,19 @@ export default async function ListsPage() {
         if (!(error instanceof AppError && error.status === 404)) throw error;
       }
     }
+    const liveConfig = await sealLiveLists(actor);
     return (
-      <ListApp
-        key={actor.id}
-        userId={actor.id}
-        name={identity.name}
-        initialLists={initialLists}
-        initialList={initialList}
-        initialInvitations={initialInvitations}
-      />
+      <ActorApiProvider userId={actor.id}>
+        <ListApp
+          key={actor.id}
+          userId={actor.id}
+          name={identity.name}
+          initialLists={initialLists}
+          initialList={initialList}
+          initialInvitations={initialInvitations}
+          liveConfig={liveConfig}
+        />
+      </ActorApiProvider>
     );
   } catch (error) {
     if (error instanceof AppError && [429, 503].includes(error.status))
