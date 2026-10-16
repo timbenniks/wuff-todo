@@ -59,4 +59,10 @@ The shared default button is neutral white with a light border; routine icon act
 - At 320px, save/cancel/add targets measured 44×44px with transparent computed backgrounds and no document overflow. At 390px all six task actions shared the same vertical position in one icon strip. The 1280px desktop view also had no horizontal overflow. [Quiet controls](screenshots/mobile-quiet-controls.jpg) use only synthetic data.
 - The first optimized local navigation used an older fixture cookie and failed in the managed SDK's server-component cookie update; a fresh synthetic sign-in passed. No authentication fix or production authentication regression is claimed by this UI milestone.
 
-Production release evidence and cleanup will be recorded below. Physical-device and screen-reader verification remain separate.
+### Quiet controls production release
+
+Source `404353f38c9e54f3e77d2529411d5d17151f1f5f` passed [GitHub CI run 38952060440](https://github.com/timbenniks/wuff-todo/actions/runs/38952060440). CLI deployment `dpl_BZ94rys69Gom6hKk1V5xXX2jJhzo` is READY in `fra1` with the canonical production alias.
+
+The signed-in production browser saved a subtask rename and bold notes through the icon buttons, then reopened the compact name field. Save, cancel and task/subtask add controls measured 44×44px with transparent backgrounds. At 390px there was no document overflow. A separate server read verified exact text/Markdown and preserved dates/completion. [Production quiet controls](screenshots/mobile-quiet-production.jpg) contains only synthetic data.
+
+Disposable production/development lists were removed and confirmed inaccessible. The baseline fixture and real lists were preserved, viewport overrides reset, test tabs closed and the local dev server restored. No schema/auth-managed-table changes or OAuth grants were involved. Physical-device and screen-reader verification remain separate.
