@@ -87,9 +87,9 @@ Before mobile implementation, revisit the PWA/offline deliberation confirmed Oct
 
 This is future React Native/Expo design work. Preserve current website behavior; live updates for connected web views and changes made through ChatGPT/MCP are implemented. Widgets, notifications, and share extensions require separate scope decisions.
 
-## Phase 5: list personalization
+## Phase 5: broader list personalization
 
-Add themes, custom colors, and images after the basic workflow is proven. Decide whether a list's appearance is shared or personal, who can change it, and how images are stored and served. Maintain readable contrast and accessible controls for every theme.
+Named shared list colors were delivered before mobile in the mature-list milestone; owners control them. Cover images, arbitrary custom colors, and broader themes remain future work. Decide image ownership, storage, and access rules before adding uploads. Maintain readable contrast and accessible controls for every theme.
 
 ## Decisions and remaining work
 

@@ -110,9 +110,11 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 18 tools are:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 25 tools are:
 
 - `list_lists`, `get_list`, `create_list`, `rename_list`, `delete_list`.
+- `update_list`, `get_list_order`, `reorder_lists`.
+- `create_section`, `rename_section`, `reorder_sections`, `delete_section`.
 - `create_task`, `update_task`, `delete_task`, `reorder_tasks`. `get_list` includes tasks; `update_task` explicitly sets completion/reopening.
 - `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, `leave_list`.
 - Interactive `show_lists` and `show_list` tools for MCP Apps.

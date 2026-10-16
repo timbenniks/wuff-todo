@@ -18,7 +18,7 @@ Invitations show only the list title and owner before acceptance. Membership is 
 - `remove_list_member`: owner revokes an editor’s access.
 - `leave_list`: editor leaves.
 
-Tools work without an embedded UI. The existing MCP App continues to browse accepted lists and manage tasks. Sharing settings and the invitation inbox have website controls; sharing tools return structured results to AI clients. Refresh the client’s tool catalog to discover the seven new tools (18 tools total).
+Tools work without an embedded UI. The existing MCP App continues to browse accepted lists and manage tasks. Sharing settings and the invitation inbox have website controls; sharing tools return structured results to AI clients. The sharing milestone added seven tools (18 total at that point). The mature-list milestone brings the catalog to 25; refresh the client’s tool catalog after deployment.
 
 Owner changes and leaving require the current list version. Each mutation takes an operation ID UUID: reuse it with exactly the same payload when retrying an uncertain response. Concurrent changes may return a conflict; read fresh state before a new operation. Old acceptance receipts never restore revoked membership.
 
