@@ -114,3 +114,5 @@ The production fixture was deleted and confirmed inaccessible; the development f
 ## Add-section discoverability — October 16, 2026
 
 The Add section button keeps a visible “Add section” label beside ListPlus on phone and desktop. Its ghost style and 44px height stay quiet and consistent. The icon is decorative for assistive technology; the existing accessible button name and owner/archive/section-limit rules are preserved. This is an explicit exception to routine icon-only controls because the symbol alone was unclear.
+
+Label release: source `c983a387a26b98c714d015309d4862afbf98bbbd` passed local TypeScript and GitHub CI run `38956878262`. Vercel CLI deployment `dpl_4j77psVHhR3Ako43SpDG35wgxQvt` is READY in `fra1` with the canonical alias. Local and deployed 390px browser checks confirmed the visible label, a 44px-high button and the existing section-form open/cancel flow without creating data. [Deployed label](screenshots/add-section-label.jpg). Temporary tabs were closed and viewport overrides reset.
