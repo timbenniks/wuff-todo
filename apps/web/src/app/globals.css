@@ -50,6 +50,141 @@ h2,
 ::selection {
   background: #dceafb;
 }
+.task-more,
+.task-action-label {
+  display: none;
+}
+.task-secondary-actions {
+  display: contents;
+}
+@media (width >= 40rem) {
+  .task-actions .task-edit {
+    order: 1;
+  }
+  .task-actions .task-subtasks {
+    order: 2;
+  }
+  .task-actions .task-date {
+    order: 3;
+  }
+  .task-actions .task-notes-action {
+    order: 4;
+  }
+  .task-actions .task-delete {
+    order: 5;
+  }
+  .task-actions > .drag-handle {
+    order: 6;
+  }
+}
+/* On phones, titles own the first line and controls share a quiet second line.
+   Editors stay in the title column instead of competing with the action bar. */
+@media (width < 40rem) {
+  .task-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 4px;
+    row-gap: 0;
+    padding-block: 10px;
+  }
+  .task-complete {
+    width: 44px;
+    height: 44px;
+    margin: -9px 0 0 -5px;
+  }
+  .task-name {
+    grid-column: 2;
+    overflow-wrap: anywhere;
+    padding-top: 1px;
+  }
+  .task-actions {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 3px 0 0 -8px;
+  }
+  .task-actions > button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .task-more {
+    display: inline-flex;
+  }
+  .task-actions > .drag-handle {
+    margin-left: auto;
+  }
+  .task-actions > .task-secondary-actions {
+    display: none;
+  }
+  .task-actions[data-expanded="true"] > .task-secondary-actions {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 3px;
+  }
+  .task-secondary-actions > button {
+    width: auto;
+    min-height: 44px;
+    padding-inline: 12px;
+    gap: 6px;
+    background: var(--color-accent);
+  }
+  .task-secondary-actions .task-action-label {
+    display: inline;
+    font-size: 12px;
+  }
+  .task-actions[data-editing="true"] {
+    display: none;
+  }
+  .task-panel,
+  .task-subtask-panel {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-left: 0;
+    margin-top: 8px;
+  }
+  .task-subtask-panel {
+    margin-left: 12px;
+  }
+  .task-name form button,
+  .task-notes > div:last-child > button {
+    min-height: 44px;
+  }
+  .task-name form input,
+  .task-name form select,
+  .task-row input,
+  .task-row textarea {
+    font-size: 16px;
+  }
+  .task-formatting {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding: 2px 4px;
+  }
+  .task-formatting > button {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+  }
+  .task-notes .task-editor {
+    min-height: 128px;
+    max-height: 40dvh;
+    font-size: 16px;
+    padding: 12px;
+  }
+  .list-heading {
+    padding: 16px;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .list-heading h1 {
+    font-size: 28px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

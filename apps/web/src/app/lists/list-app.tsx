@@ -1,7 +1,14 @@
 "use client";
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ChevronDown,
+  ListTodo,
+  LogOut,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
@@ -51,6 +58,8 @@ export function ListApp({
 }) {
   const api = useActorApi();
   const [liveStatus, setLiveStatus] = useState("connecting");
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const navigationTrigger = useRef<HTMLButtonElement>(null);
   const [readFailure, setReadFailure] = useState("");
   const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
@@ -421,151 +430,192 @@ export function ListApp({
         />
       )}
       <aside className="bg-[#edf4fa] border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 md:min-h-dvh flex flex-col">
-        <div className="flex gap-3 items-center mb-4 md:mb-8">
+        <div className="flex gap-3 items-center md:mb-8">
           <Corgi size={48} />
           <span className="wordmark text-xl font-bold">Wuff Todo</span>
-        </div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-            {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
-          </span>
           <Button
-            size="icon"
-            variant="ghost"
-            aria-label="Create list"
-            disabled={busy || !!pendingCreate}
-            onClick={() => setCreating((v) => !v)}
+            ref={navigationTrigger}
+            type="button"
+            variant="outline"
+            className="md:hidden ml-auto"
+            aria-label="Choose a list"
+            aria-expanded={navigationOpen}
+            aria-controls="pack-navigation"
+            onClick={() => setNavigationOpen((open) => !open)}
           >
-            <Plus size={18} />
-          </Button>
-        </div>
-        {creating && (
-          <form
-            className="mb-4 grid gap-2"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await create(String(new FormData(e.currentTarget).get("title")));
-            }}
-          >
-            <input
-              name="title"
-              aria-label="List name"
-              placeholder={wuffCopy.listPlaceholder}
-              maxLength={300}
-              required
-              autoFocus
+            Lists{" "}
+            <ChevronDown
+              size={16}
+              className={navigationOpen ? "rotate-180" : ""}
             />
-            <Button size="sm" disabled={busy}>
-              Create list
-            </Button>
-          </form>
-        )}
-        <div className="flex items-center gap-2 mb-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const next = !showArchive;
-              setShowArchive(next);
-              chooseList(summaries.find((s) => s.archived === next)?.id ?? "");
-            }}
-          >
-            <Archive size={15} />
-            {showArchive
-              ? "Back to lists"
-              : `Archive (${summaries.filter((s) => s.archived).length})`}
           </Button>
         </div>
-        <SortableList
-          items={visibleLists}
-          disabled={busy || !!pendingCreate}
-          onReorder={moveList}
+        <div
+          id="pack-navigation"
+          className={`${navigationOpen ? "flex" : "hidden"} md:flex flex-1 flex-col pt-4 md:pt-0`}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && navigationOpen) {
+              setNavigationOpen(false);
+              navigationTrigger.current?.focus();
+            }
+          }}
         >
-          <nav
-            aria-label={showArchive ? "Archived lists" : "Lists"}
-            className="grid gap-1"
-          >
-            {visibleLists.map((s) => (
-              <SortableItem
-                key={s.id}
-                id={s.id}
-                title={`list ${s.title}`}
-                disabled={busy || !!pendingCreate}
-              >
-                {({ ref, style, handle }) => (
-                  <div
-                    ref={ref}
-                    style={style}
-                    className="flex items-center min-w-0 gap-1"
-                  >
-                    <button
-                      onClick={() => chooseList(s.id)}
-                      onPointerEnter={() => {
-                        if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-                      }}
-                      onFocus={() => {
-                        if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-                      }}
-                      aria-current={s.id === selectedId ? "page" : undefined}
-                      className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
-                      style={{
-                        background:
-                          s.id === selectedId
-                            ? listPalette[s.color].tint
-                            : undefined,
-                      }}
-                    >
-                      <ListTodo
-                        size={17}
-                        className="shrink-0"
-                        style={{ color: listPalette[s.color].accent }}
-                      />
-                      <span className="truncate">{s.title}</span>
-                      {s.id === pendingCreate?.id && (
-                        <span className="text-xs text-slate-500">
-                          {pendingCreate.status === "saving"
-                            ? wuffCopy.saving
-                            : "Retry"}
-                        </span>
-                      )}
-                    </button>
-                    {handle}
-                  </div>
-                )}
-              </SortableItem>
-            ))}
-          </nav>
-        </SortableList>
-        {showArchive && visibleLists.length === 0 && (
-          <p className="text-sm text-slate-500 px-3 py-4">
-            No lists taking a paws yet.
-          </p>
-        )}
-        <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
-          <a
-            href="/connections"
-            className="block px-3 py-2 text-primary hover:underline"
-          >
-            Connected AI clients
-          </a>
-          <div className="flex items-center justify-between px-3 md:pt-3 md:border-t border-border md:mt-3">
-            <span className="hidden md:inline truncate">{name}</span>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
+              {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
+            </span>
             <Button
-              aria-label="Sign out"
-              variant="ghost"
               size="icon"
-              onClick={async () => {
-                cache.clear();
-                await authClient.signOut();
-                window.location.assign("/sign-in");
+              variant="ghost"
+              aria-label="Create list"
+              disabled={busy || !!pendingCreate}
+              onClick={() => setCreating((v) => !v)}
+            >
+              <Plus size={18} />
+            </Button>
+          </div>
+          {creating && (
+            <form
+              className="mb-4 grid gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await create(
+                  String(new FormData(e.currentTarget).get("title")),
+                );
               }}
             >
-              <LogOut size={16} />
+              <input
+                name="title"
+                aria-label="List name"
+                placeholder={wuffCopy.listPlaceholder}
+                maxLength={300}
+                required
+                autoFocus
+              />
+              <Button size="sm" disabled={busy}>
+                Create list
+              </Button>
+            </form>
+          )}
+          <div className="flex items-center gap-2 mb-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const next = !showArchive;
+                setShowArchive(next);
+                chooseList(
+                  summaries.find((s) => s.archived === next)?.id ?? "",
+                );
+              }}
+            >
+              <Archive size={15} />
+              {showArchive
+                ? "Back to lists"
+                : `Archive (${summaries.filter((s) => s.archived).length})`}
             </Button>
+          </div>
+          <SortableList
+            items={visibleLists}
+            disabled={busy || !!pendingCreate}
+            onReorder={moveList}
+          >
+            <nav
+              aria-label={showArchive ? "Archived lists" : "Lists"}
+              className="grid gap-1"
+            >
+              {visibleLists.map((s) => (
+                <SortableItem
+                  key={s.id}
+                  id={s.id}
+                  title={`list ${s.title}`}
+                  disabled={busy || !!pendingCreate}
+                >
+                  {({ ref, style, handle }) => (
+                    <div
+                      ref={ref}
+                      style={style}
+                      className="flex items-center min-w-0 gap-1"
+                    >
+                      <button
+                        onClick={() => {
+                          chooseList(s.id);
+                          if (navigationOpen) {
+                            setNavigationOpen(false);
+                            requestAnimationFrame(() =>
+                              navigationTrigger.current?.focus(),
+                            );
+                          }
+                        }}
+                        onPointerEnter={() => {
+                          if (!cache.get(s.id))
+                            void reload(s.id).catch(() => {});
+                        }}
+                        onFocus={() => {
+                          if (!cache.get(s.id))
+                            void reload(s.id).catch(() => {});
+                        }}
+                        aria-current={s.id === selectedId ? "page" : undefined}
+                        className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
+                        style={{
+                          background:
+                            s.id === selectedId
+                              ? listPalette[s.color].tint
+                              : undefined,
+                        }}
+                      >
+                        <ListTodo
+                          size={17}
+                          className="shrink-0"
+                          style={{ color: listPalette[s.color].accent }}
+                        />
+                        <span className="truncate">{s.title}</span>
+                        {s.id === pendingCreate?.id && (
+                          <span className="text-xs text-slate-500">
+                            {pendingCreate.status === "saving"
+                              ? wuffCopy.saving
+                              : "Retry"}
+                          </span>
+                        )}
+                      </button>
+                      {handle}
+                    </div>
+                  )}
+                </SortableItem>
+              ))}
+            </nav>
+          </SortableList>
+          {showArchive && visibleLists.length === 0 && (
+            <p className="text-sm text-slate-500 px-3 py-4">
+              No lists taking a paws yet.
+            </p>
+          )}
+          <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
+            <a
+              href="/connections"
+              className="block px-3 py-2 text-primary hover:underline"
+            >
+              Connected AI clients
+            </a>
+            <div className="flex items-center justify-between px-3 md:pt-3 md:border-t border-border md:mt-3">
+              <span className="hidden md:inline truncate">{name}</span>
+              <Button
+                aria-label="Sign out"
+                variant="ghost"
+                size="icon"
+                onClick={async () => {
+                  cache.clear();
+                  await authClient.signOut();
+                  window.location.assign("/sign-in");
+                }}
+              >
+                <LogOut size={16} />
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
-      <main className="px-6 py-10 md:px-16 md:py-16 max-w-4xl w-full mx-auto">
+      <main className="px-5 py-5 md:px-16 md:py-16 max-w-4xl w-full mx-auto">
         {liveConfig && (
           <p role="status" className="text-xs text-slate-500 mb-4">
             {liveStatus === "live"
@@ -648,7 +698,7 @@ export function ListApp({
         {list && (
           <>
             <div
-              className="flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-full md:[&>div:first-child]:basis-40"
+              className="list-heading flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-full md:[&>div:first-child]:basis-40"
               style={{
                 background: listPalette[list.color].tint,
                 borderColor: listPalette[list.color].accent + "30",

@@ -228,7 +228,7 @@ export default function TaskNoteEditor({
       <div
         role="group"
         aria-label="Text formatting"
-        className="flex flex-wrap gap-0.5 border-b border-border bg-background p-1.5"
+        className="task-formatting flex flex-wrap gap-0.5 border-b border-border bg-background p-1.5"
       >
         {controls.map(([label, Icon, active, run]) => (
           <Button

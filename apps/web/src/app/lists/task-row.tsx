@@ -5,6 +5,7 @@ import {
   Check,
   FileText,
   ListTree,
+  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -46,6 +47,8 @@ export function TaskRow({
   const children = list.tasks.filter((t) => t.parentTaskId === task.id);
   const [expanded, setExpanded] = useState<boolean | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreTrigger = useRef<HTMLButtonElement>(null);
   const subtasksOpen =
     expanded ?? (children.length > 0 || subtaskDrafts.has(task.id));
   const [dateOpen, setDateOpen] = useState(dueDrafts.has(task.id)),
@@ -59,14 +62,14 @@ export function TaskRow({
     <li
       ref={rowRef}
       style={style}
-      className="group flex flex-wrap items-start gap-x-2 sm:gap-x-3 gap-y-2 py-3"
+      className="task-row group flex flex-wrap items-start gap-x-2 sm:gap-x-3 gap-y-2 py-3"
       data-task-id={task.id}
     >
       <button
         type="button"
         aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`}
         disabled={disabled}
-        className={`h-6 w-6 mt-1 shrink-0 rounded-full border-2 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 ${task.completed ? "bg-primary border-primary text-white" : "border-[#aabdcf] hover:bg-accent"}`}
+        className="task-complete h-6 w-6 mt-1 shrink-0 rounded-full flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
         onClick={() =>
           change("/api/v1/tasks", "PATCH", {
             ...body,
@@ -74,9 +77,14 @@ export function TaskRow({
           })
         }
       >
-        {task.completed && <Check size={15} />}
+        <span
+          className={`h-6 w-6 shrink-0 rounded-full border-2 flex items-center justify-center ${task.completed ? "bg-primary border-primary text-white" : "border-[#aabdcf] hover:bg-accent"}`}
+        >
+          {task.completed && <Check size={15} />}
+        </span>
       </button>
       <InlineName
+        className="task-name"
         afterName={<DueDateBadge task={task} today={today} />}
         value={task.title}
         label="Task name"
@@ -118,14 +126,25 @@ export function TaskRow({
           ) : undefined
         }
         renderActions={({ edit, editing, trigger }) => (
-          <div className="flex shrink-0 items-center task-actions">
+          <div
+            className="flex shrink-0 items-center task-actions"
+            data-editing={editing}
+            data-expanded={moreOpen}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && moreOpen) {
+                e.preventDefault();
+                setMoreOpen(false);
+                moreTrigger.current?.focus();
+              }
+            }}
+          >
             {!list.archived && (
               <Button
                 ref={trigger}
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 text-slate-400 hover:text-primary"
+                className="task-edit h-8 w-8 text-slate-400 hover:text-primary"
                 title="Edit task"
                 aria-label={`Edit ${task.title}`}
                 disabled={busy || editing}
@@ -137,12 +156,12 @@ export function TaskRow({
                 <Pencil size={16} />
               </Button>
             )}
-            {!task.parentTaskId && (!list.archived || children.length > 0) && (
+            {!task.parentTaskId && children.length > 0 && (
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`h-8 px-1.5 gap-1 ${children.length ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                className={`task-subtasks ${children.length ? "" : "task-secondary"} h-8 px-1.5 gap-1 ${children.length ? "text-primary" : "text-slate-400 hover:text-primary"}`}
                 aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
                 title="Little steps, big tail wags · Subtasks"
                 aria-expanded={subtasksOpen}
@@ -151,6 +170,9 @@ export function TaskRow({
                 onClick={() => setExpanded(!subtasksOpen)}
               >
                 <ListTree size={16} />
+                {!children.length && (
+                  <span className="task-action-label">Subtasks</span>
+                )}
                 {children.length > 0 && (
                   <span className="text-xs tabular-nums">
                     {children.filter((t) => t.completed).length}/
@@ -160,37 +182,11 @@ export function TaskRow({
               </Button>
             )}
             <Button
-              ref={dateTrigger}
-              type="button"
-              size="icon"
-              variant="ghost"
-              className={`h-8 w-8 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-slate-400 hover:text-primary"}`}
-              title="Due date"
-              aria-label={`${dateOpen ? "Hide" : task.dueDate ? "Change" : "Set"} due date for ${task.title}`}
-              aria-expanded={dateOpen}
-              aria-controls={dateOpen ? `due-${task.id}` : undefined}
-              disabled={
-                busy ||
-                editing ||
-                (list.archived && !task.dueDate && !dueDrafts.has(task.id))
-              }
-              onClick={() => {
-                if (!dateOpen && !dueDrafts.has(task.id))
-                  dueDrafts.set(task.id, {
-                    value: task.dueDate ?? "",
-                    base: task.dueDate ?? null,
-                  });
-                setDateOpen(!dateOpen);
-              }}
-            >
-              <CalendarDays size={16} />
-            </Button>
-            <Button
               ref={notesTrigger}
               type="button"
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 ${notesOpen ? "bg-accent text-primary" : task.content ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+              className={`task-notes-action h-8 w-8 ${notesOpen ? "bg-accent text-primary" : task.content ? "text-primary" : "text-slate-400 hover:text-primary"}`}
               title={notesOpen ? "Hide notes" : "Notes"}
               aria-label={`${notesOpen ? "Hide" : task.content ? "Edit" : "Add"} notes for ${task.title}`}
               aria-expanded={notesOpen}
@@ -200,30 +196,99 @@ export function TaskRow({
             >
               <FileText size={16} />
             </Button>
-            {!list.archived && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              ref={moreTrigger}
+              className="task-more"
+              aria-label={`More actions for ${task.title}`}
+              aria-expanded={moreOpen}
+              aria-controls={`task-more-${task.id}`}
+              disabled={busy || editing}
+              onClick={() => setMoreOpen((open) => !open)}
+            >
+              <MoreHorizontal size={18} />
+            </Button>
+            {dragHandle}
+            <div id={`task-more-${task.id}`} className="task-secondary-actions">
+              {!task.parentTaskId &&
+                !list.archived &&
+                children.length === 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className={`task-subtasks ${children.length ? "" : "task-secondary"} h-8 px-1.5 gap-1 ${children.length ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                    aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
+                    title="Little steps, big tail wags · Subtasks"
+                    aria-expanded={subtasksOpen}
+                    aria-controls={
+                      subtasksOpen ? `subtasks-${task.id}` : undefined
+                    }
+                    disabled={busy || editing}
+                    onClick={() => setExpanded(!subtasksOpen)}
+                  >
+                    <ListTree size={16} />
+                    <span className="task-action-label">Subtasks</span>
+                  </Button>
+                )}
               <Button
+                ref={dateTrigger}
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 text-slate-400 hover:text-red-700"
-                title="Delete task"
-                aria-label={`Delete ${task.title}`}
-                disabled={busy || editing}
-                onClick={() =>
-                  children.length
-                    ? setConfirmDelete(true)
-                    : change("/api/v1/tasks", "DELETE", body)
+                className={`task-date task-secondary h-8 w-8 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                title="Due date"
+                aria-label={`${dateOpen ? "Hide" : task.dueDate ? "Change" : "Set"} due date for ${task.title}`}
+                aria-expanded={dateOpen}
+                aria-controls={dateOpen ? `due-${task.id}` : undefined}
+                disabled={
+                  busy ||
+                  editing ||
+                  (list.archived && !task.dueDate && !dueDrafts.has(task.id))
                 }
+                onClick={() => {
+                  if (!dateOpen && !dueDrafts.has(task.id))
+                    dueDrafts.set(task.id, {
+                      value: task.dueDate ?? "",
+                      base: task.dueDate ?? null,
+                    });
+                  setDateOpen(!dateOpen);
+                  setMoreOpen(false);
+                }}
               >
-                <Trash2 size={16} />
+                <CalendarDays size={16} />
+                <span className="task-action-label">Date</span>
               </Button>
-            )}
-            {dragHandle}
+              {!list.archived && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="task-delete task-secondary h-8 w-8 text-slate-400 hover:text-red-700"
+                  title="Delete task"
+                  aria-label={`Delete ${task.title}`}
+                  disabled={busy || editing}
+                  onClick={() =>
+                    children.length
+                      ? setConfirmDelete(true)
+                      : change("/api/v1/tasks", "DELETE", body)
+                  }
+                >
+                  <Trash2 size={16} />
+                  <span className="task-action-label">Delete</span>
+                </Button>
+              )}
+            </div>
           </div>
         )}
       />
       {dateOpen && (
-        <div id={`due-${task.id}`} className="basis-full min-w-0 pl-8 sm:pl-9">
+        <div
+          id={`due-${task.id}`}
+          className="task-panel basis-full min-w-0 pl-8 sm:pl-9"
+        >
           <TaskDueDate
             task={task}
             list={list}
@@ -232,13 +297,20 @@ export function TaskRow({
             drafts={dueDrafts}
             onClose={() => {
               setDateOpen(false);
-              requestAnimationFrame(() => dateTrigger.current?.focus());
+              requestAnimationFrame(() => {
+                const target = dateTrigger.current;
+                if (target?.getClientRects().length) target.focus();
+                else moreTrigger.current?.focus();
+              });
             }}
           />
         </div>
       )}
       {confirmDelete && children.length > 0 && !list.archived && (
-        <div className="basis-full min-w-0 pl-8 grid gap-2" role="alert">
+        <div
+          className="task-panel basis-full min-w-0 pl-8 grid gap-2"
+          role="alert"
+        >
           <p className="text-sm text-slate-600">
             Paws before deleting: this removes “{task.title}” and all{" "}
             {children.length} subtasks for everyone. This cannot be undone.
@@ -265,7 +337,7 @@ export function TaskRow({
       {!task.parentTaskId && subtasksOpen && (
         <div
           id={`subtasks-${task.id}`}
-          className="basis-full min-w-0 pl-4 sm:pl-8"
+          className="task-subtask-panel basis-full min-w-0 pl-4 sm:pl-8"
         >
           <Subtasks
             parent={task}
@@ -282,7 +354,7 @@ export function TaskRow({
         </div>
       )}
       {notesOpen && (
-        <div className="basis-full min-w-0 pl-8 sm:pl-9">
+        <div className="task-panel basis-full min-w-0 pl-8 sm:pl-9">
           <TaskNotes
             userId={userId}
             task={task}
@@ -337,7 +409,7 @@ function Subtasks({
       aria-label={`Subtasks for ${parent.title}`}
       className="border-l-2 border-primary/20 pl-3 sm:pl-4"
     >
-      <p className="text-xs text-slate-500 mb-1">
+      <p className="hidden sm:block text-xs text-slate-500 mb-1">
         Little steps, big tail wags. {items.filter((t) => t.completed).length}{" "}
         of {items.length} done.
       </p>

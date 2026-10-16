@@ -75,6 +75,8 @@ Accepted members share task changes and task order. Only the owner can manage ac
 
 ### Web experience
 
+The responsive [mobile website layout](mobile-web-ui.md) keeps names and editors readable, collapses list navigation on phones, and moves secondary task actions behind More while retaining direct Edit/Notes controls.
+
 - A sidebar contains the user's accessible lists and a create-list action.
 - The selected list shows its title, active tasks, and completed tasks.
 - Adding a task is a short, keyboard-friendly interaction.

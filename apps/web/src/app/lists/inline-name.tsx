@@ -23,6 +23,7 @@ export function InlineName({
   additionalFields,
   afterName,
   additionalDirty = false,
+  className = "",
 }: {
   value: string;
   label: string;
@@ -35,6 +36,7 @@ export function InlineName({
   additionalFields?: ReactNode;
   afterName?: ReactNode;
   additionalDirty?: boolean;
+  className?: string;
   renderActions?: (props: {
     edit: () => void;
     editing: boolean;
@@ -113,7 +115,7 @@ export function InlineName({
   const Heading = heading;
   return (
     <>
-      <div className="min-w-0 flex-1">
+      <div className={`min-w-0 flex-1 ${className}`}>
         {editing && editable ? (
           <form
             noValidate
