@@ -347,13 +347,14 @@ export function TaskGroups({
           ) : (
             <Button
               variant="ghost"
-              size="icon"
+              className="px-2 text-slate-600"
               aria-label="Add section"
               title="Add section"
               disabled={busy || list.sections.length >= 50}
               onClick={() => setAddingSection(true)}
             >
-              <ListPlus size={18} />
+              <ListPlus size={18} aria-hidden="true" />
+              <span>Add section</span>
             </Button>
           )}
         </div>
