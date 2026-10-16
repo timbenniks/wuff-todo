@@ -1,6 +1,17 @@
 import { liveQueryDefinition } from "./live-query";
 import { createHash, randomUUID } from "node:crypto";
-import { and, asc, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  exists,
+  gt,
+  isNull,
+  isNotNull,
+  inArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import {
   database,
   invitations,
@@ -11,6 +22,7 @@ import {
   users,
   sections,
   listPreferences,
+  attachments,
 } from "@wuff/db";
 import {
   Actor,
@@ -34,7 +46,21 @@ import {
   renameSectionSchema,
   sectionMutationSchema,
   reorderSectionsSchema,
+  taskImageUploadSchema,
+  taskImageCountLimit,
+  taskImagePath,
+  idSchema,
 } from "@wuff/contracts";
+
+import { taskImageReferences } from "./task-images";
+import {
+  normalizeTaskImage,
+  storeTaskImage,
+  loadTaskImage,
+  eraseTaskImage,
+  imageStorageConfigured,
+} from "./image-storage";
+export { decodeTaskImage } from "./image-storage";
 
 type Db = ReturnType<typeof database>["db"];
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -75,7 +101,24 @@ async function accessible(tx: Tx | Db, actor: Actor, id: string, lock = false) {
 }
 async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
   const list = await accessible(tx, actor, listId);
-  return {
+  const images = await tx
+    .select({
+      id: attachments.id,
+      taskId: attachments.taskId,
+      width: attachments.width,
+      height: attachments.height,
+      bytes: attachments.bytes,
+    })
+    .from(attachments)
+    .where(
+      and(
+        eq(attachments.listId, listId),
+        eq(attachments.attached, true),
+        eq(attachments.ready, true),
+        isNull(attachments.retiredAt),
+      ),
+    );
+  const snapshot = {
     ...list,
     sections: await tx
       .select({
@@ -98,6 +141,15 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
       .from(tasks)
       .where(eq(tasks.listId, listId))
       .orderBy(asc(tasks.position), asc(tasks.id)),
+  };
+  return {
+    ...snapshot,
+    tasks: snapshot.tasks.map((task) => ({
+      ...task,
+      images: images
+        .filter((image) => image.taskId === task.id)
+        .map(({ taskId, ...image }) => image),
+    })),
   };
 }
 async function mutate(
@@ -459,6 +511,12 @@ export async function createTask(actor: Actor, data: unknown) {
         .where(eq(tasks.listId, input.listId));
       if (existing.length >= 1000)
         fail("limit_reached", "A list can contain up to 1,000 tasks.", 400);
+      if (taskImageReferences(input.content ?? "").length)
+        fail(
+          "invalid_attachment",
+          "Create the task before adding images.",
+          400,
+        );
       await tx.insert(tasks).values({
         listId: input.listId,
         title: input.title,
@@ -485,6 +543,8 @@ export async function updateTask(actor: Actor, data: unknown) {
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
       if (!task) fail("not_found", "Task not found.", 404);
       await validSection(tx, input.listId, input.sectionId);
+      if (input.content !== undefined)
+        await reconcileTaskImages(tx, actor, task.id, input.content);
       let position = task.position;
       if (input.completed === false && task.completed) {
         const rows = await tx
@@ -859,4 +919,248 @@ export async function getLiveQuery(actor: Actor) {
   requireScope(actor, "lists:read");
   await admission(database().db, actor);
   return liveQueryDefinition(actor.id);
+}
+
+async function reconcileTaskImages(
+  tx: Tx,
+  actor: Actor,
+  taskId: string,
+  content: string,
+) {
+  const ids = taskImageReferences(content);
+  if (ids.length > taskImageCountLimit)
+    fail("limit_reached", "A task can have up to 20 images.", 400);
+  // The caller holds the list lock; row locks serialize this with cleanup.
+  const rows = await tx
+    .select()
+    .from(attachments)
+    .where(eq(attachments.taskId, taskId))
+    .for("update");
+  for (const id of ids) {
+    const row = rows.find((row) => row.id === id);
+    if (
+      !row ||
+      !row.ready ||
+      row.retiredAt ||
+      (!row.attached &&
+        (row.uploaderId !== actor.id ||
+          row.createdAt.getTime() <= Date.now() - 86_400_000))
+    )
+      fail(
+        "invalid_attachment",
+        "An image is unavailable. Remove it from your draft or upload it again.",
+        409,
+      );
+  }
+  for (const row of rows) {
+    if (ids.includes(row.id))
+      await tx
+        .update(attachments)
+        .set({ attached: true })
+        .where(eq(attachments.id, row.id));
+    else if (row.attached && !row.retiredAt)
+      await tx
+        .update(attachments)
+        .set({ retiredAt: new Date() })
+        .where(eq(attachments.id, row.id));
+  }
+}
+async function currentImage(
+  tx: Tx | Db,
+  actor: Actor,
+  id: string,
+  write = false,
+) {
+  const [row] = await tx
+    .select()
+    .from(attachments)
+    .where(eq(attachments.id, id));
+  if (!row?.listId || !row.taskId || row.retiredAt)
+    return fail("not_found", "Image not found.", 404);
+  const list = await accessible(tx, actor, row.listId, write);
+  if (write && list.archived)
+    fail("list_archived", "Restore this list before adding images.", 409);
+  const [task] = await tx
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(and(eq(tasks.id, row.taskId), eq(tasks.listId, list.id)));
+  if (
+    !task ||
+    (!row.attached &&
+      (row.uploaderId !== actor.id ||
+        row.createdAt.getTime() <= Date.now() - 86_400_000))
+  )
+    return fail("not_found", "Image not found.", 404);
+  return row;
+}
+export async function uploadTaskImage(
+  actor: Actor,
+  data: unknown,
+  bytes: Uint8Array,
+) {
+  requireScope(actor, "tasks:write");
+  const input = taskImageUploadSchema.parse(data);
+  // Reject unauthorized callers before decoding/re-encoding or storing bytes.
+  await accessible(database().db, actor, input.listId);
+  if (!imageStorageConfigured())
+    fail(
+      "images_unavailable",
+      "Image uploads aren’t available yet. Your notes are safe.",
+      503,
+    );
+  const image = await normalizeTaskImage(bytes);
+  const result = await mutate(
+    actor,
+    {
+      ...input,
+      kind: "upload_task_image",
+      digest: image.digest,
+    } as typeof input,
+    async (tx) => {
+      const list = await accessible(tx, actor, input.listId, true);
+      if (list.archived)
+        fail("list_archived", "Restore this list before adding images.", 409);
+      if (list.version !== input.version)
+        fail("conflict", "This list changed. Refresh it and try again.", 409);
+      const [task] = await tx
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, list.id)));
+      if (!task) return fail("not_found", "Task not found.", 404);
+      const existing = await tx
+        .select({ id: attachments.id })
+        .from(attachments)
+        .where(
+          and(
+            eq(attachments.taskId, task.id),
+            isNull(attachments.retiredAt),
+            or(
+              eq(attachments.attached, true),
+              sql`${attachments.createdAt} > now() - interval '24 hours'`,
+            ),
+          ),
+        );
+      if (existing.length >= taskImageCountLimit)
+        fail(
+          "limit_reached",
+          "A task can have up to 20 saved or draft images. Remove saved images or try again after abandoned drafts expire.",
+          400,
+        );
+      const id = randomUUID();
+      await tx.insert(attachments).values({
+        id,
+        listId: list.id,
+        taskId: task.id,
+        uploaderId: actor.id,
+        digest: image.digest,
+        pathname: `task-images/${id}/${image.digest}.webp`,
+        bytes: image.bytes,
+        width: image.width,
+        height: image.height,
+      });
+      return { id };
+    },
+  );
+  // A receipt never restores former membership or a deleted/expired attachment.
+  const row = await database().db.transaction((tx) =>
+    currentImage(tx, actor, result.id, true),
+  );
+  if (!row.ready) {
+    await storeTaskImage(row.pathname, image.data);
+    await database().db.transaction(async (tx) => {
+      await currentImage(tx, actor, row.id, true);
+      const [updated] = await tx
+        .update(attachments)
+        .set({ ready: true })
+        .where(and(eq(attachments.id, row.id), isNull(attachments.retiredAt)))
+        .returning({ id: attachments.id });
+      if (!updated) fail("not_found", "Image not found.", 404);
+    });
+  }
+  return {
+    id: row.id,
+    width: row.width,
+    height: row.height,
+    bytes: row.bytes,
+    markdown: `![Image](${taskImagePath(row.id)})`,
+  };
+}
+export async function readTaskImage(actor: Actor, imageId: string) {
+  requireScope(actor, "lists:read");
+  const row = await currentImage(database().db, actor, idSchema.parse(imageId));
+  if (!row.ready) return fail("not_found", "Image not found.", 404);
+  const stream = await loadTaskImage(row.pathname);
+  // Recheck after storage I/O; never redirect to a Blob URL or issue a read token.
+  await currentImage(database().db, actor, row.id);
+  return {
+    stream,
+    image: {
+      id: row.id,
+      width: row.width,
+      height: row.height,
+      bytes: row.bytes,
+    },
+  };
+}
+export async function cleanupTaskImages() {
+  if (!imageStorageConfigured())
+    fail("images_unavailable", "Image storage is unavailable.", 503);
+  const db = database().db;
+  const rows = await db.transaction(async (tx) => {
+    const candidates = await tx
+      .select()
+      .from(attachments)
+      .where(
+        or(
+          and(
+            eq(attachments.attached, false),
+            sql`${attachments.createdAt} <= now() - interval '24 hours'`,
+          ),
+          and(
+            or(
+              isNull(attachments.taskId),
+              isNull(attachments.listId),
+              isNotNull(attachments.retiredAt),
+            ),
+            sql`${attachments.createdAt} <= now() - interval '1 hour'`,
+          ),
+        ),
+      )
+      .limit(100)
+      .for("update", { skipLocked: true });
+    if (candidates.length)
+      await tx
+        .update(attachments)
+        .set({ retiredAt: new Date() })
+        .where(
+          and(
+            inArray(
+              attachments.id,
+              candidates.map((row) => row.id),
+            ),
+            isNull(attachments.retiredAt),
+          ),
+        );
+    return candidates;
+  });
+  let removed = 0,
+    failed = 0;
+  for (const row of rows) {
+    try {
+      await eraseTaskImage(row.pathname);
+      // Keep a tombstone for an hour, then delete the object again before
+      // dropping metadata. A delayed upload cannot leave an untracked orphan.
+      if (row.retiredAt && row.retiredAt.getTime() <= Date.now() - 3_600_000) {
+        await db
+          .delete(attachments)
+          .where(
+            and(eq(attachments.id, row.id), isNotNull(attachments.retiredAt)),
+          );
+      }
+      removed++;
+    } catch {
+      failed++;
+    }
+  }
+  return { removed, failed };
 }

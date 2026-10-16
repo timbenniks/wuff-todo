@@ -29,6 +29,13 @@
       "when": 1792148355352,
       "tag": "0003_strange_dark_phoenix",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792153172528,
+      "tag": "0004_thick_harrier",
+      "breakpoints": true
     }
   ]
 }

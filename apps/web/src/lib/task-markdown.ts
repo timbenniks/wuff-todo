@@ -1,3 +1,4 @@
+import { taskImageId, taskImagePath } from "@wuff/contracts";
 import MarkdownIt from "markdown-it";
 
 // One renderer for the website and the sandboxed MCP App. Keep HTML disabled;
@@ -9,7 +10,7 @@ export function safeNoteLink(value: string) {
   );
 }
 const markdown = new MarkdownIt({ html: false, linkify: false, breaks: false });
-markdown.validateLink = safeNoteLink;
+markdown.validateLink = (value) => safeNoteLink(value) || !!taskImageId(value);
 // Render Markdown checklists as decorative checked/unchecked boxes. These are
 // note content, not Wuff subtasks, and never send completion mutations.
 markdown.core.ruler.after("inline", "note_checklists", (state) => {
@@ -41,10 +42,26 @@ markdown.renderer.rules.link_open = (tokens, index, options, env, self) => {
     ? defaultLink(tokens, index, options, env, self)
     : self.renderToken(tokens, index, options);
 };
-markdown.renderer.rules.image = (tokens, index) =>
-  `<span class="note-image">[Image: ${markdown.utils.escapeHtml(tokens[index].content || "image")} — uploads coming later]</span>`;
-export function renderTaskMarkdown(content: string) {
-  return markdown.render(content);
+type ImageEnvironment = { imageSource?: (id: string) => string | null };
+markdown.renderer.rules.image = (tokens, index, _options, env) => {
+  const token = tokens[index],
+    id = taskImageId(String(token.attrGet("src") ?? "")),
+    alt = markdown.utils.escapeHtml(token.content || "Task image");
+  if (!id)
+    return `<span class="note-image">[Image: ${alt} — external image not loaded]</span>`;
+  const imageEnv = env as ImageEnvironment | undefined;
+  const src = imageEnv?.imageSource
+    ? imageEnv.imageSource(id)
+    : taskImagePath(id);
+  return src
+    ? `<img src="${markdown.utils.escapeHtml(src)}" alt="${alt}" loading="lazy" decoding="async">`
+    : `<span class="note-image" data-task-image="${id}" aria-label="${alt}" role="status">Fetching image…</span>`;
+};
+export function renderTaskMarkdown(
+  content: string,
+  env: ImageEnvironment = {},
+) {
+  return markdown.render(content, env);
 }
 
 // Keep raw HTML, image syntax and extended blocks out of Tiptap's HTML import
@@ -54,8 +71,9 @@ export function needsPreservedNote(content: string) {
   const unsafe = (tokens: ReturnType<typeof inspection.parse>): boolean =>
     tokens.some(
       (token) =>
-        ["html_block", "html_inline", "image"].includes(token.type) ||
-        (token.type === "inline" && /!\[/.test(token.content)) ||
+        ["html_block", "html_inline"].includes(token.type) ||
+        (token.type === "image" &&
+          !taskImageId(String(token.attrGet("src") ?? ""))) ||
         (token.children ? unsafe(token.children) : false),
     );
   return (

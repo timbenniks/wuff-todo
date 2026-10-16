@@ -78,6 +78,34 @@ export const updateTaskSchema = listMutationSchema
     "Provide a task change",
   );
 export const deleteTaskSchema = listMutationSchema.extend({ taskId: idSchema });
+// Keep uploads below Vercel's function request limit, including MCP base64.
+export const taskImageLimit = 3 * 1024 * 1024;
+export const taskImageCountLimit = 20;
+export const taskImageUploadSchema = listMutationSchema.extend({
+  taskId: idSchema,
+});
+export const taskImageBase64Schema = taskImageUploadSchema.extend({
+  imageBase64: z
+    .string()
+    .min(4)
+    .max(4 * Math.ceil(taskImageLimit / 3)),
+});
+export type TaskImage = {
+  id: string;
+  width: number;
+  height: number;
+  bytes: number;
+};
+export function taskImagePath(id: string) {
+  return `/api/v1/attachments/${id}`;
+}
+export function taskImageId(value: string): string | null {
+  return (
+    /^\/api\/v1\/attachments\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.exec(
+      value,
+    )?.[1] ?? null
+  );
+}
 export const reorderTasksSchema = listMutationSchema.extend({
   taskIds: z.array(idSchema).max(1000),
 });
@@ -123,6 +151,7 @@ export type Task = {
   completed: boolean;
   position: number;
   sectionId: string | null;
+  images?: TaskImage[];
 };
 export type ListSection = { id: string; title: string; position: number };
 export type ListOrder = { version: number; listIds: string[] };

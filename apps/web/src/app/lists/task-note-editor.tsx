@@ -17,6 +17,8 @@ import {
   Redo2,
   Link2,
   Unlink,
+  ImagePlus,
+  Trash2,
 } from "lucide-react";
 import {
   needsPreservedNote,
@@ -25,17 +27,42 @@ import {
 } from "@/lib/task-markdown";
 import { PreservedNote, preservedNoteDocument } from "@/lib/preserved-note";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { TaskImageNode } from "@/lib/task-image-node";
+import { useEffect, useState, useRef } from "react";
 
 export default function TaskNoteEditor({
   value,
   onChange,
   disabled,
+  onUpload,
 }: {
   value: string;
   onChange: (content: string) => void;
   disabled: boolean;
+  onUpload: (file: File) => Promise<string>;
 }) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef(onUpload);
+  uploadRef.current = onUpload;
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
+  async function insertImage(file: File) {
+    if (disabledRef.current || !editor) return;
+    try {
+      const src = await uploadRef.current(file);
+      if (!editor.isDestroyed)
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "taskImage",
+            attrs: { src, alt: "Task image" },
+          })
+          .run();
+    } catch {
+      /* The parent keeps the error beside Save. */
+    }
+  }
   const [linking, setLinking] = useState(false),
     [url, setUrl] = useState(""),
     [error, setError] = useState(""),
@@ -56,12 +83,31 @@ export default function TaskNoteEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       PreservedNote,
+      TaskImageNode,
       Markdown,
     ],
     content: needsPreservedNote(value) ? preservedNoteDocument(value) : value,
     contentType: needsPreservedNote(value) ? "json" : "markdown",
     editable: !disabled,
     editorProps: {
+      handlePaste: (_view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (!files.length) return false;
+        event.preventDefault();
+        if (files[0]) void insertImage(files[0]);
+        return true;
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved || !event.dataTransfer?.files.length) return false;
+        event.preventDefault();
+        const position = view.posAtCoords({
+          left: event.clientX,
+          top: event.clientY,
+        });
+        if (position) editor?.commands.setTextSelection(position.pos);
+        void insertImage(event.dataTransfer.files[0]);
+        return true;
+      },
       attributes: {
         class: "task-prose task-editor",
         role: "textbox",
@@ -91,6 +137,8 @@ export default function TaskNoteEditor({
     selector: ({ editor }) =>
       editor
         ? {
+            image: editor.isActive("taskImage"),
+            alt: editor.getAttributes("taskImage").alt as string | undefined,
             bold: editor.isActive("bold"),
             italic: editor.isActive("italic"),
             strike: editor.isActive("strike"),
@@ -197,6 +245,30 @@ export default function TaskNoteEditor({
             <Icon size={16} />
           </Button>
         ))}
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          aria-label="Choose task image"
+          disabled={disabled}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void insertImage(file);
+          }}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          title="Add image"
+          aria-label="Add image"
+          disabled={disabled}
+          onClick={() => fileInput.current?.click()}
+        >
+          <ImagePlus size={16} />
+        </Button>
         <Button
           type="button"
           variant="ghost"
@@ -231,6 +303,32 @@ export default function TaskNoteEditor({
           <Redo2 size={16} />
         </Button>
       </div>
+      {state?.image && (
+        <div className="flex flex-wrap items-end gap-2 border-b border-border p-3">
+          <label className="grid flex-1 min-w-0 gap-1 text-xs font-semibold text-slate-500">
+            Image description
+            <input
+              value={state.alt ?? ""}
+              maxLength={300}
+              disabled={disabled}
+              onChange={(event) =>
+                editor.commands.updateAttributes("taskImage", {
+                  alt: event.target.value,
+                })
+              }
+            />
+          </label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            onClick={() => editor.chain().focus().deleteSelection().run()}
+          >
+            <Trash2 size={14} /> Remove image
+          </Button>
+        </div>
+      )}
       {linking && (
         <div className="border-b border-border p-3 grid gap-2">
           <label className="text-xs font-semibold">

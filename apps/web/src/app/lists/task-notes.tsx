@@ -1,7 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { taskContentLimit, type Task, type TodoList } from "@wuff/contracts";
+import {
+  taskContentLimit,
+  taskImageLimit,
+  taskImagePath,
+  type Task,
+  type TodoList,
+} from "@wuff/contracts";
 import { TaskMarkdown } from "@/components/task-markdown";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
@@ -16,6 +22,7 @@ const Editor = dynamic(() => import("./task-note-editor"), {
 export type NoteDraft = { draft: string; original: string };
 export function TaskNotes({
   task,
+  userId,
   list,
   busy,
   change,
@@ -23,6 +30,7 @@ export function TaskNotes({
   onClose,
 }: {
   task: Task;
+  userId: string;
   list: TodoList;
   busy: boolean;
   change: ListChange;
@@ -32,21 +40,88 @@ export function TaskNotes({
   const retained = drafts.get(task.id);
   const [draft, setDraft] = useState(retained?.draft ?? task.content),
     [original] = useState(retained?.original ?? task.content),
+    [uploading, setUploading] = useState(false),
     [saving, setSaving] = useState(false),
     [error, setError] = useState("");
   const pending = useRef(false),
     changed = task.content !== original,
-    disabled = busy || saving || list.archived,
+    disabled = busy || saving || uploading || list.archived,
     tooLong = draft.length > taskContentLimit;
   useEffect(() => {
     if (!list.archived || retained) drafts.set(task.id, { draft, original });
   }, [drafts, task.id, draft, original, list.archived, retained]);
+  const uploadingRef = useRef(false);
+  const uploadRetry = useRef<
+    { digest: string; params: URLSearchParams } | undefined
+  >(undefined);
+  const currentList = useRef(list);
+  currentList.current = list;
+  async function upload(file: File) {
+    if (disabled || uploadingRef.current) throw new Error("Upload busy");
+    if (file.size > taskImageLimit) {
+      setError("That’s a big pup! Choose an image up to 3 MiB.");
+      throw new Error("Image too large");
+    }
+    uploadingRef.current = true;
+    setUploading(true);
+    setError("");
+    try {
+      const input = currentList.current;
+      const digest = Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
+        ),
+      )
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+      const params =
+        uploadRetry.current?.digest === digest
+          ? uploadRetry.current.params
+          : new URLSearchParams({
+              listId: input.id,
+              taskId: task.id,
+              version: String(input.version),
+              operationId: crypto.randomUUID(),
+            });
+      uploadRetry.current = { digest, params };
+      const response = await fetch(`/api/v1/attachments?${params}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+          "X-Wuff-User": userId,
+        },
+        body: file,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status < 500) uploadRetry.current = undefined;
+        if (data.error?.code === "account_changed")
+          window.location.replace("/lists");
+        throw new Error(
+          data.error?.message ??
+            "Ruff patch! Your image wasn’t uploaded. Try again.",
+        );
+      }
+      uploadRetry.current = undefined;
+      return taskImagePath(data.image.id);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Ruff patch! Your image wasn’t uploaded. Try again.",
+      );
+      throw error;
+    } finally {
+      uploadingRef.current = false;
+      setUploading(false);
+    }
+  }
   function close() {
     drafts.delete(task.id);
     onClose();
   }
   async function save() {
-    if (disabled || tooLong || pending.current) return;
+    if (disabled || tooLong || pending.current || uploadingRef.current) return;
     if (draft === task.content) {
       close();
       return;
@@ -83,7 +158,7 @@ export function TaskNotes({
       className="task-notes w-full min-w-0 mt-1 rounded-xl border border-border bg-white overflow-hidden"
       onKeyDown={(e) => {
         if (e.nativeEvent.isComposing) return;
-        if (e.key === "Escape" && !busy && !saving) {
+        if (e.key === "Escape" && !busy && !saving && !uploading) {
           e.preventDefault();
           e.stopPropagation();
           close();
@@ -99,7 +174,17 @@ export function TaskNotes({
           <TaskMarkdown content={task.content} />
         </div>
       ) : (
-        <Editor value={draft} onChange={setDraft} disabled={disabled} />
+        <Editor
+          value={draft}
+          onChange={setDraft}
+          disabled={disabled}
+          onUpload={upload}
+        />
+      )}
+      {uploading && (
+        <p role="status" className="px-4 py-2 text-sm text-slate-500">
+          Fetching your photo, paws a moment…
+        </p>
       )}
       {changed && (
         <div
@@ -148,7 +233,7 @@ export function TaskNotes({
           type="button"
           variant="ghost"
           size="sm"
-          disabled={busy || saving}
+          disabled={busy || saving || uploading}
           onClick={close}
         >
           {list.archived && !retained ? "Close" : "Cancel"}

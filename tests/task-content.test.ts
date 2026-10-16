@@ -65,7 +65,7 @@ test("shared note renderer supports formatting, tables, code and noninteractive 
     assert.ok(html.includes(expected), expected);
   assert.ok(!html.includes("<input"), "Checklist markers do not mutate tasks");
 });
-test("notes never execute HTML, load images, or emit dangerous/relative links", () => {
+test("notes never execute HTML, load external images, or emit dangerous links", () => {
   for (const content of [
     "<script>alert(1)</script>",
     "<img src=x onerror=alert(1)>",
@@ -92,7 +92,7 @@ test("notes never execute HTML, load images, or emit dangerous/relative links", 
   assert.equal(safeNoteLink("https://example.com\u0000test"), false);
   assert.ok(
     renderTaskMarkdown("![Photo](https://example.com/photo.jpg)").includes(
-      "uploads coming later",
+      "external image not loaded",
     ),
   );
 });

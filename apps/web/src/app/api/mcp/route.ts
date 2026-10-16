@@ -1,6 +1,9 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { createMcpServer } from "@/lib/mcp";
 import { bearerActor, unauthorizedMcp } from "@/lib/oauth";
+import { boundedBody } from "@/lib/bounded-body";
+import { failure } from "@/lib/http";
+import { taskImageLimit } from "@wuff/contracts";
 import { appOrigin } from "@/lib/config";
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,6 +19,15 @@ async function handle(request: Request) {
   }
   if (request.method !== "POST")
     return new Response(null, { status: 405, headers: { Allow: "POST" } });
+  try {
+    const bytes = await boundedBody(
+      request,
+      4 * Math.ceil(taskImageLimit / 3) + 16_384,
+    );
+    request = new Request(request, { body: bytes });
+  } catch (error) {
+    return failure(error);
+  }
   const server = createMcpServer(actor);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,

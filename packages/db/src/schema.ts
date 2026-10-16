@@ -79,6 +79,36 @@ export const tasks = pgTable("wuff_tasks", {
   position: integer("position").notNull(),
   createdAt: time("created_at"),
 });
+// SET NULL preserves storage cleanup records when a task/list is deleted.
+// Only a ready, unretired row joined to a current parent can authorize a read.
+export const attachments = pgTable(
+  "wuff_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id").references(() => lists.id, {
+      onDelete: "set null",
+    }),
+    taskId: uuid("task_id").references(() => tasks.id, {
+      onDelete: "set null",
+    }),
+    uploaderId: text("uploader_id")
+      .notNull()
+      .references(() => users.id),
+    digest: text("digest").notNull(),
+    pathname: text("pathname").notNull().unique(),
+    bytes: integer("bytes").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    ready: boolean("ready").notNull().default(false),
+    attached: boolean("attached").notNull().default(false),
+    retiredAt: timestamp("retired_at", { withTimezone: true }),
+    createdAt: time("created_at"),
+  },
+  (t) => [
+    index("wuff_attachments_task_idx").on(t.taskId),
+    index("wuff_attachments_cleanup_idx").on(t.createdAt),
+  ],
+);
 export const receipts = pgTable(
   "wuff_mutation_receipts",
   {

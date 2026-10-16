@@ -29,6 +29,7 @@ import {
   renameSectionSchema,
   sectionMutationSchema,
   reorderSectionsSchema,
+  taskImageBase64Schema,
 } from "@wuff/contracts";
 import * as domain from "@wuff/domain";
 
@@ -210,7 +211,7 @@ export function createMcpServer(actor: Actor) {
     ],
     [
       "create_task",
-      "Add a task to an active list. Optional content is Markdown task notes (up to 16,000 characters); HTML is displayed as text and images are not loaded. Optional sectionId must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
+      "Add a task to an active list. Optional content is Markdown task notes (up to 16,000 characters); HTML is displayed as text; only Wuff-uploaded private images are displayed. Optional sectionId must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
       createTaskSchema,
       domain.createTask,
       write,
@@ -329,6 +330,55 @@ export function createMcpServer(actor: Actor) {
       async (data: unknown) =>
         result(async () => ({ sharing: await action(actor, data) })),
     );
+  server.registerTool(
+    "upload_task_image",
+    {
+      description:
+        "Upload a private task-note image (still PNG/JPEG/WebP, at most 3 MiB, standard base64 without a data URL prefix). Read the list version first and use a fresh operationId for safe retries. Returns a Markdown image reference: insert it into this task's content with update_task to save it. Draft uploads expire after 24 hours. Never change existing notes unless asked.",
+      inputSchema: taskImageBase64Schema,
+      annotations: write,
+    },
+    async ({ imageBase64, ...input }) =>
+      result(async () => ({
+        image: await domain.uploadTaskImage(
+          actor,
+          input,
+          domain.decodeTaskImage(imageBase64),
+        ),
+      })),
+  );
+  server.registerTool(
+    "get_task_image",
+    {
+      description:
+        "Read a private task-note image by attachmentId from a task's images or Markdown. Returns image content for clients to display/inspect. Current account and list access are required; draft images are visible only to their uploader.",
+      inputSchema: { attachmentId: idSchema },
+      annotations: read,
+    },
+    async ({ attachmentId }) => {
+      let imageContent:
+        { type: "image"; data: string; mimeType: string } | undefined;
+      const response = await result(async () => {
+        const { stream, image } = await domain.readTaskImage(
+          actor,
+          attachmentId,
+        );
+        const bytes = await new Response(stream).arrayBuffer();
+        imageContent = {
+          type: "image",
+          data: Buffer.from(bytes).toString("base64"),
+          mimeType: "image/webp",
+        };
+        return { image };
+      });
+      return {
+        ...response,
+        content: imageContent
+          ? [...response.content, imageContent]
+          : response.content,
+      };
+    },
+  );
   registerAppResource(
     server,
     "Wuff lists",

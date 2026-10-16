@@ -8,6 +8,7 @@ import { TaskNotes, type NoteDraft } from "./task-notes";
 import type { ListChange } from "./list-settings";
 export function TaskRow({
   task,
+  userId,
   list,
   busy,
   change,
@@ -17,6 +18,7 @@ export function TaskRow({
   style,
 }: {
   task: Task;
+  userId: string;
   list: TodoList;
   busy: boolean;
   change: ListChange;
@@ -145,6 +147,7 @@ export function TaskRow({
       {notesOpen && (
         <div className="basis-full min-w-0 pl-8 sm:pl-9">
           <TaskNotes
+            userId={userId}
             task={task}
             list={list}
             busy={busy}

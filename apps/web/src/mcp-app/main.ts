@@ -2,7 +2,7 @@ import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
 import type { Task } from "@wuff/contracts";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
-import { listColors } from "@wuff/contracts";
+import { taskImageLimit, taskImagePath, listColors } from "@wuff/contracts";
 import { listPalette } from "../lib/list-colors";
 const app = new App({ name: "Wuff Todo", version: "0.2.0" }, {});
 let current: TodoList | undefined,
@@ -208,6 +208,53 @@ function inlineName(
   return wrapper;
 }
 
+const imageReads = new Map<string, Promise<string>>();
+let imageEpoch = 0;
+function renderNotes(target: HTMLElement, content: string) {
+  target.innerHTML = renderTaskMarkdown(content, { imageSource: () => null });
+}
+async function hydrateImages(target: HTMLElement) {
+  const epoch = imageEpoch;
+  for (const placeholder of target.querySelectorAll<HTMLElement>(
+    "[data-task-image]",
+  )) {
+    const id = placeholder.dataset.taskImage!;
+    try {
+      let read = imageReads.get(id);
+      if (!read) {
+        read = app
+          .callServerTool({
+            name: "get_task_image",
+            arguments: { attachmentId: id },
+          })
+          .then((result) => {
+            const image = result.content?.find((item) => item.type === "image");
+            if (
+              result.isError ||
+              !image ||
+              image.type !== "image" ||
+              image.mimeType !== "image/webp" ||
+              image.data.length > 4 * Math.ceil(taskImageLimit / 3) ||
+              !/^[A-Za-z0-9+/=]+$/.test(image.data)
+            )
+              throw new Error("Image unavailable");
+            return `data:image/webp;base64,${image.data}`;
+          });
+        imageReads.set(id, read);
+      }
+      const src = await read;
+      if (epoch !== imageEpoch || !placeholder.isConnected) continue;
+      const image = element("img");
+      image.src = src;
+      image.alt = placeholder.getAttribute("aria-label") || "Task image";
+      placeholder.replaceWith(image);
+    } catch {
+      if (placeholder.isConnected)
+        placeholder.textContent =
+          "Ruff patch! Image unavailable. Reopen this list to try again.";
+    }
+  }
+}
 type NoteDraft = {
   listId: string;
   original: string;
@@ -227,7 +274,10 @@ function taskNotes(task: Task) {
   panel.append(summary);
   const preview = element("div");
   preview.className = "task-prose";
-  preview.innerHTML = renderTaskMarkdown(task.content);
+  renderNotes(preview, task.content);
+  panel.ontoggle = () => {
+    if (panel.open) void hydrateImages(panel);
+  };
   const start = () => {
     const listId = current!.id;
     const draft = noteDrafts.get(task.id) ?? {
@@ -248,7 +298,8 @@ function taskNotes(task: Task) {
     input.value = draft.content;
     input.setAttribute("aria-label", `Markdown notes for ${task.title}`);
     const renderPreview = () => {
-      livePreview.innerHTML = renderTaskMarkdown(input.value);
+      renderNotes(livePreview, input.value);
+      if (panel.open) void hydrateImages(livePreview);
     };
     renderPreview();
     input.oninput = () => {
@@ -308,6 +359,81 @@ function taskNotes(task: Task) {
         noteDrafts.delete(task.id);
         render();
       });
+    const uploadInput = element("input");
+    uploadInput.type = "file";
+    uploadInput.accept = "image/png,image/jpeg,image/webp";
+    uploadInput.setAttribute("aria-label", `Add image to ${task.title}`);
+    // A bridge retry of the same bytes keeps the operation UUID and version.
+    let uploadRetry:
+      { digest: string; input: Record<string, unknown> } | undefined;
+    uploadInput.onchange = () => {
+      const file = uploadInput.files?.[0];
+      uploadInput.value = "";
+      if (!file) return;
+      if (file.size > taskImageLimit) {
+        notice.textContent = "That’s a big pup! Choose an image up to 3 MiB.";
+        return;
+      }
+      const epoch = imageEpoch;
+      uploadInput.disabled =
+        save.disabled =
+        cancel.disabled =
+        input.readOnly =
+          true;
+      notice.textContent = "Fetching your photo, paws a moment…";
+      void (async () => {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let binary = "";
+        for (let offset = 0; offset < bytes.length; offset += 8192)
+          binary += String.fromCharCode(
+            ...bytes.subarray(offset, offset + 8192),
+          );
+        const digest = btoa(binary);
+        if (!uploadRetry || uploadRetry.digest !== digest)
+          uploadRetry = {
+            digest,
+            input: {
+              listId,
+              taskId: task.id,
+              version: current!.version,
+              operationId: crypto.randomUUID(),
+              imageBase64: digest,
+            },
+          };
+        const value = (await request(
+          "upload_task_image",
+          uploadRetry.input,
+        )) as { image: { id: string } };
+        if (epoch !== imageEpoch || !input.isConnected) return;
+        input.setRangeText(
+          `\n\n![Task image](${taskImagePath(value.image.id)})\n\n`,
+          input.selectionStart,
+          input.selectionEnd,
+          "end",
+        );
+        draft.content = input.value;
+        renderPreview();
+        uploadRetry = undefined;
+        notice.textContent =
+          "Photo fetched! Save notes to keep it with your pack.";
+      })()
+        .catch((error) => {
+          notice.textContent =
+            error instanceof Error
+              ? error.message
+              : "Ruff patch! Image upload failed.";
+          if (error instanceof ToolError && error.code !== "internal_error")
+            uploadRetry = undefined;
+        })
+        .finally(() => {
+          uploadInput.disabled =
+            save.disabled =
+            cancel.disabled =
+            input.readOnly =
+              false;
+        });
+    };
+    if (!current!.archived) form.append(uploadInput);
     actions.className = "name-actions";
     actions.append(save, cancel);
     if (task.content !== draft.original)
@@ -362,6 +488,8 @@ function show(value: unknown) {
   if (data.viewerId && viewerId && data.viewerId !== viewerId)
     noteDrafts.clear();
   if (data.viewerId) viewerId = data.viewerId;
+  imageReads.clear();
+  imageEpoch++;
   root.replaceChildren();
   if (data.lists) {
     catalog = data.lists;

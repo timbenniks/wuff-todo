@@ -72,6 +72,7 @@ export function TaskGroups({
             >
               {({ ref, style, handle }) => (
                 <TaskRow
+                  userId={userId}
                   rowRef={ref}
                   style={style}
                   task={task}
@@ -308,6 +309,7 @@ export function TaskGroups({
             .filter((t) => t.completed)
             .map((task) => (
               <TaskRow
+                userId={userId}
                 key={task.id}
                 task={task}
                 list={list}

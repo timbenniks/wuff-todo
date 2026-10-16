@@ -12,6 +12,8 @@ Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzl
 
 The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. Mobile applications will have separate release pipelines within the same repository.
 
+Private task-note images use Vercel Blob for bytes and Neon for task-bound attachment records. Current admission/list permissions authorize each delivery; Markdown uses stable application attachment references. Development and production use separate private Frankfurt stores. See [private task images](task-images.md) for lifecycle, APIs, MCP and verification status.
+
 Use pnpm workspaces. Add build orchestration only when workspace dependencies and build times justify it. Pin supported package versions during implementation rather than treating this planning document as a version lock.
 
 ## Repository layout and future packages

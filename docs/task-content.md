@@ -4,7 +4,7 @@ Updated: October 16, 2026
 
 ## Confirmed scope
 
-Task content comes before native mobile. This milestone adds formatted text and Markdown first; the user explicitly deferred private image uploads to a later pass. Subtasks, deadlines and scheduling are not part of this build. Markdown checklists are text inside notes, not Wuff subtasks.
+Task content comes before native mobile. This milestone adds formatted text and Markdown first; the user explicitly deferred private image uploads to a later pass. That text-only pass is complete; the follow-up [private images milestone](task-images.md) adds images with Vercel Blob. Subtasks, deadlines and scheduling remain outside these builds. Markdown checklists are text inside notes, not Wuff subtasks.
 
 ## Shared content contract
 
@@ -22,7 +22,7 @@ Tiptap is loaded on demand and Markdown remains the canonical format behind the 
 
 Live refresh does not replace an open notes draft. A changed remote note shows the latest content and an explicit “Save my notes” choice; version checks still reject a server race. Drafts survive moves between sections and active/completed groups. Archived notes open read-only, and a draft already open at archive time is retained but cannot be saved until restored.
 
-Unsupported syntax from an AI/client must never be silently dropped. HTML, image and extended syntax bypass Tiptap's HTML import; notes that cannot roundtrip through the editor also use a selectable, rendered preserved block. Its original Markdown serializes verbatim and its HTML/images remain non-executing/non-loading. People can append rich text or deliberately select/delete/replace that block, without a format switch. Unchanged opening/saving preserves the original string.
+Unsupported syntax from an AI/client must never be silently dropped. HTML, external image and extended syntax bypass Tiptap's HTML import; notes that cannot roundtrip through the editor also use a selectable, rendered preserved block. Wuff's private attachment images now have a native editor node; see [task images](task-images.md). Its original Markdown serializes verbatim and its HTML/images remain non-executing/non-loading. People can append rich text or deliberately select/delete/replace that block, without a format switch. Unchanged opening/saving preserves the original string.
 
 Tasks reorder by dragging within their section. Sections and the personal sidebar also use drag handles; arrows and the sidebar's extra Reorder mode are removed. Pointer/touch activation is confined to the handle, so the rest of the row stays available for scrolling and text editing. Keyboard users pick up with Space, use arrows, drop with Space and cancel with Escape, with spoken names/positions and restored handle focus after saving. Ordering stays authoritative on the existing revisioned endpoints. If item membership/order changes during a drag, abandon that drag; merging a visible subset preserves all other section/archived positions. Moving a task to another section remains an edit-form choice. See [task controls](task-controls.md).
 
@@ -34,7 +34,7 @@ The sandboxed MCP App provides a textarea Markdown editor with a live preview, e
 
 ## Rendering and links
 
-Web and MCP App share `task-markdown.ts` and its prose styles. Markdown-it renders with HTML disabled, so raw HTML appears as text. Only full HTTP(S) and mailto links are clickable; protocol-relative, relative, control-character and executable URLs are rejected. External links open with `noopener noreferrer`. Image syntax renders as an escaped placeholder with alt text and never loads a third-party URL. No image upload or attachment permission claim is implied.
+Web and MCP App share `task-markdown.ts` and its prose styles. Markdown-it renders with HTML disabled, so raw HTML appears as text. Only full HTTP(S) and mailto links are clickable; protocol-relative, relative, control-character and executable URLs are rejected. External links open with `noopener noreferrer`. External image syntax renders as an escaped placeholder with alt text and never loads a third-party URL. The subsequent [private image milestone](task-images.md) permits only exact Wuff attachment paths, with current server-side admission/list authorization for delivery.
 
 Markdown checklist boxes are decorative, accessible checked/unchecked markers. They do not send task-completion requests. User-supplied task names, notes, list names, email addresses and client names are never rewritten to add jokes.
 

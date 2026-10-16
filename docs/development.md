@@ -139,3 +139,7 @@ Migration `0002_worried_freak.sql` adds description/color/archive columns, accou
 ## Task notes
 
 Migration `0003_strange_dark_phoenix.sql` adds `wuff_tasks.content`, a non-null Markdown string defaulting to empty. Apply the additive migration before deploying the new snapshot reader. Task create/update accepts optional `content` (16,000 characters); empty clears and omission preserves it. No extra OAuth scope or new endpoint is needed. The task JSON route allows 128 KiB to accommodate escaping; other routes retain their 32 KiB limit. Refresh MCP tool catalogs to discover the content field. See [task content and voice](task-content.md) for editor limitations, image deferral and verification.
+
+## Private task images
+
+See [task images](task-images.md) for the separate private Frankfurt Blob stores, server-only `BLOB_READ_WRITE_TOKEN` / `CRON_SECRET`, additive attachment migration, bounded upload API, MCP tools and daily retryable cleanup. Local development retains the isolated Neon branch. Provisioning Blob through Vercel CLI can automatically pull development environment variables; do this in an isolated linked directory so it cannot overwrite `.env.local`. Never replace the development branch values with the integration’s main-branch defaults.
