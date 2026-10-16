@@ -112,7 +112,7 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 25 tools are:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 27 tools include:
 
 - `list_lists`, `get_list`, `create_list`, `rename_list`, `delete_list`.
 - `update_list`, `get_list_order`, `reorder_lists`.
