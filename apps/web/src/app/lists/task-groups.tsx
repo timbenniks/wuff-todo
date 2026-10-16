@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from "lucide-react";
 import type { Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
+import { InlineName } from "./inline-name";
 
 export function TaskGroups({
   list,
@@ -61,22 +62,20 @@ export function TaskGroups({
                 })
               }
             />
-            <button
-              disabled={disabled}
-              className="text-left min-w-0 flex-1 py-2 break-words"
-              aria-label={`Edit ${task.title}`}
-              onClick={() => {
-                const title = window.prompt("Task name", task.title);
-                if (title?.trim())
-                  void change("/api/v1/tasks", "PATCH", {
-                    ...body,
-                    taskId: task.id,
-                    title,
-                  });
-              }}
-            >
-              {task.title}
-            </button>
+            <InlineName
+              value={task.title}
+              label="Task name"
+              editLabel={`Edit ${task.title}`}
+              editable={!list.archived}
+              disabled={busy}
+              onSave={(title) =>
+                change("/api/v1/tasks", "PATCH", {
+                  ...body,
+                  taskId: task.id,
+                  title,
+                })
+              }
+            />
             <div className="flex items-center">
               <Button
                 size="icon"
@@ -212,13 +211,22 @@ export function TaskGroups({
       {addTask(null)}
       {list.sections.map((section, i) => (
         <section key={section.id} className="mt-8 border-t border-border pt-4">
-          <div className="flex items-center gap-2">
+          <InlineName
+            value={section.title}
+            heading="h2"
+            label="Section name"
+            editLabel={`Rename section ${section.title}`}
+            editable={owner && !list.archived}
+            disabled={busy}
+            onSave={(title) =>
+              change(path, "PATCH", { ...body, sectionId: section.id, title })
+            }
+          />
+          <div className="mt-1">
             <details open className="min-w-0 flex-1 group/section">
-              <summary className="font-bold text-lg py-2 break-words">
-                {section.title}
-                <span className="ml-2 font-normal text-xs text-slate-500">
-                  {active.filter((t) => t.sectionId === section.id).length}
-                </span>
+              <summary className="text-xs font-medium text-slate-500 py-2">
+                Tasks ({active.filter((t) => t.sectionId === section.id).length}
+                )
               </summary>
               <div className="mt-1">
                 {rows(section.id)}
@@ -245,23 +253,6 @@ export function TaskGroups({
                 onClick={() => moveSection(section.id, 1)}
               >
                 <ArrowDown size={14} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={busy}
-                aria-label={`Rename section ${section.title}`}
-                onClick={() => {
-                  const title = window.prompt("Section name", section.title);
-                  if (title?.trim())
-                    void change(path, "PATCH", {
-                      ...body,
-                      sectionId: section.id,
-                      title,
-                    });
-                }}
-              >
-                <Pencil size={14} />
               </Button>
               <Button
                 variant="ghost"
@@ -361,7 +352,21 @@ export function TaskGroups({
                 >
                   <Check size={15} />
                 </button>
-                <span className="line-through break-words">{task.title}</span>
+                <InlineName
+                  value={task.title}
+                  label="Task name"
+                  editLabel={`Edit ${task.title}`}
+                  completed
+                  editable={!list.archived}
+                  disabled={busy}
+                  onSave={(title) =>
+                    change("/api/v1/tasks", "PATCH", {
+                      ...body,
+                      taskId: task.id,
+                      title,
+                    })
+                  }
+                />
               </li>
             ))}
         </ul>

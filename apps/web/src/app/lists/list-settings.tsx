@@ -23,7 +23,6 @@ export function ListSettings({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState({
-    title: list.title,
     description: list.description,
     color: list.color,
     version: list.version,
@@ -31,7 +30,6 @@ export function ListSettings({
   const [failed, setFailed] = useState(false);
   function load() {
     setDraft({
-      title: list.title,
       description: list.description,
       color: list.color,
       version: list.version,
@@ -92,15 +90,6 @@ export function ListSettings({
             else setFailed(true);
           }}
         >
-          <label className="grid gap-2 text-sm font-semibold">
-            List name
-            <input
-              required
-              maxLength={300}
-              value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            />
-          </label>
           <label className="grid gap-2 text-sm font-semibold">
             Description
             <textarea

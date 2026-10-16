@@ -78,6 +78,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 - A sidebar contains the user's accessible lists and a create-list action.
 - The selected list shows its title, active tasks, and completed tasks.
 - Adding a task is a short, keyboard-friendly interaction.
+- List, section, and task names use inline editing with Enter/Save and Escape/Cancel, including completed tasks. Drafts stay visible through save failures; name edits use existing permissions and version checks.
 - Task editing and completion have clear pending, success, and failure states.
 - Reordering works with pointer, touch, and keyboard controls.
 - Sharing settings expose the owner, members, and pending invitations.

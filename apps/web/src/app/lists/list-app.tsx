@@ -25,6 +25,7 @@ import { LiveRefreshQueue } from "@/lib/live-refresh";
 import { listPalette } from "@/lib/list-colors";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
+import { InlineName } from "./inline-name";
 
 type PendingCreate = {
   id: string;
@@ -660,14 +661,29 @@ export function ListApp({
         {list && (
           <>
             <div
-              className="flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-40"
+              className="flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-full md:[&>div:first-child]:basis-40"
               style={{
                 background: listPalette[list.color].tint,
                 borderColor: listPalette[list.color].accent + "30",
               }}
             >
               <div className="min-w-0">
-                <h1 className="text-4xl font-bold break-words">{list.title}</h1>
+                <InlineName
+                  key={list.id}
+                  value={list.title}
+                  heading="h1"
+                  label="List name"
+                  editLabel="Rename list"
+                  editable={list.ownerId === userId && !isPending}
+                  disabled={busy}
+                  onSave={(title) =>
+                    change(`/api/v1/lists/${list.id}`, "PATCH", {
+                      listId: list.id,
+                      version: list.version,
+                      title,
+                    })
+                  }
+                />
                 {!isPending && (
                   <p className="text-xs text-slate-500 mt-2">
                     {list.ownerId === userId ? "Your list" : "Shared with you"}

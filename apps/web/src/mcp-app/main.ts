@@ -69,11 +69,130 @@ function wireForm(
     submit();
   };
   form.onkeydown = (e) => {
+    if (e.isComposing) return;
     if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) {
       e.preventDefault();
       submit();
     }
   };
+}
+function inlineName(
+  value: string,
+  label: string,
+  tool: string,
+  args: Record<string, unknown>,
+  options: {
+    heading?: "h1" | "h2";
+    editable?: boolean;
+    completed?: boolean;
+  } = {},
+) {
+  const wrapper = element("div");
+  wrapper.className = "inline-name";
+  const nameKey = `${tool}:${args.taskId ?? args.sectionId ?? "list"}`;
+  wrapper.dataset.nameKey = nameKey;
+  const render = () => {
+    const text = element("span", value);
+    if (options.completed) text.style.textDecoration = "line-through";
+    const trigger = button("", () => {
+      const target = {
+        listId: current!.id,
+        version: current!.version,
+        ...args,
+      };
+      const form = element("form");
+      form.className = "name-editor";
+      form.setAttribute("aria-label", `Edit ${label.toLowerCase()}`);
+      const input = element("input");
+      input.value = value;
+      input.maxLength = 300;
+      input.required = true;
+      input.setAttribute("aria-label", label);
+      input.autocomplete = "off";
+      const save = element("button", "Save"),
+        cancel = button("Cancel", () => {
+          if (!save.disabled) {
+            render();
+            wrapper.querySelector<HTMLButtonElement>(".name-button")?.focus();
+          }
+        }),
+        notice = element("p");
+      notice.setAttribute("role", "alert");
+      const caption = element("label", label);
+      const fieldId = `name-${crypto.randomUUID()}`;
+      input.id = fieldId;
+      caption.htmlFor = fieldId;
+      const actions = element("div");
+      actions.className = "name-actions";
+      actions.append(save, cancel);
+      form.append(caption, input, actions, notice);
+      let savedTitle = "",
+        operationId = crypto.randomUUID();
+      wireForm(form, save, () => {
+        const title = input.value.trim();
+        if (!title) {
+          notice.textContent = "Enter a name first.";
+          save.disabled = false;
+          input.focus();
+          return;
+        }
+        if (title === value) {
+          render();
+          wrapper.querySelector<HTMLButtonElement>(".name-button")?.focus();
+          return;
+        }
+        if (savedTitle && savedTitle !== title)
+          operationId = crypto.randomUUID();
+        savedTitle = title;
+        cancel.disabled = true;
+        input.readOnly = true;
+        notice.textContent = "";
+        status.textContent = "Saving…";
+        void request(tool, { ...target, title, operationId })
+          .then((data) => {
+            show(data);
+            status.textContent = "Saved";
+            Array.from(root.querySelectorAll<HTMLElement>(".inline-name"))
+              .find((el) => el.dataset.nameKey === nameKey)
+              ?.querySelector<HTMLButtonElement>(".name-button")
+              ?.focus();
+          })
+          .catch((e) => {
+            notice.textContent = (e as Error).message;
+            status.textContent = "The name wasn’t saved. Your draft is kept.";
+            save.disabled = false;
+            cancel.disabled = false;
+            input.readOnly = false;
+          });
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !save.disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          render();
+          wrapper.querySelector<HTMLButtonElement>(".name-button")?.focus();
+        }
+      });
+      wrapper.replaceChildren(form);
+      input.focus();
+      input.select();
+    });
+    trigger.className = "name-button";
+    trigger.title = `Edit ${label.toLowerCase()}`;
+    trigger.append(text);
+    const mark = element("span", "✎");
+    mark.className = "name-mark";
+    mark.setAttribute("aria-hidden", "true");
+    trigger.append(mark);
+    const content = options.editable ? trigger : text;
+    if (options.heading) {
+      const heading = element(options.heading);
+      heading.append(content);
+      wrapper.replaceChildren(heading);
+    } else wrapper.replaceChildren(content);
+  };
+  render();
+  return wrapper;
 }
 function show(value: unknown) {
   const data = value as {
@@ -97,7 +216,16 @@ function show(value: unknown) {
   header.className = "list-header";
   header.style.background = color.tint;
   header.style.borderColor = color.accent;
-  header.append(element("h1", current.title));
+  const owner = current.ownerId === viewerId;
+  header.append(
+    inlineName(
+      current.title,
+      "List name",
+      "update_list",
+      {},
+      { heading: "h1", editable: owner },
+    ),
+  );
   if (current.description) {
     const p = element("p", current.description);
     p.style.whiteSpace = "pre-wrap";
@@ -108,18 +236,12 @@ function show(value: unknown) {
       element("p", "Archived · restore this list before editing tasks."),
     );
   root.append(header);
-  const owner = current.ownerId === viewerId;
   if (owner) {
     const settings = element("details"),
       summary = element("summary", "List settings");
     settings.append(summary);
     const form = element("form");
     form.className = "settings";
-    const title = element("input");
-    title.value = current.title;
-    title.required = true;
-    title.maxLength = 300;
-    title.setAttribute("aria-label", "List name");
     const description = element("textarea");
     description.value = current.description;
     description.maxLength = 4000;
@@ -134,10 +256,9 @@ function show(value: unknown) {
     }
     select.value = current.color;
     const save = element("button", "Save settings");
-    form.append(title, description, select, save);
+    form.append(description, select, save);
     wireForm(form, save, () => {
       void mutation("update_list", {
-        title: title.value,
         description: description.value,
         color: select.value,
       });
@@ -159,7 +280,21 @@ function show(value: unknown) {
     const details = element("details");
     details.open = true;
     details.className = "section";
-    details.append(element("summary", group.title));
+    root.append(
+      inlineName(
+        group.title,
+        "Section name",
+        "rename_section",
+        { sectionId: group.id },
+        { heading: "h2", editable: owner && !!group.id && !current.archived },
+      ),
+    );
+    details.append(
+      element(
+        "summary",
+        `Tasks (${current.tasks.filter((t) => t.sectionId === group.id && !t.completed).length})`,
+      ),
+    );
     for (const task of current.tasks.filter((t) => t.sectionId === group.id)) {
       const row = element("div");
       row.className = "task";
@@ -178,9 +313,16 @@ function show(value: unknown) {
           completed: check.checked,
         });
       };
-      const text = element("span", task.title);
-      if (task.completed) text.style.textDecoration = "line-through";
-      row.append(check, text);
+      row.append(
+        check,
+        inlineName(
+          task.title,
+          "Task name",
+          "update_task",
+          { taskId: task.id },
+          { editable: !current.archived, completed: task.completed },
+        ),
+      );
       if (current.sections.length) {
         const select = element("select");
         select.setAttribute("aria-label", `Section for ${task.title}`);
@@ -238,20 +380,7 @@ function show(value: unknown) {
           ),
         );
       }
-      // Explicit inline form avoids relying on host support for window.prompt/confirm.
-      const edit = element("form"),
-        name = element("input"),
-        save = element("button", "Rename section");
-      name.value = group.title;
-      name.required = true;
-      name.maxLength = 300;
-      name.setAttribute("aria-label", `Rename section ${group.title}`);
-      edit.append(name, save);
-      wireForm(edit, save, () => {
-        void mutation("rename_section", { sectionId: id, title: name.value });
-      });
       actions.append(
-        edit,
         button(
           `Remove ${group.title} (keep tasks)`,
           () => void mutation("delete_section", { sectionId: id }),
