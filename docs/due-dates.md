@@ -32,7 +32,7 @@ Sources: [Drizzle PostgreSQL date string mode](https://orm.drizzle.team/docs/col
 
 ## Verification
 
-Release evidence will be recorded here after checks complete. Named AI hosts and physical mobile devices remain separate from local protocol/SDK-host and responsive-browser proof.
+Named AI hosts and physical mobile devices remain separate from local protocol/SDK-host and responsive-browser proof.
 
 - Final `pnpm check` passed after the date-picker input fix: workspace/root TypeScript, all 25 unit tests, and optimized Next.js/MCP App builds. Static scanning of 20 browser scripts found no environment secrets or domain SQL.
 - Unit evidence covers real/invalid/leap dates, bounds, omission versus null, date-only update validation, tomorrow/today/overdue transitions, completed neutrality, year rollover, fixed-date formatting across three time zones, and calendar-day choices across DST.
@@ -41,3 +41,11 @@ Release evidence will be recorded here after checks complete. Named AI hosts and
 - On the optimized local build, a synthetic account exercised Today/Tomorrow, custom date save, clearing, today/tomorrow/overdue badges and neutral completed dates. The calendar field now captures native input/change events and submits its actual form value; a custom pick survived close/reopen, a live MCP date change and parent completion/reopening. A stale MCP App date save displayed the conflict, retained the original pick and saved that pick on an explicit retry. Web and MCP clearing were both exercised. A separate domain read verified the final exact dates and unchanged completion states.
 - The responsive picker measured `innerWidth = scrollWidth = 390`. Screenshots: [web](screenshots/due-dates-web.jpg), [phone-width picker](screenshots/due-dates-mobile.jpg), [MCP retained conflict](screenshots/due-dates-mcp-conflict.jpg). MCP App proof uses the official SDK host in an `allow-scripts` sandbox, not a named AI client's renderer. Physical-device and screen-reader certification were not performed.
 - The additive migration passed on isolated development and then production using direct connections. Hashes of existing production task records, excluding the new nullable column, matched before/after migration. No auth-managed tables were changed. Temporary development lists were removed, synthetic browser/integration grants verified revoked, the original baseline fixture preserved, and the local dev server restored.
+
+## Production release
+
+Source `e314a1979893ca9a7d1b9166bbb661c094697519` passed [GitHub CI run 38924450343](https://github.com/timbenniks/wuff-todo/actions/runs/38924450343). CLI deployment `dpl_8sdh3YNCBkSHRZcEiQfwg74Pmoh5` is READY in `fra1`, with the canonical [production alias](https://wuff-todo.vercel.app).
+
+The existing signed-in production browser created a root task and subtask on a disposable private list, saved Today on the parent and Tomorrow on the child, and saved yesterday through the custom date field on a second root task. The resulting today/tomorrow/overdue badges were visible. A separate server read verified the exact calendar dates, independent parent/child values, manual root order and unchanged completion states. The disposable list was then removed and confirmed inaccessible. No existing user tasks were edited. [Production screenshot](screenshots/due-dates-production.jpg) contains only the synthetic list; the private sidebar is excluded.
+
+This milestone did not repeat authenticated production MCP or named-client checks. Local authenticated HTTP/MCP integration and the SDK-host browser checks above are the evidence for the new MCP fields and embedded UI. Refresh connected clients' MCP tool catalogs to discover `dueDate`; physical-device and screen-reader verification remain separate.

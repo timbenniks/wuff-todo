@@ -99,3 +99,5 @@ Production image release: commit `5a0a8c0` passed GitHub run `38902320494`; CLI 
 ## Calendar due dates — October 16, 2026
 
 See [due dates](due-dates.md) for current date validation/time-zone tests, domain and authenticated API/MCP coverage, browser draft/conflict checks, migration and release evidence. Historical test totals above belong to their respective milestones.
+
+Release source `e314a19` passed GitHub run `38924450343`; CLI deployment `dpl_8sdh3YNCBkSHRZcEiQfwg74Pmoh5` is READY in `fra1` with the canonical alias. Authenticated production browser Today/Tomorrow/custom-date saves and badges passed. A server reread verified exact independent parent/child dates, ordering and completion; the disposable list was removed and confirmed inaccessible. The development suite passed 18/19 initially; the unchanged existing image-stream case passed in isolation, yielding 19 distinct passing cases across the two runs. Named-client production MCP verification was not repeated for this milestone.
