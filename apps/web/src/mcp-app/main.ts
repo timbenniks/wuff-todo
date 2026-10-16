@@ -350,11 +350,15 @@ function taskNotes(task: Task) {
 }
 
 function show(value: unknown) {
+  if (!value || typeof value !== "object") return;
   const data = value as {
     list?: TodoList;
     lists?: ListSummary[];
     viewerId?: string;
   };
+  // A host may forward an error or a tool result for another view. Keep the
+  // current notes/drafts on screen instead of clearing them.
+  if (!data.list && !data.lists) return;
   if (data.viewerId && viewerId && data.viewerId !== viewerId)
     noteDrafts.clear();
   if (data.viewerId) viewerId = data.viewerId;
