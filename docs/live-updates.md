@@ -32,6 +32,12 @@ The existing Frankfurt project and its isolated development/main branches are re
 - Production static JavaScript was checked for the actual development/production sealing-secret values and domain SQL; neither was present.
 - Test setup was isolated after an existing disabled-user test interfered with shared fixtures. Integration files run serially, retain explicit concurrency cases, and respect bounded sign-in retry delays. Authentication protections were not weakened.
 
+Production commit `4801c96` was deployed through the Vercel CLI as `dpl_72gxhWiTda6B2ep7Jwzx9LHgeewy`, READY with function region `fra1`. [GitHub CI run 38881911297](https://github.com/timbenniks/wuff-todo/actions/runs/38881911297) passed. Unauthenticated production live and MCP endpoints returned 401.
+
+A production subscription received a disposable list's creation, task addition, completion, capability renewal, and deletion. The smoke test measured 344ms for task addition and 333ms for completion, from starting the domain write to receiving its live version signal; these single samples exclude the website's subsequent API reconciliation and are not a latency guarantee. The disposable list was deleted. This check used trusted server domain services with production configuration, not an authenticated production web session or remote MCP client.
+
+The saved Codex connection could not repeat production MCP validation on October 16: its OAuth refresh grant returned `invalid_grant` and requires reauthentication. No fixture was created through that failed connection. Development authenticated HTTP/MCP and browser live-update tests passed; the production client check remains pending. See [MCP connection status](mcp-validation.md#connection-status--october-16-2026).
+
 Actual ChatGPT client sign-in/tool selection, Joreel’s independent account/client session, native devices, and named-host embedded UI remain separate checks. This feature reacts to committed MCP changes regardless of client, but that does not certify every host.
 
 ![Private list updated by authenticated MCP](screenshots/live-private-mcp.jpg)

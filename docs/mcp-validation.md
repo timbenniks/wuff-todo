@@ -10,6 +10,12 @@ The deployed catalog now has 18 tools: the original 11 below plus `get_list_shar
 
 Tim also reported successful use in another Codex chat. This does not verify ChatGPT, another person's authorization, or inline rendering in a named host.
 
+## Connection status — October 16, 2026
+
+The earlier successful checks below remain historical evidence. A new attempt through the saved Codex connection failed before tool discovery: its OAuth refresh grant returned `invalid_grant` / authorization required. The connection needs interactive reauthentication before further production MCP testing. The reason the grant became invalid was not established, and no production fixture was created through this failed attempt.
+
+Authenticated synthetic development MCP tests passed with live subscriptions. Production live transport was separately verified through trusted server domain services, including task addition/completion and disposable-list cleanup; this does not substitute for a production remote MCP client check. See [live updates](live-updates.md#verification).
+
 ## Initial Codex result (before sharing tools)
 
 Codex CLI 0.160.0 successfully authenticated using Dynamic Client Registration, S256 PKCE, the production resource indicator, and the user's interactive Wuff sign-in/consent. The connection is saved as `wuff-todo` in the user's Codex configuration. OAuth credentials are managed by Codex, not copied into the repository or test scripts.
@@ -29,7 +35,7 @@ The real Codex app-server MCP runtime then performed these checks against produc
 | Stale-version mutation                      | Rejected                                                                           |
 | `get_list`, `delete_list`                   | Disposable list reread and cleaned up with its task                                |
 
-Tool calls used an ephemeral protocol context with no model turn or persistent user chat. This proves Codex runtime interoperability; it is not evidence of a natural-language model selecting every tool correctly. User lists were read only; writes were confined to a newly created disposable validation list, which was deleted afterward. The user's Codex authorization remains connected.
+Tool calls used an ephemeral protocol context with no model turn or persistent user chat. This proves Codex runtime interoperability; it is not evidence of a natural-language model selecting every tool correctly. User lists were read only; writes were confined to a newly created disposable validation list, which was deleted afterward. The authorization was connected at that time; see the October 16 connection status above.
 
 The initial 11-tool catalog contained `create_list`, `create_task`, `delete_list`, `delete_task`, `get_list`, `list_lists`, `rename_list`, `reorder_tasks`, `show_list`, `show_lists`, and `update_task`. Catalog discovery is distinct from exercising every tool or permission combination.
 
