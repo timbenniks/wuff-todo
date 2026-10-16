@@ -1,4 +1,5 @@
 "use client";
+import { wuffError } from "@/lib/copy";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 export function Consent({ query }: { query: string }) {
@@ -20,7 +21,7 @@ export function Consent({ query }: { query: string }) {
         );
       window.location.assign(data.redirect);
     } catch (e) {
-      setError((e as Error).message);
+      setError(wuffError((e as Error).message));
       setBusy(false);
     }
   }

@@ -1,3 +1,4 @@
+import { wuffCopy, wuffError } from "../lib/copy";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
 import type { Task } from "@wuff/contracts";
@@ -34,12 +35,12 @@ async function request(name: string, args: Record<string, unknown>) {
   return result.structuredContent;
 }
 async function call(name: string, args: Record<string, unknown>) {
-  status.textContent = "Saving, paws a moment…";
+  status.textContent = wuffCopy.saving;
   try {
     show(await request(name, args));
-    status.textContent = "Paw-some, saved.";
+    status.textContent = wuffCopy.saved;
   } catch (e) {
-    status.textContent = (e as Error).message;
+    status.textContent = wuffError((e as Error).message);
   }
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) {
@@ -160,19 +161,20 @@ function inlineName(
         cancel.disabled = true;
         input.readOnly = true;
         notice.textContent = "";
-        status.textContent = "Saving, paws a moment…";
+        status.textContent = wuffCopy.saving;
         void request(tool, { ...target, title, operationId })
           .then((data) => {
             show(data);
-            status.textContent = "Paw-some, saved.";
+            status.textContent = wuffCopy.saved;
             Array.from(root.querySelectorAll<HTMLElement>(".inline-name"))
               .find((el) => el.dataset.nameKey === nameKey)
               ?.querySelector<HTMLButtonElement>(".name-button")
               ?.focus();
           })
           .catch((e) => {
-            notice.textContent = (e as Error).message;
-            status.textContent = "The name wasn’t saved. Your draft is kept.";
+            notice.textContent = wuffError((e as Error).message);
+            status.textContent =
+              "Ruff patch! The name wasn’t saved. Your draft is kept.";
             save.disabled = false;
             cancel.disabled = false;
             input.readOnly = false;
@@ -347,7 +349,7 @@ function taskNotes(task: Task) {
                   .then(show)
                   .catch(() => {});
               }
-              notice.textContent = `${error.message} Your draft is kept. Reopen this list to compare the latest notes.`;
+              notice.textContent = `${wuffError(error.message)} Your draft is kept. Reopen this list to compare the latest notes.`;
               status.textContent = "Ruff patch! Notes weren’t confirmed saved.";
               save.disabled = false;
               input.readOnly = false;
@@ -380,7 +382,7 @@ function taskNotes(task: Task) {
         cancel.disabled =
         input.readOnly =
           true;
-      notice.textContent = "Fetching your photo, paws a moment…";
+      notice.textContent = wuffCopy.uploadingImage;
       void (async () => {
         const bytes = new Uint8Array(await file.arrayBuffer());
         let binary = "";
@@ -420,7 +422,7 @@ function taskNotes(task: Task) {
         .catch((error) => {
           notice.textContent =
             error instanceof Error
-              ? error.message
+              ? wuffError(error.message)
               : "Ruff patch! Image upload failed.";
           if (error instanceof ToolError && error.code !== "internal_error")
             uploadRetry = undefined;
@@ -689,7 +691,7 @@ function show(value: unknown) {
     const form = element("form"),
       input = element("input"),
       save = element("button", "Add section");
-    input.placeholder = "Section name";
+    input.placeholder = wuffCopy.sectionPlaceholder;
     input.setAttribute("aria-label", "Section name");
     input.required = true;
     input.maxLength = 300;
@@ -702,7 +704,7 @@ function show(value: unknown) {
 }
 function renderCatalog() {
   root.replaceChildren(
-    element("h1", archive ? "Archived lists" : "Your lists"),
+    element("h1", archive ? wuffCopy.archiveHeading : wuffCopy.listsHeading),
   );
   root.append(
     button(archive ? "Back to lists" : "Archive", () => {
@@ -746,7 +748,7 @@ function renderCatalog() {
     );
 }
 async function reorder(id: string, target: string) {
-  status.textContent = "Saving, paws a moment…";
+  status.textContent = wuffCopy.saving;
   try {
     const data = (await request("get_list_order", {})) as { order: ListOrder };
     const ids = [...data.order.listIds],
@@ -754,7 +756,7 @@ async function reorder(id: string, target: string) {
       b = ids.indexOf(target);
     if (a < 0 || b < 0)
       throw new Error(
-        "Your lists changed. Reopen the list view and try again.",
+        "Your pack of lists changed. Reopen the list view and try again.",
       );
     [ids[a], ids[b]] = [ids[b], ids[a]];
     await request("reorder_lists", {
@@ -765,10 +767,11 @@ async function reorder(id: string, target: string) {
     show(await request("show_lists", {}));
     status.textContent = "Paw-some, order saved";
   } catch (e) {
-    status.textContent = (e as Error).message;
+    status.textContent = wuffError((e as Error).message);
   }
 }
 app.ontoolresult = (result) => show(result.structuredContent);
 app.connect().catch(() => {
-  status.textContent = "Open this view in a client that supports MCP Apps.";
+  status.textContent =
+    "This view needs a helping paw. Open it in a client that supports MCP Apps.";
 });

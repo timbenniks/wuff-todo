@@ -24,7 +24,7 @@ export default async function AuthorizePage({
         <h1 className="text-3xl font-bold mb-4">
           Ruff request! This connection isn’t valid.
         </h1>
-        <p>Return to your AI client and start the connection again.</p>
+        <p>Head back to your AI pal and give this connection another sniff.</p>
       </main>
     );
   }
@@ -37,7 +37,8 @@ export default async function AuthorizePage({
   } catch {
     return (
       <main className="max-w-md mx-auto p-8">
-        Your account needs an invitation before connecting an AI client.
+        Our pack is invite-only. Your account needs an invitation before
+        connecting an AI client.
       </main>
     );
   }
@@ -61,8 +62,8 @@ export default async function AuthorizePage({
         ))}
       </ul>
       <p className="text-sm text-slate-500 mb-7">
-        It can access the same lists you can. You can disconnect it at any time
-        in Connected AI clients.
+        Your AI pal follows your lead: it can access the same lists you can. You
+        can disconnect it at any time in Connected AI clients.
       </p>
       <Consent query={params.toString()} />
     </main>

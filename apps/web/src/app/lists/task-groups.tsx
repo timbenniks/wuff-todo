@@ -1,4 +1,5 @@
 "use client";
+import { wuffCopy, taskCount } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { TodoList } from "@wuff/contracts";
@@ -147,9 +148,7 @@ export function TaskGroups({
             : "Its owner can restore it so you can make changes again."}
         </p>
       )}
-      <p className="text-sm text-slate-500 mb-5">
-        {active.length} things to fetch and finish
-      </p>
+      <p className="text-sm text-slate-500 mb-5">{taskCount(active.length)}</p>
       {list.sections.length > 0 && (
         <h2 className="text-lg font-bold mb-1">No section</h2>
       )}
@@ -270,7 +269,7 @@ export function TaskGroups({
               <input
                 name="title"
                 aria-label="Section name"
-                placeholder="Section name"
+                placeholder={wuffCopy.sectionPlaceholder}
                 maxLength={300}
                 required
                 autoFocus

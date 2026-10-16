@@ -40,6 +40,8 @@ Markdown checklist boxes are decorative, accessible checked/unchecked markers. T
 
 ## Voice
 
+The follow-up [Waffles' voice](voice.md) audit extends this convention consistently across account recovery, AI connections, sharing, settings, status and error paths, with shared recurring copy and singular/plural task counts.
+
 Waffles is a friendly little companion, not a corporate mascot. The user's requested corgi wordplay applies across greetings, guidance, loading/empty states and feedback, on the website and embedded app: “Welcome to the pack,” “a little more de-tail,” “taking a paws,” and “Ruff patch!”
 
 Keep action labels, field names, access rules and irreversible consequences explicit. For example “Save notes,” “Delete list,” “Email,” and “Allow connection” stay easy to identify; their surrounding guidance carries the wordplay. Never soften a failure into a success or obscure who has access. Shared error presentation adds the voice while stable error codes, API keys, OAuth scopes and machine contracts stay unchanged. Tool responses remain structured data without synthetic success chatter.

@@ -85,7 +85,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 - Empty, loading, denied-access, and failed-request states are designed deliberately.
 - Responsive layouts support phones before native apps arrive.
 
-The corgi appears in the app identity and selected empty states. App-authored greetings, guidance and feedback use friendly corgi wordplay, while action labels, permissions and consequences stay explicit; user content is never rewritten. Animation and completion celebrations are optional future design choices. Core actions remain readable, accessible, and usable without animation.
+The corgi appears in the app identity and selected empty states. App-authored greetings, guidance and feedback use friendly corgi wordplay, while action labels, permissions and consequences stay explicit; user content is never rewritten. [Waffles' voice](voice.md) defines the shared web/MCP copy conventions and examples. Animation and completion celebrations are optional future design choices. Core actions remain readable, accessible, and usable without animation.
 
 ### MCP and interactive UI
 

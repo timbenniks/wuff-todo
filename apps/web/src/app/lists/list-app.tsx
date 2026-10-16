@@ -1,4 +1,5 @@
 "use client";
+import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
@@ -104,7 +105,11 @@ export function ListApp({
           setReadFailure(error.message);
         else
           setError(
-            error instanceof Error ? error.message : "Couldn’t load your list.",
+            wuffError(
+              error instanceof Error
+                ? error.message
+                : "Couldn’t load your list.",
+            ),
           );
     },
     [cache],
@@ -312,7 +317,7 @@ export function ListApp({
     if (mutating.current) return false;
     if (uncertainWrite.current && !retry) {
       setError(
-        "A previous change needs confirmation. Retry that request first, or keep the current state.",
+        "Paws a moment! A previous change needs confirmation. Retry that request first, or keep the current state.",
       );
       return false;
     }
@@ -339,7 +344,7 @@ export function ListApp({
       const uncertain = !(e instanceof ApiError) || e.status >= 500;
       uncertainWrite.current = uncertain ? request : null;
       setRetryWrite(uncertain ? request : null);
-      setError((e as Error).message);
+      setError(wuffError((e as Error).message));
       if (selected.current) await reload(selected.current).catch(() => {});
       return false;
     } finally {
@@ -390,7 +395,7 @@ export function ListApp({
       );
       return true;
     } catch (e) {
-      setError((e as Error).message);
+      setError(wuffError((e as Error).message));
       return false;
     } finally {
       mutating.current = false;
@@ -422,7 +427,7 @@ export function ListApp({
         </div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-            {showArchive ? "Archived lists" : "Your lists"}
+            {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
           </span>
           <Button
             size="icon"
@@ -445,7 +450,7 @@ export function ListApp({
             <input
               name="title"
               aria-label="List name"
-              placeholder="List name"
+              placeholder={wuffCopy.listPlaceholder}
               maxLength={300}
               required
               autoFocus
@@ -519,7 +524,7 @@ export function ListApp({
                       {s.id === pendingCreate?.id && (
                         <span className="text-xs text-slate-500">
                           {pendingCreate.status === "saving"
-                            ? "Saving…"
+                            ? wuffCopy.saving
                             : "Retry"}
                         </span>
                       )}
@@ -564,10 +569,10 @@ export function ListApp({
         {liveConfig && (
           <p role="status" className="text-xs text-slate-500 mb-4">
             {liveStatus === "live"
-              ? "Your pack is in sync · Live updates connected"
+              ? wuffCopy.liveConnected
               : liveStatus === "connecting"
-                ? "Fetching live updates. Regular refresh is active."
-                : "A little paws in live updates. Reconnecting; regular refresh is active."}
+                ? wuffCopy.connectingLive
+                : wuffCopy.reconnectingLive}
           </p>
         )}
         <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
@@ -618,7 +623,7 @@ export function ListApp({
         )}
         {loading && (
           <p role="status" className="text-slate-500">
-            Fetching your list…
+            {wuffCopy.fetchingList}
           </p>
         )}
         {!selectedId && (
@@ -668,7 +673,9 @@ export function ListApp({
                 />
                 {!isPending && (
                   <p className="text-xs text-slate-500 mt-2">
-                    {list.ownerId === userId ? "Your list" : "Shared with you"}
+                    {list.ownerId === userId
+                      ? "Your list · Pack leader"
+                      : "Shared with your pack"}
                   </p>
                 )}
               </div>
@@ -708,7 +715,7 @@ export function ListApp({
                     onClick={async () => {
                       if (
                         !window.confirm(
-                          `Delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+                          `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
                         )
                       )
                         return;
@@ -730,7 +737,7 @@ export function ListApp({
                         if (selected.current === list.id)
                           chooseList(next[0]?.id ?? "");
                       } catch (e) {
-                        setError((e as Error).message);
+                        setError(wuffError((e as Error).message));
                       } finally {
                         mutating.current = false;
                         setBusy(false);

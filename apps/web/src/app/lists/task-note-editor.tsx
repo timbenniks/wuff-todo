@@ -1,4 +1,5 @@
 "use client";
+import { wuffCopy } from "@/lib/copy";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
@@ -160,7 +161,7 @@ export default function TaskNoteEditor({
   if (!editor)
     return (
       <p role="status" className="p-4 text-sm">
-        Fetching your writing paws…
+        {wuffCopy.writingPaws}
       </p>
     );
   const controls = [

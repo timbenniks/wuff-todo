@@ -29,7 +29,7 @@ export default async function SignInPage({
           href="/set-password"
           className="block text-sm font-semibold underline underline-offset-4 mt-6"
         >
-          First visit or forgot your password?
+          New to the pack or fur-got your password?
         </Link>
         <p className="text-sm text-slate-500 mt-8 border-t border-border pt-6">
           Our pack is invite-only. Wuff is a private space for friends and

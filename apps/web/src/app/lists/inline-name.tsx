@@ -191,7 +191,7 @@ export function InlineName({
                 className={`text-xs ${error ? "text-red-800" : "text-slate-600"}`}
               >
                 {error ||
-                  `The name changed to “${value}” while you were editing. You can keep your draft or cancel to use the latest name.`}
+                  `New de-tails! The name changed to “${value}” while you were editing. Keep your draft or cancel to use the latest name.`}
               </p>
             )}
             <div className="flex flex-wrap items-center gap-1">

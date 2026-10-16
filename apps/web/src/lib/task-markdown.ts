@@ -1,5 +1,6 @@
 import { taskImageId, taskImagePath } from "@wuff/contracts";
 import MarkdownIt from "markdown-it";
+import { wuffCopy } from "./copy";
 
 // One renderer for the website and the sandboxed MCP App. Keep HTML disabled;
 // never load a remote image merely because an AI/client supplied Markdown.
@@ -48,14 +49,14 @@ markdown.renderer.rules.image = (tokens, index, _options, env) => {
     id = taskImageId(String(token.attrGet("src") ?? "")),
     alt = markdown.utils.escapeHtml(token.content || "Task image");
   if (!id)
-    return `<span class="note-image">[Image: ${alt} — external image not loaded]</span>`;
+    return `<span class="note-image">[Image: ${alt} — paws off: external image not loaded]</span>`;
   const imageEnv = env as ImageEnvironment | undefined;
   const src = imageEnv?.imageSource
     ? imageEnv.imageSource(id)
     : taskImagePath(id);
   return src
     ? `<img src="${markdown.utils.escapeHtml(src)}" alt="${alt}" loading="lazy" decoding="async">`
-    : `<span class="note-image" data-task-image="${id}" aria-label="${alt}" role="status">Fetching image…</span>`;
+    : `<span class="note-image" data-task-image="${id}" aria-label="${alt}" role="status">${wuffCopy.fetchingImage}</span>`;
 };
 export function renderTaskMarkdown(
   content: string,

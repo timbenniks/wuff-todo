@@ -12,7 +12,7 @@ export function SetPassword() {
     return (
       <div className="grid gap-6">
         <p role="status">
-          Paw-some, your password is ready. Sign in to see your lists.
+          Paw-some, your password is ready. Sign in and fetch your lists.
         </p>
         <Link
           href="/sign-in"
@@ -127,7 +127,8 @@ export function SetPassword() {
             />
           </label>
           <p className="text-xs text-slate-500">
-            Use at least 8 characters. Codes expire after a few minutes.
+            Keep your pack protected: use at least 8 characters. Codes expire
+            after a few minutes.
           </p>
         </>
       )}

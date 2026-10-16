@@ -36,7 +36,7 @@ export const TaskImageNode = Node.create({
             decoding: "async",
           },
         ]
-      : ["span", {}, "Image unavailable"],
+      : ["span", {}, "Ruff luck! Image unavailable."],
   markdownTokenName: "image",
   parseMarkdown: (token, helpers) =>
     taskImageId(token.href ?? "")

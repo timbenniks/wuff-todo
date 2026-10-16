@@ -1,4 +1,5 @@
 "use client";
+import { wuffCopy, wuffError } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
@@ -15,7 +16,7 @@ const Editor = dynamic(() => import("./task-note-editor"), {
   ssr: false,
   loading: () => (
     <p role="status" className="p-4 text-sm">
-      Fetching your writing paws…
+      {wuffCopy.writingPaws}
     </p>
   ),
 });
@@ -107,7 +108,7 @@ export function TaskNotes({
     } catch (error) {
       setError(
         error instanceof Error
-          ? error.message
+          ? wuffError(error.message)
           : "Ruff patch! Your image wasn’t uploaded. Try again.",
       );
       throw error;
@@ -183,7 +184,7 @@ export function TaskNotes({
       )}
       {uploading && (
         <p role="status" className="px-4 py-2 text-sm text-slate-500">
-          Fetching your photo, paws a moment…
+          {wuffCopy.uploadingImage}
         </p>
       )}
       {changed && (

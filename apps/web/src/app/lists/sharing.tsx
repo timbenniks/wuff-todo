@@ -1,4 +1,5 @@
 "use client";
+import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Users, X } from "lucide-react";
 import type {
@@ -31,7 +32,9 @@ function useSharingMutation<T>(saved: (value: T) => Promise<void>) {
       return true;
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Couldn’t save sharing settings.",
+        wuffError(
+          e instanceof Error ? e.message : "Couldn’t save sharing settings.",
+        ),
       );
       setRetry(e instanceof ApiError && e.status < 500 ? null : request);
       return false;
@@ -102,7 +105,7 @@ export function InvitationInbox({
           if (e instanceof ApiError && [401, 403].includes(e.status))
             setItems([]);
           setReadError(
-            "Couldn’t refresh invitations. They’ll be checked again shortly.",
+            "We lost the scent of your invitations. We’ll check again shortly.",
           );
         }
       } finally {
@@ -130,7 +133,7 @@ export function InvitationInbox({
               <div className="min-w-0 flex-1 basis-48">
                 <p className="font-semibold break-words">{invite.listTitle}</p>
                 <p className="text-sm text-slate-600 break-words">
-                  From {invite.ownerName} · {invite.ownerEmail}
+                  A pack invite from {invite.ownerName} · {invite.ownerEmail}
                 </p>
               </div>
               <Button
@@ -166,7 +169,7 @@ export function InvitationInbox({
           ))}
           {mutation.busy && (
             <p role="status" className="text-sm text-slate-500">
-              Saving your response…
+              {wuffCopy.savingInvitation}
             </p>
           )}
           <MutationError mutation={mutation} />
@@ -209,7 +212,7 @@ export function SharingDialog({
       await onChanged(list.id, true);
     } else {
       setSharing(value);
-      setNotice("Paw-some, sharing settings saved.");
+      setNotice(wuffCopy.sharingSaved);
       await onChanged(list.id);
     }
   });
@@ -224,7 +227,9 @@ export function SharingDialog({
     } catch (e) {
       if (revision.current === epoch) {
         setReadError(
-          e instanceof Error ? e.message : "Couldn’t load sharing settings.",
+          wuffError(
+            e instanceof Error ? e.message : "Couldn’t load sharing settings.",
+          ),
         );
         if (e instanceof ApiError && [401, 403, 404].includes(e.status))
           setSharing(null);
@@ -351,8 +356,8 @@ export function SharingDialog({
                 ))}
               </section>
               <p className="text-sm text-slate-500">
-                Editors can change tasks. Only the owner can rename, delete, or
-                share the list.
+                Pack rules: editors can change tasks. Only the owner can rename,
+                delete, or share the list.
               </p>
               {owner ? (
                 <>
@@ -393,8 +398,8 @@ export function SharingDialog({
                       </Button>
                     </div>
                     <p className="text-xs text-slate-500">
-                      They’ll see an invitation in Wuff. They need an existing
-                      account. No email is sent.
+                      Roll out the wag-on: they’ll see an invitation in Wuff.
+                      They need an existing account. No email is sent.
                     </p>
                   </form>
                   {sharing.invitations.length > 0 && (
@@ -403,7 +408,7 @@ export function SharingDialog({
                       className="grid gap-3"
                     >
                       <h3 className="text-sm font-semibold">
-                        Pending invitations
+                        Awaiting a tail wag · Pending invitations
                       </h3>
                       {sharing.invitations.map((invite) => (
                         <div
@@ -454,7 +459,7 @@ export function SharingDialog({
           )}
           {mutation.busy && (
             <p role="status" className="text-sm text-slate-500">
-              Saving sharing settings…
+              {wuffCopy.savingSharing}
             </p>
           )}
           <MutationError mutation={mutation} />

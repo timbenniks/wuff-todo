@@ -1,3 +1,4 @@
+import { wuffError } from "@/lib/copy";
 import { redirect } from "next/navigation";
 import { webActor, webIdentity } from "@/lib/auth/server";
 import { AppError } from "@wuff/contracts";
@@ -44,8 +45,8 @@ export default async function ListsPage() {
     if (error instanceof AppError && [429, 503].includes(error.status))
       return (
         <main className="max-w-md mx-auto px-6 py-24">
-          <h1 className="text-3xl font-bold mb-4">Wuff needs a moment.</h1>
-          <p className="mb-6">{error.message}</p>
+          <h1 className="text-3xl font-bold mb-4">Paws a moment.</h1>
+          <p className="mb-6">{wuffError(error.message)}</p>
           <a href="/lists" className="font-semibold text-primary underline">
             Try again
           </a>
@@ -54,11 +55,12 @@ export default async function ListsPage() {
     if (error instanceof AppError && error.status === 403)
       return (
         <main className="max-w-md mx-auto px-6 py-24">
-          <h1 className="text-3xl font-bold mb-4">An invitation is needed.</h1>
+          <h1 className="text-3xl font-bold mb-4">
+            An invite to the pack is needed.
+          </h1>
           <p>
-            Your identity is signed in, but this account hasn’t been invited to
-            Wuff yet. Ask the person who invited you to finish setting up your
-            access.
+            You’re signed in, but this account hasn’t joined the pack yet. Ask
+            the person who invited you to finish setting up your Wuff access.
           </p>
         </main>
       );

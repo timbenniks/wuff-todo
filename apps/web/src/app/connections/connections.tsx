@@ -1,4 +1,5 @@
 "use client";
+import { wuffError } from "@/lib/copy";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 export function Connections() {
@@ -11,10 +12,12 @@ export function Connections() {
     fetch("/api/v1/connections")
       .then(async (r) => {
         if (!r.ok)
-          throw new Error("Ruff patch! Couldn’t load connections. Try again.");
+          throw new Error(
+            "We lost the scent! Couldn’t load your AI connections. Try again.",
+          );
         setClients(await r.json());
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(wuffError(e.message)));
   }, []);
   return (
     <div>
@@ -50,11 +53,11 @@ export function Connections() {
                     });
                     if (!r.ok)
                       throw new Error(
-                        "Ruff patch! Couldn’t disconnect. Try again.",
+                        "Ruff break! The AI client wasn’t disconnected. Try again.",
                       );
                     setClients(clients.filter((c) => c.id !== client.id));
                   } catch (e) {
-                    setError((e as Error).message);
+                    setError(wuffError((e as Error).message));
                   } finally {
                     setBusy(false);
                   }

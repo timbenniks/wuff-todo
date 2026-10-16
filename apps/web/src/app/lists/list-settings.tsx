@@ -107,6 +107,9 @@ export function ListSettings({
           </label>
           <fieldset>
             <legend className="text-sm font-semibold mb-3">List color</legend>
+            <p className="text-xs text-slate-500 mb-3">
+              Give your list a little paw-sonality.
+            </p>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {listColors.map((color) => {
                 const p = listPalette[color];

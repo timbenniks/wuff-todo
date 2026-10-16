@@ -12,8 +12,8 @@ export default function SetPasswordPage() {
         </Link>
         <h1 className="text-3xl font-bold mb-3">Welcome to the pack.</h1>
         <p className="text-slate-500 mb-8">
-          Set your first password or reset a forgotten one using a code sent to
-          your email.
+          New here or fur-got your password? Fetch a code from your email to set
+          or reset it.
         </p>
         <SetPassword />
       </div>

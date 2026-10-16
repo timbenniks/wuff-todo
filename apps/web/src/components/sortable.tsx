@@ -52,17 +52,19 @@ export function SortableList({
       accessibility={{
         screenReaderInstructions: {
           draggable:
-            "Press Space to pick up. Use the arrow keys to move, Space to drop, or Escape to cancel.",
+            "Lend a paw: press Space to pick up. Use the arrow keys to move, Space to drop, or Escape to cancel.",
         },
         announcements: {
-          onDragStart: ({ active }) => `Picked up ${name(active.id)}.`,
+          onDragStart: ({ active }) => `Paws on ${name(active.id)}. Picked up.`,
           onDragOver: ({ active, over }) =>
             over
               ? `${name(active.id)} at position ${ids.indexOf(String(over.id)) + 1} of ${ids.length}.`
               : undefined,
           onDragEnd: ({ active, over }) =>
-            over ? `Dropped ${name(active.id)}.` : "Reordering cancelled.",
-          onDragCancel: () => "Reordering cancelled.",
+            over
+              ? `Paws off ${name(active.id)}. Dropped.`
+              : "Paws off. Reordering cancelled.",
+          onDragCancel: () => "Paws off. Reordering cancelled.",
         },
       }}
       onDragStart={({ active }) => {
@@ -82,7 +84,7 @@ export function SortableList({
         const from = ids.indexOf(String(active.id)),
           to = ids.indexOf(String(over.id));
         if (from >= 0 && to >= 0) {
-          setNotice("Saving order…");
+          setNotice("Getting your pack in order… Saving order.");
           void onReorder(arrayMove(ids, from, to), ids)
             .then((saved) => {
               setNotice(
@@ -163,7 +165,7 @@ export function SortableItem({
       data-sort-id={id}
       aria-label={`Reorder ${title}`}
       className="drag-handle h-8 w-8 shrink-0 touch-none text-slate-400 hover:text-primary cursor-grab active:cursor-grabbing"
-      title="Drag to reorder · Space for keyboard"
+      title="Lend a paw: drag to reorder · Space for keyboard"
     >
       <GripVertical size={16} />
     </Button>
