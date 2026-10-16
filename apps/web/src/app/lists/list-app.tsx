@@ -1,16 +1,15 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Archive,
   ArrowDown,
   ArrowUp,
-  Check,
   ListTodo,
   LogOut,
-  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
-import type { ListSummary, Task, TodoList } from "@wuff/contracts";
+import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { authClient } from "@/lib/auth/client";
@@ -23,12 +22,20 @@ import { useActorApi } from "./actor-api";
 import { LiveUpdates } from "./live-updates";
 import type { LiveLists } from "@/lib/live-types";
 import { LiveRefreshQueue } from "@/lib/live-refresh";
+import { listPalette } from "@/lib/list-colors";
+import { ListSettings } from "./list-settings";
+import { TaskGroups } from "./task-groups";
 
 type PendingCreate = {
   id: string;
   title: string;
   operationId: string;
   status: "saving" | "failed";
+};
+type PendingWrite = {
+  path: string;
+  method: string;
+  body: Record<string, unknown>;
 };
 
 export function ListApp({
@@ -51,7 +58,11 @@ export function ListApp({
   const [readFailure, setReadFailure] = useState("");
   const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
-    [selectedId, setSelectedId] = useState(initialLists[0]?.id ?? "");
+    [selectedId, setSelectedId] = useState(initialList?.id ?? "");
+  const [showArchive, setShowArchive] = useState(
+    initialList?.archived ?? false,
+  );
+  const [ordering, setOrdering] = useState(false);
   const [list, setList] = useState<TodoList | null>(initialList),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -63,6 +74,8 @@ export function ListApp({
   );
   const pending = useRef<PendingCreate | null>(null);
   const mutating = useRef(false);
+  const uncertainWrite = useRef<PendingWrite | null>(null);
+  const [retryWrite, setRetryWrite] = useState<PendingWrite | null>(null);
   const skipSelectionRead = useRef(initialList?.id ?? "");
   const summaryEpoch = useRef(0);
   const summariesRef = useRef(summaries);
@@ -213,6 +226,8 @@ export function ListApp({
               title: current.title,
               ownerId: current.ownerId,
               version: current.version,
+              color: current.color,
+              archived: current.archived,
             }
           : item,
       ),
@@ -235,12 +250,17 @@ export function ListApp({
         title: request.title,
         ownerId: userId,
         version: 0,
+        color: "blue" as const,
+        description: "",
+        archived: false,
+        sections: [],
         tasks: [],
       };
       cache.write(preview);
       setSummaries((items) => [...items, preview]);
       chooseList(request.id);
       setCreating(false);
+      setShowArchive(false);
     }
     request = { ...request, status: "saving" };
     pending.current = request;
@@ -265,6 +285,8 @@ export function ListApp({
           title: created.title,
           ownerId: created.ownerId,
           version: created.version,
+          color: created.color,
+          archived: created.archived,
         },
       ]);
       pending.current = null;
@@ -291,21 +313,38 @@ export function ListApp({
     path: string,
     method: string,
     body: Record<string, unknown>,
+    retry = false,
   ) {
     if (mutating.current) return false;
+    if (uncertainWrite.current && !retry) {
+      setError(
+        "A previous change needs confirmation. Retry that request first, or keep the current state.",
+      );
+      return false;
+    }
+    const request =
+      retry && uncertainWrite.current
+        ? uncertainWrite.current
+        : { path, method, body: { ...body, operationId: crypto.randomUUID() } };
     mutating.current = true;
     summaryEpoch.current++;
     if (typeof body.listId === "string") cache.supersede(body.listId);
     setBusy(true);
     setError("");
     try {
-      const result = await api<TodoList>(path, method, {
-        ...body,
-        operationId: crypto.randomUUID(),
-      });
+      const result = await api<TodoList>(
+        request.path,
+        request.method,
+        request.body,
+      );
+      uncertainWrite.current = null;
+      setRetryWrite(null);
       remember(result);
       return true;
     } catch (e) {
+      const uncertain = !(e instanceof ApiError) || e.status >= 500;
+      uncertainWrite.current = uncertain ? request : null;
+      setRetryWrite(uncertain ? request : null);
       setError((e as Error).message);
       if (selected.current) await reload(selected.current).catch(() => {});
       return false;
@@ -331,19 +370,48 @@ export function ListApp({
     chooseList(id);
   }
   const isPending = list?.id === pendingCreate?.id;
-  async function move(task: Task, direction: number) {
-    if (!list) return;
-    const ids = list.tasks.filter((t) => !t.completed).map((t) => t.id),
-      index = ids.indexOf(task.id),
-      target = index + direction;
-    if (target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
-    await change("/api/v1/tasks", "PUT", {
-      listId: list.id,
-      version: list.version,
-      taskIds: ids,
-    });
+  async function moveList(id: string, direction: number) {
+    if (mutating.current) return;
+    mutating.current = true;
+    setBusy(true);
+    setError("");
+    summaryEpoch.current++;
+    try {
+      const order = await api<ListOrder>("/api/v1/list-order");
+      const visible = order.listIds.filter((id) =>
+        summariesRef.current.some(
+          (s) => s.id === id && s.archived === showArchive,
+        ),
+      );
+      const target = visible[visible.indexOf(id) + direction];
+      if (!target) return;
+      const ids = [...order.listIds],
+        a = ids.indexOf(id),
+        b = ids.indexOf(target);
+      [ids[a], ids[b]] = [ids[b], ids[a]];
+      const saved = await api<ListOrder>("/api/v1/list-order", "PUT", {
+        listIds: ids,
+        version: order.version,
+        operationId: crypto.randomUUID(),
+      });
+      const rank = new Map(saved.listIds.map((id, i) => [id, i]));
+      setSummaries((items) =>
+        [...items].sort(
+          (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
+        ),
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      mutating.current = false;
+      setBusy(false);
+      void liveRefresh.current?.notify();
+    }
   }
+  useEffect(() => {
+    if (list) setShowArchive(list.archived);
+  }, [list?.id, list?.archived]);
+  const visibleLists = summaries.filter((s) => s.archived === showArchive);
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[260px_1fr]">
       {liveConfig && (
@@ -364,7 +432,7 @@ export function ListApp({
         </div>
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-            Your lists
+            {showArchive ? "Archived lists" : "Your lists"}
           </span>
           <Button
             size="icon"
@@ -397,30 +465,94 @@ export function ListApp({
             </Button>
           </form>
         )}
-        <nav aria-label="Lists" className="flex flex-wrap md:grid gap-1">
-          {summaries.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => chooseList(s.id)}
-              onPointerEnter={() => {
-                if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-              }}
-              onFocus={() => {
-                if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-              }}
-              aria-current={s.id === selectedId ? "page" : undefined}
-              className={`flex items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "bg-white shadow-sm font-semibold" : "hover:bg-white/60"}`}
-            >
-              <ListTodo size={17} />
-              <span className="truncate">{s.title}</span>
-              {s.id === pendingCreate?.id && (
-                <span className="text-xs text-slate-500">
-                  {pendingCreate.status === "saving" ? "Saving…" : "Retry"}
-                </span>
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const next = !showArchive;
+              setShowArchive(next);
+              chooseList(summaries.find((s) => s.archived === next)?.id ?? "");
+            }}
+          >
+            <Archive size={15} />
+            {showArchive
+              ? "Back to lists"
+              : `Archive (${summaries.filter((s) => s.archived).length})`}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={busy || !!pendingCreate}
+            aria-pressed={ordering}
+            onClick={() => setOrdering((v) => !v)}
+          >
+            {ordering ? "Done" : "Reorder"}
+          </Button>
+        </div>
+        <nav
+          aria-label={showArchive ? "Archived lists" : "Lists"}
+          className="grid gap-1"
+        >
+          {visibleLists.map((s, i) => (
+            <div key={s.id} className="flex items-center min-w-0 gap-1">
+              <button
+                onClick={() => chooseList(s.id)}
+                onPointerEnter={() => {
+                  if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+                }}
+                onFocus={() => {
+                  if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+                }}
+                aria-current={s.id === selectedId ? "page" : undefined}
+                className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
+                style={{
+                  background:
+                    s.id === selectedId ? listPalette[s.color].tint : undefined,
+                }}
+              >
+                <ListTodo
+                  size={17}
+                  className="shrink-0"
+                  style={{ color: listPalette[s.color].accent }}
+                />
+                <span className="truncate">{s.title}</span>
+                {s.id === pendingCreate?.id && (
+                  <span className="text-xs text-slate-500">
+                    {pendingCreate.status === "saving" ? "Saving…" : "Retry"}
+                  </span>
+                )}
+              </button>
+              {ordering && (
+                <div className="flex">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={busy || i === 0}
+                    aria-label={`Move list ${s.title} up`}
+                    onClick={() => moveList(s.id, -1)}
+                  >
+                    <ArrowUp size={14} />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={busy || i === visibleLists.length - 1}
+                    aria-label={`Move list ${s.title} down`}
+                    onClick={() => moveList(s.id, 1)}
+                  >
+                    <ArrowDown size={14} />
+                  </Button>
+                </div>
               )}
-            </button>
+            </div>
           ))}
         </nav>
+        {showArchive && visibleLists.length === 0 && (
+          <p className="text-sm text-slate-500 px-3 py-4">
+            No archived lists yet.
+          </p>
+        )}
         <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
           <a
             href="/connections"
@@ -461,12 +593,44 @@ export function ListApp({
             {readFailure}
           </p>
         )}
-        {error && (
+        {(error || retryWrite) && (
           <div
             role="alert"
             className="rounded-xl bg-red-50 text-red-800 px-4 py-3 mb-6 text-sm"
           >
-            {error}
+            {error || "We couldn’t confirm your previous change."}
+            {retryWrite && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    change(
+                      retryWrite.path,
+                      retryWrite.method,
+                      retryWrite.body,
+                      true,
+                    )
+                  }
+                >
+                  Retry same request
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    uncertainWrite.current = null;
+                    setRetryWrite(null);
+                    setError("");
+                    void liveRefresh.current?.notify();
+                  }}
+                >
+                  Keep current state
+                </Button>
+              </div>
+            )}
           </div>
         )}
         {loading && (
@@ -478,10 +642,14 @@ export function ListApp({
           <div className="py-12">
             <Corgi size={88} />
             <h1 className="text-4xl font-bold mt-7 mb-3">
-              A little room for your day.
+              {showArchive
+                ? "All clear in the archive."
+                : "A little room for your day."}
             </h1>
             <p className="text-slate-500 mb-7">
-              Groceries, weekend plans, things you don’t want to forget.
+              {showArchive
+                ? "Archived lists will be kept here until you need them again."
+                : "Groceries, weekend plans, things you don’t want to forget."}
             </p>
             <Button onClick={() => setCreating(true)}>
               <Plus size={18} />
@@ -491,7 +659,13 @@ export function ListApp({
         )}
         {list && (
           <>
-            <div className="flex flex-wrap items-start gap-2 mb-2 [&>div:first-child]:flex-1 [&>div:first-child]:basis-40">
+            <div
+              className="flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-40"
+              style={{
+                background: listPalette[list.color].tint,
+                borderColor: listPalette[list.color].accent + "30",
+              }}
+            >
               <div className="min-w-0">
                 <h1 className="text-4xl font-bold break-words">{list.title}</h1>
                 {!isPending && (
@@ -510,23 +684,24 @@ export function ListApp({
                 />
               )}
               {list.ownerId === userId && !isPending && (
-                <div className="flex">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={busy}
-                    aria-label="Rename list"
-                    onClick={async () => {
-                      const title = window.prompt("List name", list.title);
-                      if (title?.trim())
-                        await change(`/api/v1/lists/${list.id}`, "PATCH", {
-                          title,
-                          version: list.version,
-                        });
-                    }}
-                  >
-                    <Pencil size={17} />
-                  </Button>
+                <div className="flex items-center gap-1">
+                  <ListSettings
+                    key={list.id}
+                    list={list}
+                    busy={busy}
+                    change={change}
+                    retry={
+                      retryWrite
+                        ? () =>
+                            change(
+                              retryWrite.path,
+                              retryWrite.method,
+                              retryWrite.body,
+                              true,
+                            )
+                        : undefined
+                    }
+                  />
                   <Button
                     variant="ghost"
                     size="icon"
@@ -588,152 +763,18 @@ export function ListApp({
               </div>
             ) : (
               <>
-                <p className="text-sm text-slate-500 mb-10">
-                  {list.tasks.filter((t) => !t.completed).length} things to do
-                </p>
-                <ul
-                  aria-label="Active tasks"
-                  className="divide-y divide-border"
-                >
-                  {list.tasks
-                    .filter((t) => !t.completed)
-                    .map((task, i, active) => (
-                      <li
-                        key={task.id}
-                        className="group flex items-center gap-3 py-3"
-                      >
-                        <button
-                          aria-label={`Complete ${task.title}`}
-                          disabled={busy}
-                          className="h-6 w-6 shrink-0 rounded-full border-2 border-[#aabdcf] hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary"
-                          onClick={() =>
-                            change("/api/v1/tasks", "PATCH", {
-                              listId: list.id,
-                              taskId: task.id,
-                              version: list.version,
-                              completed: true,
-                            })
-                          }
-                        />
-                        <button
-                          disabled={busy}
-                          className="text-left min-w-0 flex-1 py-2 break-words"
-                          aria-label={`Edit ${task.title}`}
-                          onClick={() => {
-                            const title = window.prompt(
-                              "Task name",
-                              task.title,
-                            );
-                            if (title?.trim())
-                              change("/api/v1/tasks", "PATCH", {
-                                listId: list.id,
-                                taskId: task.id,
-                                version: list.version,
-                                title,
-                              });
-                          }}
-                        >
-                          {task.title}
-                        </button>
-                        <div className="flex">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`Move ${task.title} up`}
-                            disabled={busy || i === 0}
-                            onClick={() => move(task, -1)}
-                          >
-                            <ArrowUp size={15} />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`Move ${task.title} down`}
-                            disabled={busy || i === active.length - 1}
-                            onClick={() => move(task, 1)}
-                          >
-                            <ArrowDown size={15} />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`Delete ${task.title}`}
-                            disabled={busy}
-                            onClick={() =>
-                              change("/api/v1/tasks", "DELETE", {
-                                listId: list.id,
-                                taskId: task.id,
-                                version: list.version,
-                              })
-                            }
-                          >
-                            <Trash2 size={15} />
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                </ul>
-                <form
-                  className="flex gap-2 mt-5"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    if (
-                      await change("/api/v1/tasks", "POST", {
-                        listId: list.id,
-                        version: list.version,
-                        title: String(new FormData(form).get("title")),
-                      })
-                    )
-                      form.reset();
-                  }}
-                >
-                  <input
-                    name="title"
-                    aria-label="New task"
-                    placeholder="Add a little thing to do…"
-                    maxLength={300}
-                    required
-                    className="flex-1"
-                  />
-                  <Button disabled={busy} type="submit" aria-label="Add task">
-                    <Plus size={20} />
-                  </Button>
-                </form>
-                <details className="mt-10">
-                  <summary className="text-sm text-slate-500 py-3">
-                    Completed ({list.tasks.filter((t) => t.completed).length})
-                  </summary>
-                  <ul>
-                    {list.tasks
-                      .filter((t) => t.completed)
-                      .map((task) => (
-                        <li
-                          key={task.id}
-                          className="flex gap-3 items-center py-3 text-slate-500"
-                        >
-                          <button
-                            aria-label={`Reopen ${task.title}`}
-                            disabled={busy}
-                            onClick={() =>
-                              change("/api/v1/tasks", "PATCH", {
-                                listId: list.id,
-                                taskId: task.id,
-                                version: list.version,
-                                completed: false,
-                              })
-                            }
-                            className="rounded-full bg-primary text-white w-6 h-6 flex items-center justify-center"
-                          >
-                            <Check size={15} />
-                          </button>
-                          <span className="line-through break-words">
-                            {task.title}
-                          </span>
-                        </li>
-                      ))}
-                  </ul>
-                </details>
+                {list.description && (
+                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600 mb-8">
+                    {list.description}
+                  </p>
+                )}
+                <TaskGroups
+                  key={list.id}
+                  list={list}
+                  userId={userId}
+                  busy={busy}
+                  change={change}
+                />
               </>
             )}
           </>

@@ -22,6 +22,12 @@ import {
   renameListSchema,
   reorderTasksSchema,
   updateTaskSchema,
+  updateListSchema,
+  reorderListsSchema,
+  createSectionSchema,
+  renameSectionSchema,
+  sectionMutationSchema,
+  reorderSectionsSchema,
 } from "@wuff/contracts";
 import * as domain from "@wuff/domain";
 
@@ -42,7 +48,7 @@ export function createMcpServer(actor: Actor) {
   };
   async function result(action: () => Promise<Record<string, unknown>>) {
     try {
-      const data = await action();
+      const data = { ...(await action()), viewerId: actor.id };
       return {
         content: [{ type: "text" as const, text: JSON.stringify(data) }],
         structuredContent: data,
@@ -108,7 +114,64 @@ export function createMcpServer(actor: Actor) {
     async ({ listId }) =>
       result(async () => ({ list: await domain.getList(actor, listId) })),
   );
+  server.registerTool(
+    "get_list_order",
+    {
+      description:
+        "Read your personal sidebar ordering and its current revision, including archived lists. Does not change the shared task order.",
+      inputSchema: {},
+      annotations: read,
+    },
+    async () =>
+      result(async () => ({ order: await domain.getListOrder(actor) })),
+  );
+  server.registerTool(
+    "reorder_lists",
+    {
+      description:
+        "Set only your personal sidebar order. Read get_list_order first; include each accessible list ID exactly once, including archived lists, with its order revision and a fresh operationId UUID.",
+      inputSchema: reorderListsSchema,
+      annotations: write,
+    },
+    async (data) =>
+      result(async () => ({ order: await domain.reorderLists(actor, data) })),
+  );
   const operations = [
+    [
+      "update_list",
+      "Owner only: change list title, plain-text description, shared color, or archived state. archived=true archives for everyone; false restores. Archived tasks are read-only. Read current list version first; use an operationId UUID for safe retries.",
+      updateListSchema,
+      domain.updateList,
+      write,
+    ],
+    [
+      "create_section",
+      "Owner only: add a named section to an active list. Sections share list permissions. Read the list version first.",
+      createSectionSchema,
+      domain.createSection,
+      write,
+    ],
+    [
+      "rename_section",
+      "Owner only: rename a section in an active list. Read the list version first.",
+      renameSectionSchema,
+      domain.renameSection,
+      write,
+    ],
+    [
+      "delete_section",
+      "Owner only: remove a section from an active list. All its tasks are kept in the unsectioned group. Read the list version first.",
+      sectionMutationSchema,
+      domain.deleteSection,
+      { ...write, destructiveHint: true },
+    ],
+    [
+      "reorder_sections",
+      "Owner only: set section order in an active list, supplying every section ID once. Read the list version first.",
+      reorderSectionsSchema,
+      domain.reorderSections,
+      write,
+    ],
     [
       "create_list",
       "Create a private list. Supply a fresh operationId UUID; reuse it only for an identical retry.",
@@ -132,14 +195,14 @@ export function createMcpServer(actor: Actor) {
     ],
     [
       "create_task",
-      "Add a task. Read the list version first. Supply an operationId UUID for safe retries.",
+      "Add a task to an active list. Optional sectionId must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
       createTaskSchema,
       domain.createTask,
       write,
     ],
     [
       "update_task",
-      "Rename or set completion state explicitly. Read the list version first.",
+      "Rename, set completion state, or move a task in an active list. sectionId must belong to the same list; null moves to unsectioned. Read the list version first.",
       updateTaskSchema,
       domain.updateTask,
       write,

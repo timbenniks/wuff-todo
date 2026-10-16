@@ -325,10 +325,132 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       assert.equal(response.status, 200);
       return response.body.result;
     }
+    // List-focused features use the same versioned services through MCP and HTTP.
+    let mature = webState;
+    async function listTool(name: string, extra: Record<string, unknown>) {
+      const value = await call(token.access_token, name, {
+        listId: list.id,
+        version: mature.version,
+        operationId: crypto.randomUUID(),
+        ...extra,
+      });
+      assert.ok(!value.isError, `MCP ${name} succeeds`);
+      mature = value.structuredContent.list;
+      return mature;
+    }
+    await listTool("update_list", {
+      color: "lavender",
+      description: "Shared list context",
+    });
+    await listTool("create_section", { title: "MCP section" });
+    const sectionId = mature.sections[0].id;
+    await listTool("rename_section", { sectionId, title: "Weekend" });
+    await listTool("reorder_sections", { sectionIds: [sectionId] });
+    const moved = await fetch(`${origin}/api/v1/tasks`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({
+        listId: list.id,
+        version: mature.version,
+        taskId: mature.tasks[0].id,
+        sectionId,
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(moved.status, 200);
+    mature = await moved.json();
+    assert.equal(mature.tasks[0].sectionId, sectionId);
+    await listTool("update_list", { archived: true });
+    const archivedDenied = await call(token.access_token, "create_task", {
+      listId: list.id,
+      version: mature.version,
+      title: "Archived task denied",
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(archivedDenied.isError);
+    const restored = await fetch(`${origin}/api/v1/lists/${list.id}`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({
+        version: mature.version,
+        archived: false,
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(restored.status, 200);
+    mature = await restored.json();
+    await listTool("delete_section", { sectionId });
+    assert.equal(mature.tasks[0].sectionId, null);
+    const orderRead = await call(token.access_token, "get_list_order", {});
+    const order = orderRead.structuredContent.order;
+    assert.ok(order.listIds.includes(list.id));
+    const reordered = await call(token.access_token, "reorder_lists", {
+      ...order,
+      operationId: crypto.randomUUID(),
+    });
+    assert.ok(!reordered.isError);
+    for (const path of [
+      "/api/v1/list-order",
+      `/api/v1/lists/${list.id}/sections`,
+    ]) {
+      const method = path.includes("sections") ? "POST" : "PUT";
+      const data = path.includes("sections")
+        ? {
+            version: mature.version,
+            title: "Denied",
+            operationId: crypto.randomUUID(),
+          }
+        : { ...order, operationId: crypto.randomUUID() };
+      assert.equal(
+        (
+          await fetch(origin + path, {
+            method,
+            headers: {
+              ...jsonHeaders,
+              Origin: "https://other.example",
+              Cookie: cookie,
+            },
+            body: JSON.stringify(data),
+          })
+        ).status,
+        403,
+      );
+      assert.equal(
+        (
+          await fetch(origin + path, {
+            method,
+            headers: {
+              ...jsonHeaders,
+              "X-Wuff-User": fixtures[1].id,
+              Cookie: cookie,
+            },
+            body: JSON.stringify(data),
+          })
+        ).status,
+        409,
+      );
+    }
+    await waitForLive(liveSubscription, (rows) =>
+      rows.some(
+        (row) =>
+          row.id === list.id &&
+          row.version === mature.version &&
+          row.color === "lavender" &&
+          !row.archived,
+      ),
+    );
+    Object.assign(webState, mature);
     const toolNames = tools.body.result.tools.map(
       (tool: { name: string }) => tool.name,
     );
     for (const name of [
+      "update_list",
+      "get_list_order",
+      "reorder_lists",
+      "create_section",
+      "rename_section",
+      "reorder_sections",
+      "delete_section",
       "get_list_sharing",
       "list_invitations",
       "invite_to_list",

@@ -9,6 +9,8 @@ import {
   receipts,
   tasks,
   users,
+  sections,
+  listPreferences,
 } from "@wuff/db";
 import {
   Actor,
@@ -26,6 +28,12 @@ import {
   renameListSchema,
   reorderTasksSchema,
   updateTaskSchema,
+  updateListSchema,
+  reorderListsSchema,
+  createSectionSchema,
+  renameSectionSchema,
+  sectionMutationSchema,
+  reorderSectionsSchema,
 } from "@wuff/contracts";
 
 type Db = ReturnType<typeof database>["db"];
@@ -69,12 +77,22 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
   const list = await accessible(tx, actor, listId);
   return {
     ...list,
+    sections: await tx
+      .select({
+        id: sections.id,
+        title: sections.title,
+        position: sections.position,
+      })
+      .from(sections)
+      .where(eq(sections.listId, listId))
+      .orderBy(asc(sections.position), asc(sections.id)),
     tasks: await tx
       .select({
         id: tasks.id,
         title: tasks.title,
         completed: tasks.completed,
         position: tasks.position,
+        sectionId: tasks.sectionId,
       })
       .from(tasks)
       .where(eq(tasks.listId, listId))
@@ -128,10 +146,17 @@ async function locked(
   actor: Actor,
   input: { listId: string; version: number },
   owner = false,
+  activeOnly = false,
 ) {
   const list = await accessible(tx, actor, input.listId, true);
   if (owner && list.ownerId !== actor.id)
     fail("owner_required", "Only the owner can manage this list.", 403);
+  if (activeOnly && list.archived)
+    fail(
+      "list_archived",
+      "Restore this list before changing its tasks or sections.",
+      409,
+    );
   if (list.version !== input.version)
     fail("conflict", "This list changed. Refresh it and try again.", 409);
   await tx
@@ -141,23 +166,22 @@ async function locked(
   return list;
 }
 
-export async function listLists(actor: Actor) {
-  requireScope(actor, "lists:read");
-  const db = database().db;
-  await admission(db, actor);
-  return db
+async function catalog(tx: Tx | Db, actor: Actor) {
+  return tx
     .select({
       id: lists.id,
       title: lists.title,
       ownerId: lists.ownerId,
       version: lists.version,
+      color: lists.color,
+      archived: lists.archived,
     })
     .from(lists)
     .where(
       or(
         eq(lists.ownerId, actor.id),
         exists(
-          db
+          tx
             .select({ id: members.listId })
             .from(members)
             .where(
@@ -167,6 +191,83 @@ export async function listLists(actor: Actor) {
       ),
     )
     .orderBy(asc(lists.createdAt), asc(lists.id));
+}
+async function orderedCatalog(tx: Tx | Db, actor: Actor) {
+  const rows = await catalog(tx, actor);
+  const [preference] = await tx
+    .select()
+    .from(listPreferences)
+    .where(eq(listPreferences.userId, actor.id));
+  const rank = new Map((preference?.listIds ?? []).map((id, i) => [id, i]));
+  return {
+    lists: rows.sort(
+      (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
+    ),
+    version: preference?.version ?? 0,
+  };
+}
+export async function listLists(actor: Actor) {
+  requireScope(actor, "lists:read");
+  const db = database().db;
+  await admission(db, actor);
+  return (await orderedCatalog(db, actor)).lists;
+}
+export async function getListOrder(actor: Actor) {
+  requireScope(actor, "lists:read");
+  return database().db.transaction(
+    async (tx) => {
+      await admission(tx, actor);
+      const value = await orderedCatalog(tx, actor);
+      return { version: value.version, listIds: value.lists.map((l) => l.id) };
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+}
+export async function reorderLists(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = reorderListsSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "reorder_lists" } as typeof input,
+    async (tx) => {
+      // Account row serializes first writes even before a preference row exists.
+      await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, actor.id))
+        .for("update");
+      const current = await orderedCatalog(tx, actor);
+      if (current.version !== input.version)
+        fail(
+          "conflict",
+          "Your list order changed. Refresh it and try again.",
+          409,
+        );
+      if (
+        current.lists.length !== input.listIds.length ||
+        new Set(input.listIds).size !== input.listIds.length ||
+        current.lists.some((l) => !input.listIds.includes(l.id))
+      )
+        fail(
+          "invalid_order",
+          "Provide each accessible list exactly once, including archived lists.",
+          400,
+        );
+      await tx
+        .insert(listPreferences)
+        .values({
+          userId: actor.id,
+          listIds: input.listIds,
+          version: current.version + 1,
+        })
+        .onConflictDoUpdate({
+          target: listPreferences.userId,
+          set: { listIds: input.listIds, version: current.version + 1 },
+        });
+      return { id: actor.id };
+    },
+  );
+  return getListOrder(actor);
 }
 export async function getList(actor: Actor, id: string) {
   requireScope(actor, "lists:read");
@@ -225,6 +326,123 @@ export async function deleteList(actor: Actor, data: unknown) {
     },
   );
 }
+export async function updateList(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = updateListSchema.parse(data);
+  // Receipts do not retain an owner's former authority.
+  const current = await accessible(database().db, actor, input.listId);
+  if (current.ownerId !== actor.id)
+    fail("owner_required", "Only the owner can manage this list.", 403);
+  await mutate(
+    actor,
+    { ...input, kind: "update_list" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true);
+      const { title, description, color, archived } = input;
+      await tx
+        .update(lists)
+        .set({ title, description, color, archived })
+        .where(eq(lists.id, input.listId));
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
+}
+async function validSection(tx: Tx, listId: string, sectionId?: string | null) {
+  if (!sectionId) return;
+  const [section] = await tx
+    .select({ id: sections.id })
+    .from(sections)
+    .where(and(eq(sections.id, sectionId), eq(sections.listId, listId)));
+  if (!section) fail("not_found", "Section not found in this list.", 404);
+}
+export async function createSection(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = createSectionSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "create_section" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true, true);
+      const existing = await tx
+        .select()
+        .from(sections)
+        .where(eq(sections.listId, input.listId));
+      if (existing.length >= 50)
+        fail("limit_reached", "A list can contain up to 50 sections.", 400);
+      await tx.insert(sections).values({
+        listId: input.listId,
+        title: input.title,
+        position: Math.max(-1, ...existing.map((s) => s.position)) + 1,
+      });
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
+}
+export async function renameSection(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = renameSectionSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "rename_section" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true, true);
+      await validSection(tx, input.listId, input.sectionId);
+      await tx
+        .update(sections)
+        .set({ title: input.title })
+        .where(eq(sections.id, input.sectionId));
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
+}
+export async function deleteSection(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = sectionMutationSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "delete_section" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true, true);
+      await validSection(tx, input.listId, input.sectionId);
+      // ON DELETE SET NULL preserves every task in the unsectioned group.
+      await tx.delete(sections).where(eq(sections.id, input.sectionId));
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
+}
+export async function reorderSections(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = reorderSectionsSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "reorder_sections" } as typeof input,
+    async (tx) => {
+      await locked(tx, actor, input, true, true);
+      const existing = await tx
+        .select({ id: sections.id })
+        .from(sections)
+        .where(eq(sections.listId, input.listId));
+      if (
+        existing.length !== input.sectionIds.length ||
+        new Set(input.sectionIds).size !== existing.length ||
+        existing.some((s) => !input.sectionIds.includes(s.id))
+      )
+        fail(
+          "invalid_order",
+          "Provide every section in this list exactly once.",
+          400,
+        );
+      for (const [position, id] of input.sectionIds.entries())
+        await tx.update(sections).set({ position }).where(eq(sections.id, id));
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
+}
 export async function createTask(actor: Actor, data: unknown) {
   requireScope(actor, "tasks:write");
   const input = createTaskSchema.parse(data);
@@ -232,7 +450,8 @@ export async function createTask(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "create_task" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input);
+      await locked(tx, actor, input, false, true);
+      await validSection(tx, input.listId, input.sectionId);
       const existing = await tx
         .select()
         .from(tasks)
@@ -242,6 +461,7 @@ export async function createTask(actor: Actor, data: unknown) {
       await tx.insert(tasks).values({
         listId: input.listId,
         title: input.title,
+        sectionId: input.sectionId ?? null,
         position: Math.max(-1, ...existing.map((t) => t.position)) + 1,
       });
       return { id: input.listId };
@@ -256,12 +476,13 @@ export async function updateTask(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "update_task" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input);
+      await locked(tx, actor, input, false, true);
       const [task] = await tx
         .select()
         .from(tasks)
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
       if (!task) fail("not_found", "Task not found.", 404);
+      await validSection(tx, input.listId, input.sectionId);
       let position = task.position;
       if (input.completed === false && task.completed) {
         const rows = await tx
@@ -275,6 +496,8 @@ export async function updateTask(actor: Actor, data: unknown) {
         .set({
           title: input.title ?? task.title,
           completed: input.completed ?? task.completed,
+          sectionId:
+            input.sectionId === undefined ? task.sectionId : input.sectionId,
           position,
         })
         .where(eq(tasks.id, task.id));
@@ -290,7 +513,7 @@ export async function deleteTask(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "delete_task" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input);
+      await locked(tx, actor, input, false, true);
       await tx
         .delete(tasks)
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
@@ -306,7 +529,7 @@ export async function reorderTasks(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "reorder_tasks" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input);
+      await locked(tx, actor, input, false, true);
       const active = await tx
         .select({ id: tasks.id })
         .from(tasks)

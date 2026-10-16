@@ -77,17 +77,17 @@ MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity.
 
 ## Implemented endpoints
 
-| Endpoint                                                               | Purpose                                          |
-| ---------------------------------------------------------------------- | ------------------------------------------------ |
-| `/api/auth/[...path]`                                                  | Restricted Neon session/login proxy              |
-| `/api/v1/lists`                                                        | Read accessible lists; create private lists      |
-| `/api/v1/lists/:id`                                                    | Read list; owner rename/delete                   |
-| `/api/v1/tasks`                                                        | Add, edit, complete/reopen, delete, reorder      |
-| `/api/v1/connections`                                                  | List and revoke the user's AI connections        |
-| `/api/mcp`                                                             | Stateless authenticated MCP HTTP transport       |
-| `/.well-known/oauth-protected-resource/api/mcp`                        | MCP resource discovery                           |
-| `/.well-known/oauth-authorization-server`                              | Authorization-server discovery                   |
-| `/oauth/register`, `/oauth/authorize`, `/oauth/token`, `/oauth/revoke` | Client registration, consent, tokens, revocation |
+| Endpoint                                                               | Purpose                                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `/api/auth/[...path]`                                                  | Restricted Neon session/login proxy                           |
+| `/api/v1/lists`                                                        | Read accessible lists in personal order; create private lists |
+| `/api/v1/lists/:id`                                                    | Read list; owner settings/archive/restore/delete              |
+| `/api/v1/tasks`                                                        | Add, edit, complete/reopen, delete, reorder                   |
+| `/api/v1/connections`                                                  | List and revoke the user's AI connections                     |
+| `/api/mcp`                                                             | Stateless authenticated MCP HTTP transport                    |
+| `/.well-known/oauth-protected-resource/api/mcp`                        | MCP resource discovery                                        |
+| `/.well-known/oauth-authorization-server`                              | Authorization-server discovery                                |
+| `/oauth/register`, `/oauth/authorize`, `/oauth/token`, `/oauth/revoke` | Client registration, consent, tokens, revocation              |
 
 Website API mutations require a same-origin session. External MCP clients use bearer tokens scoped to the MCP resource. HTTP API bearer authentication for future mobile clients remains future work. An OpenAPI document has not been added yet.
 
@@ -126,3 +126,12 @@ Feature enablement uses the Neon CLI against the existing Vercel-managed project
 The authenticated, same-origin `POST /api/v1/live` endpoint accepts `{ userId }`, checks it against the current admitted actor, and returns a non-cacheable sealed subscription. Missing configuration leaves the website on regular refresh; the endpoint returns 503. The list-page API sends `X-Wuff-User` to reject requests from an old page after an account switch. The existing MCP transport remains unchanged and does not need new scopes or tools.
 
 See [live updates](live-updates.md) for permission boundaries, retry/reconnect behavior, and verification limits.
+
+## Mature list endpoints
+
+- `GET /api/v1/list-order`: current account order `{ version, listIds }`, including archived lists. `PUT` accepts that revision, all accessible IDs exactly once, and an operation UUID.
+- `PATCH /api/v1/lists/:id`: owner changes any of `title`, `description`, `color`, `archived`, with the current list version and operation UUID. Existing rename MCP tool remains compatible.
+- `/api/v1/lists/:id/sections`: owner `POST` creates by title; `PATCH` renames by sectionId; `PUT` orders all sectionIds; `DELETE` removes by sectionId while preserving tasks. All use list version and operation UUID.
+- Task create/update accepts `sectionId` belonging to that list, or null for unsectioned. Archived task/section writes return `list_archived` (409).
+
+Migration `0002_worried_freak.sql` adds description/color/archive columns, account ordering preferences, list sections, and nullable task section IDs. Defaults preserve existing data. See [mature lists](mature-lists.md). The MCP catalog adds `update_list`, `get_list_order`, `reorder_lists`, `create_section`, `rename_section`, `reorder_sections`, and `delete_section`; existing OAuth scopes cover these operations. Clients may need to refresh their tool catalogs.

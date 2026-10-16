@@ -15,6 +15,13 @@
       "when": 1792094334063,
       "tag": "0001_free_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792145768504,
+      "tag": "0002_worried_freak",
+      "breakpoints": true
     }
   ]
 }

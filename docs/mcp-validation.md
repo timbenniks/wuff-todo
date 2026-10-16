@@ -4,9 +4,9 @@ October 15, 2026
 
 Endpoint: `https://wuff-todo.vercel.app/api/mcp`.
 
-## Current catalog and later sharing checks
+## Catalog history and later sharing checks
 
-The deployed catalog now has 18 tools: the original 11 below plus `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, and `leave_list`. Authenticated production Codex calls validated sharing reads and rejection of self-invitation without mutation; development tests exercised the two-user sharing lifecycle through both HTTP and MCP. See [verification](verification.md#existing-account-sharing--october-15-2026).
+The sharing milestone deployed 18 tools: the original 11 below plus `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, and `leave_list`. Authenticated production Codex calls validated sharing reads and rejection of self-invitation without mutation; development tests exercised the two-user sharing lifecycle through both HTTP and MCP. See [verification](verification.md#existing-account-sharing--october-15-2026).
 
 Tim also reported successful use in another Codex chat. This does not verify ChatGPT, another person's authorization, or inline rendering in a named host.
 
@@ -63,3 +63,7 @@ The connection may need a server restart in the desktop client's MCP settings be
 - Broaden recorded natural-language coverage beyond the user-reported successful Codex use; keep model/tool-selection evidence separate from direct protocol checks.
 - Production token refresh/rotation and user-driven disconnection remain separate checks; synthetic development integration tests cover refresh, revocation, read-only scopes, and permissions. The production validation deliberately preserved the user's working connection.
 - Joreel's own connection, ChatGPT, Claude, and other clients remain unverified. One person's successful consent does not verify another account.
+
+## Mature list catalog — October 16, 2026
+
+The mature list build has 25 tools, adding `update_list`, `get_list_order`, `reorder_lists`, `create_section`, `rename_section`, `reorder_sections`, and `delete_section`. Authenticated development HTTP/MCP tests exercised these with current versions and operation UUIDs; local MCP App bridge controls saved color/settings, created sections, and archived a list while the open website reconciled live changes. Production release evidence is recorded in [mature lists](mature-lists.md). Saved Codex reauthentication and named-host checks remain outstanding; a build or local host is not production Codex/ChatGPT proof.

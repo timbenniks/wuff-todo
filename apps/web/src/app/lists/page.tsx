@@ -17,9 +17,10 @@ export default async function ListsPage() {
       listInvitations(actor),
     ]);
     let initialList: TodoList | null = null;
-    if (initialLists[0]) {
+    const first = initialLists.find((l) => !l.archived) ?? initialLists[0];
+    if (first) {
       try {
-        initialList = await getList(actor, initialLists[0].id);
+        initialList = await getList(actor, first.id);
       } catch (error) {
         // A concurrent delete/revocation is reconciled by the client's fresh read.
         if (!(error instanceof AppError && error.status === 404)) throw error;

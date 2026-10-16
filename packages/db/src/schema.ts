@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { ListColor } from "@wuff/contracts";
 
 const time = (name: string) =>
   timestamp(name, { withTimezone: true }).notNull().defaultNow();
@@ -27,8 +28,30 @@ export const lists = pgTable("wuff_lists", {
     .notNull()
     .references(() => users.id),
   version: integer("version").notNull().default(0),
+  color: text("color").$type<ListColor>().notNull().default("blue"),
+  description: text("description").notNull().default(""),
+  archived: boolean("archived").notNull().default(false),
   createdAt: time("created_at"),
 });
+export const listPreferences = pgTable("wuff_list_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  version: integer("version").notNull().default(0),
+  listIds: jsonb("list_ids").$type<string[]>().notNull().default([]),
+});
+export const sections = pgTable(
+  "wuff_sections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [index("wuff_sections_list_idx").on(t.listId)],
+);
 export const members = pgTable(
   "wuff_members",
   {
@@ -49,6 +72,9 @@ export const tasks = pgTable("wuff_tasks", {
     .references(() => lists.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   completed: boolean("completed").notNull().default(false),
+  sectionId: uuid("section_id").references(() => sections.id, {
+    onDelete: "set null",
+  }),
   position: integer("position").notNull(),
   createdAt: time("created_at"),
 });

@@ -22,7 +22,9 @@ button:not(:disabled),
 summary {
   cursor: pointer;
 }
-input:not([type="checkbox"]) {
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
   min-width: 0;
   border: 1px solid var(--color-border);
   background: white;
@@ -31,6 +33,8 @@ input:not([type="checkbox"]) {
   outline-offset: 3px;
 }
 input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
 a:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--color-primary);

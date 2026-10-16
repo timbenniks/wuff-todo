@@ -1,6 +1,6 @@
 import { failure, jsonInput, sameOrigin } from "@/lib/http";
 import { listResponse } from "@/lib/list-response";
-import { deleteList, getList, renameList } from "@wuff/domain";
+import { deleteList, getList, updateList } from "@wuff/domain";
 import { idSchema } from "@wuff/contracts";
 type Context = { params: Promise<{ id: string }> };
 export async function GET(_: Request, context: Context) {
@@ -17,7 +17,7 @@ export async function PATCH(request: Request, context: Context) {
     const data = await jsonInput(request);
     const listId = (await context.params).id;
     return await listResponse((actor) =>
-      renameList(actor, {
+      updateList(actor, {
         ...data,
         listId,
       }),

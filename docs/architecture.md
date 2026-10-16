@@ -4,7 +4,7 @@ Status: implemented web/API/MCP architecture with explicitly marked future scope
 
 Updated: October 16, 2026
 
-The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Native authentication, new-account invitation delivery, sidebar ordering, and future packages remain planned.
+The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication, new-account invitation delivery, and future packages remain planned.
 
 ## Stack and deployment
 
@@ -69,15 +69,16 @@ Implemented MCP scopes are `lists:read`, `tasks:write`, and `lists:manage`. Code
 
 ## Conceptual data model
 
-| Entity               | Responsibility                                                                         |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| User/profile         | Stable link to Neon identity and application preferences                               |
-| List                 | Title, owner, lifecycle state, timestamps, version                                     |
-| List membership      | Accepted editor membership, unique per list and user                                   |
-| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                    |
-| User list preference | Future personal sidebar order and preferences; not implemented                         |
-| Task                 | List, title, integer position, completion state, creation time; version is on the list |
-| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                   |
+| Entity               | Responsibility                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| User/profile         | Stable link to Neon identity and application preferences                              |
+| List                 | Title, description, shared color, archived state, owner, timestamps, version          |
+| List membership      | Accepted editor membership, unique per list and user                                  |
+| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                   |
+| User list preference | Account-owned ordered list IDs and independent revision; current access filters reads |
+| List section         | List-bound title and shared integer position; removal preserves tasks                 |
+| Task                 | List, optional section, title, integer position, completion; version is on the list   |
+| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                  |
 
 The list owner is authoritative on the list row. Domain queries recognize owner access or accepted membership. Avoid competing sources of truth for ownership.
 
@@ -92,7 +93,8 @@ Implemented behavior:
 - Completion/reopening set explicit state. Reopening appends the task to the active order.
 - Retryable mutations accept actor-scoped operation IDs. Reusing an ID with different input is rejected. Receipts contain identifiers; services recheck current authorization before returning protected snapshots.
 - Task writes and sharing changes serialize on the list row; invitation responses use the same row lock. Revocation cannot be bypassed by an old acceptance or mutation receipt.
-- Personal sidebar ordering remains future work.
+- Personal sidebar ordering uses a separate account revision and serializes writes on the account row. It does not advance shared list versions. Reorder requests supply every currently accessible list once; new lists append, and revoked/deleted IDs are filtered on reads.
+- Sections and owner metadata use the list lock/version. Task section IDs must belong to the same list. Archived task/section writes fail in domain services; sharing and owner metadata remain available.
 
 The website uses Neon Realtime to subscribe to accessible list summaries and versions. The SQL definition lives in the domain package and includes enabled-profile and owner/member predicates, so removing membership removes the row from an existing subscription. Authenticated `POST /api/v1/live` seals the query for the verified actor; the secret stays on the server and capabilities stay in memory. Renewals check the page’s expected user ID, and list-page API requests also pin writes/reads to that identity to prevent an old tab operating under a newly signed-in account.
 

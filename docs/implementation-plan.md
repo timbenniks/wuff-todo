@@ -1,21 +1,21 @@
 # Wuff Todo implementation plan
 
-Status: web, sharing, MCP, branding, and live list updates implemented
+Status: web, sharing, MCP, live updates, and mature lists implemented
 
 Updated: October 16, 2026
 
-The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification, native auth validation, and personal sidebar ordering remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
+The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification and native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
 
-- **Implemented:** invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
+- **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
-- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 18 tools. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
+- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 25 tools. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
 - **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
 - **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
 - **Verification:** 12 unit tests, 10 development integration tests, TypeScript checks, and a production build passed for live updates; production Codex tool checks for the earlier sharing milestone passed. Tim reported working activation, Codex use, and sharing. Joreel's independent activation/client connection, ChatGPT end-to-end, and named-host interactive MCP UI remain unverified. See [verification](verification.md) and [MCP validation](mcp-validation.md).
-- **Later scope:** personal sidebar ordering, archive/restore, new-account invitation delivery, native apps/auth, offline editing, themes, and richer task scheduling/details. Custom SMTP remains an operational follow-up.
+- **Later scope:** Markdown task content with private image uploads, subtasks, deadlines, new-account invitation delivery, native apps/auth, offline editing, and broader themes. Custom SMTP remains an operational follow-up.
 
 Before resuming, inspect `git status`, read the operating instructions in [development](development.md), and check the actual code and available tools. The ignored local environment and synthetic fixture files are machine-local; a fresh clone needs setup. Provision Neon through Vercel, preserve the isolated development branch, and verify `fra1` on actual deployments. Do not recreate accounts/resources or rerun migrations merely because this is a new chat. Past verification is dated evidence; rerun checks relevant to the change before making new claims.
 
@@ -37,7 +37,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-No follow-up feature has been selected yet. Discuss remaining priorities before starting another milestone. Preserve the current online website/offline boundary; native and offline behavior still belong to future React Native/Expo planning.
+The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Next: scope richer task content with Markdown and private image uploads, then subtasks and deadlines before mobile. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
 
 ## Phase 0: resolve architectural risks
 
@@ -100,10 +100,10 @@ Add themes, custom colors, and images after the basic workflow is proven. Decide
 | New-account invitations       | Future scope; operator provisioning remains the only account-admission path                                           |
 | MCP authorization             | Implemented separate OAuth layer preserving Neon identity; read, task-write, and list-manage scopes                   |
 | Client verification           | Codex tools validated; ChatGPT and other named hosts, inline UI, and Joreel's independent connection remain to verify |
-| Ordering                      | Shared task order implemented; personal sidebar order deferred                                                        |
+| Ordering                      | Shared task order and independent personal sidebar order implemented                                                  |
 | Concurrent mutations          | List versions, transactional permission checks, and actor-scoped operation receipts implemented                       |
 | Cross-client freshness        | Polling/focus refresh implemented; live updates are implemented with polling/focus fallback                           |
-| Archive and deletion          | Owner-only permanent deletion implemented; archive/restore deferred                                                   |
+| Archive and deletion          | Owner-only permanent deletion and archive/restore implemented                                                         |
 | Corgi branding                | Waffles integrated; see mascot asset and verification documentation                                                   |
 | Native and offline support    | Revisit online-only, cached reads, and offline edits during React Native/Expo planning; website stays online          |
 

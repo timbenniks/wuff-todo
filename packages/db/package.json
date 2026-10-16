@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@wuff/contracts": "workspace:*",
     "@vercel/functions": "^3.10.1",
     "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1"

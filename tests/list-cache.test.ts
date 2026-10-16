@@ -8,6 +8,10 @@ const snapshot = (version: number): TodoList => ({
   title: "Synthetic list",
   ownerId: "synthetic-user",
   version,
+  color: "blue",
+  description: "",
+  archived: false,
+  sections: [],
   tasks: [],
 });
 function deferred<T>() {

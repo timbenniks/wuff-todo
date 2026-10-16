@@ -20,7 +20,7 @@ The first release focuses on lists, tasks, and ordering. It should feel fast and
 - Web and MCP, including interactive MCP UI, ship first.
 - iPhone and Android apps follow against the same backend.
 - All surfaces use the same recognizable design language.
-- List customization with images, colors, and themes is future scope.
+- Shared owner-controlled list colors are implemented before mobile; images and broader themes follow later.
 - The project uses one monorepo.
 
 ## First-release scope
@@ -35,9 +35,11 @@ The first two users use an operator-only bootstrap: managed identities are provi
 
 Users can create and view private lists, rename their own lists, share them, and manually order lists. Shared lists display who owns them and who has access.
 
-**Proposed:** sidebar ordering is personal to each user. Reordering the sidebar does not change anyone else's sidebar.
+**Implemented:** sidebar ordering is personal to each user. Reordering the sidebar does not change anyone else's sidebar.
 
-**Proposed:** archive and restore lists, with archive controlled by the owner. Permanent deletion is a separate owner-only action with an explicit confirmation explaining that it affects all members.
+**Implemented:** archive and restore lists, with archive controlled by the owner. Archived lists retain their content and membership, and tasks/sections are read-only until restored. Permanent deletion is a separate owner-only action with an explicit confirmation explaining that it affects all members.
+
+Implemented list colors, descriptions, sections, personal ordering, and archive/restore are specified in [mature lists](mature-lists.md). Richer task content, subtasks, and deadlines follow this list-focused build before native mobile.
 
 ### Tasks
 
@@ -63,7 +65,7 @@ Task descriptions, subtasks, labels, priorities, dates, recurrence, and reminder
 | Leave shared list                                  | Not without resolving ownership | Yes    | Not applicable |
 | Reorder own sidebar                                | Yes                             | Yes    | Not applicable |
 
-Owner-only rename, deletion, invitations, and access revocation are confirmed and implemented. Editors may leave. Archive/restore and personal sidebar ordering remain proposed, unimplemented features. Ownership transfer and reader-only membership are deferred.
+Owner-only rename, deletion, invitations, and access revocation are confirmed and implemented. Editors may leave. Archive/restore and personal sidebar ordering are implemented. List metadata and section management are owner-only; editors can move tasks between sections. Ownership transfer and reader-only membership are deferred.
 
 An owner invites an existing, enabled Wuff account by email. Wuff binds the invitation to that account’s stable user ID. The recipient sees the list title and owner in their invitation inbox, then accepts or declines while signed in. An invitation never exposes tasks or grants editing access before acceptance. No invitation email is sent.
 
@@ -107,7 +109,7 @@ Revisit offline behavior when planning the React Native/Expo iPhone and Android 
 ## Future scope
 
 - Native iPhone and Android apps.
-- Per-list images, custom colors, and themes; ownership and shared-versus-personal appearance rules remain undecided.
+- Per-list cover images and broader themes; named shared colors are implemented.
 - Richer task details and organization, if the initial users need them.
 - Scheduling, reminders, recurring tasks, calendars, and integrations.
 - Import/export, attachments, widgets, and share extensions.
