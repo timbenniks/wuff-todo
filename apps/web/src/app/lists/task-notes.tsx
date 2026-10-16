@@ -1,6 +1,7 @@
 "use client";
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
+import { Check, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
   taskContentLimit,
@@ -215,29 +216,36 @@ export function TaskNotes({
             : error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2 p-3 border-t border-border bg-[#f9fbfd]">
+      <div className="flex items-center justify-end gap-1 px-2 py-1 border-t border-border bg-white">
         {!list.archived && (
           <Button
             type="button"
-            size="sm"
+            size="icon"
+            variant="ghost"
+            className="h-11 w-11"
+            aria-label={
+              saving ? "Saving notes" : changed ? "Save my notes" : "Save notes"
+            }
+            title={changed ? "Save my notes" : "Save notes"}
             disabled={disabled || tooLong}
             onClick={() => void save()}
           >
-            {saving
-              ? "Saving your de-tails…"
-              : changed
-                ? "Save my notes"
-                : "Save notes"}
+            <Check size={18} />
           </Button>
         )}
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="icon"
+          className="h-11 w-11"
+          aria-label={
+            list.archived && !retained ? "Close notes" : "Cancel notes"
+          }
+          title={list.archived && !retained ? "Close notes" : "Cancel notes"}
           disabled={busy || saving || uploading}
           onClick={close}
         >
-          {list.archived && !retained ? "Close" : "Cancel"}
+          <X size={18} />
         </Button>
       </div>
     </div>

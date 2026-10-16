@@ -1,14 +1,7 @@
 "use client";
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Archive,
-  ChevronDown,
-  ListTodo,
-  LogOut,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
@@ -436,18 +429,16 @@ export function ListApp({
           <Button
             ref={navigationTrigger}
             type="button"
-            variant="outline"
+            variant="ghost"
+            size="icon"
             className="md:hidden ml-auto"
             aria-label="Choose a list"
+            title="Choose a list"
             aria-expanded={navigationOpen}
             aria-controls="pack-navigation"
             onClick={() => setNavigationOpen((open) => !open)}
           >
-            Lists{" "}
-            <ChevronDown
-              size={16}
-              className={navigationOpen ? "rotate-180" : ""}
-            />
+            <ListTodo size={20} />
           </Button>
         </div>
         <div
@@ -492,8 +483,14 @@ export function ListApp({
                 required
                 autoFocus
               />
-              <Button size="sm" disabled={busy}>
-                Create list
+              <Button
+                size="icon"
+                variant="ghost"
+                disabled={busy}
+                aria-label="Create list"
+                title="Create list"
+              >
+                <Plus size={18} />
               </Button>
             </form>
           )}

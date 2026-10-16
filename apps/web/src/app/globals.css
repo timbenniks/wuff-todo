@@ -29,13 +29,17 @@ select {
   min-width: 0;
   border: 1px solid var(--color-border);
   background: white;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   outline-offset: 3px;
 }
 input:focus-visible,
 textarea:focus-visible,
-select:focus-visible,
+select:focus-visible {
+  outline: 1px solid var(--color-primary);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
 a:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--color-primary);
@@ -60,6 +64,13 @@ h2,
 }
 .task-menu-title {
   display: none;
+}
+.task-action-panel button {
+  color: #536c82;
+}
+.task-add input:not([type="checkbox"]):not([type="radio"]) {
+  height: 44px;
+  padding: 8px 12px;
 }
 @media (width >= 40rem) {
   .task-actions .task-edit {
@@ -146,9 +157,9 @@ h2,
     top: 44px;
     right: 0;
     z-index: 30;
-    width: 260px;
-    max-width: calc(100vw - 48px);
-    flex-direction: column;
+    width: 288px;
+    max-width: calc(100vw - 24px);
+    flex-wrap: wrap;
     padding: 6px;
     border: 1px solid var(--color-border);
     border-radius: 12px;
@@ -170,21 +181,19 @@ h2,
     font-size: 12px;
     color: #536c82;
     border-bottom: 1px solid var(--color-border);
+    flex-basis: 100%;
+    order: 0;
   }
   .task-action-panel button {
-    width: 100%;
+    width: 44px;
+    flex-shrink: 0;
     min-height: 44px;
-    justify-content: flex-start;
-    gap: 10px;
-    padding-inline: 12px;
+    justify-content: center;
+    padding: 0;
+    order: 1;
   }
   .task-action-panel .task-action-label {
-    display: inline;
-    font-size: 13px;
-  }
-  .task-action-panel .drag-handle::after {
-    content: "Reorder";
-    font-size: 13px;
+    display: none;
   }
   .task-actions[data-editing="true"] {
     display: none;
@@ -233,6 +242,8 @@ h2,
     gap: 4px;
     padding: 8px 12px;
     font-size: 12px;
+    flex-basis: 100%;
+    order: 2;
   }
   .task-panel,
   .task-subtask-panel {

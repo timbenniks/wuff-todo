@@ -274,15 +274,17 @@ export function SharingDialog({
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
+        variant="ghost"
+        size="icon"
+        className="h-11 w-11"
+        aria-label={owner ? "Share" : "People"}
+        title={owner ? "Share" : "People"}
         disabled={disabled}
         onClick={() => {
           setOpen(true);
         }}
       >
         <Users size={16} />
-        {owner ? "Share" : "People"}
       </Button>
       <dialog
         ref={dialog}

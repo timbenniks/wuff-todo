@@ -563,7 +563,7 @@ function Subtasks({
       </SortableList>
       {!list.archived && (
         <form
-          className="flex gap-2 mt-2"
+          className="task-add flex gap-2 mt-2"
           onSubmit={async (e) => {
             e.preventDefault();
             const sent = title;
@@ -594,6 +594,10 @@ function Subtasks({
           />
           <Button
             type="submit"
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11 shrink-0"
+            title="Add subtask"
             disabled={disabled}
             aria-label={`Add subtask to ${parent.title}`}
           >

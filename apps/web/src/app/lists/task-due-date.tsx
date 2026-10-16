@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { Check, Eraser, X } from "lucide-react";
 import { dueDateSchema, type Task, type TodoList } from "@wuff/contracts";
 import {
   calendarDay,
@@ -161,35 +162,44 @@ export function TaskDueDate({
             </p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" size="sm" disabled={disabled}>
-              {busy
-                ? "Saving, paws a moment…"
-                : changed
-                  ? "Save my date"
-                  : "Save date"}
+            <Button
+              type="submit"
+              size="icon"
+              variant="ghost"
+              disabled={disabled}
+              aria-label={
+                busy ? "Saving date" : changed ? "Save my date" : "Save date"
+              }
+              title={changed ? "Save my date" : "Save date"}
+            >
+              <Check size={18} />
             </Button>
             {task.dueDate && (
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon"
+                aria-label="Clear date"
+                title="Clear date"
                 disabled={disabled}
                 onClick={() => void save(null)}
               >
-                Clear date
+                <Eraser size={18} />
               </Button>
             )}
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="icon"
+              aria-label="Cancel date"
+              title="Cancel date"
               disabled={busy}
               onClick={() => {
                 drafts.delete(task.id);
                 onClose();
               }}
             >
-              Cancel
+              <X size={18} />
             </Button>
           </div>
         </>

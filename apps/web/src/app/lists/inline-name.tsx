@@ -209,15 +209,20 @@ export function InlineName({
             <div className="inline-name-buttons flex flex-wrap items-center gap-1">
               <Button
                 type="submit"
-                size="sm"
+                size="icon"
+                variant="ghost"
                 disabled={disabled || saving}
                 aria-label={
-                  compact ? (changed ? "Save my name" : "Save name") : undefined
+                  saving
+                    ? "Saving name"
+                    : changed
+                      ? "Save my name"
+                      : "Save name"
                 }
-                title={compact ? "Save name" : undefined}
+                title="Save name"
               >
                 <Check size={14} aria-hidden="true" />
-                <span>
+                <span className="sr-only">
                   {saving
                     ? "Saving, paws a moment…"
                     : changed
@@ -228,14 +233,14 @@ export function InlineName({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon"
                 disabled={disabled || saving}
                 onClick={finish}
-                aria-label={compact ? "Cancel name edit" : undefined}
-                title={compact ? "Cancel name edit" : undefined}
+                aria-label="Cancel name edit"
+                title="Cancel name edit"
               >
                 <X size={14} aria-hidden="true" />
-                <span>Cancel</span>
+                <span className="sr-only">Cancel</span>
               </Button>
             </div>
           </form>

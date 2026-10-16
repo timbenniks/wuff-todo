@@ -1,7 +1,7 @@
 "use client";
 import { wuffCopy, taskCount } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import type { TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
@@ -119,7 +119,7 @@ export function TaskGroups({
     return (
       !list.archived && (
         <form
-          className="flex gap-2 mt-4"
+          className="task-add flex gap-2 mt-4"
           onSubmit={async (e) => {
             e.preventDefault();
             const form = e.currentTarget;
@@ -146,8 +146,12 @@ export function TaskGroups({
             className="flex-1"
           />
           <Button
+            size="icon"
+            variant="ghost"
+            className="h-11 w-11 shrink-0"
             disabled={disabled}
             type="submit"
+            title="Add task"
             aria-label={
               sectionId
                 ? `Add task to ${list.sections.find((s) => s.id === sectionId)?.title}`
@@ -305,26 +309,37 @@ export function TaskGroups({
                 autoFocus
                 className="flex-1"
               />
-              <Button type="submit" disabled={busy}>
-                Add section
+              <Button
+                type="submit"
+                size="icon"
+                variant="ghost"
+                disabled={busy}
+                aria-label="Save section"
+                title="Save section"
+              >
+                <Check size={18} />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
+                size="icon"
+                aria-label="Cancel section"
+                title="Cancel section"
                 onClick={() => setAddingSection(false)}
               >
-                Cancel
+                <X size={18} />
               </Button>
             </form>
           ) : (
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
+              aria-label="Add section"
+              title="Add section"
               disabled={busy || list.sections.length >= 50}
               onClick={() => setAddingSection(true)}
             >
-              <Plus size={16} />
-              Add section
+              <ListPlus size={18} />
             </Button>
           )}
         </div>

@@ -128,7 +128,7 @@
   outline: none;
 }
 .task-editor:focus-visible {
-  box-shadow: inset 0 0 0 2px #315f9b;
+  box-shadow: inset 0 0 0 1px #315f9b;
 }
 .task-editor p.is-editor-empty:first-child::before {
   color: #6b8294;

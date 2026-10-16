@@ -39,8 +39,11 @@ export function ListSettings({
   return (
     <>
       <Button
-        size="sm"
-        variant="outline"
+        size="icon"
+        variant="ghost"
+        className="h-11 w-11"
+        aria-label="List settings"
+        title="List settings"
         disabled={busy}
         onClick={() => {
           load();
@@ -48,7 +51,6 @@ export function ListSettings({
         }}
       >
         <Settings2 size={16} />
-        List settings
       </Button>
       <dialog
         ref={dialog}
@@ -172,8 +174,15 @@ export function ListSettings({
               Retry same request
             </Button>
           )}
-          <Button disabled={busy} type="submit">
-            {busy ? "Saving your de-tails…" : "Save settings"}
+          <Button
+            disabled={busy}
+            type="submit"
+            size="icon"
+            variant="ghost"
+            aria-label={busy ? "Saving settings" : "Save settings"}
+            title="Save settings"
+          >
+            <Check size={18} />
           </Button>
         </form>
         <div className="border-t border-border mt-6 pt-5">
