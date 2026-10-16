@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+
 import { useRef, useState } from "react";
 import { Check, Eraser, X } from "lucide-react";
 import { dueDateSchema, type Task, type TodoList } from "@wuff/contracts";
@@ -140,7 +142,7 @@ export function TaskDueDate({
           </div>
           <label className="grid gap-1 text-xs font-semibold text-slate-500">
             Due date
-            <input
+            <Input
               autoFocus
               type="date"
               name="dueDate"

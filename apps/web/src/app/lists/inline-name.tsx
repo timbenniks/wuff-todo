@@ -1,5 +1,12 @@
 "use client";
 import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
+
+import {
   useEffect,
   useId,
   useRef,
@@ -8,7 +15,6 @@ import {
   type RefObject,
 } from "react";
 import { Check, Pencil, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export function InlineName({
   value,
@@ -163,36 +169,72 @@ export function InlineName({
               }
             }}
           >
-            <label
-              htmlFor={id}
-              className="inline-name-label text-xs font-semibold text-slate-500"
-            >
+            <label htmlFor={id} className="sr-only">
               {label}
             </label>
-            <input
-              id={id}
-              ref={input}
-              value={draft}
-              maxLength={300}
-              autoComplete="off"
-              readOnly={disabled || saving}
-              aria-invalid={!!error}
-              aria-describedby={error || changed ? `${id}-notice` : undefined}
-              className={`w-full ${typography}`}
-              onChange={(e) => {
-                setDraft(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.nativeEvent.isComposing && e.key === "Enter")
-                  e.preventDefault();
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!saving && !disabled) finish();
-                }
-              }}
-            />
+            <InputGroup>
+              <InputGroupInput
+                id={id}
+                ref={input}
+                value={draft}
+                maxLength={300}
+                autoComplete="off"
+                readOnly={disabled || saving}
+                aria-invalid={!!error}
+                aria-describedby={error || changed ? `${id}-notice` : undefined}
+                className="text-base"
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.nativeEvent.isComposing && e.key === "Enter")
+                    e.preventDefault();
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!saving && !disabled) finish();
+                  }
+                }}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  type="submit"
+                  size="icon-sm"
+                  variant="ghost"
+                  disabled={disabled || saving}
+                  aria-label={
+                    saving
+                      ? "Saving name"
+                      : changed
+                        ? "Save my name"
+                        : "Save name"
+                  }
+                  title="Save name"
+                >
+                  <Check size={14} aria-hidden="true" />
+                  <span className="sr-only">
+                    {saving
+                      ? "Saving, paws a moment…"
+                      : changed
+                        ? "Save my name"
+                        : "Save"}
+                  </span>
+                </InputGroupButton>
+                <InputGroupButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={disabled || saving}
+                  onClick={finish}
+                  aria-label="Cancel name edit"
+                  title="Cancel name edit"
+                >
+                  <X size={14} aria-hidden="true" />
+                  <span className="sr-only">Cancel</span>
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
             {additionalFields && (
               <div className="inline-name-extra">{additionalFields}</div>
             )}
@@ -206,43 +248,6 @@ export function InlineName({
                   `New de-tails! The name changed to “${value}” while you were editing. Keep your draft or cancel to use the latest name.`}
               </p>
             )}
-            <div className="inline-name-buttons flex flex-wrap items-center gap-1">
-              <Button
-                type="submit"
-                size="icon"
-                variant="ghost"
-                disabled={disabled || saving}
-                aria-label={
-                  saving
-                    ? "Saving name"
-                    : changed
-                      ? "Save my name"
-                      : "Save name"
-                }
-                title="Save name"
-              >
-                <Check size={14} aria-hidden="true" />
-                <span className="sr-only">
-                  {saving
-                    ? "Saving, paws a moment…"
-                    : changed
-                      ? "Save my name"
-                      : "Save"}
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled || saving}
-                onClick={finish}
-                aria-label="Cancel name edit"
-                title="Cancel name edit"
-              >
-                <X size={14} aria-hidden="true" />
-                <span className="sr-only">Cancel</span>
-              </Button>
-            </div>
           </form>
         ) : Heading ? (
           <Heading className={`${typography} break-words`}>{name}</Heading>

@@ -6,6 +6,11 @@
   --color-primary: #315f9b;
   --color-accent: #e7f0f8;
   --color-border: #dce5ed;
+  --color-input: #dce5ed;
+  --color-ring: #315f9b;
+  --color-muted-foreground: #61768b;
+  --color-destructive: #b91c1c;
+  --color-primary-foreground: #ffffff;
   --font-sans: "Avenir Next", "Segoe UI", sans-serif;
 }
 body {
@@ -23,18 +28,7 @@ button:not(:disabled),
 summary {
   cursor: pointer;
 }
-input:not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
-  min-width: 0;
-  border: 1px solid var(--color-border);
-  background: white;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  outline-offset: 3px;
-}
-input:focus-visible,
-textarea:focus-visible,
+a:focus-visible,
 select:focus-visible {
   outline: 1px solid var(--color-primary);
   outline-offset: 1px;
@@ -68,10 +62,6 @@ h2,
 .task-action-panel button {
   color: #536c82;
 }
-.task-add input:not([type="checkbox"]):not([type="radio"]) {
-  height: 44px;
-  padding: 8px 12px;
-}
 @media (width >= 40rem) {
   .task-actions .task-edit {
     order: 1;
@@ -91,6 +81,9 @@ h2,
   .task-actions .drag-handle {
     order: 6;
   }
+}
+.task-actions[data-editing="true"] {
+  display: none;
 }
 /* Phone rows keep completion, title, date and one disclosure on one line. */
 @media (width < 40rem) {
@@ -195,47 +188,8 @@ h2,
   .task-action-panel .task-action-label {
     display: none;
   }
-  .task-actions[data-editing="true"] {
-    display: none;
-  }
-  .task-name .inline-name-compact {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px;
-    align-items: center;
-    padding-block: 0;
-  }
-  .inline-name-compact .inline-name-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  .task-name .inline-name-compact > input {
-    grid-column: 1;
-    grid-row: 1;
-    padding: 8px;
-    height: 44px;
-  }
-  .inline-name-compact .inline-name-buttons {
-    grid-column: 2;
-    grid-row: 1;
-    flex-wrap: nowrap;
-    gap: 0;
-  }
-  .inline-name-compact .inline-name-buttons button {
-    width: 44px;
-    padding: 0;
-  }
-  .inline-name-compact .inline-name-buttons span {
-    display: none;
-  }
   .inline-name-compact .inline-name-extra {
     display: none;
-  }
-  .inline-name-compact > p {
-    grid-column: 1 / -1;
   }
   .task-menu-section {
     display: grid;

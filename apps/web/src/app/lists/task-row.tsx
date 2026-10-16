@@ -1,4 +1,13 @@
 "use client";
+import { NativeSelect } from "@/components/ui/native-select";
+
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
+
 import {
   useEffect,
   useLayoutEffect,
@@ -170,7 +179,7 @@ export function TaskRow({
           list.sections.length > 0 && !task.completed && !task.parentTaskId ? (
             <label className="grid gap-1 text-xs font-semibold text-slate-500">
               Section
-              <select
+              <NativeSelect
                 className="text-sm max-w-full"
                 aria-label={`Section for ${task.title}`}
                 value={draftSection ?? ""}
@@ -183,7 +192,7 @@ export function TaskRow({
                     {s.title}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </label>
           ) : undefined
         }
@@ -302,7 +311,7 @@ export function TaskRow({
                   !list.archived && (
                     <label className="task-menu-section sm:hidden">
                       Move to section
-                      <select
+                      <NativeSelect
                         aria-label={`Move ${task.title} to section`}
                         value={task.sectionId ?? ""}
                         disabled={disabled}
@@ -322,7 +331,7 @@ export function TaskRow({
                             {section.title}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </label>
                   )}
                 {!task.parentTaskId &&
@@ -576,33 +585,37 @@ function Subtasks({
             }
           }}
         >
-          <input
-            ref={input}
-            autoFocus={items.length === 0}
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (e.target.value) subtaskDrafts.set(parent.id, e.target.value);
-              else subtaskDrafts.delete(parent.id);
-            }}
-            aria-label={`New subtask for ${parent.title}`}
-            placeholder="One little step for your pack…"
-            maxLength={300}
-            required
-            readOnly={busy}
-            className="min-w-0 flex-1 text-sm"
-          />
-          <Button
-            type="submit"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-11 shrink-0"
-            title="Add subtask"
-            disabled={disabled}
-            aria-label={`Add subtask to ${parent.title}`}
-          >
-            <Plus size={18} />
-          </Button>
+          <InputGroup>
+            <InputGroupInput
+              ref={input}
+              autoFocus={items.length === 0}
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (e.target.value)
+                  subtaskDrafts.set(parent.id, e.target.value);
+                else subtaskDrafts.delete(parent.id);
+              }}
+              aria-label={`New subtask for ${parent.title}`}
+              placeholder="One little step for your pack…"
+              maxLength={300}
+              required
+              readOnly={busy}
+              className="min-w-0 flex-1"
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                type="submit"
+                variant="ghost"
+                size="icon-sm"
+                title="Add subtask"
+                disabled={disabled}
+                aria-label={`Add subtask to ${parent.title}`}
+              >
+                <Plus size={18} />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </form>
       )}
     </section>

@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Users, X } from "lucide-react";
@@ -384,7 +386,7 @@ export function SharingDialog({
                       Invite someone to your pack
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      <input
+                      <Input
                         id={`invite-${list.id}`}
                         type="email"
                         autoComplete="email"

@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +77,7 @@ export function SetPassword() {
       {step === "email" ? (
         <label className="grid gap-2 text-sm font-semibold">
           Your invited email
-          <input
+          <Input
             type="email"
             name="email"
             autoComplete="email"
@@ -94,7 +96,7 @@ export function SetPassword() {
           </p>
           <label className="grid gap-2 text-sm font-semibold">
             Email code
-            <input
+            <Input
               name="otp"
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -106,7 +108,7 @@ export function SetPassword() {
           </label>
           <label className="grid gap-2 text-sm font-semibold">
             New password
-            <input
+            <Input
               name="password"
               type="password"
               autoComplete="new-password"
@@ -117,7 +119,7 @@ export function SetPassword() {
           </label>
           <label className="grid gap-2 text-sm font-semibold">
             Confirm password
-            <input
+            <Input
               name="confirm"
               type="password"
               autoComplete="new-password"

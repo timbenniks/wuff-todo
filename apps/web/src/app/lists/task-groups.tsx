@@ -1,4 +1,11 @@
 "use client";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
+
 import { wuffCopy, taskCount } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -133,33 +140,36 @@ export function TaskGroups({
               form.reset();
           }}
         >
-          <input
-            name="title"
-            aria-label={
-              sectionId
-                ? `New task in ${list.sections.find((s) => s.id === sectionId)?.title}`
-                : "New task"
-            }
-            placeholder="What’s next for your pack?"
-            maxLength={300}
-            required
-            className="flex-1"
-          />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-11 w-11 shrink-0"
-            disabled={disabled}
-            type="submit"
-            title="Add task"
-            aria-label={
-              sectionId
-                ? `Add task to ${list.sections.find((s) => s.id === sectionId)?.title}`
-                : "Add task"
-            }
-          >
-            <Plus size={20} />
-          </Button>
+          <InputGroup>
+            <InputGroupInput
+              name="title"
+              aria-label={
+                sectionId
+                  ? `New task in ${list.sections.find((s) => s.id === sectionId)?.title}`
+                  : "New task"
+              }
+              placeholder="What’s next for your pack?"
+              maxLength={300}
+              required
+              className="flex-1"
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                size="icon-sm"
+                variant="ghost"
+                disabled={disabled}
+                type="submit"
+                title="Add task"
+                aria-label={
+                  sectionId
+                    ? `Add task to ${list.sections.find((s) => s.id === sectionId)?.title}`
+                    : "Add task"
+                }
+              >
+                <Plus size={20} />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </form>
       )
     );
@@ -288,7 +298,7 @@ export function TaskGroups({
         <div className="mt-6">
           {addingSection ? (
             <form
-              className="flex flex-wrap gap-2"
+              className="min-w-0"
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (
@@ -300,35 +310,39 @@ export function TaskGroups({
                   setAddingSection(false);
               }}
             >
-              <input
-                name="title"
-                aria-label="Section name"
-                placeholder={wuffCopy.sectionPlaceholder}
-                maxLength={300}
-                required
-                autoFocus
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                variant="ghost"
-                disabled={busy}
-                aria-label="Save section"
-                title="Save section"
-              >
-                <Check size={18} />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Cancel section"
-                title="Cancel section"
-                onClick={() => setAddingSection(false)}
-              >
-                <X size={18} />
-              </Button>
+              <InputGroup>
+                <InputGroupInput
+                  name="title"
+                  aria-label="Section name"
+                  placeholder={wuffCopy.sectionPlaceholder}
+                  maxLength={300}
+                  required
+                  autoFocus
+                  className="flex-1"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    type="submit"
+                    size="icon-sm"
+                    variant="ghost"
+                    disabled={busy}
+                    aria-label="Save section"
+                    title="Save section"
+                  >
+                    <Check size={18} />
+                  </InputGroupButton>
+                  <InputGroupButton
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Cancel section"
+                    title="Cancel section"
+                    onClick={() => setAddingSection(false)}
+                  >
+                    <X size={18} />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
             </form>
           ) : (
             <Button

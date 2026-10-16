@@ -1,4 +1,11 @@
 "use client";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
+
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
@@ -475,23 +482,28 @@ export function ListApp({
                 );
               }}
             >
-              <input
-                name="title"
-                aria-label="List name"
-                placeholder={wuffCopy.listPlaceholder}
-                maxLength={300}
-                required
-                autoFocus
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                disabled={busy}
-                aria-label="Create list"
-                title="Create list"
-              >
-                <Plus size={18} />
-              </Button>
+              <InputGroup>
+                <InputGroupInput
+                  name="title"
+                  aria-label="List name"
+                  placeholder={wuffCopy.listPlaceholder}
+                  maxLength={300}
+                  required
+                  autoFocus
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    type="submit"
+                    size="icon-sm"
+                    variant="ghost"
+                    disabled={busy}
+                    aria-label="Create list"
+                    title="Create list"
+                  >
+                    <Plus size={18} />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
             </form>
           )}
           <div className="flex items-center gap-2 mb-3">

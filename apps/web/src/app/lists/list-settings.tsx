@@ -1,4 +1,6 @@
 "use client";
+import { Textarea } from "@/components/ui/textarea";
+
 import { useRef, useState } from "react";
 import { Archive, ArchiveRestore, Check, Settings2, X } from "lucide-react";
 import { listColors, type ListColor, type TodoList } from "@wuff/contracts";
@@ -94,7 +96,7 @@ export function ListSettings({
         >
           <label className="grid gap-2 text-sm font-semibold">
             Description
-            <textarea
+            <Textarea
               rows={4}
               maxLength={4000}
               placeholder="What’s the plan for your pack?"

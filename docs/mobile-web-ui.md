@@ -66,3 +66,21 @@ Source `404353f38c9e54f3e77d2529411d5d17151f1f5f` passed [GitHub CI run 38952060
 The signed-in production browser saved a subtask rename and bold notes through the icon buttons, then reopened the compact name field. Save, cancel and task/subtask add controls measured 44×44px with transparent backgrounds. At 390px there was no document overflow. A separate server read verified exact text/Markdown and preserved dates/completion. [Production quiet controls](screenshots/mobile-quiet-production.jpg) contains only synthetic data.
 
 Disposable production/development lists were removed and confirmed inaccessible. The baseline fixture and real lists were preserved, viewport overrides reset, test tabs closed and the local dev server restored. No schema/auth-managed-table changes or OAuth grants were involved. Physical-device and screen-reader verification remain separate.
+
+## Shared form foundation — October 16, 2026
+
+The previous controls used a shadcn-style Button but raw inputs styled by global element selectors. Those selectors imposed padding, borders and an offset focus outline, with phone-only overrides. This did not provide a consistent form foundation and produced the double frame shown in the user's screenshot.
+
+Visible website inputs now use shared `Input`, `Textarea`, and `NativeSelect` components. Add-list, add-task, add-subtask, add-section and inline-name forms compose `InputGroupInput` with trailing `InputGroupButton` actions inside one field. The shared Input and InputGroup source was copied from the official shadcn new-york-v4 registry and adapted to Wuff's existing palette, a single 1px focus ring, and 44px touch targets. Textarea and the simple native select follow the same local tokens; the radio color choices and hidden image file picker remain native. `apps/web/components.json` records the registry configuration. No form-state library or new runtime dependency was required.
+
+Remove the global input/textarea/select presentation rules; component classes now own height, padding, border and focus. Inline names use the same 16px field at every viewport, including list headings, while the saved heading retains its display typography. Task action buttons disappear during rename so the field gets available width. Labels, accessible action names, Enter/Escape handling, validation, drafts and stale-edit notices are preserved. Auxiliary section selection remains beneath desktop rename fields and in the phone action disclosure.
+
+Sources consulted: [shadcn Input](https://ui.shadcn.com/docs/components/input) and [Input Group](https://ui.shadcn.com/docs/components/input-group), plus their official new-york-v4 registry source. This does not claim the entire UI has been converted to shadcn; existing dialogs, completion controls and the Tiptap editor remain their existing implementations.
+
+### Verification
+
+- Local TypeScript checks, all 25 unit tests and the optimized Next.js/MCP build passed. The final optimized build also passed after the explicit create-list submit-button refinement.
+- Real synthetic development browser checks: task rename with Enter; task/subtask/section creation; blank-name validation preserving the editor; Escape cancellation; settings textarea rendering. Viewport/document widths matched at 320, 390, 640 and 1280px. Inline icon targets measured 44×44px; grouped field height measured 44px, with a borderless input and a single group focus ring.
+- Optimized-build browser checks also saved a custom date and created a list through its grouped submit icon. A separate domain read confirmed the saved task/subtask names, section and date, then removed the disposable UI-created list. A static browser-bundle scan checked 20 scripts without finding server secrets or domain SQL.
+- Screenshot: [mobile grouped fields](screenshots/forms-mobile-editing.jpg). This initial screenshot is from local development with synthetic data.
+- No database schema, permissions, authentication flow, API/MCP contract or mutation service changed. Backend integration results from prior milestones are historical; they were not rerun for this form refactor. Physical-device and screen-reader verification remain separate.

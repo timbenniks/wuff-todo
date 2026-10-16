@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+
 import { wuffCopy } from "@/lib/copy";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -308,7 +310,7 @@ export default function TaskNoteEditor({
         <div className="flex flex-wrap items-end gap-2 border-b border-border p-3">
           <label className="grid flex-1 min-w-0 gap-1 text-xs font-semibold text-slate-500">
             Image description
-            <input
+            <Input
               value={state.alt ?? ""}
               maxLength={300}
               disabled={disabled}
@@ -334,7 +336,7 @@ export default function TaskNoteEditor({
         <div className="border-b border-border p-3 grid gap-2">
           <label className="text-xs font-semibold">
             Link address
-            <input
+            <Input
               className="mt-1 w-full"
               aria-label="Link address"
               placeholder="https://example.com"

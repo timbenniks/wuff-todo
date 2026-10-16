@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+
 import { useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
@@ -32,11 +34,11 @@ export function SignIn({ next }: { next: string }) {
     >
       <label className="grid gap-2 text-sm font-semibold">
         Email
-        <input type="email" name="email" autoComplete="email" required />
+        <Input type="email" name="email" autoComplete="email" required />
       </label>
       <label className="grid gap-2 text-sm font-semibold">
         Password
-        <input
+        <Input
           type="password"
           name="password"
           autoComplete="current-password"
