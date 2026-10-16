@@ -50,7 +50,7 @@ export function renderTaskMarkdown(content: string) {
 // Keep raw HTML, image syntax and extended blocks out of Tiptap's HTML import
 // path altogether. They remain literal/non-loading in the Markdown renderer.
 const inspection = new MarkdownIt({ html: true }); // tokenize only; never render
-export function needsMarkdownSource(content: string) {
+export function needsPreservedNote(content: string) {
   const unsafe = (tokens: ReturnType<typeof inspection.parse>): boolean =>
     tokens.some(
       (token) =>

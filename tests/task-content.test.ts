@@ -8,7 +8,7 @@ import {
 import {
   renderTaskMarkdown,
   safeNoteLink,
-  needsMarkdownSource,
+  needsPreservedNote,
 } from "../apps/web/src/lib/task-markdown";
 const base = {
   listId: crypto.randomUUID(),
@@ -97,17 +97,17 @@ test("notes never execute HTML, load images, or emit dangerous/relative links", 
   );
 });
 
-test("HTML and image syntax stay in source before entering the visual import path", () => {
+test("HTML and image syntax are identified before entering the visual import path", () => {
   for (const content of [
     "<img src=https://example.com/pixel>",
     "![Photo](https://example.com/photo)",
     "[^note]: Extended note",
     ":::warning",
   ])
-    assert.equal(needsMarkdownSource(content), true);
-  assert.equal(needsMarkdownSource("```html\n<img src=example>\n```"), false);
+    assert.equal(needsPreservedNote(content), true);
+  assert.equal(needsPreservedNote("```html\n<img src=example>\n```"), false);
   assert.equal(
-    needsMarkdownSource("## Plan\n\n**Bold** and [link](https://example.com)"),
+    needsPreservedNote("## Plan\n\n**Bold** and [link](https://example.com)"),
     false,
   );
 });

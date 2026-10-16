@@ -1,14 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Archive,
-  ArrowDown,
-  ArrowUp,
-  ListTodo,
-  LogOut,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
@@ -25,6 +17,8 @@ import { LiveRefreshQueue } from "@/lib/live-refresh";
 import { listPalette } from "@/lib/list-colors";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
+import { SortableList, SortableItem } from "@/components/sortable";
+import { mergeVisibleOrder } from "@/lib/reorder";
 import { InlineName } from "./inline-name";
 
 type PendingCreate = {
@@ -63,7 +57,6 @@ export function ListApp({
   const [showArchive, setShowArchive] = useState(
     initialList?.archived ?? false,
   );
-  const [ordering, setOrdering] = useState(false);
   const [list, setList] = useState<TodoList | null>(initialList),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -371,25 +364,19 @@ export function ListApp({
     chooseList(id);
   }
   const isPending = list?.id === pendingCreate?.id;
-  async function moveList(id: string, direction: number) {
-    if (mutating.current) return;
+  async function moveList(next: string[], before: string[]) {
+    if (mutating.current) return false;
     mutating.current = true;
     setBusy(true);
     setError("");
     summaryEpoch.current++;
     try {
       const order = await api<ListOrder>("/api/v1/list-order");
-      const visible = order.listIds.filter((id) =>
-        summariesRef.current.some(
-          (s) => s.id === id && s.archived === showArchive,
-        ),
-      );
-      const target = visible[visible.indexOf(id) + direction];
-      if (!target) return;
-      const ids = [...order.listIds],
-        a = ids.indexOf(id),
-        b = ids.indexOf(target);
-      [ids[a], ids[b]] = [ids[b], ids[a]];
+      const ids = mergeVisibleOrder(order.listIds, before, next);
+      if (!ids)
+        throw new Error(
+          "Your pack of lists changed. Try moving the list again.",
+        );
       const saved = await api<ListOrder>("/api/v1/list-order", "PUT", {
         listIds: ids,
         version: order.version,
@@ -401,8 +388,10 @@ export function ListApp({
           (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
         ),
       );
+      return true;
     } catch (e) {
       setError((e as Error).message);
+      return false;
     } finally {
       mutating.current = false;
       setBusy(false);
@@ -481,74 +470,67 @@ export function ListApp({
               ? "Back to lists"
               : `Archive (${summaries.filter((s) => s.archived).length})`}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy || !!pendingCreate}
-            aria-pressed={ordering}
-            onClick={() => setOrdering((v) => !v)}
-          >
-            {ordering ? "Done" : "Reorder"}
-          </Button>
         </div>
-        <nav
-          aria-label={showArchive ? "Archived lists" : "Lists"}
-          className="grid gap-1"
+        <SortableList
+          items={visibleLists}
+          disabled={busy || !!pendingCreate}
+          onReorder={moveList}
         >
-          {visibleLists.map((s, i) => (
-            <div key={s.id} className="flex items-center min-w-0 gap-1">
-              <button
-                onClick={() => chooseList(s.id)}
-                onPointerEnter={() => {
-                  if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-                }}
-                onFocus={() => {
-                  if (!cache.get(s.id)) void reload(s.id).catch(() => {});
-                }}
-                aria-current={s.id === selectedId ? "page" : undefined}
-                className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
-                style={{
-                  background:
-                    s.id === selectedId ? listPalette[s.color].tint : undefined,
-                }}
+          <nav
+            aria-label={showArchive ? "Archived lists" : "Lists"}
+            className="grid gap-1"
+          >
+            {visibleLists.map((s) => (
+              <SortableItem
+                key={s.id}
+                id={s.id}
+                title={`list ${s.title}`}
+                disabled={busy || !!pendingCreate}
               >
-                <ListTodo
-                  size={17}
-                  className="shrink-0"
-                  style={{ color: listPalette[s.color].accent }}
-                />
-                <span className="truncate">{s.title}</span>
-                {s.id === pendingCreate?.id && (
-                  <span className="text-xs text-slate-500">
-                    {pendingCreate.status === "saving" ? "Saving…" : "Retry"}
-                  </span>
+                {({ ref, style, handle }) => (
+                  <div
+                    ref={ref}
+                    style={style}
+                    className="flex items-center min-w-0 gap-1"
+                  >
+                    <button
+                      onClick={() => chooseList(s.id)}
+                      onPointerEnter={() => {
+                        if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+                      }}
+                      onFocus={() => {
+                        if (!cache.get(s.id)) void reload(s.id).catch(() => {});
+                      }}
+                      aria-current={s.id === selectedId ? "page" : undefined}
+                      className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
+                      style={{
+                        background:
+                          s.id === selectedId
+                            ? listPalette[s.color].tint
+                            : undefined,
+                      }}
+                    >
+                      <ListTodo
+                        size={17}
+                        className="shrink-0"
+                        style={{ color: listPalette[s.color].accent }}
+                      />
+                      <span className="truncate">{s.title}</span>
+                      {s.id === pendingCreate?.id && (
+                        <span className="text-xs text-slate-500">
+                          {pendingCreate.status === "saving"
+                            ? "Saving…"
+                            : "Retry"}
+                        </span>
+                      )}
+                    </button>
+                    {handle}
+                  </div>
                 )}
-              </button>
-              {ordering && (
-                <div className="flex">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={busy || i === 0}
-                    aria-label={`Move list ${s.title} up`}
-                    onClick={() => moveList(s.id, -1)}
-                  >
-                    <ArrowUp size={14} />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={busy || i === visibleLists.length - 1}
-                    aria-label={`Move list ${s.title} down`}
-                    onClick={() => moveList(s.id, 1)}
-                  >
-                    <ArrowDown size={14} />
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
+              </SortableItem>
+            ))}
+          </nav>
+        </SortableList>
         {showArchive && visibleLists.length === 0 && (
           <p className="text-sm text-slate-500 px-3 py-4">
             No lists taking a paws yet.

@@ -18,7 +18,12 @@ import {
   Link2,
   Unlink,
 } from "lucide-react";
-import { renderTaskMarkdown, safeNoteLink } from "@/lib/task-markdown";
+import {
+  needsPreservedNote,
+  renderTaskMarkdown,
+  safeNoteLink,
+} from "@/lib/task-markdown";
+import { PreservedNote, preservedNoteDocument } from "@/lib/preserved-note";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
@@ -26,16 +31,15 @@ export default function TaskNoteEditor({
   value,
   onChange,
   disabled,
-  onUnsupported,
 }: {
   value: string;
   onChange: (content: string) => void;
   disabled: boolean;
-  onUnsupported: () => void;
 }) {
   const [linking, setLinking] = useState(false),
     [url, setUrl] = useState(""),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [preserved, setPreserved] = useState(needsPreservedNote(value));
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -51,10 +55,11 @@ export default function TaskNoteEditor({
       TableKit.configure({ table: { resizable: false } }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      PreservedNote,
       Markdown,
     ],
-    content: value,
-    contentType: "markdown",
+    content: needsPreservedNote(value) ? preservedNoteDocument(value) : value,
+    contentType: needsPreservedNote(value) ? "json" : "markdown",
     editable: !disabled,
     editorProps: {
       attributes: {
@@ -71,9 +76,13 @@ export default function TaskNoteEditor({
       if (
         renderTaskMarkdown(value).trim() !==
         renderTaskMarkdown(editor.getMarkdown()).trim()
-      )
-        onUnsupported();
-      else editor.commands.focus("end");
+      ) {
+        editor.commands.setContent(preservedNoteDocument(value), {
+          emitUpdate: false,
+        });
+        setPreserved(true);
+      }
+      editor.commands.focus("end");
     },
   });
   // Re-render toolbar state without replacing the draft during live list refreshes.
@@ -166,7 +175,7 @@ export default function TaskNoteEditor({
     ],
   ] as const;
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-white">
+    <div className="overflow-hidden bg-white">
       <div
         role="group"
         aria-label="Text formatting"
@@ -277,6 +286,12 @@ export default function TaskNoteEditor({
             </Button>
           </div>
         </div>
+      )}
+      {preserved && (
+        <p role="status" className="px-4 pt-3 text-xs text-slate-500">
+          Your original de-tails are kept intact below. Add to them, or select
+          the saved block to replace it.
+        </p>
       )}
       <EditorContent editor={editor} />
     </div>

@@ -141,3 +141,13 @@
 .task-prose ul[data-type="taskList"] > li > div > p {
   margin: 0;
 }
+.preserved-note {
+  border: 1px solid #dce5ed;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: #f9fbfd;
+}
+.preserved-note.ProseMirror-selectednode {
+  outline: 2px solid #315f9b;
+}
