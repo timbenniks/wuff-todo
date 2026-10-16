@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const titleSchema = z.string().trim().min(1).max(300);
+// Canonical task notes are Markdown, shared by web and MCP. No HTML is executed.
+export const taskContentLimit = 16_000;
+export const taskContentSchema = z.string().max(taskContentLimit);
 export const idSchema = z.uuid();
 export const operationSchema = z.object({ operationId: z.uuid() });
 export const versionSchema = z.number().int().nonnegative();
@@ -56,6 +59,7 @@ export const reorderSectionsSchema = listMutationSchema.extend({
 export const createTaskSchema = listMutationSchema.extend({
   title: titleSchema,
   sectionId: idSchema.nullable().optional(),
+  content: taskContentSchema.optional(),
 });
 export const updateTaskSchema = listMutationSchema
   .extend({
@@ -63,12 +67,14 @@ export const updateTaskSchema = listMutationSchema
     title: titleSchema.optional(),
     completed: z.boolean().optional(),
     sectionId: idSchema.nullable().optional(),
+    content: taskContentSchema.optional(),
   })
   .refine(
     (v) =>
       v.title !== undefined ||
       v.completed !== undefined ||
-      v.sectionId !== undefined,
+      v.sectionId !== undefined ||
+      v.content !== undefined,
     "Provide a task change",
   );
 export const deleteTaskSchema = listMutationSchema.extend({ taskId: idSchema });
@@ -112,6 +118,7 @@ export type IncomingInvitation = {
 
 export type Task = {
   id: string;
+  content: string;
   title: string;
   completed: boolean;
   position: number;

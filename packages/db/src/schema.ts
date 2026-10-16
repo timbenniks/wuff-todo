@@ -66,6 +66,7 @@ export const members = pgTable(
   (t) => [primaryKey({ columns: [t.listId, t.userId] })],
 );
 export const tasks = pgTable("wuff_tasks", {
+  content: text("content").notNull().default(""),
   id: uuid("id").primaryKey().defaultRandom(),
   listId: uuid("list_id")
     .notNull()

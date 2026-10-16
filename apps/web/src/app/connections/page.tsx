@@ -16,8 +16,8 @@ export default async function ConnectionsPage() {
       </a>
       <h1 className="text-3xl font-bold mt-8 mb-4">Connected AI clients</h1>
       <p className="text-slate-500 mb-4">
-        Add this MCP server address in your AI client, then sign in and choose
-        its permissions.
+        Give your AI a helping paw. Add this MCP server address in your AI
+        client, then sign in and choose its permissions.
       </p>
       <code className="block rounded-xl border border-border p-4 bg-white break-all text-sm mb-8">
         {mcpResource()}

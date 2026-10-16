@@ -97,12 +97,12 @@ export function InlineName({
             if (disabled || pending.current) return;
             const title = draft.trim();
             if (!title) {
-              setError("Enter a name first.");
+              setError("Give it a name to bark about first.");
               input.current?.focus();
               return;
             }
             if (title.length > 300) {
-              setError("Use 300 characters or fewer.");
+              setError("That’s a long tail! Use 300 characters or fewer.");
               return;
             }
             if (title === value) {
@@ -116,10 +116,12 @@ export function InlineName({
               if (await onSave(title)) finish();
               else
                 setError(
-                  "The name wasn’t saved. Your draft is kept; check the message above and try again.",
+                  "Ruff patch! The name wasn’t saved. Your draft is kept; check the message above and try again.",
                 );
             } catch {
-              setError("The name wasn’t saved. Your draft is kept. Try again.");
+              setError(
+                "Ruff patch! The name wasn’t saved. Your draft is kept. Try again.",
+              );
             } finally {
               pending.current = false;
               setSaving(false);
@@ -166,7 +168,11 @@ export function InlineName({
           <div className="flex flex-wrap items-center gap-1">
             <Button type="submit" size="sm" disabled={disabled || saving}>
               <Check size={14} aria-hidden="true" />
-              {saving ? "Saving…" : changed ? "Save my name" : "Save"}
+              {saving
+                ? "Saving, paws a moment…"
+                : changed
+                  ? "Save my name"
+                  : "Save"}
             </Button>
             <Button
               type="button"

@@ -15,7 +15,9 @@ export function Consent({ query }: { query: string }) {
       });
       const data = await result.json();
       if (!result.ok)
-        throw new Error(data.error?.message ?? "Couldn’t connect.");
+        throw new Error(
+          data.error?.message ?? "Ruff connection! Please try again.",
+        );
       window.location.assign(data.redirect);
     } catch (e) {
       setError((e as Error).message);

@@ -19,11 +19,11 @@ export function SignIn({ next }: { next: string }) {
           });
           if (result.error)
             setError(
-              "Sign-in failed. Check your email and password and try again.",
+              "Ruff start! Sign-in failed. Check your email and password and try again.",
             );
           else window.location.assign(next);
         } catch {
-          setError("We couldn’t connect. Check your connection and try again.");
+          setError("Ruff connection! Check your connection and try again.");
         } finally {
           setBusy(false);
         }
@@ -49,7 +49,7 @@ export function SignIn({ next }: { next: string }) {
         </p>
       )}
       <Button type="submit" disabled={busy}>
-        {busy ? "Signing in…" : "Sign in"}
+        {busy ? "Sniffing out your lists…" : "Sign in"}
       </Button>
     </form>
   );

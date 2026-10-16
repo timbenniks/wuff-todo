@@ -15,7 +15,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
 - **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
 - **Verification:** 12 unit tests, 10 development integration tests, TypeScript checks, and a production build passed for live updates; production Codex tool checks for the earlier sharing milestone passed. Tim reported working activation, Codex use, and sharing. Joreel's independent activation/client connection, ChatGPT end-to-end, and named-host interactive MCP UI remain unverified. See [verification](verification.md) and [MCP validation](mcp-validation.md).
-- **Later scope:** Markdown task content with private image uploads, subtasks, deadlines, new-account invitation delivery, native apps/auth, offline editing, and broader themes. Custom SMTP remains an operational follow-up.
+- **Task notes:** formatted text and canonical Markdown are implemented for web/API/MCP, with an on-demand Tiptap toolbar, safe shared renderer and MCP App source editor. Corgi wordplay covers app guidance and feedback. Release verification is recorded in [task content and voice](task-content.md).
+- **Later scope:** private image uploads in task notes, subtasks, deadlines, new-account invitation delivery, native apps/auth, offline editing, and broader themes. Custom SMTP remains an operational follow-up.
 
 Before resuming, inspect `git status`, read the operating instructions in [development](development.md), and check the actual code and available tools. The ignored local environment and synthetic fixture files are machine-local; a fresh clone needs setup. Provision Neon through Vercel, preserve the isolated development branch, and verify `fra1` on actual deployments. Do not recreate accounts/resources or rerun migrations merely because this is a new chat. Past verification is dated evidence; rerun checks relevant to the change before making new claims.
 
@@ -37,7 +38,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Next: scope richer task content with Markdown and private image uploads, then subtasks and deadlines before mobile. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
+The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Formatted task notes and Markdown are now implemented in [task content and voice](task-content.md); the user chose formatted text first. Next: private image uploads in task notes, then scope subtasks and deadlines before mobile. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
 
 ## Phase 0: resolve architectural risks
 

@@ -22,7 +22,7 @@ export default async function AuthorizePage({
     return (
       <main className="max-w-md mx-auto px-6 py-24">
         <h1 className="text-3xl font-bold mb-4">
-          Connection request isn’t valid.
+          Ruff request! This connection isn’t valid.
         </h1>
         <p>Return to your AI client and start the connection again.</p>
       </main>
@@ -52,7 +52,9 @@ export default async function AuthorizePage({
       <h1 className="text-3xl font-bold mt-8 mb-4">
         Connect {details.client.name}?
       </h1>
-      <p className="text-slate-500">This client is asking to:</p>
+      <p className="text-slate-500">
+        This AI pal wants to join your pack. It is asking to:
+      </p>
       <ul className="list-disc pl-5 my-6 space-y-3">
         {details.requested.map((s) => (
           <li key={s}>{labels[s]}</li>

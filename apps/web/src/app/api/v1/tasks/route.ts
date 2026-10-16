@@ -5,7 +5,7 @@ async function mutate(request: Request, action: typeof createTask) {
   try {
     sameOrigin(request);
     return privateJson(
-      await action(await webActor(), await jsonInput(request)),
+      await action(await webActor(), await jsonInput(request, 131_072)),
     );
   } catch (error) {
     return failure(error);

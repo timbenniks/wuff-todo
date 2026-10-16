@@ -39,7 +39,7 @@ Users can create and view private lists, rename their own lists, share them, and
 
 **Implemented:** archive and restore lists, with archive controlled by the owner. Archived lists retain their content and membership, and tasks/sections are read-only until restored. Permanent deletion is a separate owner-only action with an explicit confirmation explaining that it affects all members.
 
-Implemented list colors, descriptions, sections, personal ordering, and archive/restore are specified in [mature lists](mature-lists.md). Richer task content, subtasks, and deadlines follow this list-focused build before native mobile.
+Implemented list colors, descriptions, sections, personal ordering, and archive/restore are specified in [mature lists](mature-lists.md). Markdown task notes are implemented in [task content and voice](task-content.md). Private images, subtasks, and deadlines follow before native mobile.
 
 ### Tasks
 
@@ -49,7 +49,7 @@ Empty or whitespace-only titles are rejected. Titles are treated as content, nev
 
 **Proposed:** completed tasks appear in a collapsible section. Completing a task removes it from the active order; reopening appends it to the active list. Task order is shared by everyone with access to the list.
 
-Task descriptions, subtasks, labels, priorities, dates, recurrence, and reminders are outside the first release.
+The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). Subtasks, labels, priorities, dates, recurrence, and reminders remain deferred. Private image uploads follow the formatted-text pass.
 
 ### Sharing and invitations
 
@@ -85,7 +85,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 - Empty, loading, denied-access, and failed-request states are designed deliberately.
 - Responsive layouts support phones before native apps arrive.
 
-The corgi appears in the app identity and selected empty states. Animation and completion celebrations are optional future design choices. Core actions remain readable, accessible, and usable without animation.
+The corgi appears in the app identity and selected empty states. App-authored greetings, guidance and feedback use friendly corgi wordplay, while action labels, permissions and consequences stay explicit; user content is never rewritten. Animation and completion celebrations are optional future design choices. Core actions remain readable, accessible, and usable without animation.
 
 ### MCP and interactive UI
 

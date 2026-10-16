@@ -64,7 +64,7 @@ export function ListSettings({
               List settings
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              These settings are shared with everyone on this list.
+              A few de-tails, shared with everyone on this list.
             </p>
           </div>
           <Button
@@ -95,14 +95,14 @@ export function ListSettings({
             <textarea
               rows={4}
               maxLength={4000}
-              placeholder="What is this list for?"
+              placeholder="What’s the plan for your pack?"
               value={draft.description}
               onChange={(e) =>
                 setDraft({ ...draft, description: e.target.value })
               }
             />
             <span className="font-normal text-xs text-slate-500">
-              A little context for everyone. Plain text, up to 4,000 characters.
+              A few de-tails for your pack. Plain text, up to 4,000 characters.
             </span>
           </label>
           <fieldset>
@@ -143,7 +143,7 @@ export function ListSettings({
           {list.version !== draft.version && (
             <div role="status" className="text-sm rounded-xl bg-amber-50 p-3">
               <p>
-                This list changed while you were editing. Your draft is still
+                New de-tails arrived while you were editing. Your draft is still
                 here.
               </p>
               <Button type="button" variant="ghost" size="sm" onClick={load}>
@@ -153,8 +153,8 @@ export function ListSettings({
           )}
           {failed && (
             <p role="alert" className="text-sm text-red-800">
-              Settings weren’t saved. Check the list’s error message or load its
-              latest settings, then try again.
+              Ruff patch! Settings weren’t saved. Check the list’s error message
+              or load its latest settings, then try again.
             </p>
           )}
           {retry && (
@@ -170,14 +170,14 @@ export function ListSettings({
             </Button>
           )}
           <Button disabled={busy} type="submit">
-            {busy ? "Saving…" : "Save settings"}
+            {busy ? "Saving your de-tails…" : "Save settings"}
           </Button>
         </form>
         <div className="border-t border-border mt-6 pt-5">
           <p className="text-sm text-slate-500 mb-3">
             {list.archived
-              ? "Restore this list so everyone can edit its tasks again."
-              : "Put this list away for everyone. Its tasks and sharing are kept."}
+              ? "Paws over? Restore this list so everyone can edit its tasks again."
+              : "Let this list take a paws for everyone. Its tasks and sharing are kept."}
           </p>
           <Button
             variant="outline"

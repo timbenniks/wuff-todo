@@ -69,16 +69,16 @@ Implemented MCP scopes are `lists:read`, `tasks:write`, and `lists:manage`. Code
 
 ## Conceptual data model
 
-| Entity               | Responsibility                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| User/profile         | Stable link to Neon identity and application preferences                              |
-| List                 | Title, description, shared color, archived state, owner, timestamps, version          |
-| List membership      | Accepted editor membership, unique per list and user                                  |
-| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                   |
-| User list preference | Account-owned ordered list IDs and independent revision; current access filters reads |
-| List section         | List-bound title and shared integer position; removal preserves tasks                 |
-| Task                 | List, optional section, title, integer position, completion; version is on the list   |
-| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                  |
+| Entity               | Responsibility                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| User/profile         | Stable link to Neon identity and application preferences                                              |
+| List                 | Title, description, shared color, archived state, owner, timestamps, version                          |
+| List membership      | Accepted editor membership, unique per list and user                                                  |
+| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                                   |
+| User list preference | Account-owned ordered list IDs and independent revision; current access filters reads                 |
+| List section         | List-bound title and shared integer position; removal preserves tasks                                 |
+| Task                 | List, optional section, title, Markdown content, integer position, completion; version is on the list |
+| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                                  |
 
 The list owner is authoritative on the list row. Domain queries recognize owner access or accepted membership. Avoid competing sources of truth for ownership.
 
@@ -164,3 +164,7 @@ Research reviewed October 15, 2026. Current integration evidence is recorded in 
 The list owner controls invitations and membership. A recipient must already have an enabled Wuff profile; managed identity alone is insufficient. Invitations reference the recipient ID and are accepted only by that actor. Legacy token hashes remain stored for schema compatibility but are not authorization credentials, are never exposed, and are not used by the in-app flow.
 
 All sharing mutations and task writes lock the same list row and use its version. Acceptance/decline lock the list before rechecking invitation state. Cancellation and acceptance cannot both commit; a concurrent task write and revocation either serialize or fail with a stale-version conflict. Operation receipts store identifiers, and acceptance retries recheck current access instead of recreating membership. Read snapshots use repeatable-read transactions where multi-query consistency is required.
+
+## Task notes
+
+Tasks have canonical Markdown `content` (16,000 characters, empty by default), included in authorized snapshots. HTTP and MCP create/update adapters use the same contracts and domain mutation services, so versioning, admission, membership, archive restrictions and live invalidation apply unchanged. The website lazily loads Tiptap; the MCP App edits source with a live preview. Both share a Markdown-it renderer with HTML disabled, restricted links and non-loading image placeholders. See [task content and voice](task-content.md) for conversion safeguards, draft handling, the additive migration and the corgi copy decisions.

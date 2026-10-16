@@ -10,7 +10,8 @@ export function Connections() {
   useEffect(() => {
     fetch("/api/v1/connections")
       .then(async (r) => {
-        if (!r.ok) throw new Error("Couldn’t load connections.");
+        if (!r.ok)
+          throw new Error("Ruff patch! Couldn’t load connections. Try again.");
         setClients(await r.json());
       })
       .catch((e) => setError(e.message));
@@ -23,9 +24,11 @@ export function Connections() {
         </p>
       )}
       {clients === null ? (
-        <p role="status">Loading connections…</p>
+        <p role="status">Fetching your AI pack…</p>
       ) : clients.length === 0 ? (
-        <p className="text-slate-500">No AI clients connected yet.</p>
+        <p className="text-slate-500">
+          No AI pals in your pack yet. Connect a client to get started.
+        </p>
       ) : (
         <ul className="divide-y divide-border">
           {clients.map((client) => (
@@ -46,7 +49,9 @@ export function Connections() {
                       body: JSON.stringify({ clientId: client.id }),
                     });
                     if (!r.ok)
-                      throw new Error("Couldn’t disconnect. Try again.");
+                      throw new Error(
+                        "Ruff patch! Couldn’t disconnect. Try again.",
+                      );
                     setClients(clients.filter((c) => c.id !== client.id));
                   } catch (e) {
                     setError((e as Error).message);

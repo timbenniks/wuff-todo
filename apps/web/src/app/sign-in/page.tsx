@@ -16,13 +16,13 @@ export default async function SignInPage({
           <span className="wordmark text-2xl font-bold">
             Wuff Todo
             <span className="block font-sans text-xs tracking-normal font-medium text-slate-500 mt-1">
-              A little less to remember.
+              Less to remember. More tail wags.
             </span>
           </span>
         </div>
-        <h1 className="text-4xl font-bold mb-3">Good to see you.</h1>
+        <h1 className="text-4xl font-bold mb-3">Wuff, welcome back.</h1>
         <p className="text-slate-500 mb-8">
-          Your lists are right where you left them.
+          Your pack of lists is right where you left it.
         </p>
         <SignIn next={safeNext} />
         <Link
@@ -32,8 +32,8 @@ export default async function SignInPage({
           First visit or forgot your password?
         </Link>
         <p className="text-sm text-slate-500 mt-8 border-t border-border pt-6">
-          Wuff is a private space for friends and family. You’ll need an
-          invitation to join.
+          Our pack is invite-only. Wuff is a private space for friends and
+          family; you’ll need an invitation to join.
         </p>
       </div>
     </main>

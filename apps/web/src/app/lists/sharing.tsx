@@ -124,7 +124,7 @@ export function InvitationInbox({
           aria-label="List invitations"
           className="rounded-2xl border border-blue-200 bg-blue-50 p-4 mb-8 grid gap-4"
         >
-          <h2 className="font-semibold">You’re invited</h2>
+          <h2 className="font-semibold">Your pack is calling</h2>
           {items.map((invite) => (
             <div key={invite.id} className="flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1 basis-48">
@@ -209,7 +209,7 @@ export function SharingDialog({
       await onChanged(list.id, true);
     } else {
       setSharing(value);
-      setNotice("Sharing settings saved.");
+      setNotice("Paw-some, sharing settings saved.");
       await onChanged(list.id);
     }
   });
@@ -288,7 +288,7 @@ export function SharingDialog({
         <div className="flex items-start justify-between gap-4 mb-5">
           <div className="min-w-0">
             <h2 id={`sharing-title-${list.id}`} className="text-2xl font-bold">
-              Share this list
+              Share with your pack
             </h2>
             <p className="text-sm text-slate-500 break-words mt-1">
               {list.title}
@@ -312,7 +312,7 @@ export function SharingDialog({
               </Button>
             </div>
           )}
-          {!sharing && !readError && <p role="status">Loading people…</p>}
+          {!sharing && !readError && <p role="status">Fetching your pack…</p>}
           {sharing && (
             <>
               <section aria-label="People with access" className="grid gap-3">
@@ -374,7 +374,7 @@ export function SharingDialog({
                       htmlFor={`invite-${list.id}`}
                       className="text-sm font-semibold"
                     >
-                      Invite someone
+                      Invite someone to your pack
                     </label>
                     <div className="flex flex-wrap gap-2">
                       <input

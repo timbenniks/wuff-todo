@@ -90,6 +90,7 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
       .select({
         id: tasks.id,
         title: tasks.title,
+        content: tasks.content,
         completed: tasks.completed,
         position: tasks.position,
         sectionId: tasks.sectionId,
@@ -462,6 +463,7 @@ export async function createTask(actor: Actor, data: unknown) {
         listId: input.listId,
         title: input.title,
         sectionId: input.sectionId ?? null,
+        content: input.content ?? "",
         position: Math.max(-1, ...existing.map((t) => t.position)) + 1,
       });
       return { id: input.listId };
@@ -495,6 +497,7 @@ export async function updateTask(actor: Actor, data: unknown) {
         .update(tasks)
         .set({
           title: input.title ?? task.title,
+          content: input.content ?? task.content,
           completed: input.completed ?? task.completed,
           sectionId:
             input.sectionId === undefined ? task.sectionId : input.sectionId,

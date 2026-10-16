@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   applicationName: "Wuff Todo",
   title: "Wuff Todo",
   description:
-    "A little less to remember. Private lists for you and your people.",
+    "Less to remember. More tail wags. Private lists for you and your pack.",
   robots: { index: false, follow: false },
   icons: {
     icon: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     siteName: "Wuff Todo",
     title: "Wuff Todo",
     description:
-      "A little less to remember. Private lists for you and your people.",
+      "Less to remember. More tail wags. Private lists for you and your pack.",
     images: [
       {
         url: "/icons/share.png",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Wuff Todo",
     description:
-      "A little less to remember. Private lists for you and your people.",
+      "Less to remember. More tail wags. Private lists for you and your pack.",
     images: ["/icons/share.png"],
   },
 };

@@ -22,6 +22,13 @@
       "when": 1792145768504,
       "tag": "0002_worried_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792148355352,
+      "tag": "0003_strange_dark_phoenix",
+      "breakpoints": true
     }
   ]
 }

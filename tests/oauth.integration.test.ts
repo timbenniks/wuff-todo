@@ -261,6 +261,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         listId: list.id,
         version: list.version,
         title: "Web to MCP",
+        content: "## Web notes\n\n**Shared** de-tails.",
         operationId: crypto.randomUUID(),
       },
       cookie,
@@ -272,6 +273,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     });
     list = read.body.result.structuredContent.list;
     assert.equal(list.tasks[0].title, "Web to MCP");
+    assert.equal(list.tasks[0].content, "## Web notes\n\n**Shared** de-tails.");
     const ui = await rpc(token.access_token, "resources/read", {
       uri: "ui://wuff/lists.html",
     });
@@ -284,6 +286,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         taskId: list.tasks[0].id,
         version: list.version,
         completed: true,
+        content: "## MCP notes\n\n- Fetch treats\n- Take a walk",
         operationId: crypto.randomUUID(),
       },
     });
@@ -299,6 +302,10 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       })
     ).json();
     assert.equal(webState.tasks[0].completed, true);
+    assert.equal(
+      webState.tasks[0].content,
+      "## MCP notes\n\n- Fetch treats\n- Take a walk",
+    );
     // Two independent synthetic identities exercise the actual HTTP and MCP adapters.
     editorCookie = await login(1);
     const editorGrant = await grant(

@@ -135,3 +135,7 @@ See [live updates](live-updates.md) for permission boundaries, retry/reconnect b
 - Task create/update accepts `sectionId` belonging to that list, or null for unsectioned. Archived task/section writes return `list_archived` (409).
 
 Migration `0002_worried_freak.sql` adds description/color/archive columns, account ordering preferences, list sections, and nullable task section IDs. Defaults preserve existing data. See [mature lists](mature-lists.md). The MCP catalog adds `update_list`, `get_list_order`, `reorder_lists`, `create_section`, `rename_section`, `reorder_sections`, and `delete_section`; existing OAuth scopes cover these operations. Clients may need to refresh their tool catalogs.
+
+## Task notes
+
+Migration `0003_strange_dark_phoenix.sql` adds `wuff_tasks.content`, a non-null Markdown string defaulting to empty. Apply the additive migration before deploying the new snapshot reader. Task create/update accepts optional `content` (16,000 characters); empty clears and omission preserves it. No extra OAuth scope or new endpoint is needed. The task JSON route allows 128 KiB to accommodate escaping; other routes retain their 32 KiB limit. Refresh MCP tool catalogs to discover the content field. See [task content and voice](task-content.md) for editor limitations, image deferral and verification.

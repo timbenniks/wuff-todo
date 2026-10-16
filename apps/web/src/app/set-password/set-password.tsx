@@ -11,7 +11,9 @@ export function SetPassword() {
   if (step === "done")
     return (
       <div className="grid gap-6">
-        <p role="status">Your password is ready. Sign in to see your lists.</p>
+        <p role="status">
+          Paw-some, your password is ready. Sign in to see your lists.
+        </p>
         <Link
           href="/sign-in"
           className="font-semibold underline underline-offset-4"
@@ -31,7 +33,7 @@ export function SetPassword() {
           step === "password" &&
           data.get("password") !== data.get("confirm")
         ) {
-          setError("Your passwords don’t match.");
+          setError("Ruff match! Your passwords don’t match.");
           return;
         }
         setBusy(true);
@@ -57,14 +59,14 @@ export function SetPassword() {
           if (!response.ok) {
             setError(
               response.status === 429
-                ? "Please wait a minute before trying again."
+                ? "Paws for a minute before trying again."
                 : step === "email"
-                  ? "We couldn’t send a code. Please try again shortly."
-                  : "We couldn’t set your password. Check the code or request a new one.",
+                  ? "Ruff delivery! We couldn’t send a code. Please try again shortly."
+                  : "Ruff patch! We couldn’t set your password. Check the code or request a new one.",
             );
           } else setStep(step === "email" ? "password" : "done");
         } catch {
-          setError("We couldn’t connect. Check your connection and try again.");
+          setError("Ruff connection! Check your connection and try again.");
         } finally {
           setBusy(false);
         }
@@ -87,8 +89,8 @@ export function SetPassword() {
       ) : (
         <>
           <p role="status" className="text-sm text-slate-600">
-            If {email} has been invited, a code is on its way. Check your inbox
-            and spam folder.
+            If {email} has been invited, a code is on its way. Fetch it from
+            your inbox and spam folder.
           </p>
           <label className="grid gap-2 text-sm font-semibold">
             Email code
@@ -136,7 +138,7 @@ export function SetPassword() {
       )}
       <Button type="submit" disabled={busy}>
         {busy
-          ? "One moment…"
+          ? "Just a little paws…"
           : step === "email"
             ? "Send me a code"
             : "Save password"}

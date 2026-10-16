@@ -1,3 +1,4 @@
+import { wuffError } from "./copy";
 import { ZodError } from "zod";
 import { AppError } from "@wuff/contracts";
 import { appOrigin } from "./config";
@@ -10,9 +11,9 @@ export function sameOrigin(request: Request) {
       403,
     );
 }
-export async function jsonInput(request: Request) {
+export async function jsonInput(request: Request, limit = 32_768) {
   const text = await request.text();
-  if (text.length > 32_768)
+  if (text.length > limit)
     throw new AppError("too_large", "Request is too large.", 413);
   try {
     return JSON.parse(text);
@@ -26,14 +27,14 @@ export function failure(error: unknown) {
       {
         error: {
           code: "invalid_input",
-          message: error.issues.map((i) => i.message).join("; "),
+          message: wuffError(error.issues.map((i) => i.message).join("; ")),
         },
       },
       { status: 400 },
     );
   if (error instanceof AppError)
     return Response.json(
-      { error: { code: error.code, message: error.message } },
+      { error: { code: error.code, message: wuffError(error.message) } },
       { status: error.status },
     );
   const requestId = crypto.randomUUID();
@@ -45,7 +46,7 @@ export function failure(error: unknown) {
     {
       error: {
         code: "internal_error",
-        message: "Something went wrong. Try again.",
+        message: "Ruff patch! Something went wrong. Try again.",
         requestId,
       },
     },

@@ -1,4 +1,6 @@
 import { App } from "@modelcontextprotocol/ext-apps";
+import { renderTaskMarkdown } from "../lib/task-markdown";
+import type { Task } from "@wuff/contracts";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { listColors } from "@wuff/contracts";
 import { listPalette } from "../lib/list-colors";
@@ -9,22 +11,33 @@ let current: TodoList | undefined,
   archive = false;
 const root = document.querySelector<HTMLElement>("#app")!;
 const status = document.querySelector<HTMLElement>("#status")!;
+class ToolError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+  ) {
+    super(message);
+  }
+}
 async function request(name: string, args: Record<string, unknown>) {
   const result = await app.callServerTool({ name, arguments: args });
   if (result.isError)
-    throw new Error(
+    throw new ToolError(
       result.content
         ?.filter((c) => c.type === "text")
         .map((c) => c.text)
-        .join(" ") || "Couldn’t save. Reopen the list and try again.",
+        .join(" ") ||
+        "Ruff patch! Couldn’t save. Reopen the list and try again.",
+      (result.structuredContent as { error?: { code: string } } | undefined)
+        ?.error?.code ?? "internal_error",
     );
   return result.structuredContent;
 }
 async function call(name: string, args: Record<string, unknown>) {
-  status.textContent = "Saving…";
+  status.textContent = "Saving, paws a moment…";
   try {
     show(await request(name, args));
-    status.textContent = "Saved";
+    status.textContent = "Paw-some, saved.";
   } catch (e) {
     status.textContent = (e as Error).message;
   }
@@ -131,7 +144,7 @@ function inlineName(
       wireForm(form, save, () => {
         const title = input.value.trim();
         if (!title) {
-          notice.textContent = "Enter a name first.";
+          notice.textContent = "Give it a name to bark about first.";
           save.disabled = false;
           input.focus();
           return;
@@ -147,11 +160,11 @@ function inlineName(
         cancel.disabled = true;
         input.readOnly = true;
         notice.textContent = "";
-        status.textContent = "Saving…";
+        status.textContent = "Saving, paws a moment…";
         void request(tool, { ...target, title, operationId })
           .then((data) => {
             show(data);
-            status.textContent = "Saved";
+            status.textContent = "Paw-some, saved.";
             Array.from(root.querySelectorAll<HTMLElement>(".inline-name"))
               .find((el) => el.dataset.nameKey === nameKey)
               ?.querySelector<HTMLButtonElement>(".name-button")
@@ -194,12 +207,156 @@ function inlineName(
   render();
   return wrapper;
 }
+
+type NoteDraft = {
+  listId: string;
+  original: string;
+  content: string;
+  operationId?: string;
+  request?: Record<string, unknown>;
+};
+const noteDrafts = new Map<string, NoteDraft>();
+function taskNotes(task: Task) {
+  const panel = element("details"),
+    summary = element("summary", task.content ? "Task notes" : "Add notes");
+  panel.className = "task-notes";
+  summary.setAttribute(
+    "aria-label",
+    `${task.content ? "Task notes" : "Add notes"} for ${task.title}`,
+  );
+  panel.append(summary);
+  const preview = element("div");
+  preview.className = "task-prose";
+  preview.innerHTML = renderTaskMarkdown(task.content);
+  const start = () => {
+    const listId = current!.id;
+    const draft = noteDrafts.get(task.id) ?? {
+      listId,
+      original: task.content,
+      content: task.content,
+    };
+    noteDrafts.set(task.id, draft);
+    const form = element("div"),
+      input = element("textarea"),
+      notice = element("p"),
+      livePreview = element("div"),
+      actions = element("div");
+    form.className = "note-editor";
+    livePreview.className = "task-prose";
+    notice.setAttribute("role", "status");
+    input.rows = 9;
+    input.value = draft.content;
+    input.setAttribute("aria-label", `Markdown notes for ${task.title}`);
+    const renderPreview = () => {
+      livePreview.innerHTML = renderTaskMarkdown(input.value);
+    };
+    renderPreview();
+    input.oninput = () => {
+      draft.content = input.value;
+      renderPreview();
+    };
+    const save = button(
+        task.content !== draft.original ? "Save my notes" : "Save notes",
+        () => {
+          if (input.value.length > 16000) {
+            notice.textContent =
+              "That’s a long tail! Keep notes to 16,000 characters or fewer.";
+            return;
+          }
+          // An uncertain response must retry the identical version and operation ID.
+          const payload = {
+            listId,
+            version: current!.version,
+            taskId: task.id,
+            content: input.value,
+          };
+          if (draft.request && draft.request.content !== payload.content) {
+            notice.textContent =
+              "Paws a moment: retry the original notes or reopen the list to check the saved version before changing this draft.";
+            return;
+          }
+          draft.request ??= { ...payload, operationId: crypto.randomUUID() };
+          save.disabled = true;
+          input.readOnly = true;
+          cancel.disabled = true;
+          status.textContent = "Saving your de-tails…";
+          void request("update_task", draft.request)
+            .then((result) => {
+              noteDrafts.delete(task.id);
+              show(result);
+              status.textContent = "Paw-some, notes saved.";
+            })
+            .catch((error: Error) => {
+              if (
+                error instanceof ToolError &&
+                error.code !== "internal_error"
+              ) {
+                draft.request = undefined;
+                void request("show_list", { listId })
+                  .then(show)
+                  .catch(() => {});
+              }
+              notice.textContent = `${error.message} Your draft is kept. Reopen this list to compare the latest notes.`;
+              status.textContent = "Ruff patch! Notes weren’t confirmed saved.";
+              save.disabled = false;
+              input.readOnly = false;
+              cancel.disabled = false;
+            });
+        },
+      ),
+      cancel = button("Cancel", () => {
+        noteDrafts.delete(task.id);
+        render();
+      });
+    actions.className = "name-actions";
+    actions.append(save, cancel);
+    if (task.content !== draft.original)
+      notice.textContent =
+        "New de-tails arrived. Compare the latest saved notes below before saving your version.";
+    form.append(
+      element("p", "A little more de-tail · Markdown"),
+      input,
+      element("p", "Preview"),
+      livePreview,
+      notice,
+    );
+    if (task.content !== draft.original) form.append(preview);
+    if (!current!.archived) form.append(actions);
+    else {
+      input.readOnly = true;
+      form.append(
+        element(
+          "p",
+          "This list is taking a paws. Its owner must restore it before you can save.",
+        ),
+      );
+    }
+    panel.replaceChildren(summary, form);
+    panel.open = true;
+    input.focus();
+  };
+  const render = () => {
+    panel.replaceChildren(summary, preview);
+    if (!task.content)
+      panel.append(
+        element("p", "More de-tails? Add a note or a link for your pack."),
+      );
+    if (!current!.archived)
+      panel.append(button(task.content ? "Edit notes" : "Add notes", start));
+  };
+  render();
+  if (noteDrafts.has(task.id)) start();
+  return panel;
+}
+
 function show(value: unknown) {
   const data = value as {
     list?: TodoList;
     lists?: ListSummary[];
     viewerId?: string;
   };
+  if (data.viewerId && viewerId && data.viewerId !== viewerId)
+    noteDrafts.clear();
   if (data.viewerId) viewerId = data.viewerId;
   root.replaceChildren();
   if (data.lists) {
@@ -210,6 +367,9 @@ function show(value: unknown) {
   }
   if (!data.list) return;
   current = data.list;
+  for (const [id, draft] of noteDrafts)
+    if (draft.listId === current.id && !current.tasks.some((t) => t.id === id))
+      noteDrafts.delete(id);
   const color = listPalette[current.color];
   root.append(button("← Your lists", () => void call("show_lists", {})));
   const header = element("div");
@@ -233,7 +393,10 @@ function show(value: unknown) {
   }
   if (current.archived)
     header.append(
-      element("p", "Archived · restore this list before editing tasks."),
+      element(
+        "p",
+        "Taking a paws · restore this archived list before editing tasks.",
+      ),
     );
   root.append(header);
   if (owner) {
@@ -340,7 +503,7 @@ function show(value: unknown) {
           });
         row.append(select);
       }
-      details.append(row);
+      details.append(row, taskNotes(task));
     }
     if (!current.archived) {
       const form = element("form"),
@@ -348,7 +511,7 @@ function show(value: unknown) {
         save = element("button", "Add");
       input.required = true;
       input.maxLength = 300;
-      input.placeholder = "Add a task…";
+      input.placeholder = "What’s next for your pack?";
       input.setAttribute("aria-label", `New task in ${group.title}`);
       form.append(input, save);
       wireForm(form, save, () => {
@@ -445,13 +608,13 @@ function renderCatalog() {
       element(
         "p",
         archive
-          ? "No archived lists yet."
-          : "Create your first list on Wuff, or ask your AI assistant to create one.",
+          ? "No lists taking a paws yet."
+          : "Start your pack: create your first list on Wuff, or ask your AI assistant to create one.",
       ),
     );
 }
 async function reorder(id: string, target: string) {
-  status.textContent = "Saving…";
+  status.textContent = "Saving, paws a moment…";
   try {
     const data = (await request("get_list_order", {})) as { order: ListOrder };
     const ids = [...data.order.listIds],
@@ -468,7 +631,7 @@ async function reorder(id: string, target: string) {
       operationId: crypto.randomUUID(),
     });
     show(await request("show_lists", {}));
-    status.textContent = "Order saved";
+    status.textContent = "Paw-some, order saved";
   } catch (e) {
     status.textContent = (e as Error).message;
   }

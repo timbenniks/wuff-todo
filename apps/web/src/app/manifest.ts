@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Wuff Todo",
     short_name: "Wuff",
     description:
-      "A little less to remember. Private lists for you and your people.",
+      "Less to remember. More tail wags. Private lists for you and your pack.",
     id: "/",
     start_url: "/lists",
     scope: "/",

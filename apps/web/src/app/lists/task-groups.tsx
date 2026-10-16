@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from "lucide-react";
 import type { Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
+import { TaskNotes, type NoteDraft } from "./task-notes";
 import { InlineName } from "./inline-name";
 
 export function TaskGroups({
@@ -17,6 +18,19 @@ export function TaskGroups({
   busy: boolean;
   change: ListChange;
 }) {
+  const noteDrafts = useRef(new Map<string, NoteDraft>()),
+    completedGroup = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    for (const id of noteDrafts.current.keys())
+      if (!list.tasks.some((t) => t.id === id)) noteDrafts.current.delete(id);
+    if (
+      list.tasks.some(
+        (t) => t.completed && noteDrafts.current.get(t.id)?.editing,
+      ) &&
+      completedGroup.current
+    )
+      completedGroup.current.open = true;
+  }, [list.tasks]);
   const [addingSection, setAddingSection] = useState(false);
   const owner = list.ownerId === userId,
     disabled = busy || list.archived;
@@ -132,6 +146,13 @@ export function TaskGroups({
                 ))}
               </select>
             )}
+            <TaskNotes
+              task={task}
+              list={list}
+              busy={busy}
+              change={change}
+              drafts={noteDrafts.current}
+            />
           </li>
         ))}
       </ul>
@@ -162,7 +183,7 @@ export function TaskGroups({
                 ? `New task in ${list.sections.find((s) => s.id === sectionId)?.title}`
                 : "New task"
             }
-            placeholder="Add a little thing to do…"
+            placeholder="What’s next for your pack?"
             maxLength={300}
             required
             className="flex-1"
@@ -195,14 +216,14 @@ export function TaskGroups({
           role="status"
           className="rounded-xl border border-border bg-white p-4 text-sm mb-6"
         >
-          This list is archived.{" "}
+          This list is taking a paws in the archive.{" "}
           {owner
             ? "Restore it in List settings to make changes."
             : "Its owner can restore it so you can make changes again."}
         </p>
       )}
       <p className="text-sm text-slate-500 mb-5">
-        {active.length} things to do
+        {active.length} things to fetch and finish
       </p>
       {list.sections.length > 0 && (
         <h2 className="text-lg font-bold mb-1">No section</h2>
@@ -326,9 +347,9 @@ export function TaskGroups({
           )}
         </div>
       )}
-      <details className="mt-10">
+      <details className="mt-10" ref={completedGroup}>
         <summary className="text-sm text-slate-500 py-3">
-          Completed ({list.tasks.filter((t) => t.completed).length})
+          Paw-some, completed ({list.tasks.filter((t) => t.completed).length})
         </summary>
         <ul>
           {list.tasks
@@ -336,7 +357,7 @@ export function TaskGroups({
             .map((task) => (
               <li
                 key={task.id}
-                className="flex gap-3 items-center py-3 text-slate-500"
+                className="flex flex-wrap gap-3 items-center py-3 text-slate-500"
               >
                 <button
                   aria-label={`Reopen ${task.title}`}
@@ -366,6 +387,13 @@ export function TaskGroups({
                       title,
                     })
                   }
+                />
+                <TaskNotes
+                  task={task}
+                  list={list}
+                  busy={busy}
+                  change={change}
+                  drafts={noteDrafts.current}
                 />
               </li>
             ))}

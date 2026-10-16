@@ -551,7 +551,7 @@ export function ListApp({
         </nav>
         {showArchive && visibleLists.length === 0 && (
           <p className="text-sm text-slate-500 px-3 py-4">
-            No archived lists yet.
+            No lists taking a paws yet.
           </p>
         )}
         <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
@@ -582,10 +582,10 @@ export function ListApp({
         {liveConfig && (
           <p role="status" className="text-xs text-slate-500 mb-4">
             {liveStatus === "live"
-              ? "Live updates connected"
+              ? "Your pack is in sync · Live updates connected"
               : liveStatus === "connecting"
-                ? "Connecting live updates. Regular refresh is active."
-                : "Live updates reconnecting. Regular refresh is active."}
+                ? "Fetching live updates. Regular refresh is active."
+                : "A little paws in live updates. Reconnecting; regular refresh is active."}
           </p>
         )}
         <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
@@ -599,7 +599,7 @@ export function ListApp({
             role="alert"
             className="rounded-xl bg-red-50 text-red-800 px-4 py-3 mb-6 text-sm"
           >
-            {error || "We couldn’t confirm your previous change."}
+            {error || "Ruff patch! We couldn’t confirm your previous change."}
             {retryWrite && (
               <div className="flex flex-wrap gap-2 mt-3">
                 <Button
@@ -644,13 +644,13 @@ export function ListApp({
             <Corgi size={88} />
             <h1 className="text-4xl font-bold mt-7 mb-3">
               {showArchive
-                ? "All clear in the archive."
-                : "A little room for your day."}
+                ? "No lists taking a paws."
+                : "Small paws. Big plans."}
             </h1>
             <p className="text-slate-500 mb-7">
               {showArchive
-                ? "Archived lists will be kept here until you need them again."
-                : "Groceries, weekend plans, things you don’t want to forget."}
+                ? "Your lists can take a paws here until you need them again."
+                : "Groceries, weekend plans, anything your pack needs to remember."}
             </p>
             <Button onClick={() => setCreating(true)}>
               <Plus size={18} />
@@ -764,12 +764,12 @@ export function ListApp({
             {isPending ? (
               <div className="mt-6 text-sm text-slate-500">
                 {pendingCreate?.status === "saving" ? (
-                  <p role="status">Saving your list…</p>
+                  <p role="status">Tucking your list into the pack…</p>
                 ) : (
                   <div role="alert" className="grid gap-4 justify-items-start">
                     <p>
-                      We couldn’t confirm your list was saved. Retry to check
-                      and finish the same request.
+                      Ruff patch! We couldn’t confirm your list was saved. Retry
+                      to check and finish the same request.
                     </p>
                     <Button disabled={busy} onClick={() => create()}>
                       Retry saving list

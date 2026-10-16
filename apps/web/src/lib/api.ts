@@ -1,3 +1,4 @@
+import { wuffError } from "./copy";
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -27,7 +28,7 @@ export async function api<T>(
     if (data.error?.code === "account_changed" && typeof window !== "undefined")
       window.location.replace("/lists");
     throw new ApiError(
-      data.error?.message ?? "Couldn’t save your change.",
+      wuffError(data.error?.message ?? "Couldn’t save your change."),
       response.status,
       data.error?.code,
     );

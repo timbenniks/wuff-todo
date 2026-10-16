@@ -1,3 +1,4 @@
+import { wuffError } from "./copy";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -56,13 +57,27 @@ export function createMcpServer(actor: Actor) {
     } catch (error) {
       return {
         isError: true,
+        structuredContent: {
+          error: {
+            code:
+              error instanceof AppError
+                ? error.code
+                : error instanceof z.ZodError
+                  ? "invalid_input"
+                  : "internal_error",
+          },
+        },
         content: [
           {
             type: "text" as const,
             text:
               error instanceof AppError || error instanceof z.ZodError
-                ? error.message
-                : "Wuff couldn’t complete the request. Try again.",
+                ? wuffError(
+                    error instanceof z.ZodError
+                      ? error.issues.map((i) => i.message).join("; ")
+                      : error.message,
+                  )
+                : "Ruff patch! Wuff couldn’t complete the request. Try again.",
           },
         ],
       };
@@ -195,14 +210,14 @@ export function createMcpServer(actor: Actor) {
     ],
     [
       "create_task",
-      "Add a task to an active list. Optional sectionId must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
+      "Add a task to an active list. Optional content is Markdown task notes (up to 16,000 characters); HTML is displayed as text and images are not loaded. Optional sectionId must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
       createTaskSchema,
       domain.createTask,
       write,
     ],
     [
       "update_task",
-      "Rename, set completion state, or move a task in an active list. sectionId must belong to the same list; null moves to unsectioned. Read the list version first.",
+      "Rename, set completion state, edit Markdown content (up to 16,000 characters; empty string clears notes), or move a task in an active list. Preserve existing content unless asked to change it. sectionId must belong to the same list; null moves to unsectioned. Read the list version first.",
       updateTaskSchema,
       domain.updateTask,
       write,

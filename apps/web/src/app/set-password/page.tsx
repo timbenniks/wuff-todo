@@ -10,7 +10,7 @@ export default function SetPasswordPage() {
           <Corgi />
           <span className="wordmark text-2xl font-bold">Wuff Todo</span>
         </Link>
-        <h1 className="text-3xl font-bold mb-3">Make yourself at home.</h1>
+        <h1 className="text-3xl font-bold mb-3">Welcome to the pack.</h1>
         <p className="text-slate-500 mb-8">
           Set your first password or reset a forgotten one using a code sent to
           your email.

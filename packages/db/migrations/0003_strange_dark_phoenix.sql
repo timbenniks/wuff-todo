@@ -1,0 +1,1 @@
+ALTER TABLE "wuff_tasks" ADD COLUMN "content" text DEFAULT '' NOT NULL;

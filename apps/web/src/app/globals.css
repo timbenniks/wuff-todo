@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../lib/task-prose.css";
 @theme inline {
   --color-background: #f7fafc;
   --color-foreground: #263e55;
