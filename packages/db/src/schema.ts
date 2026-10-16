@@ -1,6 +1,7 @@
 import {
   boolean,
   check,
+  date,
   foreignKey,
   integer,
   index,
@@ -72,6 +73,7 @@ export const tasks = pgTable(
   "wuff_tasks",
   {
     parentTaskId: uuid("parent_task_id"),
+    dueDate: date("due_date", { mode: "string" }),
     content: text("content").notNull().default(""),
     id: uuid("id").primaryKey().defaultRandom(),
     listId: uuid("list_id")
@@ -86,6 +88,10 @@ export const tasks = pgTable(
     createdAt: time("created_at"),
   },
   (t) => [
+    check(
+      "wuff_tasks_due_date_range",
+      sql`${t.dueDate} is null or ${t.dueDate} between date '0001-01-01' and date '9999-12-31'`,
+    ),
     uniqueIndex("wuff_tasks_id_list_idx").on(t.id, t.listId),
     index("wuff_tasks_parent_idx").on(t.parentTaskId),
     foreignKey({

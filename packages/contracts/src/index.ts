@@ -4,6 +4,13 @@ export const titleSchema = z.string().trim().min(1).max(300);
 // Canonical task notes are Markdown, shared by web and MCP. No HTML is executed.
 export const taskContentLimit = 16_000;
 export const taskContentSchema = z.string().max(taskContentLimit);
+// Calendar dates, never instants. Reject year zero, which Postgres DATE lacks.
+export const dueDateSchema = z.iso
+  .date()
+  .refine(
+    (value) => value >= "0001-01-01",
+    "Choose a calendar date from year 1 to 9999",
+  );
 export const idSchema = z.uuid();
 export const operationSchema = z.object({ operationId: z.uuid() });
 export const versionSchema = z.number().int().nonnegative();
@@ -58,6 +65,7 @@ export const reorderSectionsSchema = listMutationSchema.extend({
 });
 export const createTaskSchema = listMutationSchema.extend({
   title: titleSchema,
+  dueDate: dueDateSchema.nullable().optional(),
   parentTaskId: idSchema.nullable().optional(),
   sectionId: idSchema.nullable().optional(),
   content: taskContentSchema.optional(),
@@ -65,6 +73,7 @@ export const createTaskSchema = listMutationSchema.extend({
 export const updateTaskSchema = listMutationSchema
   .extend({
     taskId: idSchema,
+    dueDate: dueDateSchema.nullable().optional(),
     title: titleSchema.optional(),
     completed: z.boolean().optional(),
     sectionId: idSchema.nullable().optional(),
@@ -72,6 +81,7 @@ export const updateTaskSchema = listMutationSchema
   })
   .refine(
     (v) =>
+      v.dueDate !== undefined ||
       v.title !== undefined ||
       v.completed !== undefined ||
       v.sectionId !== undefined ||
@@ -148,6 +158,7 @@ export type IncomingInvitation = {
 
 export type Task = {
   id: string;
+  dueDate: string | null;
   parentTaskId: string | null;
   content: string;
   title: string;

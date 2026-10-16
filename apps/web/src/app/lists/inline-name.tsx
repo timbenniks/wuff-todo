@@ -21,6 +21,7 @@ export function InlineName({
   onSave,
   renderActions,
   additionalFields,
+  afterName,
   additionalDirty = false,
 }: {
   value: string;
@@ -32,6 +33,7 @@ export function InlineName({
   completed?: boolean;
   onSave: (name: string) => Promise<boolean>;
   additionalFields?: ReactNode;
+  afterName?: ReactNode;
   additionalDirty?: boolean;
   renderActions?: (props: {
     edit: () => void;
@@ -220,6 +222,7 @@ export function InlineName({
         ) : (
           name
         )}
+        {!editing && afterName}
       </div>
       {renderActions?.({ edit: begin, editing, trigger })}
     </>

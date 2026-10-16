@@ -1,0 +1,2 @@
+ALTER TABLE "wuff_tasks" ADD COLUMN "due_date" date;--> statement-breakpoint
+ALTER TABLE "wuff_tasks" ADD CONSTRAINT "wuff_tasks_due_date_range" CHECK ("wuff_tasks"."due_date" is null or "wuff_tasks"."due_date" between date '0001-01-01' and date '9999-12-31');

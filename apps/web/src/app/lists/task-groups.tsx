@@ -9,6 +9,8 @@ import { type NoteDraft } from "./task-notes";
 import { TaskRow } from "./task-row";
 import { SortableList, SortableItem } from "@/components/sortable";
 import { mergeVisibleOrder } from "@/lib/reorder";
+import { useCalendarDay } from "@/lib/use-calendar-day";
+import type { DueDateDraft } from "./task-due-date";
 import { InlineName } from "./inline-name";
 
 export function TaskGroups({
@@ -22,6 +24,8 @@ export function TaskGroups({
   busy: boolean;
   change: ListChange;
 }) {
+  const today = useCalendarDay();
+  const dueDrafts = useRef(new Map<string, DueDateDraft>());
   const noteDrafts = useRef(new Map<string, NoteDraft>()),
     subtaskDrafts = useRef(new Map<string, string>()),
     completedGroup = useRef<HTMLDetailsElement>(null);
@@ -31,15 +35,20 @@ export function TaskGroups({
     for (const id of subtaskDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id))
         subtaskDrafts.current.delete(id);
+    for (const id of dueDrafts.current.keys())
+      if (!list.tasks.some((t) => t.id === id)) dueDrafts.current.delete(id);
     if (
       list.tasks.some(
         (t) =>
           !t.parentTaskId &&
           t.completed &&
           (subtaskDrafts.current.has(t.id) ||
+            dueDrafts.current.has(t.id) ||
             noteDrafts.current.has(t.id) ||
             list.tasks.some(
-              (c) => c.parentTaskId === t.id && noteDrafts.current.has(c.id),
+              (c) =>
+                c.parentTaskId === t.id &&
+                (noteDrafts.current.has(c.id) || dueDrafts.current.has(c.id)),
             )),
       ) &&
       completedGroup.current
@@ -95,6 +104,8 @@ export function TaskGroups({
                   change={change}
                   drafts={noteDrafts.current}
                   subtaskDrafts={subtaskDrafts.current}
+                  dueDrafts={dueDrafts.current}
+                  today={today}
                   dragHandle={!list.archived ? handle : undefined}
                 />
               )}
@@ -336,6 +347,8 @@ export function TaskGroups({
                 change={change}
                 drafts={noteDrafts.current}
                 subtaskDrafts={subtaskDrafts.current}
+                dueDrafts={dueDrafts.current}
+                today={today}
               />
             ))}
         </ul>

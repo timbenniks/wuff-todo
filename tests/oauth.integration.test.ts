@@ -261,6 +261,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         listId: list.id,
         version: list.version,
         title: "Web to MCP",
+        dueDate: "2028-02-29",
         content: "## Web notes\n\n**Shared** de-tails.",
         operationId: crypto.randomUUID(),
       },
@@ -273,6 +274,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     });
     list = read.body.result.structuredContent.list;
     assert.equal(list.tasks[0].title, "Web to MCP");
+    assert.equal(list.tasks[0].dueDate, "2028-02-29");
     assert.equal(list.tasks[0].content, "## Web notes\n\n**Shared** de-tails.");
     const ui = await rpc(token.access_token, "resources/read", {
       uri: "ui://wuff/lists.html",
@@ -315,6 +317,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         version: webState.version,
         parentTaskId: parentId,
         title: "MCP little step",
+        dueDate: "2028-03-01",
         operationId: crypto.randomUUID(),
       },
     });
@@ -324,6 +327,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       (t: { parentTaskId: string | null }) => t.parentTaskId === parentId,
     );
     assert.ok(firstChild);
+    assert.equal(firstChild.dueDate, "2028-03-01");
     assert.equal(
       firstChild.completed,
       false,
@@ -351,6 +355,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         version: webState.version,
         parentTaskId: parentId,
         title: "Web little step",
+        dueDate: null,
         operationId: crypto.randomUUID(),
       },
       cookie,
@@ -369,11 +374,38 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         taskId: firstChild.id,
         completed: true,
         content: "**Child** de-tails",
+        dueDate: "2028-03-02",
         operationId: crypto.randomUUID(),
       }),
     });
     assert.equal(patchStep.status, 200);
     webState = await patchStep.json();
+    const clearedChild = await rpc(token.access_token, "tools/call", {
+      name: "update_task",
+      arguments: {
+        listId: list.id,
+        version: webState.version,
+        taskId: firstChild.id,
+        dueDate: null,
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.ok(!clearedChild.body.result.isError);
+    webState = clearedChild.body.result.structuredContent.list;
+    assert.equal(
+      webState.tasks.find((t: { id: string }) => t.id === firstChild.id)
+        .dueDate,
+      null,
+    );
+    assert.equal(
+      webState.tasks.find((t: { id: string }) => t.id === parentId).dueDate,
+      "2028-02-29",
+    );
+    await waitForLive(liveSubscription, (rows) =>
+      rows.some(
+        (row) => row.id === list.id && row.version === webState.version,
+      ),
+    );
     const reorderedSteps = await rpc(token.access_token, "tools/call", {
       name: "reorder_tasks",
       arguments: {
@@ -433,6 +465,33 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       webState = removed.body.result.structuredContent.list;
     }
     assert.equal(webState.tasks.length, 1);
+    const clearRoot = await fetch(`${origin}/api/v1/tasks`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({
+        listId: list.id,
+        version: webState.version,
+        taskId: parentId,
+        dueDate: null,
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(clearRoot.status, 200);
+    webState = await clearRoot.json();
+    assert.equal(webState.tasks[0].dueDate, null);
+    const invalidDate = await fetch(`${origin}/api/v1/tasks`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({
+        listId: list.id,
+        version: webState.version,
+        taskId: parentId,
+        dueDate: "2026-02-30",
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(invalidDate.status, 400);
+
     // Two independent synthetic identities exercise the actual HTTP and MCP adapters.
     editorCookie = await login(1);
     const editorGrant = await grant(

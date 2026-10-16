@@ -211,14 +211,14 @@ export function createMcpServer(actor: Actor) {
     ],
     [
       "create_task",
-      "Add a task to an active list. Optional content is Markdown task notes (up to 16,000 characters); HTML is displayed as text; only Wuff-uploaded private images are displayed. For a subtask, supply parentTaskId of a top-level task in this same list (one level only); omit sectionId because children follow their parent’s section. Omit parentTaskId for a top-level task. Optional sectionId on top-level tasks must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
+      "Add a task to an active list. Optional dueDate is a real calendar date YYYY-MM-DD (years 0001–9999), or null for no date; resolve Today/Tomorrow in the user’s local calendar, never send timestamps. Parent/subtask dates are independent. Optional content is Markdown task notes (up to 16,000 characters); HTML is displayed as text; only Wuff-uploaded private images are displayed. For a subtask, supply parentTaskId of a top-level task in this same list (one level only); omit sectionId because children follow their parent’s section. Omit parentTaskId for a top-level task. Optional sectionId on top-level tasks must belong to this list; omit or set null for unsectioned. Read the list version first. Supply an operationId UUID for safe retries.",
       createTaskSchema,
       domain.createTask,
       write,
     ],
     [
       "update_task",
-      "Rename, set completion state, edit Markdown content (up to 16,000 characters; empty string clears notes), or move a task in an active list. Preserve existing content unless asked to change it. Completion is independent: changing a parent never changes its subtasks, and completing every subtask never completes the parent automatically. Subtasks stay beneath their parent even when completed. Parent links cannot be changed after creation. sectionId on top-level tasks must belong to the same list; null moves to unsectioned. Subtasks follow their parent’s section. Read the list version first.",
+      "Set or clear dueDate (YYYY-MM-DD calendar date, years 0001–9999; null clears, omission preserves), rename, set completion state, edit Markdown content (up to 16,000 characters; empty string clears notes), or move a task in an active list. Preserve existing content unless asked to change it. Dates are independent for parents/subtasks and do not change ordering or completion. Resolve relative dates in the user’s local calendar; timestamps are not accepted. Completion is independent: changing a parent never changes its subtasks, and completing every subtask never completes the parent automatically. Subtasks stay beneath their parent even when completed. Parent links cannot be changed after creation. sectionId on top-level tasks must belong to the same list; null moves to unsectioned. Subtasks follow their parent’s section. Read the list version first.",
       updateTaskSchema,
       domain.updateTask,
       write,

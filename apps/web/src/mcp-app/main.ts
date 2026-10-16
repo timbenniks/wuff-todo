@@ -1,3 +1,9 @@
+import {
+  calendarDay,
+  dueDatePresentation,
+  formatDueDate,
+} from "../lib/due-date";
+import { dueDateSchema } from "@wuff/contracts";
 import { wuffCopy, wuffError } from "../lib/copy";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
@@ -477,6 +483,164 @@ function taskNotes(task: Task) {
   return panel;
 }
 
+type DateDraft = {
+  value: string;
+  base: string | null;
+  request?: Record<string, unknown>;
+  error?: string;
+};
+const dateDrafts = new Map<string, DateDraft>();
+function refreshDueBadges() {
+  for (const badge of root.querySelectorAll<HTMLElement>("[data-due-date]")) {
+    const display = dueDatePresentation(
+      badge.dataset.dueDate!,
+      badge.dataset.completed === "true",
+      calendarDay(),
+    );
+    badge.textContent = display.label;
+    badge.title = display.detail;
+    badge.setAttribute("aria-label", display.detail);
+    badge.style.cssText = `display:block;font-size:12px;margin-top:4px;color:${display.tone === "overdue" ? "#b91c1c" : display.tone === "today" ? "#315f9b" : "#536c82"}`;
+  }
+}
+function taskDueDate(task: Task) {
+  const panel = element("details"),
+    summary = element("summary", "Due date");
+  panel.className = "task-notes";
+  panel.setAttribute("aria-label", `Due date for ${task.title}`);
+  const draft = dateDrafts.get(task.id) ?? {
+    value: task.dueDate ?? "",
+    base: task.dueDate ?? null,
+  };
+  panel.open = dateDrafts.has(task.id);
+  panel.ontoggle = () => {
+    if (panel.open && !dateDrafts.has(task.id)) dateDrafts.set(task.id, draft);
+  };
+  panel.append(summary);
+  if (current!.archived) {
+    panel.append(
+      element(
+        "p",
+        "This list is taking a paws. Restore it before changing dates.",
+      ),
+    );
+    return panel;
+  }
+  const form = element("form"),
+    input = element("input"),
+    save = element(
+      "button",
+      draft.request
+        ? "Retry save date"
+        : (task.dueDate ?? null) !== draft.base
+          ? "Save my date"
+          : "Save date",
+    ),
+    notice = element("p");
+  form.style.cssText = "display:flex;flex-wrap:wrap";
+  notice.setAttribute("role", "alert");
+  notice.textContent = draft.error ?? "";
+  input.type = "date";
+  input.min = "0001-01-01";
+  input.max = "9999-12-31";
+  input.value = draft.value;
+  input.setAttribute("aria-label", `Choose due date for ${task.title}`);
+  input.readOnly = !!draft.request;
+  input.oninput = () => {
+    draft.value = input.value;
+    dateDrafts.set(task.id, draft);
+  };
+  const controls: HTMLButtonElement[] = [];
+  const commit = (dueDate: string | null) => {
+    if (dueDate !== null && !dueDateSchema.safeParse(dueDate).success) {
+      notice.textContent =
+        "That date needs a paw. Choose a real calendar date.";
+      save.disabled = false;
+      return;
+    }
+    if (draft.request && draft.request.dueDate !== dueDate) {
+      notice.textContent =
+        "Paws a moment! Retry the original date to confirm it before choosing another.";
+      save.disabled = false;
+      return;
+    }
+    draft.value = dueDate ?? "";
+    input.value = draft.value;
+    draft.request ??= {
+      listId: current!.id,
+      version: current!.version,
+      taskId: task.id,
+      dueDate,
+      operationId: crypto.randomUUID(),
+    };
+    dateDrafts.set(task.id, draft);
+    input.readOnly = true;
+    controls.forEach((b) => (b.disabled = true));
+    save.disabled = true;
+    status.textContent = wuffCopy.saving;
+    void request("update_task", draft.request)
+      .then((value) => {
+        dateDrafts.delete(task.id);
+        show(value);
+        status.textContent = dueDate
+          ? "Paw-some, due date saved."
+          : "Date cleared. A little more room to roam.";
+      })
+      .catch((error: Error) => {
+        draft.error = wuffError(error.message) + " Your date pick is kept.";
+        notice.textContent = draft.error;
+        status.textContent = draft.error;
+        if (error instanceof ToolError && error.code !== "internal_error") {
+          const listId = String(draft.request!.listId);
+          draft.request = undefined;
+          input.readOnly = false;
+          controls.forEach((b) => (b.disabled = false));
+          void request("show_list", { listId })
+            .then(show)
+            .catch(() => {});
+        }
+        save.disabled = false;
+      });
+  };
+  const quick = element("div");
+  quick.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+  for (const [label, offset] of [
+    ["Today", 0],
+    ["Tomorrow", 1],
+  ] as const) {
+    const b = button(label, () => commit(calendarDay(offset)), !!draft.request);
+    controls.push(b);
+    quick.append(b);
+  }
+  panel.append(element("p", "Give this task a fetching finish date."), quick);
+  if ((task.dueDate ?? null) !== draft.base)
+    panel.append(
+      element(
+        "p",
+        `New de-tails! The due date changed to ${task.dueDate ? formatDueDate(task.dueDate) : "no date"}. Your pick is kept.`,
+      ),
+    );
+  form.append(input, save);
+  wireForm(form, save, () =>
+    commit(
+      draft.request ? (draft.request.dueDate as string | null) : input.value,
+    ),
+  );
+  panel.append(form);
+  if (task.dueDate) {
+    const clear = button("Clear date", () => commit(null), !!draft.request);
+    controls.push(clear);
+    panel.append(clear);
+  }
+  const cancel = button("Cancel", () => {
+    dateDrafts.delete(task.id);
+    panel.open = false;
+  });
+  controls.push(cancel);
+  panel.append(cancel, notice);
+  return panel;
+}
+
 type SubtaskDraft = { title: string; request?: Record<string, unknown> };
 const subtaskDrafts = new Map<string, SubtaskDraft>();
 const subtaskExpanded = new Map<string, boolean>();
@@ -503,13 +667,26 @@ function renderTask(
   };
   row.append(
     check,
-    inlineName(
-      task.title,
-      "Task name",
-      "update_task",
-      { taskId: task.id },
-      { editable: !current!.archived, completed: task.completed },
-    ),
+    (() => {
+      const name = element("div");
+      name.className = "inline-name";
+      name.append(
+        inlineName(
+          task.title,
+          "Task name",
+          "update_task",
+          { taskId: task.id },
+          { editable: !current!.archived, completed: task.completed },
+        ),
+      );
+      if (task.dueDate) {
+        const badge = element("span");
+        badge.dataset.dueDate = task.dueDate;
+        badge.dataset.completed = String(task.completed);
+        name.append(badge);
+      }
+      return name;
+    })(),
   );
   if (!task.parentTaskId && current!.sections.length) {
     const select = element("select");
@@ -556,7 +733,8 @@ function renderTask(
     remove.title = "Delete task";
     row.append(remove);
   }
-  wrapper.append(row, taskNotes(task));
+  wrapper.append(row, taskDueDate(task), taskNotes(task));
+  queueMicrotask(refreshDueBadges);
   if (task.parentTaskId) {
     if (!current!.archived) {
       const parentId = task.parentTaskId;
@@ -710,6 +888,7 @@ function show(value: unknown) {
   if (data.viewerId && viewerId && data.viewerId !== viewerId) {
     noteDrafts.clear();
     subtaskDrafts.clear();
+    dateDrafts.clear();
     subtaskExpanded.clear();
   }
   if (data.viewerId) viewerId = data.viewerId;
@@ -729,6 +908,8 @@ function show(value: unknown) {
       noteDrafts.delete(id);
   for (const id of subtaskDrafts.keys())
     if (!current.tasks.some((t) => t.id === id)) subtaskDrafts.delete(id);
+  for (const id of dateDrafts.keys())
+    if (!current.tasks.some((t) => t.id === id)) dateDrafts.delete(id);
   const color = listPalette[current.color];
   root.append(button("← Your lists", () => void call("show_lists", {})));
   const header = element("div");
@@ -958,3 +1139,7 @@ app.connect().catch(() => {
   status.textContent =
     "This view needs a helping paw. Open it in a client that supports MCP Apps.";
 });
+
+window.setInterval(refreshDueBadges, 30_000);
+window.addEventListener("focus", refreshDueBadges);
+document.addEventListener("visibilitychange", refreshDueBadges);

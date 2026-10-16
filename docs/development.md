@@ -143,3 +143,7 @@ Migration `0003_strange_dark_phoenix.sql` adds `wuff_tasks.content`, a non-null 
 ## Private task images
 
 See [task images](task-images.md) for the separate private Frankfurt Blob stores, server-only `BLOB_READ_WRITE_TOKEN` / `CRON_SECRET`, additive attachment migration, bounded upload API, MCP tools and daily retryable cleanup. Local development retains the isolated Neon branch. Provisioning Blob through Vercel CLI can automatically pull development environment variables; do this in an isolated linked directory so it cannot overwrite `.env.local`. Never replace the development branch values with the integration’s main-branch defaults.
+
+## Calendar due dates
+
+Migration `0006_bored_valkyrie.sql` adds nullable task `due_date` plus its supported-range check. Apply using the existing direct-connection Drizzle runner on isolated development, then production, before deploying the new snapshot reader. No environment variables or scopes change. Existing task create/update adapters accept optional `dueDate` (`YYYY-MM-DD` or null); MCP clients should refresh tool catalogs. See [due dates](due-dates.md).

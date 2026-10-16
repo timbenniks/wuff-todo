@@ -43,6 +43,13 @@
       "when": 1792159549781,
       "tag": "0005_violet_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792163380427,
+      "tag": "0006_bored_valkyrie",
+      "breakpoints": true
     }
   ]
 }

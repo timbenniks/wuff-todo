@@ -1,11 +1,20 @@
 "use client";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Check, FileText, ListTree, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  FileText,
+  ListTree,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import type { Task, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { InlineName } from "./inline-name";
 import { TaskNotes, type NoteDraft } from "./task-notes";
 import type { ListChange } from "./list-settings";
+import { TaskDueDate, DueDateBadge, type DueDateDraft } from "./task-due-date";
 import { SortableList, SortableItem } from "@/components/sortable";
 export function TaskRow({
   task,
@@ -15,6 +24,8 @@ export function TaskRow({
   change,
   drafts,
   subtaskDrafts,
+  dueDrafts,
+  today,
   dragHandle,
   rowRef,
   style,
@@ -26,6 +37,8 @@ export function TaskRow({
   change: ListChange;
   drafts: Map<string, NoteDraft>;
   subtaskDrafts: Map<string, string>;
+  dueDrafts: Map<string, DueDateDraft>;
+  today: string | null;
   dragHandle?: ReactNode;
   rowRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
@@ -35,6 +48,8 @@ export function TaskRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const subtasksOpen =
     expanded ?? (children.length > 0 || subtaskDrafts.has(task.id));
+  const [dateOpen, setDateOpen] = useState(dueDrafts.has(task.id)),
+    dateTrigger = useRef<HTMLButtonElement>(null);
   const [draftSection, setDraftSection] = useState(task.sectionId);
   const [notesOpen, setNotesOpen] = useState(drafts.has(task.id)),
     notesTrigger = useRef<HTMLButtonElement>(null);
@@ -62,6 +77,7 @@ export function TaskRow({
         {task.completed && <Check size={15} />}
       </button>
       <InlineName
+        afterName={<DueDateBadge task={task} today={today} />}
         value={task.title}
         label="Task name"
         editLabel={`Edit ${task.title}`}
@@ -144,6 +160,32 @@ export function TaskRow({
               </Button>
             )}
             <Button
+              ref={dateTrigger}
+              type="button"
+              size="icon"
+              variant="ghost"
+              className={`h-8 w-8 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+              title="Due date"
+              aria-label={`${dateOpen ? "Hide" : task.dueDate ? "Change" : "Set"} due date for ${task.title}`}
+              aria-expanded={dateOpen}
+              aria-controls={dateOpen ? `due-${task.id}` : undefined}
+              disabled={
+                busy ||
+                editing ||
+                (list.archived && !task.dueDate && !dueDrafts.has(task.id))
+              }
+              onClick={() => {
+                if (!dateOpen && !dueDrafts.has(task.id))
+                  dueDrafts.set(task.id, {
+                    value: task.dueDate ?? "",
+                    base: task.dueDate ?? null,
+                  });
+                setDateOpen(!dateOpen);
+              }}
+            >
+              <CalendarDays size={16} />
+            </Button>
+            <Button
               ref={notesTrigger}
               type="button"
               size="icon"
@@ -180,6 +222,21 @@ export function TaskRow({
           </div>
         )}
       />
+      {dateOpen && (
+        <div id={`due-${task.id}`} className="basis-full min-w-0 pl-8 sm:pl-9">
+          <TaskDueDate
+            task={task}
+            list={list}
+            busy={busy}
+            change={change}
+            drafts={dueDrafts}
+            onClose={() => {
+              setDateOpen(false);
+              requestAnimationFrame(() => dateTrigger.current?.focus());
+            }}
+          />
+        </div>
+      )}
       {confirmDelete && children.length > 0 && !list.archived && (
         <div className="basis-full min-w-0 pl-8 grid gap-2" role="alert">
           <p className="text-sm text-slate-600">
@@ -219,6 +276,8 @@ export function TaskRow({
             change={change}
             drafts={drafts}
             subtaskDrafts={subtaskDrafts}
+            dueDrafts={dueDrafts}
+            today={today}
           />
         </div>
       )}
@@ -251,6 +310,8 @@ function Subtasks({
   change,
   drafts,
   subtaskDrafts,
+  dueDrafts,
+  today,
 }: {
   parent: Task;
   items: Task[];
@@ -260,6 +321,8 @@ function Subtasks({
   change: ListChange;
   drafts: Map<string, NoteDraft>;
   subtaskDrafts: Map<string, string>;
+  dueDrafts: Map<string, DueDateDraft>;
+  today: string | null;
 }) {
   const [title, setTitle] = useState(subtaskDrafts.get(parent.id) ?? "");
   const disabled = busy || list.archived;
@@ -302,6 +365,8 @@ function Subtasks({
                   change={change}
                   drafts={drafts}
                   subtaskDrafts={subtaskDrafts}
+                  dueDrafts={dueDrafts}
+                  today={today}
                   rowRef={ref}
                   style={style}
                   dragHandle={!list.archived ? handle : undefined}
