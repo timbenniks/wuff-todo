@@ -71,16 +71,16 @@ Implemented MCP scopes are `lists:read`, `tasks:write`, and `lists:manage`. Code
 
 ## Conceptual data model
 
-| Entity               | Responsibility                                                                                        |
-| -------------------- | ----------------------------------------------------------------------------------------------------- |
-| User/profile         | Stable link to Neon identity and application preferences                                              |
-| List                 | Title, description, shared color, archived state, owner, timestamps, version                          |
-| List membership      | Accepted editor membership, unique per list and user                                                  |
-| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                                   |
-| User list preference | Account-owned ordered list IDs and independent revision; current access filters reads                 |
-| List section         | List-bound title and shared integer position; removal preserves tasks                                 |
-| Task                 | List, optional section, title, Markdown content, integer position, completion; version is on the list |
-| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                                  |
+| Entity               | Responsibility                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| User/profile         | Stable link to Neon identity and application preferences                                                                  |
+| List                 | Title, description, shared color, archived state, owner, timestamps, version                                              |
+| List membership      | Accepted editor membership, unique per list and user                                                                      |
+| Invitation           | Recipient user ID, list, email, expiry, acceptance and closed state                                                       |
+| User list preference | Account-owned ordered list IDs and independent revision; current access filters reads                                     |
+| List section         | List-bound title and shared integer position; removal preserves tasks                                                     |
+| Task                 | List, optional parent task/section, title, Markdown content, integer sibling position, completion; version is on the list |
+| Mutation receipt     | Actor, operation UUID, fingerprint, identifier result, creation time                                                      |
 
 The list owner is authoritative on the list row. Domain queries recognize owner access or accepted membership. Avoid competing sources of truth for ownership.
 
@@ -170,3 +170,7 @@ All sharing mutations and task writes lock the same list row and use its version
 ## Task notes
 
 Tasks have canonical Markdown `content` (16,000 characters, empty by default), included in authorized snapshots. HTTP and MCP create/update adapters use the same contracts and domain mutation services, so versioning, admission, membership, archive restrictions and live invalidation apply unchanged. The website lazily loads Tiptap; the MCP App edits source with a live preview. Both share a Markdown-it renderer with HTML disabled, restricted links and non-loading image placeholders. See [task content and voice](task-content.md) for conversion safeguards, draft handling, the additive migration and the corgi copy decisions.
+
+## One-level subtasks
+
+Task snapshots include nullable `parentTaskId`. The same task services, routes and MCP tools enforce same-list top-level parents, independent completion, inherited sections, sibling ordering and parent deletion cascades. The existing list row lock/version and live invalidation cover children too. No new scopes or separate mobile surface are added. See [subtasks](subtasks.md) for migration, client semantics and verification.

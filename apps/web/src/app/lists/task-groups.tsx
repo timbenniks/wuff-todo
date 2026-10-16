@@ -23,12 +23,25 @@ export function TaskGroups({
   change: ListChange;
 }) {
   const noteDrafts = useRef(new Map<string, NoteDraft>()),
+    subtaskDrafts = useRef(new Map<string, string>()),
     completedGroup = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     for (const id of noteDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id)) noteDrafts.current.delete(id);
+    for (const id of subtaskDrafts.current.keys())
+      if (!list.tasks.some((t) => t.id === id))
+        subtaskDrafts.current.delete(id);
     if (
-      list.tasks.some((t) => t.completed && noteDrafts.current.has(t.id)) &&
+      list.tasks.some(
+        (t) =>
+          !t.parentTaskId &&
+          t.completed &&
+          (subtaskDrafts.current.has(t.id) ||
+            noteDrafts.current.has(t.id) ||
+            list.tasks.some(
+              (c) => c.parentTaskId === t.id && noteDrafts.current.has(c.id),
+            )),
+      ) &&
       completedGroup.current
     )
       completedGroup.current.open = true;
@@ -38,7 +51,7 @@ export function TaskGroups({
     disabled = busy || list.archived;
   const body = { listId: list.id, version: list.version };
   const path = `/api/v1/lists/${list.id}/sections`;
-  const active = list.tasks.filter((t) => !t.completed);
+  const active = list.tasks.filter((t) => !t.parentTaskId && !t.completed);
   function rows(sectionId: string | null) {
     const items = active.filter((t) => t.sectionId === sectionId);
     return (
@@ -81,6 +94,7 @@ export function TaskGroups({
                   busy={busy}
                   change={change}
                   drafts={noteDrafts.current}
+                  subtaskDrafts={subtaskDrafts.current}
                   dragHandle={!list.archived ? handle : undefined}
                 />
               )}
@@ -148,7 +162,12 @@ export function TaskGroups({
             : "Its owner can restore it so you can make changes again."}
         </p>
       )}
-      <p className="text-sm text-slate-500 mb-5">{taskCount(active.length)}</p>
+      <p className="text-sm text-slate-500 mb-5">
+        {active.length === 0 &&
+        list.tasks.some((t) => t.parentTaskId && !t.completed)
+          ? "Main tasks fetched! Some subtasks still need a paw in Completed."
+          : taskCount(active.length)}
+      </p>
       {list.sections.length > 0 && (
         <h2 className="text-lg font-bold mb-1">No section</h2>
       )}
@@ -301,11 +320,12 @@ export function TaskGroups({
       )}
       <details className="mt-10" ref={completedGroup}>
         <summary className="text-sm text-slate-500 py-3">
-          Paw-some, completed ({list.tasks.filter((t) => t.completed).length})
+          Paw-some, completed (
+          {list.tasks.filter((t) => !t.parentTaskId && t.completed).length})
         </summary>
         <ul>
           {list.tasks
-            .filter((t) => t.completed)
+            .filter((t) => !t.parentTaskId && t.completed)
             .map((task) => (
               <TaskRow
                 userId={userId}
@@ -315,6 +335,7 @@ export function TaskGroups({
                 busy={busy}
                 change={change}
                 drafts={noteDrafts.current}
+                subtaskDrafts={subtaskDrafts.current}
               />
             ))}
         </ul>

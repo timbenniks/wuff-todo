@@ -477,6 +477,226 @@ function taskNotes(task: Task) {
   return panel;
 }
 
+type SubtaskDraft = { title: string; request?: Record<string, unknown> };
+const subtaskDrafts = new Map<string, SubtaskDraft>();
+const subtaskExpanded = new Map<string, boolean>();
+let draggedSubtask:
+  { id: string; parentId: string; version: number } | undefined;
+function renderTask(
+  task: Task,
+  groups: { id: string | null; title: string }[],
+) {
+  const wrapper = element("div"),
+    row = element("div");
+  row.className = "task";
+  const check = element("input");
+  check.type = "checkbox";
+  check.checked = task.completed;
+  check.disabled = current!.archived;
+  check.setAttribute(
+    "aria-label",
+    `${task.completed ? "Reopen" : "Complete"} ${task.title}`,
+  );
+  check.onchange = () => {
+    check.disabled = true;
+    void mutation("update_task", { taskId: task.id, completed: check.checked });
+  };
+  row.append(
+    check,
+    inlineName(
+      task.title,
+      "Task name",
+      "update_task",
+      { taskId: task.id },
+      { editable: !current!.archived, completed: task.completed },
+    ),
+  );
+  if (!task.parentTaskId && current!.sections.length) {
+    const select = element("select");
+    select.setAttribute("aria-label", `Section for ${task.title}`);
+    select.disabled = current!.archived;
+    for (const group of groups) {
+      const option = element("option", group.title);
+      option.value = group.id ?? "";
+      select.append(option);
+    }
+    select.value = task.sectionId ?? "";
+    select.onchange = () =>
+      void mutation("update_task", {
+        taskId: task.id,
+        sectionId: select.value || null,
+      });
+    row.append(select);
+  }
+  const children = current!.tasks.filter((t) => t.parentTaskId === task.id);
+  if (!current!.archived) {
+    const remove = button("×", () => {
+      if (!children.length) {
+        void mutation("delete_task", { taskId: task.id });
+        return;
+      }
+      const warning = element("div");
+      warning.setAttribute("role", "alert");
+      warning.append(
+        element(
+          "p",
+          `Paws before deleting: this removes “${task.title}” and all ${children.length} subtasks for everyone. This cannot be undone.`,
+        ),
+        button(
+          "Delete task and subtasks",
+          () => void mutation("delete_task", { taskId: task.id }),
+        ),
+        button("Cancel", () => warning.remove()),
+      );
+      wrapper.querySelector("[data-delete-confirmation]")?.remove();
+      warning.dataset.deleteConfirmation = "true";
+      wrapper.append(warning);
+    });
+    remove.setAttribute("aria-label", `Delete ${task.title}`);
+    remove.title = "Delete task";
+    row.append(remove);
+  }
+  wrapper.append(row, taskNotes(task));
+  if (task.parentTaskId) {
+    if (!current!.archived) {
+      const parentId = task.parentTaskId;
+      const siblings = current!.tasks.filter(
+        (t) => t.parentTaskId === parentId,
+      );
+      const move = (from: number, to: number) => {
+        if (from < 0 || to < 0 || to >= siblings.length || from === to) return;
+        const taskIds = siblings.map((t) => t.id);
+        const [id] = taskIds.splice(from, 1);
+        taskIds.splice(to, 0, id);
+        void mutation("reorder_tasks", {
+          parentTaskId: parentId,
+          taskIds,
+        }).then(() =>
+          root
+            .querySelector<HTMLButtonElement>(
+              `[data-subtask-handle="${task.id}"]`,
+            )
+            ?.focus(),
+        );
+      };
+      const handle = button("⠿", () => {});
+      handle.setAttribute("aria-label", `Reorder ${task.title}`);
+      handle.title = "Lend a paw: drag to reorder, or use Alt+Arrow Up/Down";
+      handle.dataset.subtaskHandle = task.id;
+      handle.setAttribute("aria-keyshortcuts", "Alt+ArrowUp Alt+ArrowDown");
+      handle.setAttribute(
+        "aria-description",
+        "Drag to reorder, or use Alt and Arrow Up or Down.",
+      );
+      handle.draggable = true;
+      handle.ondragstart = (e) => {
+        draggedSubtask = { id: task.id, parentId, version: current!.version };
+        e.dataTransfer?.setData("application/x-wuff-subtask", task.id);
+      };
+      handle.ondragend = () => {
+        draggedSubtask = undefined;
+      };
+      row.ondragover = (e) => {
+        if (draggedSubtask?.parentId === parentId) e.preventDefault();
+      };
+      row.ondrop = (e) => {
+        e.preventDefault();
+        const dragged = draggedSubtask;
+        draggedSubtask = undefined;
+        if (
+          dragged?.parentId === parentId &&
+          dragged.version === current!.version
+        )
+          move(
+            siblings.findIndex((t) => t.id === dragged.id),
+            siblings.findIndex((t) => t.id === task.id),
+          );
+      };
+      handle.onkeydown = (e) => {
+        if (e.altKey && ["ArrowUp", "ArrowDown"].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          const from = siblings.findIndex((t) => t.id === task.id);
+          move(from, from + (e.key === "ArrowUp" ? -1 : 1));
+        }
+      };
+      row.append(handle);
+    }
+    return wrapper;
+  }
+  if (children.length || !current!.archived) {
+    const panel = element("details"),
+      summary = element(
+        "summary",
+        `Little steps · ${children.filter((t) => t.completed).length} of ${children.length} done`,
+      );
+    panel.setAttribute("aria-label", `Subtasks for ${task.title}`);
+    panel.style.cssText =
+      "border-left:2px solid #dce5ed;padding-left:14px;margin:8px 0 16px 16px";
+    panel.open =
+      subtaskExpanded.get(task.id) ??
+      (children.length > 0 || subtaskDrafts.has(task.id));
+    panel.ontoggle = () => subtaskExpanded.set(task.id, panel.open);
+    panel.append(summary);
+    for (const child of children) panel.append(renderTask(child, groups));
+    if (!current!.archived) {
+      const draft = subtaskDrafts.get(task.id) ?? { title: "" };
+      const form = element("form"),
+        input = element("input"),
+        save = element("button", "Add subtask"),
+        notice = element("p");
+      notice.setAttribute("role", "alert");
+      input.required = true;
+      input.maxLength = 300;
+      input.placeholder = "One little step for your pack…";
+      input.setAttribute("aria-label", `New subtask for ${task.title}`);
+      input.value = draft.title;
+      input.readOnly = !!draft.request;
+      if (draft.request) save.textContent = "Retry add subtask";
+      input.oninput = () => {
+        draft.title = input.value;
+        subtaskDrafts.set(task.id, draft);
+      };
+      form.append(input, save);
+      wireForm(form, save, () => {
+        draft.request ??= {
+          listId: current!.id,
+          version: current!.version,
+          parentTaskId: task.id,
+          title: input.value,
+          operationId: crypto.randomUUID(),
+        };
+        subtaskDrafts.set(task.id, draft);
+        input.readOnly = true;
+        status.textContent = wuffCopy.saving;
+        void request("create_task", draft.request)
+          .then((result) => {
+            subtaskDrafts.delete(task.id);
+            show(result);
+            status.textContent = "Paw-some, little step added.";
+          })
+          .catch((error: Error) => {
+            status.textContent = wuffError(error.message);
+            notice.textContent =
+              wuffError(error.message) +
+              " Your little step is kept. Retry to confirm it was added.";
+            if (error instanceof ToolError && error.code !== "internal_error") {
+              draft.request = undefined;
+              input.readOnly = false;
+              void request("show_list", { listId: current!.id })
+                .then(show)
+                .catch(() => {});
+            }
+            save.disabled = false;
+          });
+      });
+      panel.append(form, notice);
+    }
+    wrapper.append(panel);
+  }
+  return wrapper;
+}
+
 function show(value: unknown) {
   if (!value || typeof value !== "object") return;
   const data = value as {
@@ -487,8 +707,11 @@ function show(value: unknown) {
   // A host may forward an error or a tool result for another view. Keep the
   // current notes/drafts on screen instead of clearing them.
   if (!data.list && !data.lists) return;
-  if (data.viewerId && viewerId && data.viewerId !== viewerId)
+  if (data.viewerId && viewerId && data.viewerId !== viewerId) {
     noteDrafts.clear();
+    subtaskDrafts.clear();
+    subtaskExpanded.clear();
+  }
   if (data.viewerId) viewerId = data.viewerId;
   imageReads.clear();
   imageEpoch++;
@@ -504,6 +727,8 @@ function show(value: unknown) {
   for (const [id, draft] of noteDrafts)
     if (draft.listId === current.id && !current.tasks.some((t) => t.id === id))
       noteDrafts.delete(id);
+  for (const id of subtaskDrafts.keys())
+    if (!current.tasks.some((t) => t.id === id)) subtaskDrafts.delete(id);
   const color = listPalette[current.color];
   root.append(button("← Your lists", () => void call("show_lists", {})));
   const header = element("div");
@@ -589,55 +814,13 @@ function show(value: unknown) {
     details.append(
       element(
         "summary",
-        `Tasks (${current.tasks.filter((t) => t.sectionId === group.id && !t.completed).length})`,
+        `Tasks (${current.tasks.filter((t) => !t.parentTaskId && t.sectionId === group.id && !t.completed).length})`,
       ),
     );
-    for (const task of current.tasks.filter((t) => t.sectionId === group.id)) {
-      const row = element("div");
-      row.className = "task";
-      const check = element("input");
-      check.type = "checkbox";
-      check.checked = task.completed;
-      check.disabled = current.archived;
-      check.setAttribute(
-        "aria-label",
-        `${task.completed ? "Reopen" : "Complete"} ${task.title}`,
-      );
-      check.onchange = () => {
-        check.disabled = true;
-        void mutation("update_task", {
-          taskId: task.id,
-          completed: check.checked,
-        });
-      };
-      row.append(
-        check,
-        inlineName(
-          task.title,
-          "Task name",
-          "update_task",
-          { taskId: task.id },
-          { editable: !current.archived, completed: task.completed },
-        ),
-      );
-      if (current.sections.length) {
-        const select = element("select");
-        select.setAttribute("aria-label", `Section for ${task.title}`);
-        select.disabled = current.archived;
-        for (const g of groups) {
-          const o = element("option", g.title);
-          o.value = g.id ?? "";
-          select.append(o);
-        }
-        select.value = task.sectionId ?? "";
-        select.onchange = () =>
-          void mutation("update_task", {
-            taskId: task.id,
-            sectionId: select.value || null,
-          });
-        row.append(select);
-      }
-      details.append(row, taskNotes(task));
+    for (const task of current.tasks.filter(
+      (t) => !t.parentTaskId && t.sectionId === group.id,
+    )) {
+      details.append(renderTask(task, groups));
     }
     if (!current.archived) {
       const form = element("form"),

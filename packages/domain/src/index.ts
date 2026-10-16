@@ -132,6 +132,7 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
     tasks: await tx
       .select({
         id: tasks.id,
+        parentTaskId: tasks.parentTaskId,
         title: tasks.title,
         content: tasks.content,
         completed: tasks.completed,
@@ -496,6 +497,25 @@ export async function reorderSections(actor: Actor, data: unknown) {
   );
   return getList(actor, input.listId);
 }
+// The list row is already locked by every caller. A parent must be a root in
+// the same list; no cycles, grandchildren or cross-list links can be created.
+async function validParent(
+  tx: Tx,
+  listId: string,
+  parentTaskId?: string | null,
+) {
+  if (!parentTaskId) return;
+  const [parent] = await tx
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, parentTaskId), eq(tasks.listId, listId)));
+  if (!parent || parent.parentTaskId)
+    fail(
+      "invalid_parent",
+      "Choose a top-level task in this list for your little steps.",
+      400,
+    );
+}
 export async function createTask(actor: Actor, data: unknown) {
   requireScope(actor, "tasks:write");
   const input = createTaskSchema.parse(data);
@@ -504,6 +524,13 @@ export async function createTask(actor: Actor, data: unknown) {
     { ...input, kind: "create_task" } as typeof input,
     async (tx) => {
       await locked(tx, actor, input, false, true);
+      await validParent(tx, input.listId, input.parentTaskId);
+      if (input.parentTaskId && input.sectionId)
+        fail(
+          "invalid_section",
+          "Subtasks follow their parent’s section. Move the parent to corg-anize them together.",
+          400,
+        );
       await validSection(tx, input.listId, input.sectionId);
       const existing = await tx
         .select()
@@ -519,10 +546,17 @@ export async function createTask(actor: Actor, data: unknown) {
         );
       await tx.insert(tasks).values({
         listId: input.listId,
+        parentTaskId: input.parentTaskId ?? null,
         title: input.title,
         sectionId: input.sectionId ?? null,
         content: input.content ?? "",
-        position: Math.max(-1, ...existing.map((t) => t.position)) + 1,
+        position:
+          Math.max(
+            -1,
+            ...existing
+              .filter((t) => t.parentTaskId === (input.parentTaskId ?? null))
+              .map((t) => t.position),
+          ) + 1,
       });
       return { id: input.listId };
     },
@@ -542,15 +576,23 @@ export async function updateTask(actor: Actor, data: unknown) {
         .from(tasks)
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
       if (!task) fail("not_found", "Task not found.", 404);
+      if (task.parentTaskId && input.sectionId)
+        fail(
+          "invalid_section",
+          "Subtasks follow their parent’s section. Move the parent to corg-anize them together.",
+          400,
+        );
       await validSection(tx, input.listId, input.sectionId);
       if (input.content !== undefined)
         await reconcileTaskImages(tx, actor, task.id, input.content);
       let position = task.position;
-      if (input.completed === false && task.completed) {
+      if (input.completed === false && task.completed && !task.parentTaskId) {
         const rows = await tx
           .select()
           .from(tasks)
-          .where(eq(tasks.listId, input.listId));
+          .where(
+            and(eq(tasks.listId, input.listId), isNull(tasks.parentTaskId)),
+          );
         position = Math.max(-1, ...rows.map((t) => t.position)) + 1;
       }
       await tx
@@ -593,16 +635,30 @@ export async function reorderTasks(actor: Actor, data: unknown) {
     { ...input, kind: "reorder_tasks" } as typeof input,
     async (tx) => {
       await locked(tx, actor, input, false, true);
+      await validParent(tx, input.listId, input.parentTaskId);
       const active = await tx
         .select({ id: tasks.id })
         .from(tasks)
-        .where(and(eq(tasks.listId, input.listId), eq(tasks.completed, false)));
+        .where(
+          and(
+            eq(tasks.listId, input.listId),
+            input.parentTaskId
+              ? eq(tasks.parentTaskId, input.parentTaskId)
+              : and(isNull(tasks.parentTaskId), eq(tasks.completed, false)),
+          ),
+        );
       if (
         active.length !== input.taskIds.length ||
         new Set(input.taskIds).size !== active.length ||
         active.some((t) => !input.taskIds.includes(t.id))
       )
-        fail("invalid_order", "Provide each active task exactly once.", 400);
+        fail(
+          "invalid_order",
+          input.parentTaskId
+            ? "Provide every subtask of this parent exactly once, including completed steps."
+            : "Provide each active top-level task exactly once.",
+          400,
+        );
       for (const [position, id] of input.taskIds.entries())
         await tx.update(tasks).set({ position }).where(eq(tasks.id, id));
       return { id: input.listId };

@@ -39,7 +39,7 @@ Users can create and view private lists, rename their own lists, share them, and
 
 **Implemented:** archive and restore lists, with archive controlled by the owner. Archived lists retain their content and membership, and tasks/sections are read-only until restored. Permanent deletion is a separate owner-only action with an explicit confirmation explaining that it affects all members.
 
-Implemented list colors, descriptions, sections, personal ordering, and archive/restore are specified in [mature lists](mature-lists.md). Markdown task notes are implemented in [task content and voice](task-content.md). Private images in notes are implemented in [task images](task-images.md). Subtasks and deadlines follow before native mobile.
+Implemented list colors, descriptions, sections, personal ordering, and archive/restore are specified in [mature lists](mature-lists.md). Markdown task notes are implemented in [task content and voice](task-content.md). Private images in notes are implemented in [task images](task-images.md). One-level subtasks are specified in [subtasks](subtasks.md); due dates follow before native mobile.
 
 ### Tasks
 
@@ -49,7 +49,7 @@ Empty or whitespace-only titles are rejected. Titles are treated as content, nev
 
 **Proposed:** completed tasks appear in a collapsible section. Completing a task removes it from the active order; reopening appends it to the active list. Task order is shared by everyone with access to the list.
 
-The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). Subtasks, labels, priorities, dates, recurrence, and reminders remain deferred. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
+The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). One-level subtasks are implemented in [subtasks](subtasks.md), with independent completion, shared sibling order and parent progress. Labels, priorities, dates, recurrence, and reminders remain deferred. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
 
 ### Sharing and invitations
 
@@ -80,7 +80,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 - Adding a task is a short, keyboard-friendly interaction.
 - List, section, and task names use inline editing with Enter/Save and Escape/Cancel, including completed tasks. Task Edit and Notes icons sit beside Delete; Notes opens the rich text editor immediately. Markdown is stored internally, without an editor mode switch. Notes accept private PNG/JPEG/WebP image uploads, paste and drop, with draft previews and explicit Save/Cancel. Drafts stay visible through save failures; name edits use existing permissions and version checks.
 - Task editing and completion have clear pending, success, and failure states.
-- Tasks, sections and the personal sidebar reorder using drag handles with pointer, touch and keyboard support. Task dragging stays within its section; the task edit form changes sections.
+- Tasks, sections and the personal sidebar reorder using drag handles with pointer, touch and keyboard support. Top-level task dragging stays within its section; the task edit form changes sections. Subtasks drag within their parent, follow its section and show completed/total progress. Parent deletion explains that it removes the subtasks too.
 - Sharing settings expose the owner, members, and pending invitations.
 - Empty, loading, denied-access, and failed-request states are designed deliberately.
 - Responsive layouts support phones before native apps arrive.

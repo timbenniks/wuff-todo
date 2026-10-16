@@ -1,5 +1,7 @@
 import {
   boolean,
+  check,
+  foreignKey,
   integer,
   index,
   jsonb,
@@ -11,6 +13,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type { ListColor } from "@wuff/contracts";
+import { sql } from "drizzle-orm";
 
 const time = (name: string) =>
   timestamp(name, { withTimezone: true }).notNull().defaultNow();
@@ -65,20 +68,41 @@ export const members = pgTable(
   },
   (t) => [primaryKey({ columns: [t.listId, t.userId] })],
 );
-export const tasks = pgTable("wuff_tasks", {
-  content: text("content").notNull().default(""),
-  id: uuid("id").primaryKey().defaultRandom(),
-  listId: uuid("list_id")
-    .notNull()
-    .references(() => lists.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  completed: boolean("completed").notNull().default(false),
-  sectionId: uuid("section_id").references(() => sections.id, {
-    onDelete: "set null",
-  }),
-  position: integer("position").notNull(),
-  createdAt: time("created_at"),
-});
+export const tasks = pgTable(
+  "wuff_tasks",
+  {
+    parentTaskId: uuid("parent_task_id"),
+    content: text("content").notNull().default(""),
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    completed: boolean("completed").notNull().default(false),
+    sectionId: uuid("section_id").references(() => sections.id, {
+      onDelete: "set null",
+    }),
+    position: integer("position").notNull(),
+    createdAt: time("created_at"),
+  },
+  (t) => [
+    uniqueIndex("wuff_tasks_id_list_idx").on(t.id, t.listId),
+    index("wuff_tasks_parent_idx").on(t.parentTaskId),
+    foreignKey({
+      columns: [t.parentTaskId, t.listId],
+      foreignColumns: [t.id, t.listId],
+      name: "wuff_tasks_parent_fk",
+    }).onDelete("cascade"),
+    check(
+      "wuff_tasks_not_self_parent",
+      sql`${t.parentTaskId} is null or ${t.parentTaskId} <> ${t.id}`,
+    ),
+    check(
+      "wuff_tasks_child_no_section",
+      sql`${t.parentTaskId} is null or ${t.sectionId} is null`,
+    ),
+  ],
+);
 // SET NULL preserves storage cleanup records when a task/list is deleted.
 // Only a ready, unretired row joined to a current parent can authorize a read.
 export const attachments = pgTable(

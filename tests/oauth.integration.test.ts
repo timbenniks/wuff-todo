@@ -296,7 +296,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         (row) => row.id === list.id && row.version === list.version + 1,
       ),
     );
-    const webState = await (
+    let webState = await (
       await fetch(`${origin}/api/v1/lists/${list.id}`, {
         headers: { Cookie: cookie },
       })
@@ -306,6 +306,133 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       webState.tasks[0].content,
       "## MCP notes\n\n- Fetch treats\n- Take a walk",
     );
+    // Subtasks use the same API/MCP adapters, live invalidation and flat snapshot.
+    const parentId = webState.tasks[0].id;
+    const step = await rpc(token.access_token, "tools/call", {
+      name: "create_task",
+      arguments: {
+        listId: list.id,
+        version: webState.version,
+        parentTaskId: parentId,
+        title: "MCP little step",
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.ok(!step.body.result.isError);
+    webState = step.body.result.structuredContent.list;
+    const firstChild = webState.tasks.find(
+      (t: { parentTaskId: string | null }) => t.parentTaskId === parentId,
+    );
+    assert.ok(firstChild);
+    assert.equal(
+      firstChild.completed,
+      false,
+      "Completed parent permits an independent unfinished step",
+    );
+    await waitForLive(liveSubscription, (rows) =>
+      rows.some(
+        (row) => row.id === list.id && row.version === webState.version,
+      ),
+    );
+    const childOnWeb = await (
+      await fetch(`${origin}/api/v1/lists/${list.id}`, {
+        headers: { Cookie: cookie },
+      })
+    ).json();
+    assert.equal(
+      childOnWeb.tasks.find((t: { id: string }) => t.id === firstChild.id)
+        .parentTaskId,
+      parentId,
+    );
+    const secondResponse = await post(
+      "/api/v1/tasks",
+      {
+        listId: list.id,
+        version: webState.version,
+        parentTaskId: parentId,
+        title: "Web little step",
+        operationId: crypto.randomUUID(),
+      },
+      cookie,
+    );
+    assert.equal(secondResponse.status, 200);
+    webState = await secondResponse.json();
+    const secondChild = webState.tasks.find(
+      (t: { title: string }) => t.title === "Web little step",
+    );
+    const patchStep = await fetch(`${origin}/api/v1/tasks`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({
+        listId: list.id,
+        version: webState.version,
+        taskId: firstChild.id,
+        completed: true,
+        content: "**Child** de-tails",
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(patchStep.status, 200);
+    webState = await patchStep.json();
+    const reorderedSteps = await rpc(token.access_token, "tools/call", {
+      name: "reorder_tasks",
+      arguments: {
+        listId: list.id,
+        version: webState.version,
+        parentTaskId: parentId,
+        taskIds: [secondChild.id, firstChild.id],
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.ok(!reorderedSteps.body.result.isError);
+    webState = reorderedSteps.body.result.structuredContent.list;
+    assert.deepEqual(
+      webState.tasks
+        .filter(
+          (t: { parentTaskId: string | null }) => t.parentTaskId === parentId,
+        )
+        .map((t: { id: string }) => t.id),
+      [secondChild.id, firstChild.id],
+    );
+    const grandchild = await rpc(token.access_token, "tools/call", {
+      name: "create_task",
+      arguments: {
+        listId: list.id,
+        version: webState.version,
+        parentTaskId: firstChild.id,
+        title: "Too deep",
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.equal(grandchild.body.result.isError, true);
+    const rootOrder = await rpc(token.access_token, "tools/call", {
+      name: "reorder_tasks",
+      arguments: {
+        listId: list.id,
+        version: webState.version,
+        taskIds: [],
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.ok(
+      !rootOrder.body.result.isError,
+      "Root order excludes unfinished children",
+    );
+    webState = rootOrder.body.result.structuredContent.list;
+    for (const child of [firstChild, secondChild]) {
+      const removed = await rpc(token.access_token, "tools/call", {
+        name: "delete_task",
+        arguments: {
+          listId: list.id,
+          version: webState.version,
+          taskId: child.id,
+          operationId: crypto.randomUUID(),
+        },
+      });
+      assert.ok(!removed.body.result.isError);
+      webState = removed.body.result.structuredContent.list;
+    }
+    assert.equal(webState.tasks.length, 1);
     // Two independent synthetic identities exercise the actual HTTP and MCP adapters.
     editorCookie = await login(1);
     const editorGrant = await grant(

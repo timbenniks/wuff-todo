@@ -58,6 +58,7 @@ export const reorderSectionsSchema = listMutationSchema.extend({
 });
 export const createTaskSchema = listMutationSchema.extend({
   title: titleSchema,
+  parentTaskId: idSchema.nullable().optional(),
   sectionId: idSchema.nullable().optional(),
   content: taskContentSchema.optional(),
 });
@@ -107,6 +108,7 @@ export function taskImageId(value: string): string | null {
   );
 }
 export const reorderTasksSchema = listMutationSchema.extend({
+  parentTaskId: idSchema.nullable().optional(),
   taskIds: z.array(idSchema).max(1000),
 });
 export const inviteSchema = listMutationSchema.extend({
@@ -146,6 +148,7 @@ export type IncomingInvitation = {
 
 export type Task = {
   id: string;
+  parentTaskId: string | null;
   content: string;
   title: string;
   completed: boolean;
