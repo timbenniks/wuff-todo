@@ -22,9 +22,15 @@ import {
   users,
   sections,
   listPreferences,
+  listViews,
   attachments,
 } from "@wuff/db";
 import {
+  defaultListView,
+  listViewSchema,
+  updateListViewSchema,
+  queryListViewSchema,
+  projectListView,
   Actor,
   inviteSchema,
   invitationResponseSchema,
@@ -144,7 +150,17 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
         isNull(attachments.retiredAt),
       ),
     );
+  const [personalView] = await tx
+    .select()
+    .from(listViews)
+    .where(and(eq(listViews.userId, actor.id), eq(listViews.listId, listId)));
   const snapshot = {
+    personalView: {
+      version: personalView?.version ?? 0,
+      view: personalView
+        ? listViewSchema.parse(personalView.view)
+        : defaultListView(),
+    },
     ...list,
     assignees,
     sections: await tx
@@ -375,6 +391,52 @@ export async function getList(actor: Actor, id: string) {
     isolationLevel: "repeatable read",
     accessMode: "read only",
   });
+}
+export async function queryListView(actor: Actor, data: unknown) {
+  const input = queryListViewSchema.parse(data);
+  const list = await getList(actor, input.listId);
+  return {
+    list,
+    groups: projectListView(list, list.personalView.view, input.today),
+  };
+}
+export async function updateListView(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = updateListViewSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "update_list_view" } as typeof input,
+    async (tx) => {
+      // Lock the list to serialize access revocation and first preference writes.
+      // This never increments the shared task revision or rewrites task positions.
+      await accessible(tx, actor, input.listId, true);
+      const [current] = await tx
+        .select()
+        .from(listViews)
+        .where(
+          and(
+            eq(listViews.userId, actor.id),
+            eq(listViews.listId, input.listId),
+          ),
+        );
+      if ((current?.version ?? 0) !== input.viewVersion)
+        fail("conflict", "Your view changed. Refresh it and try again.", 409);
+      await tx
+        .insert(listViews)
+        .values({
+          userId: actor.id,
+          listId: input.listId,
+          version: input.viewVersion + 1,
+          view: input.view,
+        })
+        .onConflictDoUpdate({
+          target: [listViews.userId, listViews.listId],
+          set: { version: input.viewVersion + 1, view: input.view },
+        });
+      return { id: input.listId };
+    },
+  );
+  return getList(actor, input.listId);
 }
 export async function getTask(actor: Actor, lookup: string) {
   requireScope(actor, "lists:read");

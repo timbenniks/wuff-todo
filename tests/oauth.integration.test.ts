@@ -281,6 +281,71 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       headers: { Cookie: cookie },
     });
     assert.equal(onWeb.status, 200);
+    const saveView = await fetch(`${origin}/api/v1/lists/${list.id}/view`, {
+      method: "PUT",
+      headers: {
+        Cookie: cookie,
+        Origin: origin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        viewVersion: 0,
+        view: { sortBy: "priority", layout: "detailed" },
+        operationId: crypto.randomUUID(),
+      }),
+    });
+    assert.equal(saveView.status, 200);
+    const viewList = await saveView.json();
+    assert.equal(viewList.version, list.version);
+    assert.equal(viewList.personalView.version, 1);
+    await waitForLive(
+      liveSubscription,
+      (rows) =>
+        rows.some(
+          (row) =>
+            row.id === list.id &&
+            (row as ListSummary & { viewVersion: number }).viewVersion === 1,
+        ),
+      20000,
+    );
+    const mcpView = await rpc(token.access_token, "tools/call", {
+      name: "get_list_view",
+      arguments: { listId: list.id, today: "2026-10-17" },
+    });
+    assert.equal(
+      mcpView.body.result.structuredContent.list.personalView.view.sortBy,
+      "priority",
+    );
+    const mcpSaved = await rpc(token.access_token, "tools/call", {
+      name: "update_list_view",
+      arguments: {
+        listId: list.id,
+        viewVersion: 1,
+        view: { groupBy: "status" },
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.equal(
+      mcpSaved.body.result.structuredContent.list.personalView.version,
+      2,
+    );
+    const httpView = await fetch(
+      `${origin}/api/v1/lists/${list.id}/view?today=2026-10-17`,
+      { headers: { Cookie: cookie } },
+    );
+    assert.equal(httpView.status, 200);
+    assert.equal(
+      (await httpView.json()).list.personalView.view.groupBy,
+      "status",
+    );
+    const invalidView = await fetch(`${origin}/api/v1/lists/${list.id}/view`, {
+      headers: { Cookie: cookie },
+    });
+    assert.equal(
+      invalidView.status,
+      400,
+      "Relative date queries require an explicit viewer calendar day",
+    );
     const added = await post(
       "/api/v1/tasks",
       {

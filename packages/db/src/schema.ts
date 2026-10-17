@@ -13,7 +13,13 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { ListColor, TodoList, Task, TaskReference } from "@wuff/contracts";
+import type {
+  ListColor,
+  TodoList,
+  Task,
+  TaskReference,
+  ListView,
+} from "@wuff/contracts";
 import { sql } from "drizzle-orm";
 
 const time = (name: string) =>
@@ -45,6 +51,20 @@ export const listPreferences = pgTable("wuff_list_preferences", {
   version: integer("version").notNull().default(0),
   listIds: jsonb("list_ids").$type<string[]>().notNull().default([]),
 });
+export const listViews = pgTable(
+  "wuff_list_views",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(0),
+    view: jsonb("view").$type<ListView>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.listId] })],
+);
 export const sections = pgTable(
   "wuff_sections",
   {

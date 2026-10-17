@@ -57,6 +57,13 @@
       "when": 1792219131145,
       "tag": "0007_red_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792220509803,
+      "tag": "0008_thin_pyro",
+      "breakpoints": true
     }
   ]
 }

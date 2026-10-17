@@ -85,3 +85,28 @@ test("a failed read can be retried and does not erase the last known content", a
     2,
   );
 });
+test("task and personal view snapshots cannot roll back each other's independent revision", async () => {
+  const { defaultListView } = await import("@wuff/contracts");
+  const cache = new ListCache({
+    ...snapshot(2),
+    personalView: {
+      version: 3,
+      view: { ...defaultListView(), sortBy: "priority" },
+    },
+  });
+  cache.write({
+    ...snapshot(3),
+    personalView: { version: 2, view: defaultListView() },
+  });
+  assert.equal(cache.get("list-a")?.version, 3);
+  assert.equal(cache.get("list-a")?.personalView?.version, 3);
+  cache.write({
+    ...snapshot(2),
+    personalView: {
+      version: 4,
+      view: { ...defaultListView(), groupBy: "status" },
+    },
+  });
+  assert.equal(cache.get("list-a")?.version, 3);
+  assert.equal(cache.get("list-a")?.personalView?.view.groupBy, "status");
+});

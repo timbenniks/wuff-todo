@@ -4,6 +4,11 @@ import {
   formatDueDate,
 } from "../lib/due-date";
 import {
+  defaultListView,
+  projectListView,
+  statusLabels,
+  viewSorts,
+  type ListView,
   dueDateSchema,
   taskStatuses,
   taskPriorities,
@@ -938,11 +943,28 @@ function renderTask(
   taskLink.rel = "noopener noreferrer";
   taskLink.setAttribute("aria-label", `Open ${task.key} task page`);
   wrapper.append(row, taskLink);
+  const view = current!.personalView?.view ?? defaultListView();
+  if (view.layout === "detailed")
+    wrapper.append(
+      element(
+        "p",
+        `${statusLabels[task.status]} · ${task.priority} priority${task.assigneeId ? ` · ${current!.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}` : ""}${task.references.length ? ` · ${task.references.length} links` : ""}`,
+      ),
+    );
   if (current!.mode === "work") wrapper.append(workDetails(task));
   wrapper.append(taskDueDate(task), taskNotes(task));
   queueMicrotask(refreshDueBadges);
   if (task.parentTaskId) {
-    if (!current!.archived) {
+    if (
+      !current!.archived &&
+      (view.groupBy === "section"
+        ? (view.sectionSorts.find(
+            (s) =>
+              s.sectionId ===
+              current!.tasks.find((t) => t.id === task.parentTaskId)?.sectionId,
+          )?.sortBy ?? view.sortBy)
+        : view.sortBy) === "manual"
+    ) {
       const parentId = task.parentTaskId;
       const siblings = current!.tasks.filter(
         (t) => t.parentTaskId === parentId,
@@ -1081,6 +1103,209 @@ function renderTask(
   return wrapper;
 }
 
+function viewControls(list: TodoList) {
+  const saved = list.personalView ?? { version: 0, view: defaultListView() };
+  let draft = structuredClone(saved.view);
+  const panel = element("details"),
+    form = element("form"),
+    summary = element("summary", "Your view");
+  form.className = "settings";
+  panel.append(
+    summary,
+    element("p", "Only changes how you see this list."),
+    form,
+  );
+  function select(
+    label: string,
+    value: string,
+    options: [string, string][],
+    update: (value: string) => void,
+  ) {
+    const caption = element("label", label),
+      input = element("select");
+    input.setAttribute("aria-label", label);
+    for (const [value, title] of options) {
+      const option = element("option", title);
+      option.value = value;
+      input.append(option);
+    }
+    input.value = value;
+    input.onchange = () => update(input.value);
+    caption.append(input);
+    form.append(caption);
+  }
+  const options = (values: readonly string[]) =>
+    values.map((v) => [v, v] as [string, string]);
+  const search = element("input"),
+    label = element("label", "Search title or key");
+  search.setAttribute("aria-label", "Search title or key");
+  search.value = draft.search;
+  search.maxLength = 300;
+  search.oninput = () => {
+    draft.search = search.value;
+  };
+  label.append(search);
+  form.append(label);
+  select(
+    "Section filter",
+    draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
+    [
+      ["all", "All sections"],
+      ["none", "No section"],
+      ...list.sections.map((s) => [s.id, s.title] as [string, string]),
+    ],
+    (v) => {
+      draft.sections = v === "all" ? [] : [v === "none" ? null : v];
+    },
+  );
+  if (list.mode === "work") {
+    select(
+      "Status filter",
+      draft.statuses[0] ?? "all",
+      [
+        ["all", "All statuses"],
+        ...taskStatuses.map((s) => [s, statusLabels[s]] as [string, string]),
+      ],
+      (v) => {
+        draft.statuses = v === "all" ? [] : [v as ListView["statuses"][number]];
+      },
+    );
+    select(
+      "Priority filter",
+      draft.priorities[0] ?? "all",
+      [["all", "All priorities"], ...options(taskPriorities)],
+      (v) => {
+        draft.priorities =
+          v === "all" ? [] : [v as ListView["priorities"][number]];
+      },
+    );
+  }
+  if (list.assignees.length)
+    select(
+      "Assignee filter",
+      draft.assignees[0] ?? (draft.assignees.length ? "none" : "all"),
+      [
+        ["all", "Anyone"],
+        ["none", "Unassigned"],
+        ...list.assignees.map((a) => [a.id, a.name] as [string, string]),
+      ],
+      (v) => {
+        draft.assignees = v === "all" ? [] : [v === "none" ? null : v];
+      },
+    );
+  select(
+    "Due date filter",
+    draft.due,
+    [
+      ["all", "Any due date"],
+      ["overdue", "Before today"],
+      ["today", "Today"],
+      ["upcoming", "After today"],
+      ["no_date", "No due date"],
+    ],
+    (v) => {
+      draft.due = v as ListView["due"];
+    },
+  );
+  select(
+    "Completed tasks",
+    draft.completed,
+    [
+      ["all", "Include completed"],
+      ["hide", "Hide completed"],
+      ["only", "Only completed"],
+    ],
+    (v) => {
+      draft.completed = v as ListView["completed"];
+    },
+  );
+  select(
+    "Group by",
+    draft.groupBy,
+    [
+      ["section", "Section"],
+      ["status", "Status"],
+      ["date", "Due date"],
+    ],
+    (v) => {
+      draft.groupBy = v as ListView["groupBy"];
+    },
+  );
+  select("Sort by", draft.sortBy, options(viewSorts), (v) => {
+    draft.sortBy = v as ListView["sortBy"];
+  });
+  select("Layout", draft.layout, options(["compact", "detailed"]), (v) => {
+    draft.layout = v as ListView["layout"];
+  });
+  for (const section of [{ id: null, title: "No section" }, ...list.sections])
+    select(
+      `Sort ${section.title}`,
+      draft.sectionSorts.find((s) => s.sectionId === section.id)?.sortBy ??
+        "inherit",
+      [["inherit", "Use list sorting"], ...options(viewSorts)],
+      (v) => {
+        draft.sectionSorts = [
+          ...draft.sectionSorts.filter((s) => s.sectionId !== section.id),
+          ...(v === "inherit"
+            ? []
+            : [{ sectionId: section.id, sortBy: v as ListView["sortBy"] }]),
+        ];
+      },
+    );
+  const save = element("button", "Apply view"),
+    notice = element("p");
+  notice.setAttribute("role", "alert");
+  form.append(
+    save,
+    button("Reset to defaults", () => {
+      draft = defaultListView();
+      save.click();
+    }),
+    notice,
+  );
+  let pending: Record<string, unknown> | undefined;
+  const lockControls = (disabled: boolean) =>
+    form
+      .querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLButtonElement
+      >("input,select,button")
+      .forEach((control) => {
+        if (control !== save) control.disabled = disabled;
+      });
+  wireForm(form, save, () => {
+    lockControls(true);
+    pending ??= {
+      listId: list.id,
+      viewVersion: saved.version,
+      view: structuredClone(draft),
+      operationId: crypto.randomUUID(),
+    };
+    void request("update_list_view", pending)
+      .then(show)
+      .catch((e) => {
+        notice.textContent = wuffError(e.message);
+        if (e instanceof ToolError && e.code !== "internal_error") {
+          lockControls(false);
+          pending = undefined;
+          notice.append(
+            button(
+              "Reload saved view",
+              () => void call("show_list", { listId: list.id }),
+            ),
+          );
+        }
+        if (pending) {
+          save.textContent = "Retry same request";
+          notice.append(
+            element("p", "Confirm this save before editing the view again."),
+          );
+        }
+        save.disabled = false;
+      });
+  });
+  return panel;
+}
+
 function show(value: unknown) {
   if (!value || typeof value !== "object") return;
   const data = value as {
@@ -1193,35 +1418,93 @@ function show(value: unknown) {
     );
     root.append(settings);
   }
-  const groups = [
+  root.append(viewControls(current));
+  const view = current.personalView?.view ?? defaultListView();
+  const sections = [
     { id: null, title: current.sections.length ? "No section" : "Tasks" },
     ...current.sections,
   ];
+  const groups = projectListView(current, view, calendarDay());
+  root.append(
+    element(
+      "p",
+      `${groups.reduce((n, g) => n + g.tasks.length, 0)} main tasks shown`,
+    ),
+  );
   for (const group of groups) {
+    if (view.groupBy !== "section" && !group.tasks.length) continue;
     const details = element("details");
-    details.open = true;
     details.className = "section";
-    root.append(
-      inlineName(
-        group.title,
-        "Section name",
-        "rename_section",
-        { sectionId: group.id },
-        { heading: "h2", editable: owner && !!group.id && !current.archived },
-      ),
-    );
+    details.open = !view.collapsed.includes(group.id);
+    const initialOpen = details.open;
     details.append(
-      element(
-        "summary",
-        `Tasks (${current.tasks.filter((t) => !t.parentTaskId && t.sectionId === group.id && !t.completed).length})`,
-      ),
+      element("summary", `${group.title} (${group.tasks.length})`),
     );
-    for (const task of current.tasks.filter(
-      (t) => !t.parentTaskId && t.sectionId === group.id,
-    )) {
-      details.append(renderTask(task, groups));
+    details.ontoggle = () => {
+      const collapsed = details.open
+        ? view.collapsed.filter((id) => id !== group.id)
+        : [...new Set([...view.collapsed, group.id])].slice(-200);
+      if (details.open === initialOpen) return;
+      details.ontoggle = null;
+      void request("update_list_view", {
+        listId: current!.id,
+        viewVersion: current!.personalView?.version ?? 0,
+        view: { ...view, collapsed },
+        operationId: crypto.randomUUID(),
+      })
+        .then(show)
+        .catch((e) => {
+          status.textContent = wuffError(e.message);
+        });
+    };
+    if (owner && group.sectionId && !current.archived)
+      details.append(
+        inlineName(
+          group.title,
+          "Section name",
+          "rename_section",
+          { sectionId: group.sectionId },
+          { heading: "h2" },
+        ),
+        button(
+          `Remove ${group.title} (keep tasks)`,
+          () => void mutation("delete_section", { sectionId: group.sectionId }),
+        ),
+      );
+    if (owner && group.sectionId && !current.archived) {
+      const sectionId = group.sectionId,
+        index = current.sections.findIndex((s) => s.id === sectionId);
+      for (const [direction, label] of [
+        [-1, "up"],
+        [1, "down"],
+      ] as const)
+        details.append(
+          button(
+            `Move ${group.title} ${label}`,
+            () => {
+              const ids = current!.sections.map((s) => s.id);
+              [ids[index], ids[index + direction]] = [
+                ids[index + direction],
+                ids[index],
+              ];
+              void mutation("reorder_sections", { sectionIds: ids });
+            },
+            index + direction < 0 ||
+              index + direction >= current.sections.length,
+          ),
+        );
     }
-    if (!current.archived) {
+    for (const task of group.tasks) {
+      if (group.childMatches[task.id]?.length)
+        details.append(
+          element(
+            "p",
+            `Shown because subtasks of ${task.title} match your filters.`,
+          ),
+        );
+      details.append(renderTask(task, sections));
+    }
+    if (!current.archived && view.groupBy === "section") {
       const form = element("form"),
         input = element("input"),
         save = element("button", "Add");
@@ -1230,44 +1513,33 @@ function show(value: unknown) {
       input.placeholder = "What’s next for your pack?";
       input.setAttribute("aria-label", `New task in ${group.title}`);
       form.append(input, save);
-      wireForm(form, save, () => {
-        void mutation("create_task", {
-          title: input.value,
-          sectionId: group.id,
-        });
-      });
+      wireForm(
+        form,
+        save,
+        () =>
+          void mutation("create_task", {
+            title: input.value,
+            sectionId: group.sectionId,
+          }),
+      );
       details.append(form);
     }
-    if (owner && group.id && !current.archived) {
-      const id = group.id,
-        index = current.sections.findIndex((s) => s.id === id);
-      const actions = element("div");
-      actions.className = "section-actions";
-      for (const [dir, label] of [
-        [-1, "up"],
-        [1, "down"],
-      ] as const) {
-        actions.append(
-          button(
-            `Move ${group.title} ${label}`,
-            () => {
-              const ids = current!.sections.map((s) => s.id);
-              [ids[index], ids[index + dir]] = [ids[index + dir], ids[index]];
-              void mutation("reorder_sections", { sectionIds: ids });
-            },
-            index + dir < 0 || index + dir >= current.sections.length,
-          ),
-        );
-      }
-      actions.append(
-        button(
-          `Remove ${group.title} (keep tasks)`,
-          () => void mutation("delete_section", { sectionId: id }),
-        ),
-      );
-      details.append(actions);
-    }
     root.append(details);
+  }
+  if (!current.archived && view.groupBy !== "section") {
+    const form = element("form"),
+      input = element("input"),
+      save = element("button", "Add");
+    input.required = true;
+    input.maxLength = 300;
+    input.setAttribute("aria-label", "New task");
+    form.append(input, save);
+    wireForm(
+      form,
+      save,
+      () => void mutation("create_task", { title: input.value }),
+    );
+    root.append(form);
   }
   if (owner && !current.archived && current.sections.length < 50) {
     const form = element("form"),

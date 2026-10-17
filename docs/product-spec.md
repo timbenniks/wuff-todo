@@ -2,7 +2,7 @@
 
 Status: working specification, version 0.1
 
-Updated: October 16, 2026
+Updated: October 17, 2026
 
 ## Purpose
 
@@ -51,7 +51,7 @@ Empty or whitespace-only titles are rejected. Titles are treated as content, nev
 
 **Proposed:** completed tasks appear in a collapsible section. Completing a task removes it from the active order; reopening appends it to the active list. Task order is shared by everyone with access to the list.
 
-The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). One-level subtasks are implemented in [subtasks](subtasks.md), with independent completion, shared sibling order and parent progress. Optional calendar due dates are implemented in [due dates](due-dates.md), independently for tasks and subtasks. Labels, priorities, due times, recurrence, and reminders remain deferred. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
+The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). One-level subtasks are implemented in [subtasks](subtasks.md), with independent completion, shared sibling order and parent progress. Optional calendar due dates are implemented in [due dates](due-dates.md), independently for tasks and subtasks. Work-list priorities are implemented. Labels, due times, recurrence, and reminders remain deferred. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
 
 ### Sharing and invitations
 
@@ -139,3 +139,7 @@ No subscriptions, billing, enterprise workspaces, or built-in AI model usage are
 11. Keyboard users can create, edit, complete, and reorder tasks and understand errors.
 
 The first end-to-end scenario is a shared grocery list: one user creates and shares it, the other adds an item, the owner reorders tasks on the web, and an authorized AI client completes an item. Both users see the same result; unrelated private lists remain private.
+
+## Personal list views
+
+Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization and native apps remain later milestones.

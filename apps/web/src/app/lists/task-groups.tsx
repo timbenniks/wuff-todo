@@ -9,7 +9,13 @@ import {
 import { wuffCopy, taskCount } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
-import type { TodoList } from "@wuff/contracts";
+import {
+  defaultListView,
+  projectListView,
+  type TodoList,
+  type ViewGroup,
+} from "@wuff/contracts";
+import { ListViewControls } from "./list-view-controls";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
 import { type NoteDraft } from "./task-notes";
@@ -34,8 +40,7 @@ export function TaskGroups({
   const today = useCalendarDay();
   const dueDrafts = useRef(new Map<string, DueDateDraft>());
   const noteDrafts = useRef(new Map<string, NoteDraft>()),
-    subtaskDrafts = useRef(new Map<string, string>()),
-    completedGroup = useRef<HTMLDetailsElement>(null);
+    subtaskDrafts = useRef(new Map<string, string>());
   useEffect(() => {
     for (const id of noteDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id)) noteDrafts.current.delete(id);
@@ -44,41 +49,42 @@ export function TaskGroups({
         subtaskDrafts.current.delete(id);
     for (const id of dueDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id)) dueDrafts.current.delete(id);
-    if (
-      list.tasks.some(
-        (t) =>
-          !t.parentTaskId &&
-          t.completed &&
-          (subtaskDrafts.current.has(t.id) ||
-            dueDrafts.current.has(t.id) ||
-            noteDrafts.current.has(t.id) ||
-            list.tasks.some(
-              (c) =>
-                c.parentTaskId === t.id &&
-                (noteDrafts.current.has(c.id) || dueDrafts.current.has(c.id)),
-            )),
-      ) &&
-      completedGroup.current
-    )
-      completedGroup.current.open = true;
   }, [list.tasks]);
   const [addingSection, setAddingSection] = useState(false);
   const owner = list.ownerId === userId,
     disabled = busy || list.archived;
   const body = { listId: list.id, version: list.version };
   const path = `/api/v1/lists/${list.id}/sections`;
-  const active = list.tasks.filter((t) => !t.parentTaskId && !t.completed);
-  function rows(sectionId: string | null) {
-    const items = active.filter((t) => t.sectionId === sectionId);
+  const view = list.personalView?.view ?? defaultListView();
+  const groups = projectListView(list, view, today ?? "0001-01-01");
+  const active = list.tasks.filter((t) => !t.parentTaskId);
+  const saveCollapsed = (id: string, open: boolean) => {
+    const collapsed = open
+      ? view.collapsed.filter((v) => v !== id)
+      : [...new Set([...view.collapsed, id])].slice(-200);
+    if (JSON.stringify(collapsed) !== JSON.stringify(view.collapsed))
+      void change(`/api/v1/lists/${list.id}/view`, "PUT", {
+        listId: list.id,
+        viewVersion: list.personalView?.version ?? 0,
+        view: { ...view, collapsed },
+      });
+  };
+  function rows(sectionId: string | null, group?: ViewGroup) {
+    group ??= groups.find((g) => g.sectionId === sectionId);
+    const items = group?.tasks ?? [];
+    const manual = group?.sortBy === "manual";
+    const childMatches = group?.childMatches ?? {};
     return (
       <SortableList
         items={items}
-        disabled={disabled}
+        disabled={disabled || !manual}
         onReorder={async (ids, before) => {
           const taskIds = mergeVisibleOrder(
-            active.map((t) => t.id),
-            before,
-            ids,
+            active.filter((t) => !t.completed).map((t) => t.id),
+            before.filter((id) =>
+              active.some((t) => t.id === id && !t.completed),
+            ),
+            ids.filter((id) => active.some((t) => t.id === id && !t.completed)),
           );
           if (taskIds)
             return await change("/api/v1/tasks", "PUT", { ...body, taskIds });
@@ -98,7 +104,7 @@ export function TaskGroups({
               key={task.id}
               id={task.id}
               title={task.title}
-              disabled={disabled}
+              disabled={disabled || !manual || task.completed}
             >
               {({ ref, style, handle }) => (
                 <TaskRow
@@ -113,7 +119,14 @@ export function TaskGroups({
                   subtaskDrafts={subtaskDrafts.current}
                   dueDrafts={dueDrafts.current}
                   today={today}
-                  dragHandle={!list.archived ? handle : undefined}
+                  detailed={view.layout === "detailed"}
+                  matchedChildren={childMatches[task.id]}
+                  disableChildDrag={!manual}
+                  dragHandle={
+                    !list.archived && manual && !task.completed
+                      ? handle
+                      : undefined
+                  }
                 />
               )}
             </SortableItem>
@@ -187,113 +200,167 @@ export function TaskGroups({
             : "Its owner can restore it so you can make changes again."}
         </p>
       )}
+      <ListViewControls list={list} busy={busy} change={change} />
       <p className="text-sm text-slate-500 mb-5">
-        {active.length === 0 &&
+        {active.filter((t) => !t.completed).length === 0 &&
         list.tasks.some((t) => t.parentTaskId && !t.completed)
           ? "Main tasks fetched! Some subtasks still need a paw in Completed."
-          : taskCount(active.length)}
+          : taskCount(active.filter((t) => !t.completed).length)}
       </p>
-      {list.sections.length > 0 && (
-        <h2 className="text-lg font-bold mb-1">No section</h2>
-      )}
-      {rows(null)}
-      {addTask(null)}
-      <SortableList
-        items={list.sections}
-        disabled={busy || !owner || list.archived}
-        onReorder={(sectionIds) => change(path, "PUT", { ...body, sectionIds })}
-      >
-        {list.sections.map((section) => (
-          <SortableItem
-            key={section.id}
-            id={section.id}
-            title={`section ${section.title}`}
-            disabled={busy || !owner || list.archived}
-          >
-            {({ ref, style, handle }) => (
-              <section
-                ref={ref}
-                style={style}
-                className="mt-8 border-t border-border pt-4"
+      <p role="status" className="text-xs text-slate-500 mb-3">
+        {groups.reduce((n, g) => n + g.tasks.length, 0)} main tasks shown ·{" "}
+        {view.sortBy === "manual"
+          ? "Manual order"
+          : "Dragging off while sorted"}
+      </p>
+      {view.groupBy !== "section" ? (
+        <>
+          {groups
+            .filter((g) => g.tasks.length)
+            .map((g) => (
+              <details
+                key={g.id}
+                open={!view.collapsed.includes(g.id)}
+                onToggle={(e) => saveCollapsed(g.id, e.currentTarget.open)}
+                className="mt-5"
               >
-                <div className="flex items-center gap-2">
-                  <InlineName
-                    value={section.title}
-                    heading="h2"
-                    label="Section name"
-                    editLabel={`Rename section ${section.title}`}
-                    editable={owner && !list.archived}
-                    disabled={busy}
-                    onSave={(title) =>
-                      change(path, "PATCH", {
-                        ...body,
-                        sectionId: section.id,
-                        title,
-                      })
-                    }
-                    renderActions={
-                      owner && !list.archived
-                        ? ({ edit, editing, trigger }) => (
-                            <div className="flex items-center">
-                              <Button
-                                ref={trigger}
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                aria-label={`Rename section ${section.title}`}
-                                title="Rename section"
-                                disabled={busy || editing}
-                                onClick={edit}
-                              >
-                                <Pencil size={15} />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 text-slate-400 hover:text-red-700"
-                                disabled={busy || editing}
-                                title="Remove section"
-                                aria-label={`Remove section ${section.title}`}
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      `Remove section “${section.title}”? Its tasks will be kept under No section.`,
-                                    )
-                                  )
-                                    void change(path, "DELETE", {
-                                      ...body,
-                                      sectionId: section.id,
-                                    });
-                                }}
-                              >
-                                <Trash2 size={14} />
-                              </Button>
-                              {handle}
-                            </div>
-                          )
-                        : undefined
-                    }
-                  />
-                </div>
-                <div className="mt-1">
-                  <details open className="min-w-0 flex-1 group/section">
-                    <summary className="text-xs font-medium text-slate-500 py-2">
-                      Tasks (
-                      {active.filter((t) => t.sectionId === section.id).length})
-                    </summary>
-                    <div className="mt-1">
-                      {rows(section.id)}
-                      {addTask(section.id)}
+                <summary className="font-semibold py-3">
+                  {g.title} ({g.tasks.length})
+                </summary>
+                {rows(null, g)}
+              </details>
+            ))}
+          {addTask(null)}
+        </>
+      ) : (
+        <>
+          {list.sections.length > 0 && (
+            <h2 className="text-lg font-bold mb-1">No section</h2>
+          )}
+          <details
+            open={!view.collapsed.includes("section:none")}
+            onToggle={(e) =>
+              saveCollapsed("section:none", e.currentTarget.open)
+            }
+          >
+            <summary className="text-xs py-2 min-h-11">
+              Tasks (
+              {groups.find((g) => g.sectionId === null)?.tasks.length ?? 0})
+            </summary>
+            {rows(null)}
+            {addTask(null)}
+          </details>
+          <SortableList
+            items={list.sections}
+            disabled={busy || !owner || list.archived}
+            onReorder={(sectionIds) =>
+              change(path, "PUT", { ...body, sectionIds })
+            }
+          >
+            {list.sections.map((section) => (
+              <SortableItem
+                key={section.id}
+                id={section.id}
+                title={`section ${section.title}`}
+                disabled={busy || !owner || list.archived}
+              >
+                {({ ref, style, handle }) => (
+                  <section
+                    ref={ref}
+                    style={style}
+                    className="mt-8 border-t border-border pt-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <InlineName
+                        value={section.title}
+                        heading="h2"
+                        label="Section name"
+                        editLabel={`Rename section ${section.title}`}
+                        editable={owner && !list.archived}
+                        disabled={busy}
+                        onSave={(title) =>
+                          change(path, "PATCH", {
+                            ...body,
+                            sectionId: section.id,
+                            title,
+                          })
+                        }
+                        renderActions={
+                          owner && !list.archived
+                            ? ({ edit, editing, trigger }) => (
+                                <div className="flex items-center">
+                                  <Button
+                                    ref={trigger}
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    aria-label={`Rename section ${section.title}`}
+                                    title="Rename section"
+                                    disabled={busy || editing}
+                                    onClick={edit}
+                                  >
+                                    <Pencil size={15} />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-700"
+                                    disabled={busy || editing}
+                                    title="Remove section"
+                                    aria-label={`Remove section ${section.title}`}
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          `Remove section “${section.title}”? Its tasks will be kept under No section.`,
+                                        )
+                                      )
+                                        void change(path, "DELETE", {
+                                          ...body,
+                                          sectionId: section.id,
+                                        });
+                                    }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </Button>
+                                  {handle}
+                                </div>
+                              )
+                            : undefined
+                        }
+                      />
                     </div>
-                  </details>
-                </div>
-              </section>
-            )}
-          </SortableItem>
-        ))}
-      </SortableList>
+                    <div className="mt-1">
+                      <details
+                        open={!view.collapsed.includes(`section:${section.id}`)}
+                        onToggle={(e) =>
+                          saveCollapsed(
+                            `section:${section.id}`,
+                            e.currentTarget.open,
+                          )
+                        }
+                        className="min-w-0 flex-1 group/section"
+                      >
+                        <summary className="text-xs font-medium text-slate-500 py-2 min-h-11">
+                          Tasks (
+                          {groups.find((g) => g.sectionId === section.id)?.tasks
+                            .length ?? 0}
+                          )
+                        </summary>
+                        <div className="mt-1">
+                          {rows(section.id)}
+                          {addTask(section.id)}
+                        </div>
+                      </details>
+                    </div>
+                  </section>
+                )}
+              </SortableItem>
+            ))}
+          </SortableList>
+        </>
+      )}
       {owner && !list.archived && (
         <div className="mt-6">
           {addingSection ? (
@@ -359,30 +426,6 @@ export function TaskGroups({
           )}
         </div>
       )}
-      <details className="mt-10" ref={completedGroup}>
-        <summary className="text-sm text-slate-500 py-3">
-          Paw-some, completed (
-          {list.tasks.filter((t) => !t.parentTaskId && t.completed).length})
-        </summary>
-        <ul>
-          {list.tasks
-            .filter((t) => !t.parentTaskId && t.completed)
-            .map((task) => (
-              <TaskRow
-                userId={userId}
-                key={task.id}
-                task={task}
-                list={list}
-                busy={busy}
-                change={change}
-                drafts={noteDrafts.current}
-                subtaskDrafts={subtaskDrafts.current}
-                dueDrafts={dueDrafts.current}
-                today={today}
-              />
-            ))}
-        </ul>
-      </details>
     </>
   );
 }

@@ -9,6 +9,8 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  updateListViewSchema,
+  queryListViewSchema,
   Actor,
   inviteSchema,
   invitationResponseSchema,
@@ -168,6 +170,28 @@ export function createMcpServer(actor: Actor) {
     },
     async (data) =>
       result(async () => ({ order: await domain.reorderLists(actor, data) })),
+  );
+  server.registerTool(
+    "get_list_view",
+    {
+      description:
+        "Read your personal view and matching grouped tasks. Supply your local calendar date (YYYY-MM-DD) as today for relative due-date filters. Parents remain attached to matching children; childMatches explains contextual parents. View version is separate from the list version.",
+      inputSchema: queryListViewSchema,
+      annotations: read,
+    },
+    async (data) =>
+      result(async () => ({ ...(await domain.queryListView(actor, data)) })),
+  );
+  server.registerTool(
+    "update_list_view",
+    {
+      description:
+        "Replace only your personal filters, grouping, sorting, section sort overrides, layout and collapsed groups. Read list.personalView first; send its version as viewVersion and a fresh operationId. Does not change shared tasks or ordering. Requires lists:manage. Empty view resets defaults; arrays of filters use OR within each field and AND across fields.",
+      inputSchema: updateListViewSchema,
+      annotations: write,
+    },
+    async (data) =>
+      result(async () => ({ list: await domain.updateListView(actor, data) })),
   );
   const operations = [
     [

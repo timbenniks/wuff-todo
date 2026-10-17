@@ -22,8 +22,15 @@ export class ListCache {
     const previous = this.get(next.id);
     const current =
       previous && previous.version > next.version ? previous : next;
-    this.entries.set(next.id, current);
-    return current;
+    // Task and personal-view revisions advance independently. A concurrent task
+    // response must not restore an older view (or vice versa).
+    const personalView =
+      (previous?.personalView?.version ?? 0) > (next.personalView?.version ?? 0)
+        ? previous?.personalView
+        : next.personalView;
+    const merged = personalView ? { ...current, personalView } : current;
+    this.entries.set(next.id, merged);
+    return merged;
   }
   write(next: TodoList) {
     this.supersede(next.id);

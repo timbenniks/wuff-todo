@@ -26,7 +26,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import type { Task, TodoList } from "@wuff/contracts";
+import { statusLabels, type Task, type TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { InlineName } from "./inline-name";
 import { TaskNotes, type NoteDraft } from "./task-notes";
@@ -46,6 +46,9 @@ export function TaskRow({
   dragHandle,
   rowRef,
   style,
+  detailed = false,
+  matchedChildren,
+  disableChildDrag = false,
 }: {
   task: Task;
   userId: string;
@@ -59,6 +62,9 @@ export function TaskRow({
   dragHandle?: ReactNode;
   rowRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
+  detailed?: boolean;
+  matchedChildren?: string[];
+  disableChildDrag?: boolean;
 }) {
   const children = list.tasks.filter((t) => t.parentTaskId === task.id);
   const [expanded, setExpanded] = useState(
@@ -415,6 +421,24 @@ export function TaskRow({
           </div>
         )}
       />
+      {detailed && (
+        <p className="basis-full text-xs text-slate-500 pl-8 pb-2 break-words">
+          {task.key} · {statusLabels[task.status]} ·{" "}
+          {task.priority === "none"
+            ? "No priority"
+            : `${task.priority} priority`}
+          {task.assigneeId
+            ? ` · ${list.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}`
+            : ""}
+          {task.references.length ? ` · ${task.references.length} links` : ""}
+        </p>
+      )}
+      {!!matchedChildren?.length && (
+        <p className="basis-full text-xs text-primary pl-8">
+          Shown because {matchedChildren.length} subtasks match your filters.
+          Open subtasks to see the context.
+        </p>
+      )}
       {dateOpen && (
         <div
           id={`due-${task.id}`}
@@ -477,6 +501,7 @@ export function TaskRow({
             subtaskDrafts={subtaskDrafts}
             dueDrafts={dueDrafts}
             today={today}
+            disableDrag={disableChildDrag}
           />
         </div>
       )}
@@ -512,6 +537,7 @@ export function Subtasks({
   dueDrafts,
   today,
   focusNewTask = true,
+  disableDrag = false,
 }: {
   parent: Task;
   items: Task[];
@@ -524,6 +550,7 @@ export function Subtasks({
   dueDrafts: Map<string, DueDateDraft>;
   today: string | null;
   focusNewTask?: boolean;
+  disableDrag?: boolean;
 }) {
   const [title, setTitle] = useState(subtaskDrafts.get(parent.id) ?? "");
   const disabled = busy || list.archived;
@@ -544,7 +571,7 @@ export function Subtasks({
       </p>
       <SortableList
         items={items}
-        disabled={disabled}
+        disabled={disabled || disableDrag}
         onReorder={(taskIds) =>
           change("/api/v1/tasks", "PUT", { ...body, taskIds })
         }
@@ -555,7 +582,7 @@ export function Subtasks({
               key={task.id}
               id={task.id}
               title={task.title}
-              disabled={disabled}
+              disabled={disabled || disableDrag}
             >
               {({ ref, style, handle }) => (
                 <TaskRow
@@ -570,7 +597,9 @@ export function Subtasks({
                   today={today}
                   rowRef={ref}
                   style={style}
-                  dragHandle={!list.archived ? handle : undefined}
+                  dragHandle={
+                    !list.archived && !disableDrag ? handle : undefined
+                  }
                 />
               )}
             </SortableItem>

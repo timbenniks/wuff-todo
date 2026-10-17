@@ -250,6 +250,7 @@ export type Task = {
 export type ListSection = { id: string; title: string; position: number };
 export type ListOrder = { version: number; listIds: string[] };
 export type TodoList = {
+  personalView?: PersonalListView;
   id: string;
   mode: (typeof listModes)[number];
   assignees: { id: string; name: string }[];
@@ -279,4 +280,175 @@ export class AppError extends Error {
   ) {
     super(message);
   }
+}
+
+export const viewSorts = ["manual", "priority", "due", "updated"] as const;
+export const listViewSchema = z
+  .object({
+    search: z.string().trim().max(300).default(""),
+    sections: z.array(idSchema.nullable()).max(51).default([]),
+    statuses: z.array(z.enum(taskStatuses)).max(5).default([]),
+    priorities: z.array(z.enum(taskPriorities)).max(5).default([]),
+    assignees: z
+      .array(z.string().min(1).max(200).nullable())
+      .max(100)
+      .default([]),
+    due: z
+      .enum(["all", "overdue", "today", "upcoming", "no_date"])
+      .default("all"),
+    completed: z.enum(["all", "hide", "only"]).default("all"),
+    groupBy: z.enum(["section", "status", "date"]).default("section"),
+    sortBy: z.enum(viewSorts).default("manual"),
+    sectionSorts: z
+      .array(
+        z
+          .object({ sectionId: idSchema.nullable(), sortBy: z.enum(viewSorts) })
+          .strict(),
+      )
+      .max(51)
+      .default([]),
+    layout: z.enum(["compact", "detailed"]).default("compact"),
+    collapsed: z.array(z.string().max(80)).max(200).default([]),
+  })
+  .strict();
+export type ListView = z.infer<typeof listViewSchema>;
+export type PersonalListView = { version: number; view: ListView };
+export const defaultListView = (): ListView => listViewSchema.parse({});
+export const updateListViewSchema = z
+  .object({
+    listId: idSchema,
+    viewVersion: versionSchema,
+    view: listViewSchema,
+  })
+  .extend(operationSchema.shape);
+export const queryListViewSchema = z.object({
+  listId: idSchema,
+  today: dueDateSchema,
+});
+export const statusLabels: Record<Task["status"], string> = {
+  todo: "Todo",
+  in_progress: "In progress",
+  in_review: "In review",
+  blocked: "Blocked",
+  done: "Done",
+};
+export type ViewGroup = {
+  id: string;
+  title: string;
+  sectionId?: string | null;
+  sortBy: ListView["sortBy"];
+  tasks: Task[];
+  childMatches: Record<string, string[]>;
+};
+export function projectListView(
+  list: TodoList,
+  view: ListView,
+  today: string,
+): ViewGroup[] {
+  const children = new Map<string, Task[]>();
+  for (const t of list.tasks)
+    if (t.parentTaskId)
+      children.set(t.parentTaskId, [
+        ...(children.get(t.parentTaskId) ?? []),
+        t,
+      ]);
+  const matches = (t: Task, sectionId: string | null) => {
+    const search = view.search.toLocaleLowerCase();
+    return (
+      (!search || `${t.title} ${t.key}`.toLocaleLowerCase().includes(search)) &&
+      (!view.sections.length || view.sections.includes(sectionId)) &&
+      (!view.statuses.length || view.statuses.includes(t.status)) &&
+      (!view.priorities.length || view.priorities.includes(t.priority)) &&
+      (!view.assignees.length || view.assignees.includes(t.assigneeId)) &&
+      (view.completed === "all" ||
+        (view.completed === "only") === t.completed) &&
+      (view.due === "all" ||
+        (view.due === "no_date"
+          ? !t.dueDate
+          : !!t.dueDate &&
+            (view.due === "today"
+              ? t.dueDate === today
+              : view.due === "overdue"
+                ? t.dueDate < today
+                : t.dueDate > today)))
+    );
+  };
+  const groups: ViewGroup[] = [];
+  if (view.groupBy === "section")
+    for (const s of [
+      { id: null, title: list.sections.length ? "No section" : "Tasks" },
+      ...list.sections,
+    ])
+      groups.push({
+        id: `section:${s.id ?? "none"}`,
+        title: s.title,
+        sectionId: s.id,
+        sortBy:
+          view.sectionSorts.find((o) => o.sectionId === s.id)?.sortBy ??
+          view.sortBy,
+        tasks: [],
+        childMatches: {},
+      });
+  if (view.groupBy === "status")
+    for (const s of taskStatuses)
+      groups.push({
+        id: `status:${s}`,
+        title: statusLabels[s],
+        sortBy: view.sortBy,
+        tasks: [],
+        childMatches: {},
+      });
+  for (const task of list.tasks.filter((t) => !t.parentTaskId)) {
+    const childMatches = (children.get(task.id) ?? [])
+      .filter((t) => matches(t, task.sectionId))
+      .map((t) => t.id);
+    if (!matches(task, task.sectionId) && !childMatches.length) continue;
+    const id =
+      view.groupBy === "section"
+        ? `section:${task.sectionId ?? "none"}`
+        : view.groupBy === "status"
+          ? `status:${task.status}`
+          : `date:${task.dueDate ?? "none"}`;
+    let group = groups.find((g) => g.id === id);
+    if (!group) {
+      group = {
+        id,
+        title: task.dueDate ?? "No due date",
+        sortBy: view.sortBy,
+        tasks: [],
+        childMatches: {},
+      };
+      groups.push(group);
+    }
+    group.tasks.push(task);
+    if (!matches(task, task.sectionId))
+      group.childMatches[task.id] = childMatches;
+  }
+  const priority = { none: 0, low: 1, medium: 2, high: 3, urgent: 4 };
+  for (const group of groups)
+    group.tasks.sort((a, b) => {
+      const tie = a.position - b.position || a.id.localeCompare(b.id);
+      if (group.sortBy === "priority")
+        return priority[b.priority] - priority[a.priority] || tie;
+      if (group.sortBy === "updated")
+        return b.updatedAt.localeCompare(a.updatedAt) || tie;
+      if (group.sortBy === "due")
+        return a.dueDate === b.dueDate
+          ? tie
+          : !a.dueDate
+            ? 1
+            : !b.dueDate
+              ? -1
+              : a.dueDate.localeCompare(b.dueDate);
+      return tie;
+    });
+  if (view.groupBy === "date")
+    groups.sort((a, b) =>
+      a.id === "date:none"
+        ? 1
+        : b.id === "date:none"
+          ? -1
+          : a.id.localeCompare(b.id),
+    );
+  return groups;
 }

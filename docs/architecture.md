@@ -2,7 +2,7 @@
 
 Status: implemented web/API/MCP architecture with explicitly marked future scope
 
-Updated: October 16, 2026
+Updated: October 17, 2026
 
 The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication, new-account invitation delivery, and future packages remain planned.
 
@@ -114,7 +114,7 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 28 tools include:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 30 tools include:
 
 - `list_lists`, `get_list`, `get_task`, `create_list`, `rename_list`, `delete_list`.
 - `update_list`, `get_list_order`, `reorder_lists`.
@@ -180,3 +180,7 @@ Task snapshots include nullable `parentTaskId`. The same task services, routes a
 ## Calendar due dates
 
 The task row gains nullable PostgreSQL `date` in Drizzle string mode, exposed as `dueDate: string | null`. Shared contracts validate actual `YYYY-MM-DD` dates (years 1–9999); omission preserves and explicit null clears. Existing task services, HTTP routes and MCP tools retain permissions, idempotency, list versioning and live invalidation. Parent/child dates are independent; dates do not change order or completion. Viewer-local calendar days drive Today/Tomorrow/overdue, while date strings and display never shift with time zones. See [due dates](due-dates.md) for drafts, clock refresh, migration and verification.
+
+## Personal list views
+
+Account/list preferences use the separate `wuff_list_views` table and revision, never the shared list/task version. Shared contracts provide one pure filter/group/sort projection for web, HTTP and MCP. Authorized snapshots carry only the actor's preferences; the sealed live query includes only that actor's view revision. View writes serialize with membership changes under the existing list lock and operation receipts. Browser caches merge task and view revisions independently. See [personal views](personal-views.md) for concurrency, child context, calendar and sorting rules.

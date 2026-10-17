@@ -8,7 +8,7 @@ Work is mostly personal, with occasional collaboration. Enrich the shared backen
 
 GitHub should eventually synchronize through a real GitHub App, installation permissions, webhooks and live updates. Future developer tools should resolve a Wuff task, hand it to an explicitly authorized cloud agent, and track its GitHub work. The current milestone does not launch agents or grant repository access.
 
-## Stage 1 — work-task foundation (building now)
+## Stage 1 — work-task foundation (implemented)
 
 - Owner selects Work in list settings or through create/update list API/MCP; Simple remains the default. Switching back must not erase work metadata. Reject a downgrade while work-only active states, assignment, priority or references remain, so the simple view never conceals active workflow data.
 - Fixed initial work statuses: Todo, In progress, In review, Blocked, Done. Status and the existing completion flag must agree. Existing checkbox/MCP clients remain supported: complete means Done; reopen means Todo. Parent and child states remain independent.
@@ -44,7 +44,7 @@ Build a provider-neutral task execution contract: task/version, authorized repos
 
 ## Delivery state
 
-Stage 1 is implemented; release verification follows below. Stages 2–4 are planned, not implemented. Native implementation remains deferred until the shared model and selected work features are stable.
+Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and undergoing release verification; see [personal views](personal-views.md). Stages 3–4 remain planned. Native implementation remains deferred until the shared model and selected work features are stable.
 
 ## Stage 1 development verification
 
