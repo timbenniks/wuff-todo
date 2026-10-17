@@ -1,6 +1,6 @@
 # Wuff Todo implementation plan
 
-Status: work tasks, personal views, shared design language and GitHub synchronization implemented
+Status: web/MCP and GitHub synchronization released; online-only native mobile development started
 
 Updated: October 17, 2026
 
@@ -11,15 +11,15 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 - **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
 - **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 41 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
-- **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
+- **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native source assets are reused by the new local Expo app; installed-device validation is outstanding. See [mascot details](waffles-mascot.md).
 - **Typography and controls:** DM Sans is selected and self-hosted across web/MCP with real italics; shared web selects have inset chevrons and Your view has centered disclosures and tighter spacing. [Typography](typography-review.md) records the decision.
 - **Design language:** [shared controls, status tags and list-driven themes](design-language.md) unify web/MCP appearance. The selected list's named color drives app surfaces, text, controls and focus; semantic status/danger colors remain explicit. See that document for local checks and release limits.
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
-- **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
+- **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. On October 17, the user also selected online-only React Native/Expo mobile for now; native offline editing is deferred.
 - **Verification:** the GitHub release passed 39 unit tests, TypeScript, optimized web/MCP builds and all 22 isolated-development integration cases. Actual installed-App create/edit/close/reopen, signed production deliveries, suspension/reconnection and local MCP SDK controls passed. Production palette/view/italic-note smoke passed. Named ChatGPT/Codex interactive-host and physical-device checks remain separate. See [GitHub evidence](github-sync.md) and [verification](verification.md).
 - **GitHub:** owner-authorized personal-account repository bindings, explicit issue link/create, two-way title/notes/open-state, durable jobs/webhooks, conflicts/retries and related PR context. The App is installed only on the approved private test repository; production test links were removed after verification. External clients need explicit `github:manage` consent.
 - **Task notes:** formatted text and canonical Markdown are implemented for web/API/MCP, with an on-demand Tiptap toolbar, safe shared renderer and MCP App source editor. Website task actions now open editing directly, hide Markdown implementation details and use drag handles for tasks, sections and the sidebar; see [task controls](task-controls.md). Corgi wordplay covers app guidance and feedback. Release verification is recorded in [task content and voice](task-content.md).
-- **Later scope:** due times/reminders, new-account invitation delivery, native apps/auth, offline editing, arbitrary theme colors and dark mode. Custom SMTP remains an operational follow-up.
+- **Later scope:** due times/reminders, new-account invitation delivery, native distribution and remaining native feature UI, offline editing, arbitrary theme colors and dark mode. Custom SMTP remains an operational follow-up.
 - **Subtasks:** one level beneath a task, with inline names, independent completion, shared ordering and parent progress across web/API/MCP. Children follow their parent’s section; parent deletion cascades. See [subtasks](subtasks.md) for contracts and release evidence.
 - **Due dates:** optional calendar dates on tasks and subtasks, Today/Tomorrow/custom date/clear controls, due-today/overdue badges and MCP support. Manual order and independent parent/child state are preserved. See [due dates](due-dates.md).
 - **Mobile website:** compact list navigation, single-line phone task rows and rename fields, direct Delete/drag controls and a secondary-actions disclosure, and a compact scrolling rich-text toolbar. Utilities use quiet icons; primary actions have explicit filled buttons, and expanded actions have labels. Visible form fields now share shadcn-based Input/InputGroup components, one focus treatment and 44px grouped icon controls. Desktop task controls remain direct. See [mobile website layout](mobile-web-ui.md). Native/offline plans are unchanged.
@@ -46,13 +46,15 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Next planned direction: Stage 4 developer-agent handoff.** Stage 3 [GitHub synchronization](github-sync.md) is implemented and verified within its documented provider/client limits. Before implementing Stage 4, select the cloud-agent provider and define explicit launch authorization, repository/base-ref boundaries, run/cancellation/retry contracts and runtime/cost limits in [work-task direction](work-tasks-plan.md). No agent execution is implemented or launched by the GitHub release. Physical-device and independent-account checks remain distinct follow-ups.
+**Current milestone: online-only React Native/Expo for iPhone and Android.** The user selected native mobile and confirmed online-only operation on October 17. The initial local app, secure browser-based sign-in, separate native API authorization, list/task/sharing screens and shared design tokens are implemented. See [native mobile](native-mobile.md) for scope, architecture, run instructions and verification limits. Installed simulator/device auth, native UI review and distribution remain the next gate; a bundle build is not device proof.
+
+Stage 4 developer-agent handoff remains deferred because the user considers it too deep for the current scope. Preserve its outline in [work-task direction](work-tasks-plan.md); do not begin provider research or implementation until explicitly resumed. Stage 3 [GitHub synchronization](github-sync.md) is released within its documented limits. No agent execution is enabled.
 
 ### Completed design work and earlier milestones
 
 **Design language and themes — October 17, 2026:** the [shared design language](design-language.md) implements the [audit](design-language-audit.md): explicit action/status hierarchy, coherent spacing/alignment, labeled forms/management and seven list-driven palettes across the selected web/MCP experience. Pointer position picking supplements dragging; task deletion is confirmed consistently. See the feature document for fresh verification and release limits. The earlier [static specimen](design-language-specimen.html) remains the design proposal.
 
-**Work features before native — October 17, 2026:** the user selected mostly personal work with occasional collaboration, real GitHub App synchronization, and API/MCP parity for future developer tooling. The staged [work-task plan](work-tasks-plan.md) takes precedence over the earlier native-next sequence. Stage 1 work lists, metadata, keys and task pages are released. Stage 2 [personal views](personal-views.md) is released. GitHub synchronization and authorized agent execution follow separately.
+**Work features before native — October 17, 2026:** the user selected mostly personal work with occasional collaboration, real GitHub App synchronization, and API/MCP parity for future developer tooling. The staged [work-task plan](work-tasks-plan.md) takes precedence over the earlier native-next sequence. Stage 1 work lists, metadata, keys and task pages, Stage 2 [personal views](personal-views.md), and Stage 3 [GitHub synchronization](github-sync.md) are released. Stage 4 authorized agent execution is deferred by user decision.
 
 **Mobile website check — October 17, 2026:** a fresh synthetic local responsive review exercised capture, rename, subtasks, notes, calendar dates, completion/reopening and keyboard reordering. See [mobile usability check](mobile-usability-check.md) for measured 320/390px layouts, screenshots, prioritized findings and verification limits. The design release resolves childless-delete confirmation, list reload/Back context, labeled secondary actions and non-drag position picking. Narrow titles and quiet notes/progress cues remain usability follow-ups; perform physical iPhone/Android checks before detailed native planning. No native app or offline behavior was implemented by this review.
 
@@ -102,11 +104,9 @@ Exit criteria: all first-release acceptance criteria pass, supported clients are
 
 ## Phase 4: native mobile
 
-Add an Expo application targeting iPhone and Android. Reuse contracts, the API client, design tokens, and assets. Build native components with the same visual identity.
+**In progress, selected October 17, 2026.** The user confirmed online-only for now. `apps/mobile` uses React Native/Expo, shared public contracts/client/design packages and existing Waffles assets. The initial local slice includes secure sign-in/session restoration, authorized list/task/sharing operations and active-app polling/foreground refresh. See [native scope, auth and delivery gates](native-mobile.md).
 
-Before mobile implementation, revisit the PWA/offline deliberation confirmed October 15, 2026. The user has mixed experiences with PWAs and offline-first systems; compare online-only use, cached reads, and queued offline edits against real mobile use cases instead of defaulting to offline-first. Decide secure local storage/session handling, conflict and retry behavior, revoked access, account cleanup, synchronization, distribution, and release workflows. See [the architecture boundary](architecture.md#web-and-mobile-offline-boundary).
-
-This is future React Native/Expo design work. Preserve current website behavior; live updates for connected web views and changes made through ChatGPT/MCP are implemented. Widgets, notifications, and share extensions require separate scope decisions.
+No persistent task/list cache, offline mutation queue, notifications, widgets or share extensions are included. Native authentication uses the existing admitted website identity via a system-browser PKCE flow with separate native token audience. Installed-device validation, advanced native feature UI and signing/distribution remain outstanding. Website behavior stays online and unchanged.
 
 ## Phase 5: broader list personalization
 
@@ -126,7 +126,7 @@ Named shared list colors were delivered before mobile in the mature-list milesto
 | Cross-client freshness        | Polling/focus refresh implemented; live updates are implemented with polling/focus fallback                           |
 | Archive and deletion          | Owner-only permanent deletion and archive/restore implemented                                                         |
 | Corgi branding                | Waffles integrated; see mascot asset and verification documentation                                                   |
-| Native and offline support    | Revisit online-only, cached reads, and offline edits during React Native/Expo planning; website stays online          |
+| Native and offline support    | Online-only selected for Expo native apps; initial local slice implemented, installed-device proof pending            |
 
 ## Verification strategy
 

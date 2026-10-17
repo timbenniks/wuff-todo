@@ -482,3 +482,12 @@ export type GithubTaskState = {
   error: string | null;
   conflict: { wuff: GithubSyncFields; github: GithubSyncFields } | null;
 };
+
+// First-party native OAuth configuration, shared by client and authorization server.
+export const nativeClientId = "wuff-native-v1";
+export const nativeRedirectUri = "com.timbenniks.wufftodo://oauth/callback";
+export const nativeScopes = [
+  "lists:read",
+  "tasks:write",
+  "lists:manage",
+] as const;

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { webActor } from "@/lib/auth/server";
 import { sameOrigin, jsonInput, failure } from "@/lib/http";
 import { authorizationDetails, oauthServer } from "@/lib/oauth";
-import { appOrigin, mcpResource } from "@/lib/config";
+import { appOrigin } from "@/lib/config";
 export async function POST(request: Request) {
   try {
     sameOrigin(request);
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         .object({ query: z.string().max(8192), accept: z.boolean() })
         .parse(await jsonInput(request));
     const params = new URLSearchParams(query);
-    await authorizationDetails(params);
+    const details = await authorizationDetails(params);
     if (!accept) {
       const redirect = new URL(params.get("redirect_uri")!);
       redirect.searchParams.set("error", "access_denied");
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return Response.json({ redirect: redirect.href });
     }
     const response = new OAuth2Server.Response();
-    await oauthServer().authorize(
+    await oauthServer(details.resource).authorize(
       new OAuth2Server.Request({
         method: "GET",
         headers: {},
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       response,
       {
         authenticateHandler: {
-          handle: async () => ({ id: actor.id, resource: mcpResource() }),
+          handle: async () => ({ id: actor.id, resource: details.resource }),
         },
       },
     );

@@ -217,6 +217,21 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
   });
   const token = await tokenResponse.json();
   assert.equal(
+    (
+      await fetch(`${origin}/api/mobile`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "listLists" }),
+      })
+    ).status,
+    401,
+    "An MCP token cannot authorize the native API",
+  );
+
+  assert.equal(
     tokenResponse.status,
     200,
     JSON.stringify({ error: token.error }),

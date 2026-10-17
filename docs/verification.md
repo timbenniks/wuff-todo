@@ -2,6 +2,17 @@
 
 Updated: October 17, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Native mobile development — October 17, 2026
+
+See [native mobile](native-mobile.md) for the new local Expo slice, separate authorization audience, secure storage, online-only boundary and device/distribution gates.
+
+- `pnpm check` passed: all workspace/root TypeScript checks, 48 unit tests and optimized web/MCP builds. Nine new unit tests cover native audience/redirect policy, single-flight token rotation, late responses/refreshes after sign-out, invalid grants, secure-storage failures and exact-payload ambiguous-write retries. The final mobile refresh adjustment was additionally typechecked and exported after this full check.
+- `pnpm test:integration` passed all 24 isolated-development tests in one serial run (273.6 seconds). Two new real HTTP/native OAuth cases cover system-browser authorization protocol, separate audiences, strict callback/resource policy, failed PKCE, single-use codes, private/shared permissions, owner-only management, membership revocation, safe creation retries, stale writes, read-only grants, denied GitHub scope, refresh rotation/replay and connection revocation. Existing MCP tests also prove an MCP bearer cannot authorize the native adapter. These are synthetic protocol tests, not an installed browser-to-app callback or Keychain/Keystore test.
+- `pnpm build:mobile` exported final iOS and Android Metro/Hermes bundles with source maps. The automated graph check found no web/server/domain/database modules or selected local secret values. This is a bounded packaging check, not a general security certification. CI now includes the same export/check command; inspect the remote run after pushing this change before claiming remote CI passed.
+- `expo install --check`, frozen-lockfile installation and Expo native config introspection passed. Introspection confirmed identifiers, registered iOS callback scheme, SecureStore plugin and Android HTTPS transport default. Local HTTP is enabled only when building for a loopback backend; installed native transport behavior is still unverified.
+- Native synthetic list deletion was independently reread as not found; native owner/editor/read-only grants were revoked. No production database migration, deployment, real-user task/list mutation, EAS registration/build or store submission was performed. Existing web production release evidence below remains dated evidence for its recorded source.
+- The machine has only Xcode Command Line Tools and no available Android `adb`; neither simulator nor device app execution, native visual/keyboard/accessibility review, secure device-storage behavior nor a signed binary is certified. The next gate is an installed development build with the scenarios in [native mobile](native-mobile.md).
+
 ## Latest design release
 
 Source `4c80aea` passed [CI 39016658429](https://github.com/timbenniks/wuff-todo/actions/runs/39016658429); select/disclosure refinement `c9578d9` passed [CI 39016981432](https://github.com/timbenniks/wuff-todo/actions/runs/39016981432). Local evidence covers 36 unit tests, 21 integration tests for the design implementation, optimized builds/typecheck, seven palettes, responsive web/MCP, DM Sans upright/italic loading and targeted view-control save/keyboard checks. These were separate bounded runs, not one uninterrupted full suite after every styling change.
@@ -14,7 +25,7 @@ In this chat, Wuff MCP tools were absent from the exposed tool catalog and plugi
 
 October 17 design language and list themes: [implementation and fresh evidence](design-language.md) records the shared web/MCP action/status system, responsive layout repairs and seven list-driven app palettes. Local implementation checks are distinct from production, named-host and physical-device verification.
 
-October 17 work-task foundation: [delivery plan and evidence](work-tasks-plan.md) records the selected pre-native sequence, shared web/API/MCP implementation, 29 unit tests, 20 live development integration tests and responsive browser/SDK-host checks. GitHub sync and agent execution remain planned.
+October 17 work-task foundation: [delivery plan and evidence](work-tasks-plan.md) records the selected pre-native sequence, shared web/API/MCP implementation, 29 unit tests, 20 live development integration tests and responsive browser/SDK-host checks. This historical Stage 1 evidence predates the now-released GitHub sync; agent execution remains deferred.
 
 October 17 auth rendering fix: see [session reads during server rendering](auth-rendering.md) for the production cookie-write failure, read-only page adapter, preserved Route Handler renewal and current regression/release evidence.
 

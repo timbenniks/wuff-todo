@@ -27,6 +27,7 @@
     "@tiptap/starter-kit": "3.32.0",
     "@wuff/contracts": "workspace:*",
     "@wuff/db": "workspace:*",
+    "@wuff/design": "workspace:*",
     "@wuff/domain": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -45,7 +46,8 @@
     "@types/markdown-it": "^14.2.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": "22.x"

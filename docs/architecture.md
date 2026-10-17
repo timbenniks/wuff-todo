@@ -58,6 +58,8 @@ AI client / MCP App ────── MCP tools ─┘
 
 ## Identity and authorization
 
+Native implementation started October 17: the online-only Expo app reuses admitted Neon identity through browser PKCE, a fixed first-party callback and a separate `/api/mobile` token audience. The bearer-only adapter delegates to existing domain services; no managed-auth plugin or schema migration is introduced. See [native architecture and limits](native-mobile.md).
+
 Neon Auth is the chosen identity system. Validate the current managed service capabilities before selecting an integration. Old Neon examples based on Stack Auth are not evidence for the current managed Better Auth implementation.
 
 Website sessions, future native sign-in, and delegated MCP authorization need explicit integration paths. A website login cookie alone does not authorize an external MCP client.
@@ -69,7 +71,7 @@ The first technical proof must establish:
 3. An external MCP client can discover authorization, obtain consent and appropriately scoped tokens, and call a protected tool.
 4. The server validates token issuer, audience, expiry, and scopes and maps identity to the correct application user.
 5. A user can revoke a client connection.
-6. The selected integration has a viable native authentication path; mobile implementation remains deferred.
+6. The selected integration has a viable native authentication path; the initial native implementation is local and installed-device validation remains outstanding.
 
 The implemented OAuth authorization layer delegates MCP access while preserving Neon identity. It uses application-owned OAuth tables and does not install upstream Better Auth plugins into the managed service.
 
@@ -135,15 +137,11 @@ MCP App packaging must respect host sandboxing and resource policies. Do not emb
 
 ## Web and mobile offline boundary
 
+**October 17 decision:** the user selected online-only native iPhone/Android apps for now. The alternatives below retain earlier planning context; offline persistence/queued edits are deferred, not an implementation prerequisite. See [native mobile](native-mobile.md).
+
 Confirmed October 15, 2026: preserve the website’s current online behavior. Its manifest and icon assets provide identity; do not extend them into offline-first PWA behavior. No service worker, durable offline task cache, or disconnected mutation queue is part of the current web scope. Transient in-memory list snapshots and retrying an uncertain online request are separate from offline editing. Live updates and reconnect reconciliation are implemented online features.
 
-When React Native/Expo mobile planning starts, explicitly compare:
-
-- Online-only operations with clear network failures.
-- Cached read access while offline, with visible freshness and access/privacy rules.
-- Queued offline edits, including retry/idempotency, conflict resolution, and honest pending/error states.
-
-Choose based on actual iPhone/Android needs and the user’s experience with PWA/offline tradeoffs. Native offline-first behavior is not decided or promised. Evaluate secure local storage, account switching/sign-out cleanup, and what happens to cached data or queued edits after shared-list access is revoked. Record the decision before implementing persistence or synchronization.
+The native client follows the same online-only boundary. SecureStore persists only authentication credentials, scoped by server origin; snapshots and unsaved edits remain in memory. Foreground refresh and active polling use the bearer-only native adapter. Sign-out clears local state and attempts remote revocation. Offline read caches and queued writes require a separate future decision covering privacy, revocation, conflict handling and cleanup. See [native authentication and refresh](native-mobile.md).
 
 ## Environments and delivery
 

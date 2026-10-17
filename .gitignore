@@ -12,3 +12,8 @@ playwright-report/
 .mcp/
 .agents/skills/
 skills-lock.json
+
+# Expo generated projects and local state
+.expo/
+apps/mobile/ios/
+apps/mobile/android/

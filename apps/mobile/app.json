@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Wuff Todo",
+    "slug": "wuff-todo",
+    "version": "0.1.0",
+    "scheme": "com.timbenniks.wufftodo",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.timbenniks.wufftodo"
+    },
+    "android": {
+      "package": "com.timbenniks.wufftodo",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#eaf1fb"
+      },
+      "permissions": []
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-secure-store",
+      "expo-font",
+      "expo-build-properties"
+    ],
+    "experiments": {
+      "autolinkingModuleResolution": true
+    }
+  }
+}

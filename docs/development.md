@@ -101,7 +101,7 @@ MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity.
 | `/.well-known/oauth-authorization-server`                              | Authorization-server discovery                                |
 | `/oauth/register`, `/oauth/authorize`, `/oauth/token`, `/oauth/revoke` | Client registration, consent, tokens, revocation              |
 
-Website API mutations require a same-origin session. External MCP clients use bearer tokens scoped to the MCP resource. HTTP API bearer authentication for future mobile clients remains future work. An OpenAPI document has not been added yet.
+Website API mutations require a same-origin session. External MCP clients use bearer tokens scoped to the MCP resource. The new `/api/mobile` adapter accepts separate native-audience bearer tokens; cookie-only `/api/v1` routes remain unchanged. See [native mobile](native-mobile.md). An OpenAPI document has not been added yet.
 
 ## Migrations and deployment
 
@@ -175,3 +175,9 @@ Apply additive migration `0008_thin_pyro.sql` using the existing direct-connecti
 See [GitHub sync](github-sync.md) for the auth model, eleven tools, contracts, queue behavior and release evidence. Apply additive migration `0009_rainy_red_wolf.sql` with the existing direct-connection runner, development before production. Configure the server-only GITHUB_* values in `.env.example`; GITHUB_TOKEN_SECRET must be stable and environment-specific for encrypted credentials. No GITHUB_* value belongs in a browser bundle. Expiring GitHub App user tokens are supported; optional signing-key installation tokens require GITHUB_APP_PRIVATE_KEY_BASE64. The registered App's exact callbacks are production `/api/github/callback` and loopback `http://localhost:3000/api/github/callback`; wildcards/device flow remain off. Signed webhooks target production `/api/github/webhook`.
 
 The verified installation is restricted to the disposable private `timbenniks/wuff-github-sync-test` repository. Do not silently expand it to the application's code repository. The new `github:manage` OAuth permission needs explicit renewed client consent. The daily `/api/internal/github` recovery cron uses the existing CRON_SECRET; incoming events/writes also wake the durable worker. Preserve failed/uncertain operations and use Reconcile rather than recreating issues.
+
+## Native mobile development
+
+React Native/Expo online-only development is in `apps/mobile`; [native mobile](native-mobile.md) records the full auth design, feature scope, simulator/device setup and release limits. Run `pnpm dev:mobile` for Metro after installing a development binary; `pnpm --filter @wuff/mobile ios` or `android` requires the respective toolchain. `pnpm build:mobile` exports both platforms without signing or distributing binaries. CI checks both exports after `pnpm check`.
+
+The only mobile environment input is the public `EXPO_PUBLIC_WUFF_ORIGIN`. Reuse the existing isolated backend and align its `WUFF_ORIGIN` exactly. Never expose database/auth/provider secrets in a mobile bundle. The fixed first-party OAuth registration uses existing app tables and requires no migration. No production deployment or EAS project registration is implied by local native work.

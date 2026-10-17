@@ -7,3 +7,4 @@ export function appOrigin() {
   return "http://localhost:3000";
 }
 export const mcpResource = () => `${appOrigin()}/api/mcp`;
+export const nativeResource = () => `${appOrigin()}/api/mobile`;

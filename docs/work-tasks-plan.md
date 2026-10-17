@@ -40,13 +40,15 @@ Exit: signed webhook tests, duplicates/reordering, issue creation/link/edit/clos
 
 Research: GitHub's [webhook best practices](https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks), [signature validation](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [App permissions](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app).
 
-## Stage 4 — developer-agent handoff
+## Stage 4 — developer-agent handoff (deferred)
+
+User decision, October 17, 2026: wait with developer-agent handoff; it is too deep for the current scope. The outline below is retained for later. Provider research and implementation should wait until the user explicitly resumes this stage. The user subsequently selected online-only React Native/Expo mobile; see [native mobile](native-mobile.md).
 
 Build a provider-neutral task execution contract: task/version, authorized repository and base ref, acceptance criteria, run identity, status, logs/artifact references and PR links. Model runs separately from task workflow status; a failed run need not mark the task Done or Blocked automatically. Require explicit launch authorization, scoped repository credentials, retry-safe creation, cancellation and cost/runtime limits. Research the selected provider's supported cloud-agent API at implementation time. Keep task content as untrusted work input rather than permission to execute tools or reveal secrets. Keep merges/deployments as separate authorized operations.
 
 ## Delivery state
 
-Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stage 3 GitHub synchronization is implemented and released within its documented scope; Stage 4 remains planned. Native implementation remains deferred until the shared model and selected work features are stable.
+Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stage 3 GitHub synchronization is implemented and released within its documented scope; Stage 4 is deferred by user decision. The user subsequently selected online-only React Native/Expo mobile; the initial local slice and next delivery gate are recorded in [native mobile](native-mobile.md).
 
 ## Stage 1 development verification
 

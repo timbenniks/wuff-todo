@@ -10,6 +10,12 @@ import {
 } from "@wuff/db";
 import { AppError, scopes } from "@wuff/contracts";
 import { appOrigin, mcpResource } from "./config";
+import {
+  nativeClientId,
+  nativeRedirectUri,
+  nativeScopes,
+  validResourceClient,
+} from "./native-policy";
 
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -37,17 +43,24 @@ async function clientById(id: string) {
     : null;
 }
 
-export function oauthServer() {
+export function oauthServer(resource = mcpResource()) {
   const model: OAuth2Server.AuthorizationCodeModel &
     OAuth2Server.RefreshTokenModel = {
-    getClient: async (id, secret) => (secret ? null : clientById(id)),
+    getClient: async (id, secret) =>
+      secret || !validResourceClient(id, resource, appOrigin())
+        ? null
+        : clientById(id),
     generateAccessToken: async () => randomToken(),
     generateRefreshToken: async () => randomToken(),
     generateAuthorizationCode: async () => randomToken(),
     validateScope: async (user, _client, requested) => {
       if (!(await admitted(user.id))) return false;
       return requested?.length &&
-        requested.every((s) => scopes.includes(s as (typeof scopes)[number])) &&
+        requested.every((s) =>
+          (resource === mcpResource() ? scopes : nativeScopes).some(
+            (allowed) => allowed === s,
+          ),
+        ) &&
         requested.includes("lists:read")
         ? requested
         : false;
@@ -120,7 +133,7 @@ export function oauthServer() {
           and(
             eq(oauthTokens.accessHash, digest(token)),
             eq(oauthTokens.revoked, false),
-            eq(oauthTokens.resource, mcpResource()),
+            eq(oauthTokens.resource, resource),
             eq(oauthTokens.issuer, appOrigin()),
           ),
         );
@@ -141,7 +154,7 @@ export function oauthServer() {
           and(
             eq(oauthTokens.refreshHash, digest(token)),
             eq(oauthTokens.revoked, false),
-            eq(oauthTokens.resource, mcpResource()),
+            eq(oauthTokens.resource, resource),
             eq(oauthTokens.issuer, appOrigin()),
           ),
         );
@@ -191,8 +204,8 @@ export function oauthRequest(request: Request, body?: Record<string, unknown>) {
     body,
   });
 }
-export async function bearerActor(request: Request) {
-  const token = await oauthServer().authenticate(
+export async function bearerActor(request: Request, resource = mcpResource()) {
+  const token = await oauthServer(resource).authenticate(
     oauthRequest(request),
     new OAuth2Server.Response(),
   );
@@ -225,7 +238,12 @@ export async function authorizationDetails(params: URLSearchParams) {
       "invalid_request",
       "A valid state parameter is required.",
     );
-  if (params.get("resource") !== mcpResource())
+  const resource = params.get("resource") ?? "";
+  if (
+    !validResourceClient(client.id, resource, appOrigin()) ||
+    (client.id === nativeClientId &&
+      params.get("redirect_uri") !== nativeRedirectUri)
+  )
     throw new AppError(
       "invalid_target",
       "This authorization is for a different resource.",
@@ -233,10 +251,15 @@ export async function authorizationDetails(params: URLSearchParams) {
   const requested = (params.get("scope") ?? "").split(" ").filter(Boolean);
   if (
     !requested.includes("lists:read") ||
-    requested.some((s) => !scopes.includes(s as (typeof scopes)[number]))
+    requested.some(
+      (s) =>
+        !(client.id === nativeClientId ? nativeScopes : scopes).some(
+          (allowed) => allowed === s,
+        ),
+    )
   )
     throw new AppError("invalid_scope", "Choose supported Wuff permissions.");
-  return { client, requested };
+  return { client, requested, resource };
 }
 export function authorizationMetadata() {
   const origin = appOrigin();

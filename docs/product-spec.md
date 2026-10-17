@@ -12,6 +12,8 @@ The first release focuses on lists, tasks, and ordering. It should feel fast and
 
 ## Confirmed decisions
 
+October 17 native decision: start React Native/Expo for iPhone and Android, online-only for now. The initial local slice and remaining native feature/device/distribution gates are in [native mobile](native-mobile.md). Offline task storage and queued edits remain deferred.
+
 October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) adds optional work lists before native apps, mostly for personal work with occasional sharing. All shipped features require web/API/MCP parity. Real [GitHub App issue sync](github-sync.md) is implemented with final production release validation recorded separately; cloud-agent execution is a future explicitly authorized integration. Historical first-release deferrals below do not override this selected staged scope.
 
 - Access is invitation-only. Public self-registration is unavailable.
@@ -112,7 +114,7 @@ Concurrent edits must have a defined outcome. An outdated screen must not silent
 
 **Confirmed web/offline boundary — October 15, 2026:** keep the website’s current online behavior. Do not add an offline-first PWA, service-worker caching, persistent offline list storage, or queued offline writes. Existing manifest, icons, and home-screen identity stay as they are; those assets do not imply offline support. Network failures must remain visible, and unsaved changes must never appear confirmed.
 
-Revisit offline behavior when planning the React Native/Expo iPhone and Android apps. The user has mixed experiences with PWAs and offline-first systems, so native offline support is an open product decision, not an assumed requirement. Compare online-only operation, cached read access, and queued offline editing against actual mobile use cases before choosing. This deliberation does not add offline behavior to the implemented live updates for connected web views, including changes made through MCP.
+**Native decision — October 17, 2026:** React Native/Expo iPhone and Android development has started with online-only operation for now. Persist only authentication credentials securely on the device. List/task reads and writes require the server; offline task caches and queued edits are deferred. Native delivery scope and installed-device/distribution gates are recorded in [native mobile](native-mobile.md).
 
 ## Future scope
 
@@ -142,4 +144,4 @@ The first end-to-end scenario is a shared grocery list: one user creates and sha
 
 ## Personal list views
 
-Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization and native apps remain later milestones.
+Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization is released; online-only native apps are now in development.

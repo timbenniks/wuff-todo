@@ -1,7 +1,8 @@
 import OAuth2Server from "@node-oauth/oauth2-server";
 import { and, eq } from "drizzle-orm";
 import { database, oauthCodes, oauthTokens } from "@wuff/db";
-import { mcpResource } from "@/lib/config";
+import { appOrigin } from "@/lib/config";
+import { validResourceClient } from "@/lib/native-policy";
 import { digest, oauthRequest, oauthServer } from "@/lib/oauth";
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,14 @@ export async function POST(request: Request) {
     for (const key of new Set(params.keys()))
       if (params.getAll(key).length !== 1)
         throw new OAuth2Server.InvalidRequestError("Duplicate parameter.");
-    if (params.get("resource") !== mcpResource())
+    const requestedResource = params.get("resource") ?? "";
+    if (
+      !validResourceClient(
+        params.get("client_id") ?? "",
+        requestedResource,
+        appOrigin(),
+      )
+    )
       throw new OAuth2Server.InvalidRequestError(
         "A matching resource is required.",
       );
@@ -43,9 +51,9 @@ export async function POST(request: Request) {
                 eq(oauthTokens.revoked, false),
               ),
             );
-    if (resource[0]?.resource !== mcpResource())
+    if (resource[0]?.resource !== requestedResource)
       throw new OAuth2Server.InvalidGrantError("Invalid grant.");
-    const token = await oauthServer().token(
+    const token = await oauthServer(requestedResource).token(
       oauthRequest(request, Object.fromEntries(params)),
       new OAuth2Server.Response(),
     );
