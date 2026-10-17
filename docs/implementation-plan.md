@@ -43,7 +43,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Work features before native — October 17, 2026:** the user selected mostly personal work with occasional collaboration, real GitHub App synchronization, and API/MCP parity for future developer tooling. The staged [work-task plan](work-tasks-plan.md) takes precedence over the earlier native-next sequence. Stage 1 work lists, metadata, keys and task pages are released. Stage 2 [personal views](personal-views.md) is implemented and undergoing release verification. GitHub synchronization and authorized agent execution follow separately.
+**Work features before native — October 17, 2026:** the user selected mostly personal work with occasional collaboration, real GitHub App synchronization, and API/MCP parity for future developer tooling. The staged [work-task plan](work-tasks-plan.md) takes precedence over the earlier native-next sequence. Stage 1 work lists, metadata, keys and task pages are released. Stage 2 [personal views](personal-views.md) is released. GitHub synchronization and authorized agent execution follow separately.
 
 **Mobile website check — October 17, 2026:** a fresh synthetic local responsive review exercised capture, rename, subtasks, notes, calendar dates, completion/reopening and keyboard reordering. See [mobile usability check](mobile-usability-check.md) for measured 320/390px layouts, screenshots, prioritized findings and verification limits. Resolve the review's recovery/navigation/discoverability decisions and perform physical iPhone/Android checks before detailed native planning. No native app or offline behavior was implemented by this review.
 

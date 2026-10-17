@@ -41,3 +41,11 @@ The disposable development list/task was removed and confirmed inaccessible. Loc
 ## Production migration
 
 Migration `0008_thin_pyro.sql` was applied through the existing production direct connection. Before/after hashes of every existing list, task and membership row matched; counts stayed at two lists, fifteen tasks and one membership. No auth-managed tables were changed. Deployment/browser evidence follows separately.
+
+## Production release
+
+Feature source `ab8258885fe96eab3c410f3cb0b43592cbe08ee5` passed GitHub run `39012834694`. The production smoke exposed a phone-only detailed-row grid placement issue. Follow-up source `0d15dccee5e316adc019969c713d32d9bc4c1c4e` makes metadata and child-match explanations span every grid column and removes an obsolete Completed-bucket hint. GitHub run `39013079468` passed for this source. Its final `pnpm check` passed all 34 unit tests, TypeScript and optimized builds; the browser credential scan passed again. The 21-case backend/HTTP/MCP integration run above remains applicable; this follow-up changes presentation only.
+
+Deployment `dpl_7asfc7hFYEZraSPFaj1TyNLuod5B` is READY in `fra1` and was verified at the canonical production URL. An authenticated browser created a private disposable Work list/task, saved title search, status grouping, priority sorting, hidden completion and detailed layout, then collapsed a group. Reloading and reopening that list restored the saved choices and collapsed state. Detailed metadata measured 350px wide/24px high at a 390px viewport and 280px/24px at 320px; document widths matched both viewports. [Production screenshot](screenshots/personal-views-production.png) contains only the disposable fixture.
+
+An independent authorized server read verified all saved preferences, personal view revision 3, unchanged shared revision 2 and one projected task. Cleanup deleted the disposable list and confirmed it inaccessible; its preference row cascaded away. Production returned to two lists, fifteen tasks and one membership. The browser tab was closed and viewport reset. Actual production Codex/ChatGPT catalog refresh and physical-device interaction remain client/user checks; local authenticated protocol and official SDK-host coverage are recorded above.

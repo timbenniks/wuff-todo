@@ -44,7 +44,7 @@ Build a provider-neutral task execution contract: task/version, authorized repos
 
 ## Delivery state
 
-Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and undergoing release verification; see [personal views](personal-views.md). Stages 3–4 remain planned. Native implementation remains deferred until the shared model and selected work features are stable.
+Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stages 3–4 remain planned. Native implementation remains deferred until the shared model and selected work features are stable.
 
 ## Stage 1 development verification
 
