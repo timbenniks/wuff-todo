@@ -68,6 +68,22 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     "Managed auth rejects direct public signup too",
   );
   const cookie = await login();
+  // Rendering must not attempt cookie writes, even without a usable session cache.
+  const uncachedCookie = cookie
+    .split("; ")
+    .filter((part) => !part.startsWith("__Secure-neon-auth.session_data="))
+    .join("; ");
+  for (const [path, content] of [
+    ["/lists", "Your list pack"],
+    ["/connections", "Connected AI clients"],
+  ]) {
+    const page = await fetch(`${origin}${path}`, {
+      headers: { Cookie: uncachedCookie },
+      redirect: "manual",
+    });
+    assert.equal(page.status, 200, `${path} renders an uncached real session`);
+    assert.ok((await page.text()).includes(content));
+  }
   for (let i = 0; i < 2; i++)
     assert.equal(
       (await fetch(`${origin}/api/v1/lists`, { headers: { Cookie: cookie } }))
@@ -84,6 +100,12 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     403,
   );
   assert.equal((await post("/api/auth/sign-out", {}, cookie)).status, 200);
+  const signedOutPage = await fetch(`${origin}/lists`, {
+    headers: { Cookie: cookie },
+    redirect: "manual",
+  });
+  assert.equal(signedOutPage.status, 307);
+  assert.equal(signedOutPage.headers.get("Location"), "/sign-in");
   assert.equal(
     (await fetch(`${origin}/api/v1/lists`, { headers: { Cookie: cookie } }))
       .status,

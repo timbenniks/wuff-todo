@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { authorizationDetails } from "@/lib/oauth";
-import { webActor, webIdentity } from "@/lib/auth/server";
+import { pageActor, webIdentity } from "@/lib/auth/server";
 import { Corgi } from "@/components/corgi";
 import { Consent } from "./consent";
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export default async function AuthorizePage({
       `/sign-in?next=${encodeURIComponent(`/oauth/authorize?${params}`)}`,
     );
   try {
-    await webActor();
+    await pageActor();
   } catch {
     return (
       <main className="max-w-md mx-auto p-8">

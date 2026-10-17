@@ -53,6 +53,8 @@ The activation test additionally requires a dedicated synthetic identity, provis
 
 ## Authentication boundary
 
+Server Components must use `webIdentity()` / `pageActor()` for read-only upstream session validation. Only Route Handlers use the writable `webActor()` / `neonAuth()` path for session renewal and cookie clearing. See [session rendering](auth-rendering.md) for the production cookie-write failure, fix and regression evidence.
+
 The first milestone supports email/password login for pre-provisioned identities. Public email/password sign-up is disabled in managed Neon Auth on both main and development, and rejected by the application's auth proxy. Default shared Google OAuth was removed from both branches; magic-link and phone login remain disabled. The proxy exposes email sign-in, session reading, sign-out, and admission-gated password activation/recovery.
 
 An authenticated Neon identity also needs an enabled `wuff_users` profile before it can access lists, receive an OAuth grant, or call MCP tools. Identity alone never grants application access. Testing separately proved that an authenticated, unadmitted identity is denied.

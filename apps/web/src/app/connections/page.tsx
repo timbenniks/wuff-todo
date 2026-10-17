@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { webActor } from "@/lib/auth/server";
+import { pageActor } from "@/lib/auth/server";
 import { Connections } from "./connections";
 import { mcpResource } from "@/lib/config";
 export const dynamic = "force-dynamic";
 export default async function ConnectionsPage() {
   try {
-    await webActor();
+    await pageActor();
   } catch {
     redirect("/sign-in");
   }

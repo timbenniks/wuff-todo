@@ -1,6 +1,6 @@
 import { wuffError } from "@/lib/copy";
 import { redirect } from "next/navigation";
-import { webActor, webIdentity } from "@/lib/auth/server";
+import { pageActor, webIdentity } from "@/lib/auth/server";
 import { AppError } from "@wuff/contracts";
 import type { TodoList } from "@wuff/contracts";
 import { getList, listLists, listInvitations } from "@wuff/domain";
@@ -12,7 +12,7 @@ export default async function ListsPage() {
   try {
     const identity = await webIdentity();
     if (!identity) redirect("/sign-in");
-    const actor = await webActor();
+    const actor = await pageActor();
     const [initialLists, initialInvitations] = await Promise.all([
       listLists(actor),
       listInvitations(actor),
