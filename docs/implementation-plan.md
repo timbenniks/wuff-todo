@@ -2,7 +2,7 @@
 
 Status: web, sharing, MCP, live updates, and mature lists implemented
 
-Updated: October 16, 2026
+Updated: October 17, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification and native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
@@ -41,6 +41,8 @@ Neon Realtime is enabled on the existing Vercel-managed project’s isolated dev
 Verified scenarios: synthetic shared-list changes arrive through the live transport; MCP additions/completion update an open shared and private web view; access revocation removes the open list; subscription renewal, dropped-connection recovery, and pending-input preservation work. Actual ChatGPT host usage remains a separate check; authenticated MCP protocol tests do not certify every client.
 
 ## Next milestone
+
+**Mobile website check — October 17, 2026:** a fresh synthetic local responsive review exercised capture, rename, subtasks, notes, calendar dates, completion/reopening and keyboard reordering. See [mobile usability check](mobile-usability-check.md) for measured 320/390px layouts, screenshots, prioritized findings and verification limits. Resolve the review's recovery/navigation/discoverability decisions and perform physical iPhone/Android checks before detailed native planning. No native app or offline behavior was implemented by this review.
 
 The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Formatted task notes and Markdown are now implemented in [task content and voice](task-content.md); the user chose formatted text first. Private images are implemented in [private task images](task-images.md), with release verification recorded there. One-level subtasks are implemented in [subtasks](subtasks.md). Calendar due dates are implemented in [due dates](due-dates.md). Next: plan React Native/Expo mobile and validate native auth; decide offline needs before building queued edits. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
 
