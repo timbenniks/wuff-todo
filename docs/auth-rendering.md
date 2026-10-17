@@ -19,7 +19,15 @@ Pages alone do not extend a session's lifetime. Normal list polling/live API req
 - The development auth/MCP integration tests exercised real Neon sign-in, uncached lists/connections server rendering, signed-out page redirect, closed signup, unadmitted account rejection, OAuth consent, PKCE, scopes, refresh rotation and client revocation. An initial added assertion incorrectly expected CSS-uppercase text in raw HTML; correcting it to the source text passed the focused login rerun. The OAuth/MCP case passed unchanged.
 - A fabricated invalid cookie did not reproduce the intermittent failure before the change. The forced upstream cookie response in the regression test specifically covers the SDK write branch identified in the production stack. No claim is made that a naturally aged production session was reproduced locally.
 
-The complete auth/MCP integration file then passed both tests in one run against the optimized Next.js runtime on the isolated development branch (38.2 seconds). Its disposable list and client grants were cleaned up by the existing test flow. This is protocol/server-rendered HTTP evidence, not a real ChatGPT host test. Production release evidence follows below after deployment.
+The complete auth/MCP integration file then passed both tests in one run against the optimized Next.js runtime on the isolated development branch (38.2 seconds). Its disposable list and client grants were cleaned up by the existing test flow. This is protocol/server-rendered HTTP evidence, not a real ChatGPT host test.
+
+## Production release
+
+Source `955534feeeb4f65f8911f5f9db1fe35d8dbe4423` was deployed through Vercel CLI as `dpl_HvHLzZWoQbHfC21P6nEZeRTeU95b`, READY and aliased to `wuff-todo.vercel.app`. A subsequent inspection of the canonical alias confirmed that deployment and actual function region `fra1`.
+
+The existing signed-in Chrome production session loaded Connections, navigated to Lists and fully reloaded Lists successfully. The active-task list rendered on both list loads without the cookie-write/application error. Connections loaded its existing client record through the protected API. No task content, membership or AI connection was changed. Anonymous HTTP checks returned 200 for sign-in, 401 for lists API/MCP, and 307 to sign-in for Lists. The temporary local server was stopped and the browser review tab closed.
+
+These checks verify the deployed page and API paths with an existing session. The forced renewal/clear branch is covered by the SDK regression test; a naturally aged production renewal was not independently forced. GitHub verification is tracked in [run 39009476123](https://github.com/timbenniks/wuff-todo/actions/runs/39009476123).
 
 ## Sources
 
