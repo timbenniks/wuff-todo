@@ -422,7 +422,7 @@ export function TaskRow({
         )}
       />
       {detailed && (
-        <p className="basis-full text-xs text-slate-500 pl-8 pb-2 break-words">
+        <p className="col-span-full min-w-0 basis-full text-xs text-slate-500 pl-8 pb-2 break-words">
           {task.key} · {statusLabels[task.status]} ·{" "}
           {task.priority === "none"
             ? "No priority"
@@ -434,7 +434,7 @@ export function TaskRow({
         </p>
       )}
       {!!matchedChildren?.length && (
-        <p className="basis-full text-xs text-primary pl-8">
+        <p className="col-span-full min-w-0 basis-full text-xs text-primary pl-8">
           Shown because {matchedChildren.length} subtasks match your filters.
           Open subtasks to see the context.
         </p>

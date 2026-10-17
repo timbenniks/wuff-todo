@@ -204,7 +204,7 @@ export function TaskGroups({
       <p className="text-sm text-slate-500 mb-5">
         {active.filter((t) => !t.completed).length === 0 &&
         list.tasks.some((t) => t.parentTaskId && !t.completed)
-          ? "Main tasks fetched! Some subtasks still need a paw in Completed."
+          ? "Main tasks fetched! Some subtasks still need a paw."
           : taskCount(active.filter((t) => !t.completed).length)}
       </p>
       <p role="status" className="text-xs text-slate-500 mb-3">
