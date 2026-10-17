@@ -1,6 +1,14 @@
 # Implementation verification
 
-Date: October 15, 2026
+Updated: October 17, 2026. Older sections retain their milestone-specific evidence and test counts.
+
+## Latest design release
+
+Source `4c80aea` passed [CI 39016658429](https://github.com/timbenniks/wuff-todo/actions/runs/39016658429); select/disclosure refinement `c9578d9` passed [CI 39016981432](https://github.com/timbenniks/wuff-todo/actions/runs/39016981432). Local evidence covers 36 unit tests, 21 integration tests for the design implementation, optimized builds/typecheck, seven palettes, responsive web/MCP, DM Sans upright/italic loading and targeted view-control save/keyboard checks. These were separate bounded runs, not one uninterrupted full suite after every styling change.
+
+October 17 inspection matched the GitHub deployment record for `c9578d9` to Vercel `dpl_DrbqkELJ6K5PpEBKrqXSMYvUs7es`, Ready with canonical production alias and `fra1` function output. This establishes deployment metadata, not authenticated production usability. No new production writes or physical-device tests were performed in this documentation pass. See [design release and limits](design-language.md#source-and-deployment-status).
+
+In this chat, Wuff MCP tools were absent from the exposed tool catalog and plugin discovery found no Wuff entry. That is a session capability limitation, not evidence that the deployed MCP endpoint is down. Historical SDK/protocol checks and user reports remain separate from a live named-host check.
 
 ## Implemented milestone
 

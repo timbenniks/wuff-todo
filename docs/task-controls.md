@@ -2,6 +2,8 @@
 
 Confirmed October 16, 2026, from the user's screenshot feedback.
 
+October 17 current-design note: [shared design language](design-language.md) supersedes the earlier blanket quiet/icon-only treatment. Primary/submit actions are filled and labeled; status tags are non-interactive; management/expanded actions have labels. DM Sans, seven app-wide list palettes, confirmed childless deletion and click-to-position reordering are implemented. Historical evidence below remains dated to its original milestone.
+
 - Website rows put Edit, Notes and Delete beside a drag handle. Remove the title's extra pencil, repeated Add notes labels and the intermediate empty note card.
 - Edit opens an inline form immediately. Section selection appears inside that form and is committed in the same task update as the title; section-only changes also save.
 - Notes opens Tiptap immediately. Save closes it; Cancel/Escape returns to saved content. Hiding/reopening retains the transient draft. A filled notes icon indicates saved content. Completed tasks have the same actions; archived notes are read-only.

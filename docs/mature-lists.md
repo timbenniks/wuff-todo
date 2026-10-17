@@ -2,10 +2,12 @@
 
 Confirmed October 16, 2026: improve lists before native mobile. This build covers personal sidebar order, shared list colors, a list description, sections, and archive/restore. Richer task content (Markdown and private image uploads), subtasks, and deadlines are subsequent milestones, not part of this build.
 
+October 17 follow-up: notes/private images, subtasks and calendar due dates are now implemented in their own milestones. The original scope statement above remains historical. Native/offline and arbitrary colors remain later work.
+
 ## Behavior and ownership
 
 - Sidebar ordering belongs to each account, persists across sessions, and includes both owned and shared lists. Changing it never changes another member's sidebar or the shared task order. Newly accessible lists append in creation order. Inaccessible/deleted lists are filtered out. Reorder controls work with keyboard, touch, and pointer.
-- The owner chooses a shared color from a named, accessible palette. The website and MCP App show the same color. Color is an accent, never the only label or a reason to reduce text contrast. Cover images and arbitrary custom hex colors are separate future work.
+- The owner chooses a shared color from a named, accessible palette. The website and MCP App show the same color. Originally accent-only, the selected color now drives the full selected-list app palette on web/MCP; semantic statuses retain their own colors. It is never the only label or a reason to reduce text contrast. See [current design language](design-language.md). Cover images and arbitrary custom hex colors are separate future work.
 - The owner edits the list name and a plain-text description (up to 4,000 characters). The description provides context above the tasks; rich task content follows separately.
 - Sections are named, ordered, collapsible groups within one list, not separate lists with different sharing. Only the owner creates/renames/reorders/removes sections. Members can add or move tasks between sections. Removing a section keeps its tasks in the unsectioned group. Up to 50 sections per list; tasks can also remain unsectioned. Existing tasks remain unsectioned during migration.
 - The owner archives/restores the list for everyone. Archived lists remain accessible in an Archive view and retain tasks, sections, membership, and description. Task and section writes are rejected while archived; sharing and owner metadata management remain available. Permanent deletion keeps its existing explicit confirmation.

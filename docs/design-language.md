@@ -53,10 +53,18 @@ Evidence: [desktop list](screenshots/design-implemented-desktop.png), [phone act
 
 ## Release and verification limits
 
-Implemented and verified locally; no deployment, GitHub push or production smoke check was performed. Physical iPhone/Android behavior, a manual screen-reader review, actual browser zoom controls and named ChatGPT/Codex interactive-host rendering remain separate checks. Viewport and color-pair checks do not certify accessibility conformance or device performance.
+Local implementation verification is recorded above; the subsequent source push and deployment inspection are recorded below. Fresh authenticated production smoke testing remains outstanding. Physical iPhone/Android behavior, a manual screen-reader review, actual browser zoom controls and named ChatGPT/Codex interactive-host rendering remain separate checks. Viewport and color-pair checks do not certify accessibility conformance or device performance.
 
 ## View-control spacing refinement
 
 October 17 screenshot feedback: shared web NativeSelect now retains native select behavior with `appearance: none`, 40px text clearance and a non-interactive theme-colored Lucide chevron inset 12px. Your view and Sorting per section use explicit matching disclosure chevrons with native details/summary keyboard behavior. The collapsed header uses centered flex alignment within 44px; the expanded form replaces its 12px top margin with 4px padding and uses 12px group gaps.
 
 The optimized production build passed. Local Chrome against that build measured the collapsed summary at 44px with zero vertical text-center offset, and selects at 44px with a 12px chevron inset and zero vertical center offset. A synthetic personal-view save succeeded; Enter closed and reopened the disclosure. Expanded layouts had no horizontal document overflow at 320px and 390px. [Desktop controls](screenshots/view-controls-fixed.png) and [phone controls](screenshots/view-controls-fixed-phone.png) were visually inspected. These checks are local; deployment and physical-device rendering remain unverified.
+
+## Source and deployment status
+
+Both changes are committed and pushed to main: `4c80aea` (shared design language, seven full-app list palettes and DM Sans) and `c9578d9` (select chevrons and disclosure spacing). Both passed GitHub CI: [design/font run](https://github.com/timbenniks/wuff-todo/actions/runs/39016658429), [control refinement run](https://github.com/timbenniks/wuff-todo/actions/runs/39016981432).
+
+On October 17, Vercel inspection of `https://wuff-todo.vercel.app` returned Ready deployment `dpl_DrbqkELJ6K5PpEBKrqXSMYvUs7es` with the canonical alias and function output in `fra1`. GitHub deployment `7136970663` records successful Production delivery of `c9578d9749b045965d2336461b6343fde1a34c24` to the same deployment URL. This documentation pass inspected existing delivery metadata; it did not trigger a deploy or submit production writes. User screenshots prompted the control refinement; they do not verify all released flows.
+
+Before closing release validation, check the deployed signed-in list/task/settings flows, all palette transitions, view save/reload and font requests; check a named MCP interactive host once its connector is actually available. Physical-device, screen-reader and actual zoom checks remain outstanding. The next feature plan is [GitHub synchronization](github-sync-plan.md).

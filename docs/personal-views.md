@@ -6,6 +6,10 @@ Each account has one saved view per accessible list. A view contains title/key s
 
 Views belong to the authenticated account, with an independent revision. They never update the shared list version, task positions, sections or another member's preferences. There are no owner defaults or cross-list named views. New views include completed tasks, group by section and use manual compact ordering. The explicit completion selector replaces the separate Completed bucket.
 
+## Control presentation
+
+The October 17 design refinement keeps explicit Apply/Reload/Reset semantics. Your view and Sorting per section have matching decorative chevrons with native details/summary behavior. The header is centered in a 44px track; expanded groups use 12px gaps. Web selects retain native selection with a 12px inset chevron and text clearance. See [refinement evidence](design-language.md#view-control-spacing-refinement). No view contract, version or persistence behavior changed.
+
 ## Contracts and projection
 
 Authorized list snapshots include `personalView: { version, view }`. Its optional TypeScript property preserves compatibility with older local fixtures; current server snapshots always supply it. `GET /api/v1/lists/:id/view?today=YYYY-MM-DD` and MCP `get_list_view` return `{ list, groups }`. Callers must supply their local calendar day, so Today/Before today/After today remain calendar comparisons rather than server-time-zone guesses. The website uses its existing local-day clock. The embedded app calculates its local day when rendering; refresh the view after midnight to recompute relative filtering.

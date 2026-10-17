@@ -51,6 +51,12 @@ The initial synthetic accounts were created on development with verification ema
 
 The activation test additionally requires a dedicated synthetic identity, provisioned with the operator command below using target `development`, email `activation-fixture@example.invalid`, and name `Activation fixture`. This test asks managed Auth to create an expiring challenge for a reserved, non-deliverable address; it does not prove mailbox delivery or successful code redemption.
 
+## Design assets and client connections
+
+DM Sans source assets and their OFL license are in `apps/web/src/fonts`. Keep upright/italic files aligned across the root `next/font/local` configuration and `scripts/build-mcp.mjs`; MCP embeds them and needs no runtime font CDN. `pnpm build` rebuilds both delivery paths. [Typography](typography-review.md) and [shared design language](design-language.md) record decisions and verification limits.
+
+A deployed MCP endpoint, a local SDK host and tools exposed to a particular chat are separate states. Check the current tool catalog before promising to render a user's live list; an unavailable connector in a chat does not establish a server outage. Do not substitute synthetic fixture lists for a user's requested live data.
+
 ## Authentication boundary
 
 Server Components must use `webIdentity()` / `pageActor()` for read-only upstream session validation. Only Route Handlers use the writable `webActor()` / `neonAuth()` path for session renewal and cookie clearing. See [session rendering](auth-rendering.md) for the production cookie-write failure, fix and regression evidence.

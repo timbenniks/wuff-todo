@@ -16,6 +16,10 @@ Private task-note images use Vercel Blob for bytes and Neon for task-bound attac
 
 Use pnpm workspaces. Add build orchestration only when workspace dependencies and build times justify it. Pin supported package versions during implementation rather than treating this planning document as a version lock.
 
+DM Sans upright/italic variable assets and their OFL license live in `apps/web/src/fonts`. The root layout uses `next/font/local`; the standalone MCP build embeds those same files, requiring no external font domain. Web native selects preserve browser/keyboard semantics with a decorative inset chevron; native details/summary retain disclosure state and keyboard behavior. See [typography](typography-review.md) and [design language](design-language.md).
+
+GitHub installation ownership, durable sync state and processing are planned separately in [GitHub synchronization](github-sync-plan.md); no GitHub App, webhook worker or agent-run service is implemented by the visual release.
+
 ## Repository layout and future packages
 
 The [design language and list themes](design-language.md) use a pure, client-safe palette derivation and shared CSS in `apps/web/src/lib`. Web renders selected-list tokens on its container and synchronizes the document root for gutters/dialogs; MCP applies the same palette to its standalone document. No theme state or database table is added, and the existing owner-controlled list color remains authoritative. Status/danger colors retain their semantic meaning.

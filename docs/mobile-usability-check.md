@@ -8,7 +8,11 @@ Reviewed the current website before React Native/Expo planning. The starting che
 
 The core flows exercised in a responsive Chrome browser work. Native planning should carry forward the working permissions, explicit saves and conflict contracts, while resolving the usability decisions below. This is local development evidence, not a fresh production or physical-device sign-off.
 
-## Findings, in priority order
+## Follow-up after the design release
+
+The findings below are the earlier audit, not the current implementation state. The [design release](design-language.md) adds confirmation for all task deletion, restores authorized selected-list context on reload/Back, labels expanded phone actions and offers click-to-position reordering. No Undo was introduced. Narrow single-line title capacity and quiet web notes/progress cues remain follow-ups. DM Sans and the view-control spacing refinements have their own newer screenshots and local measurements; physical-device checks remain outstanding.
+
+## Findings, in priority order (historical)
 
 | Priority | Finding and evidence                                                                                                                                                                                                                                                               | Recommended follow-up                                                                                                                                                                           |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -21,7 +21,7 @@ October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) a
 - Sharing must accommodate additional friends and family later, including invitations to people who do not yet have accounts.
 - Web and MCP, including interactive MCP UI, ship first.
 - iPhone and Android apps follow against the same backend.
-- All surfaces use the same recognizable design language.
+- All surfaces use the same recognizable design language, with DM Sans body/headings/controls and true italics for notes; code retains monospace. [Typography delivery](typography-review.md) records local self-hosting and MCP embedding.
 - Shared owner-controlled list colors theme the entire selected-list experience on web and MCP. Seven named palettes are supported; arbitrary colors and broader theme customization remain later scope. See [design language and themes](design-language.md).
 - The project uses one monorepo.
 
@@ -86,7 +86,7 @@ Primary actions and form submissions use filled theme-colored buttons with expli
 - Adding a task is a short, keyboard-friendly interaction.
 - List, section, and task names use inline editing with Enter/Save and Escape/Cancel, including completed tasks. Task Edit and Notes icons sit beside Delete; Notes opens the rich text editor immediately. Markdown is stored internally, without an editor mode switch. Notes accept private PNG/JPEG/WebP image uploads, paste and drop, with draft previews and explicit Save/Cancel. Drafts stay visible through save failures; name edits use existing permissions and version checks.
 - Task editing and completion have clear pending, success, and failure states.
-- Tasks, sections and the personal sidebar reorder using drag handles with pointer, touch and keyboard support. Top-level task dragging stays within its section; the task edit form changes sections. Subtasks drag within their parent, follow its section and show completed/total progress. Parent deletion explains that it removes the subtasks too.
+- Tasks, sections and the personal sidebar reorder using drag handles with pointer, touch and keyboard support. Web handles also open an explicit position picker on click; task deletion always requires confirmation, including tasks without subtasks. Top-level task dragging stays within its section; the task edit form changes sections. Subtasks drag within their parent, follow its section and show completed/total progress. Parent deletion explains that it removes the subtasks too.
 - Calendar actions open inline date controls with Today, Tomorrow, a date picker and explicit clearing. Date badges identify due-today and overdue tasks; completed dates remain visible without urgency styling. Manual order stays unchanged.
 - Sharing settings expose the owner, members, and pending invitations.
 - Empty, loading, denied-access, and failed-request states are designed deliberately.

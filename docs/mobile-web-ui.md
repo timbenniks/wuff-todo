@@ -1,6 +1,8 @@
 # Mobile website layout
 
-Updated: October 16, 2026
+Updated: October 17, 2026 (earlier release evidence retained)
+
+October 17 current-design note: [shared design language](design-language.md) supersedes the earlier blanket quiet/icon-only treatment. Primary/submit actions are filled and labeled; status tags are non-interactive; management/expanded actions have labels. DM Sans, seven app-wide list palettes, confirmed childless deletion and click-to-position reordering are implemented. Historical evidence below remains dated to its original milestone.
 
 The website adapts the existing Wuff palette, typography and Waffles identity for narrow screens. This milestone streamlines the online website; native apps and offline behaviour remain unchanged.
 
@@ -8,7 +10,7 @@ The website adapts the existing Wuff palette, typography and Waffles identity fo
 
 - Below 768px, a compact Wuff header has a Lists disclosure. It reveals the existing list navigation, creation, archive, personal reordering, connections and sign-out controls. Choosing a list closes the disclosure and returns focus to its trigger; Escape also closes it. The desktop sidebar stays visible.
 - Revised after the user's screenshot feedback: below 640px, each task/subtask is a single line containing completion, an ellipsized name, an optional calendar indicator, More, direct Delete and a direct drag handle. The full name is available in the floating action panel. During rename the editor uses the available row width, with save/cancel inside the field.
-- The floating panel contains icon controls for Edit, Notes, Subtasks/progress and Date, with accessible names and tooltips, plus the existing section-move capability where applicable. It overlays the list rather than adding action rows. Outside pointer input and Escape close it. Selecting editing, notes, dates or subtasks closes it. Desktop direct controls remain available.
+- The floating panel contains labeled controls for Edit, Notes, Subtasks/progress and Date, with accessible names, plus the existing section-move capability where applicable. It overlays the list rather than adding action rows. Outside pointer input and Escape close it. Selecting editing, notes, dates or subtasks closes it. Desktop direct controls remain available.
 - Task/subtask rename uses a single line with the name field and compact check/cross buttons on phones. Accessible labels and Enter/Escape remain. Errors/conflict notices can expand below the field so feedback is never clipped. Mobile section moves are available in the action panel; the desktop name form retains its section field.
 - Subtasks start collapsed and open explicitly through the parent's action panel. Existing nonempty subtask drafts keep their branch open. Notes and dates open only on request, preserving retained drafts. Editors still use the available width.
 - Completion, actions, save and cancel targets remain at least 44px. The rich-text toolbar stays a single scrolling strip with all existing commands. The editor starts at 128px and scrolls beyond 40dvh.
