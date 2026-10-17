@@ -1,5 +1,6 @@
 "use client";
 import { Textarea } from "@/components/ui/textarea";
+import { NativeSelect } from "@/components/ui/native-select";
 
 import { useRef, useState } from "react";
 import { Archive, ArchiveRestore, Check, Settings2, X } from "lucide-react";
@@ -27,6 +28,7 @@ export function ListSettings({
   const [draft, setDraft] = useState({
     description: list.description,
     color: list.color,
+    mode: list.mode,
     version: list.version,
   });
   const [failed, setFailed] = useState(false);
@@ -34,6 +36,7 @@ export function ListSettings({
     setDraft({
       description: list.description,
       color: list.color,
+      mode: list.mode,
       version: list.version,
     });
     setFailed(false);
@@ -94,6 +97,23 @@ export function ListSettings({
             else setFailed(true);
           }}
         >
+          <label className="grid gap-2 text-sm font-semibold">
+            List type
+            <NativeSelect
+              value={draft.mode}
+              disabled={busy}
+              onChange={(e) =>
+                setDraft({ ...draft, mode: e.target.value as TodoList["mode"] })
+              }
+            >
+              <option value="simple">Simple</option>
+              <option value="work">Work</option>
+            </NativeSelect>
+            <span className="text-xs font-normal text-slate-500">
+              Work adds workflow, priority and links. Share the list to assign
+              tasks.
+            </span>
+          </label>
           <label className="grid gap-2 text-sm font-semibold">
             Description
             <Textarea

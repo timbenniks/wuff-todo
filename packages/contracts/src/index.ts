@@ -25,7 +25,58 @@ export const listColors = [
 ] as const;
 export type ListColor = (typeof listColors)[number];
 export const listColorSchema = z.enum(listColors);
-export const createListSchema = operationSchema.extend({ title: titleSchema });
+export const listModes = ["simple", "work"] as const;
+export const taskStatuses = [
+  "todo",
+  "in_progress",
+  "in_review",
+  "blocked",
+  "done",
+] as const;
+export const taskPriorities = [
+  "none",
+  "low",
+  "medium",
+  "high",
+  "urgent",
+] as const;
+export const taskStatusSchema = z.enum(taskStatuses);
+export const taskPrioritySchema = z.enum(taskPriorities);
+export const taskReferenceSchema = z.object({
+  url: z
+    .url()
+    .max(2048)
+    .refine((value) => {
+      try {
+        const url = new URL(value);
+        return (
+          ["https:", "http:"].includes(url.protocol) &&
+          !url.username &&
+          !url.password &&
+          !/[\u0000-\u0020\u007f]/.test(value)
+        );
+      } catch {
+        return false;
+      }
+    }, "Use an HTTP or HTTPS URL without credentials"),
+  title: z.string().trim().max(200).optional(),
+});
+export const taskReferencesSchema = z.array(taskReferenceSchema).max(20);
+export type TaskReference = z.infer<typeof taskReferenceSchema>;
+export const taskLookupSchema = z
+  .string()
+  .regex(
+    /^(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|WUFF-[1-9][0-9]{0,9})$/i,
+  )
+  .refine(
+    (v) => !/^WUFF-/i.test(v) || Number(v.slice(5)) <= 2147483647,
+    "Invalid task key",
+  );
+export const taskPath = (id: string) => `/tasks/${idSchema.parse(id)}`;
+export const createListSchema = operationSchema.extend({
+  title: titleSchema,
+  mode: z.enum(listModes).optional(),
+});
 export const listMutationSchema = operationSchema.extend({
   listId: idSchema,
   version: versionSchema,
@@ -39,10 +90,11 @@ export const updateListSchema = listMutationSchema
     description: z.string().trim().max(4000).optional(),
     color: listColorSchema.optional(),
     archived: z.boolean().optional(),
+    mode: z.enum(listModes).optional(),
   })
   .refine(
     (v) =>
-      [v.title, v.description, v.color, v.archived].some(
+      [v.title, v.description, v.color, v.archived, v.mode].some(
         (x) => x !== undefined,
       ),
     "Provide a list change",
@@ -69,6 +121,10 @@ export const createTaskSchema = listMutationSchema.extend({
   parentTaskId: idSchema.nullable().optional(),
   sectionId: idSchema.nullable().optional(),
   content: taskContentSchema.optional(),
+  status: taskStatusSchema.optional(),
+  priority: taskPrioritySchema.optional(),
+  assigneeId: z.string().min(1).max(200).nullable().optional(),
+  references: taskReferencesSchema.optional(),
 });
 export const updateTaskSchema = listMutationSchema
   .extend({
@@ -78,15 +134,30 @@ export const updateTaskSchema = listMutationSchema
     completed: z.boolean().optional(),
     sectionId: idSchema.nullable().optional(),
     content: taskContentSchema.optional(),
+    status: taskStatusSchema.optional(),
+    priority: taskPrioritySchema.optional(),
+    assigneeId: z.string().min(1).max(200).nullable().optional(),
+    references: taskReferencesSchema.optional(),
   })
   .refine(
     (v) =>
       v.dueDate !== undefined ||
       v.title !== undefined ||
       v.completed !== undefined ||
+      v.status !== undefined ||
+      v.priority !== undefined ||
+      v.assigneeId !== undefined ||
+      v.references !== undefined ||
       v.sectionId !== undefined ||
       v.content !== undefined,
     "Provide a task change",
+  )
+  .refine(
+    (v) =>
+      v.status === undefined ||
+      v.completed === undefined ||
+      (v.status === "done") === v.completed,
+    "Status and completion must agree",
   );
 export const deleteTaskSchema = listMutationSchema.extend({ taskId: idSchema });
 // Keep uploads below Vercel's function request limit, including MCP base64.
@@ -158,6 +229,15 @@ export type IncomingInvitation = {
 
 export type Task = {
   id: string;
+  key: string;
+  path: string;
+  status: z.infer<typeof taskStatusSchema>;
+  priority: z.infer<typeof taskPrioritySchema>;
+  assigneeId: string | null;
+  references: TaskReference[];
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
   dueDate: string | null;
   parentTaskId: string | null;
   content: string;
@@ -171,6 +251,8 @@ export type ListSection = { id: string; title: string; position: number };
 export type ListOrder = { version: number; listIds: string[] };
 export type TodoList = {
   id: string;
+  mode: (typeof listModes)[number];
+  assignees: { id: string; name: string }[];
   title: string;
   ownerId: string;
   version: number;
@@ -180,6 +262,7 @@ export type TodoList = {
   sections: ListSection[];
   tasks: Task[];
 };
+export type TaskDetail = { list: TodoList; task: Task };
 export type ListSummary = Pick<
   TodoList,
   "id" | "title" | "ownerId" | "version" | "color" | "archived"

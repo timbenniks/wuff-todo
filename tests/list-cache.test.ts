@@ -9,6 +9,8 @@ const snapshot = (version: number): TodoList => ({
   ownerId: "synthetic-user",
   version,
   color: "blue",
+  mode: "simple",
+  assignees: [],
   description: "",
   archived: false,
   sections: [],

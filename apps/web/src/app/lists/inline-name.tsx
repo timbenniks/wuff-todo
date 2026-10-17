@@ -32,6 +32,7 @@ export function InlineName({
   className = "",
   compact = false,
   focusFallback,
+  readHref,
 }: {
   value: string;
   label: string;
@@ -47,6 +48,7 @@ export function InlineName({
   className?: string;
   compact?: boolean;
   focusFallback?: RefObject<HTMLButtonElement | null>;
+  readHref?: string;
   renderActions?: (props: {
     edit: () => void;
     editing: boolean;
@@ -121,7 +123,17 @@ export function InlineName({
       </button>
     ) : (
       <span className={`break-words ${completed ? "line-through" : ""}`}>
-        {value}
+        {readHref ? (
+          <a
+            href={readHref}
+            className="block truncate py-3 -my-3 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+            title={`Open task: ${value}`}
+          >
+            {value}
+          </a>
+        ) : (
+          value
+        )}
       </span>
     );
   const Heading = heading;

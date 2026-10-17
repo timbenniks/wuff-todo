@@ -3,7 +3,12 @@ import {
   dueDatePresentation,
   formatDueDate,
 } from "../lib/due-date";
-import { dueDateSchema } from "@wuff/contracts";
+import {
+  dueDateSchema,
+  taskStatuses,
+  taskPriorities,
+  taskReferencesSchema,
+} from "@wuff/contracts";
 import { wuffCopy, wuffError } from "../lib/copy";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
@@ -13,6 +18,7 @@ import { taskImageLimit, taskImagePath, listColors } from "@wuff/contracts";
 import { listPalette } from "../lib/list-colors";
 const app = new App({ name: "Wuff Todo", version: "0.2.0" }, {});
 let current: TodoList | undefined,
+  webOrigin = "https://wuff-todo.vercel.app",
   viewerId = "",
   catalog: ListSummary[] = [],
   archive = false;
@@ -646,6 +652,199 @@ const subtaskDrafts = new Map<string, SubtaskDraft>();
 const subtaskExpanded = new Map<string, boolean>();
 let draggedSubtask:
   { id: string; parentId: string; version: number } | undefined;
+type WorkDraft = {
+  status: Task["status"];
+  priority: Task["priority"];
+  assigneeId: string | null;
+  references: Task["references"];
+  version: number;
+  request?: Record<string, unknown>;
+};
+const workDrafts = new Map<string, WorkDraft>();
+function workDetails(task: Task) {
+  const panel = element("details");
+  const retained = workDrafts.get(task.id);
+  panel.open = !!retained;
+  panel.append(
+    element(
+      "summary",
+      `${task.key} · ${task.status.replaceAll("_", " ")} · Work details`,
+    ),
+  );
+  const form = element("form");
+  form.style.cssText = "display:grid;gap:10px;margin-block:12px";
+  const draft: WorkDraft = retained ?? {
+    status: task.status,
+    priority: task.priority,
+    assigneeId: task.assigneeId,
+    references: task.references.map((r) => ({ ...r })),
+    version: current!.version,
+  };
+  const controls: (HTMLInputElement | HTMLSelectElement | HTMLButtonElement)[] =
+    [];
+  function selectField(
+    label: string,
+    values: { value: string; label: string }[],
+    initial: string,
+    changed: (value: string) => void,
+  ) {
+    const labelElement = element("label", label),
+      select = element("select");
+    select.setAttribute("aria-label", label);
+    for (const value of values) {
+      const option = element("option", value.label);
+      option.value = value.value;
+      select.append(option);
+    }
+    select.value = initial;
+    select.onchange = () => {
+      changed(select.value);
+      workDrafts.set(task.id, draft);
+    };
+    controls.push(select);
+    labelElement.append(select);
+    form.append(labelElement);
+  }
+  selectField(
+    "Status",
+    taskStatuses.map((value) => ({ value, label: value.replaceAll("_", " ") })),
+    draft.status,
+    (value) => {
+      draft.status = value as Task["status"];
+    },
+  );
+  selectField(
+    "Priority",
+    taskPriorities.map((value) => ({ value, label: value })),
+    draft.priority,
+    (value) => {
+      draft.priority = value as Task["priority"];
+    },
+  );
+  if (current!.assignees.length)
+    selectField(
+      "Assignee",
+      [
+        { value: "", label: "Unassigned" },
+        ...current!.assignees.map((p) => ({ value: p.id, label: p.name })),
+      ],
+      draft.assigneeId ?? "",
+      (value) => {
+        draft.assigneeId = value || null;
+      },
+    );
+  else form.append(element("p", "Share this list to assign tasks."));
+  const references = element("div");
+  const renderReferences = () => {
+    references.replaceChildren();
+    draft.references.forEach((ref, i) => {
+      const row = element("div");
+      row.style.cssText = "display:grid;gap:6px;margin-block:8px";
+      for (const field of ["title", "url"] as const) {
+        const label = element(
+            "label",
+            field === "url" ? "Reference URL" : "Reference title",
+          ),
+          input = element("input");
+        input.value = ref[field] ?? "";
+        input.type = field === "url" ? "url" : "text";
+        input.required = field === "url";
+        input.maxLength = field === "url" ? 2048 : 200;
+        input.oninput = () => {
+          ref[field] = input.value;
+          workDrafts.set(task.id, draft);
+        };
+        controls.push(input);
+        label.append(input);
+        row.append(label);
+      }
+      const remove = button("Remove reference", () => {
+        draft.references.splice(i, 1);
+        workDrafts.set(task.id, draft);
+        renderReferences();
+      });
+      controls.push(remove);
+      row.append(remove);
+      references.append(row);
+    });
+    const add = button(
+      "Add reference",
+      () => {
+        draft.references.push({ url: "", title: "" });
+        workDrafts.set(task.id, draft);
+        renderReferences();
+      },
+      draft.references.length >= 20,
+    );
+    controls.push(add);
+    references.append(add);
+  };
+  renderReferences();
+  form.append(references);
+  const notice = element("p");
+  notice.setAttribute("role", "status");
+  if (draft.version !== current!.version)
+    notice.textContent =
+      "The list changed. Your work draft is kept. Use latest to reload these fields.";
+  const latest = button("Use latest work details", () => {
+    workDrafts.delete(task.id);
+    void request("show_list", { listId: current!.id })
+      .then(show)
+      .catch((e) => {
+        notice.textContent = (e as Error).message;
+      });
+  });
+  const save = element("button", "Save work details");
+  controls.push(save, latest);
+  const lock = (locked: boolean) =>
+    controls.forEach((c) => {
+      c.disabled = locked || current!.archived;
+    });
+  wireForm(form, save, () => {
+    const parsed = taskReferencesSchema.safeParse(draft.references);
+    if (!parsed.success) {
+      notice.textContent = parsed.error.issues.map((i) => i.message).join("; ");
+      save.disabled = false;
+      return;
+    }
+    draft.request ??= {
+      listId: current!.id,
+      taskId: task.id,
+      version: draft.version,
+      status: draft.status,
+      priority: draft.priority,
+      assigneeId: draft.assigneeId,
+      references: parsed.data,
+      operationId: crypto.randomUUID(),
+    };
+    workDrafts.set(task.id, draft);
+    lock(true);
+    void request("update_task", draft.request)
+      .then((data) => {
+        workDrafts.delete(task.id);
+        show(data);
+        status.textContent = wuffCopy.saved;
+      })
+      .catch((e) => {
+        notice.textContent = `${(e as Error).message} Your draft is kept.`;
+        if (e instanceof ToolError && e.code !== "internal_error")
+          draft.request = undefined;
+        lock(!!draft.request);
+        save.disabled = current!.archived;
+        if (!draft.request)
+          void request("show_list", { listId: current!.id })
+            .then(show)
+            .catch(() => {});
+      });
+  });
+  if (draft.version !== current!.version) form.append(latest);
+  form.append(save, notice);
+  panel.append(form);
+  lock(!!draft.request);
+  if (draft.request) save.disabled = current!.archived;
+  return panel;
+}
+
 function renderTask(
   task: Task,
   groups: { id: string | null; title: string }[],
@@ -733,7 +932,14 @@ function renderTask(
     remove.title = "Delete task";
     row.append(remove);
   }
-  wrapper.append(row, taskDueDate(task), taskNotes(task));
+  const taskLink = element("a", task.key);
+  taskLink.href = new URL(task.path, webOrigin).href;
+  taskLink.target = "_blank";
+  taskLink.rel = "noopener noreferrer";
+  taskLink.setAttribute("aria-label", `Open ${task.key} task page`);
+  wrapper.append(row, taskLink);
+  if (current!.mode === "work") wrapper.append(workDetails(task));
+  wrapper.append(taskDueDate(task), taskNotes(task));
   queueMicrotask(refreshDueBadges);
   if (task.parentTaskId) {
     if (!current!.archived) {
@@ -881,6 +1087,7 @@ function show(value: unknown) {
     list?: TodoList;
     lists?: ListSummary[];
     viewerId?: string;
+    webOrigin?: string;
   };
   // A host may forward an error or a tool result for another view. Keep the
   // current notes/drafts on screen instead of clearing them.
@@ -890,8 +1097,10 @@ function show(value: unknown) {
     subtaskDrafts.clear();
     dateDrafts.clear();
     subtaskExpanded.clear();
+    workDrafts.clear();
   }
   if (data.viewerId) viewerId = data.viewerId;
+  if (data.webOrigin) webOrigin = data.webOrigin;
   imageReads.clear();
   imageEpoch++;
   root.replaceChildren();
@@ -959,11 +1168,20 @@ function show(value: unknown) {
     }
     select.value = current.color;
     const save = element("button", "Save settings");
-    form.append(description, select, save);
+    const mode = element("select");
+    mode.setAttribute("aria-label", "List type");
+    for (const value of ["simple", "work"]) {
+      const option = element("option", value === "work" ? "Work" : "Simple");
+      option.value = value;
+      mode.append(option);
+    }
+    mode.value = current.mode;
+    form.append(description, select, mode, save);
     wireForm(form, save, () => {
       void mutation("update_list", {
         description: description.value,
         color: select.value,
+        mode: mode.value,
       });
     });
     settings.append(

@@ -50,6 +50,10 @@ import {
   taskImageCountLimit,
   taskImagePath,
   idSchema,
+  taskLookupSchema,
+  taskPath,
+  type TodoList,
+  type Task,
 } from "@wuff/contracts";
 
 import { taskImageReferences } from "./task-images";
@@ -101,6 +105,28 @@ async function accessible(tx: Tx | Db, actor: Actor, id: string, lock = false) {
 }
 async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
   const list = await accessible(tx, actor, listId);
+  const participantIds =
+    list.mode === "work"
+      ? await tx
+          .select({ id: members.userId })
+          .from(members)
+          .where(eq(members.listId, listId))
+      : [];
+  const assignees = participantIds.length
+    ? await tx
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(
+          and(
+            inArray(users.id, [
+              list.ownerId,
+              ...participantIds.map((p) => p.id),
+            ]),
+            eq(users.enabled, true),
+          ),
+        )
+        .orderBy(asc(users.name), asc(users.id))
+    : [];
   const images = await tx
     .select({
       id: attachments.id,
@@ -120,6 +146,7 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
     );
   const snapshot = {
     ...list,
+    assignees,
     sections: await tx
       .select({
         id: sections.id,
@@ -132,6 +159,14 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
     tasks: await tx
       .select({
         id: tasks.id,
+        number: tasks.number,
+        status: tasks.status,
+        priority: tasks.priority,
+        assigneeId: tasks.assigneeId,
+        references: tasks.references,
+        createdAt: tasks.createdAt,
+        updatedAt: tasks.updatedAt,
+        completedAt: tasks.completedAt,
         parentTaskId: tasks.parentTaskId,
         dueDate: tasks.dueDate,
         title: tasks.title,
@@ -146,12 +181,22 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
   };
   return {
     ...snapshot,
-    tasks: snapshot.tasks.map((task) => ({
-      ...task,
-      images: images
-        .filter((image) => image.taskId === task.id)
-        .map(({ taskId, ...image }) => image),
-    })),
+    tasks: snapshot.tasks.map(
+      ({ number, createdAt, updatedAt, completedAt, ...task }) => ({
+        ...task,
+        key: `WUFF-${number}`,
+        path: taskPath(task.id),
+        createdAt: createdAt.toISOString(),
+        updatedAt: updatedAt.toISOString(),
+        completedAt: completedAt?.toISOString() ?? null,
+        assigneeId: assignees.some((p) => p.id === task.assigneeId)
+          ? task.assigneeId
+          : null,
+        images: images
+          .filter((image) => image.taskId === task.id)
+          .map(({ taskId, ...image }) => image),
+      }),
+    ),
   };
 }
 async function mutate(
@@ -331,6 +376,34 @@ export async function getList(actor: Actor, id: string) {
     accessMode: "read only",
   });
 }
+export async function getTask(actor: Actor, lookup: string) {
+  requireScope(actor, "lists:read");
+  const identifier = taskLookupSchema.parse(lookup);
+  return database().db.transaction(
+    async (tx) => {
+      await admission(tx, actor);
+      const [row] = await tx
+        .select({ id: tasks.id, listId: tasks.listId })
+        .from(tasks)
+        .where(
+          /^WUFF-/i.test(identifier)
+            ? eq(tasks.number, Number(identifier.slice(5)))
+            : eq(tasks.id, identifier),
+        );
+      if (!row) return fail("not_found", "Task not found.", 404);
+      const list = await snapshot(tx, actor, row.listId).catch(
+        (error: unknown) => {
+          // Keys are discoverable numbers; do not reveal existence through errors.
+          if (error instanceof AppError && error.status === 404)
+            return fail("not_found", "Task not found.", 404);
+          throw error;
+        },
+      );
+      return { list, task: list.tasks.find((t) => t.id === row.id)! };
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+}
 export async function createList(actor: Actor, data: unknown) {
   requireScope(actor, "lists:manage");
   const input = createListSchema.parse(data);
@@ -340,7 +413,11 @@ export async function createList(actor: Actor, data: unknown) {
     async (tx) => {
       const [list] = await tx
         .insert(lists)
-        .values({ title: input.title, ownerId: actor.id })
+        .values({
+          title: input.title,
+          ownerId: actor.id,
+          mode: input.mode ?? "simple",
+        })
         .returning({ id: lists.id });
       return list;
     },
@@ -393,10 +470,30 @@ export async function updateList(actor: Actor, data: unknown) {
     { ...input, kind: "update_list" } as typeof input,
     async (tx) => {
       await locked(tx, actor, input, true);
-      const { title, description, color, archived } = input;
+      const { title, description, color, archived, mode } = input;
+      if (mode === "simple") {
+        const rows = await tx
+          .select()
+          .from(tasks)
+          .where(eq(tasks.listId, input.listId));
+        if (
+          rows.some(
+            (t) =>
+              !["todo", "done"].includes(t.status) ||
+              t.priority !== "none" ||
+              t.assigneeId ||
+              t.references.length,
+          )
+        )
+          fail(
+            "work_metadata_present",
+            "Clear work metadata before switching to Simple. Your task data has been kept.",
+            409,
+          );
+      }
       await tx
         .update(lists)
-        .set({ title, description, color, archived })
+        .set({ title, description, color, archived, mode })
         .where(eq(lists.id, input.listId));
       return { id: input.listId };
     },
@@ -517,6 +614,67 @@ async function validParent(
       400,
     );
 }
+async function validWorkFields(
+  tx: Tx,
+  list: { id: string; ownerId: string; mode: TodoList["mode"] },
+  input: {
+    status?: Task["status"];
+    priority?: Task["priority"];
+    assigneeId?: string | null;
+    references?: Task["references"];
+  },
+) {
+  if (
+    list.mode !== "work" &&
+    ((input.status !== undefined && !["todo", "done"].includes(input.status)) ||
+      (input.priority !== undefined && input.priority !== "none") ||
+      input.assigneeId ||
+      input.references?.length)
+  )
+    fail(
+      "work_list_required",
+      "Choose Work in list settings before adding work metadata.",
+      400,
+    );
+  if (input.assigneeId) {
+    const people = await tx
+      .select({ id: members.userId })
+      .from(members)
+      .where(eq(members.listId, list.id));
+    const [person] = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, input.assigneeId), eq(users.enabled, true)));
+    if (
+      !people.length ||
+      !person ||
+      (input.assigneeId !== list.ownerId &&
+        !people.some((p) => p.id === input.assigneeId))
+    )
+      fail(
+        "invalid_assignee",
+        "Choose a current member of this shared list.",
+        400,
+      );
+  }
+}
+async function clearDepartedAssignee(tx: Tx, listId: string, userId: string) {
+  const remaining = await tx
+    .select({ id: members.userId })
+    .from(members)
+    .where(eq(members.listId, listId));
+  await tx
+    .update(tasks)
+    .set({ assigneeId: null, updatedAt: new Date() })
+    .where(
+      and(
+        eq(tasks.listId, listId),
+        remaining.length
+          ? eq(tasks.assigneeId, userId)
+          : isNotNull(tasks.assigneeId),
+      ),
+    );
+}
 export async function createTask(actor: Actor, data: unknown) {
   requireScope(actor, "tasks:write");
   const input = createTaskSchema.parse(data);
@@ -524,7 +682,8 @@ export async function createTask(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "create_task" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input, false, true);
+      const list = await locked(tx, actor, input, false, true);
+      await validWorkFields(tx, list, input);
       await validParent(tx, input.listId, input.parentTaskId);
       if (input.parentTaskId && input.sectionId)
         fail(
@@ -549,6 +708,12 @@ export async function createTask(actor: Actor, data: unknown) {
         listId: input.listId,
         parentTaskId: input.parentTaskId ?? null,
         title: input.title,
+        status: input.status ?? "todo",
+        completed: input.status === "done",
+        completedAt: input.status === "done" ? new Date() : null,
+        priority: input.priority ?? "none",
+        assigneeId: input.assigneeId ?? null,
+        references: input.references ?? [],
         dueDate: input.dueDate ?? null,
         sectionId: input.sectionId ?? null,
         content: input.content ?? "",
@@ -572,7 +737,8 @@ export async function updateTask(actor: Actor, data: unknown) {
     actor,
     { ...input, kind: "update_task" } as typeof input,
     async (tx) => {
-      await locked(tx, actor, input, false, true);
+      const list = await locked(tx, actor, input, false, true);
+      await validWorkFields(tx, list, input);
       const [task] = await tx
         .select()
         .from(tasks)
@@ -587,8 +753,16 @@ export async function updateTask(actor: Actor, data: unknown) {
       await validSection(tx, input.listId, input.sectionId);
       if (input.content !== undefined)
         await reconcileTaskImages(tx, actor, task.id, input.content);
+      const status =
+        input.status ??
+        (input.completed === true
+          ? "done"
+          : input.completed === false && task.completed
+            ? "todo"
+            : task.status);
+      const completed = status === "done";
       let position = task.position;
-      if (input.completed === false && task.completed && !task.parentTaskId) {
+      if (!completed && task.completed && !task.parentTaskId) {
         const rows = await tx
           .select()
           .from(tasks)
@@ -603,7 +777,18 @@ export async function updateTask(actor: Actor, data: unknown) {
           title: input.title ?? task.title,
           dueDate: input.dueDate === undefined ? task.dueDate : input.dueDate,
           content: input.content ?? task.content,
-          completed: input.completed ?? task.completed,
+          status,
+          completed,
+          completedAt: completed
+            ? task.completed
+              ? task.completedAt
+              : new Date()
+            : null,
+          updatedAt: new Date(),
+          priority: input.priority ?? task.priority,
+          assigneeId:
+            input.assigneeId === undefined ? task.assigneeId : input.assigneeId,
+          references: input.references ?? task.references,
           sectionId:
             input.sectionId === undefined ? task.sectionId : input.sectionId,
           position,
@@ -945,6 +1130,7 @@ export async function removeListMember(actor: Actor, data: unknown) {
             eq(members.userId, input.userId),
           ),
         );
+      await clearDepartedAssignee(tx, input.listId, input.userId);
       return { id: input.listId };
     },
   );
@@ -966,6 +1152,7 @@ export async function leaveList(actor: Actor, data: unknown) {
         .where(
           and(eq(members.listId, input.listId), eq(members.userId, actor.id)),
         );
+      await clearDepartedAssignee(tx, input.listId, actor.id);
       return { id: input.listId };
     },
   );

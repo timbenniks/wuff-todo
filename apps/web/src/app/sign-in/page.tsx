@@ -1,13 +1,14 @@
 import { Corgi } from "@/components/corgi";
 import { SignIn } from "./sign-in";
 import Link from "next/link";
+import { signInReturnPath } from "@/lib/auth/return-path";
 export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
   const next = (await searchParams).next;
-  const safeNext = next?.startsWith("/oauth/authorize?") ? next : "/lists";
+  const safeNext = signInReturnPath(next);
   return (
     <main className="min-h-dvh flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">

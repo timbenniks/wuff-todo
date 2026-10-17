@@ -8,7 +8,11 @@ import { sealLiveLists } from "@/lib/live-server";
 import { ActorApiProvider } from "./actor-api";
 import { ListApp } from "./list-app";
 export const dynamic = "force-dynamic";
-export default async function ListsPage() {
+export default async function ListsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ listId?: string }>;
+}) {
   try {
     const identity = await webIdentity();
     if (!identity) redirect("/sign-in");
@@ -18,7 +22,11 @@ export default async function ListsPage() {
       listInvitations(actor),
     ]);
     let initialList: TodoList | null = null;
-    const first = initialLists.find((l) => !l.archived) ?? initialLists[0];
+    const requested = (await searchParams).listId;
+    const first =
+      initialLists.find((l) => l.id === requested) ??
+      initialLists.find((l) => !l.archived) ??
+      initialLists[0];
     if (first) {
       try {
         initialList = await getList(actor, first.id);

@@ -50,6 +50,13 @@
       "when": 1792163380427,
       "tag": "0006_bored_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792219131145,
+      "tag": "0007_red_kronos",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,8 @@ Date: October 15, 2026
 
 ## Implemented milestone
 
+October 17 work-task foundation: [delivery plan and evidence](work-tasks-plan.md) records the selected pre-native sequence, shared web/API/MCP implementation, 29 unit tests, 20 live development integration tests and responsive browser/SDK-host checks. GitHub sync and agent execution remain planned.
+
 October 17 auth rendering fix: see [session reads during server rendering](auth-rendering.md) for the production cookie-write failure, read-only page adapter, preserved Route Handler renewal and current regression/release evidence.
 
 The initial technical foundation includes the pnpm monorepo, Next.js web application, managed Neon email/password login, application admission, Drizzle migrations, shared list/task services, a session-authenticated HTTP API, delegated OAuth for MCP, MCP tools, and an embedded MCP App.

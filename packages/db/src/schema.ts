@@ -13,7 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { ListColor } from "@wuff/contracts";
+import type { ListColor, TodoList, Task, TaskReference } from "@wuff/contracts";
 import { sql } from "drizzle-orm";
 
 const time = (name: string) =>
@@ -35,6 +35,7 @@ export const lists = pgTable("wuff_lists", {
   color: text("color").$type<ListColor>().notNull().default("blue"),
   description: text("description").notNull().default(""),
   archived: boolean("archived").notNull().default(false),
+  mode: text("mode").$type<TodoList["mode"]>().notNull().default("simple"),
   createdAt: time("created_at"),
 });
 export const listPreferences = pgTable("wuff_list_preferences", {
@@ -73,6 +74,21 @@ export const tasks = pgTable(
   "wuff_tasks",
   {
     parentTaskId: uuid("parent_task_id"),
+    number: integer("number").generatedAlwaysAsIdentity(),
+    status: text("status").$type<Task["status"]>().notNull().default("todo"),
+    priority: text("priority")
+      .$type<Task["priority"]>()
+      .notNull()
+      .default("none"),
+    assigneeId: text("assignee_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    references: jsonb("references")
+      .$type<TaskReference[]>()
+      .notNull()
+      .default([]),
+    updatedAt: time("updated_at"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
     dueDate: date("due_date", { mode: "string" }),
     content: text("content").notNull().default(""),
     id: uuid("id").primaryKey().defaultRandom(),
@@ -88,6 +104,19 @@ export const tasks = pgTable(
     createdAt: time("created_at"),
   },
   (t) => [
+    uniqueIndex("wuff_tasks_number_idx").on(t.number),
+    check(
+      "wuff_tasks_status",
+      sql`${t.status} in ('todo', 'in_progress', 'in_review', 'blocked', 'done')`,
+    ),
+    check(
+      "wuff_tasks_completion_status",
+      sql`${t.completed} = (${t.status} = 'done')`,
+    ),
+    check(
+      "wuff_tasks_priority",
+      sql`${t.priority} in ('none', 'low', 'medium', 'high', 'urgent')`,
+    ),
     check(
       "wuff_tasks_due_date_range",
       sql`${t.dueDate} is null or ${t.dueDate} between date '0001-01-01' and date '9999-12-31'`,

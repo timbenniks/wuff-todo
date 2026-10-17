@@ -104,6 +104,8 @@ Live snapshots act as invalidation signals: a coalescing queue fetches authorita
 
 ## HTTP API
 
+Work-task expansion (October 17): the [work-task plan](work-tasks-plan.md) defines the selected sequence before native clients. Stage 1 extends existing task/list contracts and domain services with Work mode, workflow/priority/assignment/references, immutable readable keys and task-detail lookup. `GET /api/v1/tasks/:id-or-key` and MCP `get_task` share the same authorized read; existing mutations carry the new optional fields. Page rendering keeps the read-only auth adapter. Live list-version invalidation also refreshes task pages; it never overrides a pending local mutation or grants access after removal. View preferences, GitHub App sync and agent-run contracts remain later stages.
+
 The implemented `/api/v1` interface exposes lists, members, invitations, tasks, and AI connections. See [development](development.md) for routes. User preferences remain future work.
 
 An OpenAPI description remains future work; when added, generate it from shared contracts or validate it against them. Specify pagination, input limits, stable error codes, conflict responses, and idempotency behavior. Unauthorized callers must not learn private list contents through errors.
@@ -112,9 +114,9 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 27 tools include:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 28 tools include:
 
-- `list_lists`, `get_list`, `create_list`, `rename_list`, `delete_list`.
+- `list_lists`, `get_list`, `get_task`, `create_list`, `rename_list`, `delete_list`.
 - `update_list`, `get_list_order`, `reorder_lists`.
 - `create_section`, `rename_section`, `reorder_sections`, `delete_section`.
 - `create_task`, `update_task`, `delete_task`, `reorder_tasks`. `get_list` includes tasks; `update_task` explicitly sets completion/reopening.

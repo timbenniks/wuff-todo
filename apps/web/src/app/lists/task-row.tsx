@@ -158,6 +158,7 @@ export function TaskRow({
         focusFallback={moreTrigger}
         afterName={<DueDateBadge task={task} today={today} />}
         value={task.title}
+        readHref={task.path}
         label="Task name"
         editLabel={`Edit ${task.title}`}
         completed={task.completed}
@@ -499,7 +500,7 @@ export function TaskRow({
   );
 }
 
-function Subtasks({
+export function Subtasks({
   parent,
   items,
   list,
@@ -510,6 +511,7 @@ function Subtasks({
   subtaskDrafts,
   dueDrafts,
   today,
+  focusNewTask = true,
 }: {
   parent: Task;
   items: Task[];
@@ -521,6 +523,7 @@ function Subtasks({
   subtaskDrafts: Map<string, string>;
   dueDrafts: Map<string, DueDateDraft>;
   today: string | null;
+  focusNewTask?: boolean;
 }) {
   const [title, setTitle] = useState(subtaskDrafts.get(parent.id) ?? "");
   const disabled = busy || list.archived;
@@ -592,7 +595,7 @@ function Subtasks({
           <InputGroup>
             <InputGroupInput
               ref={input}
-              autoFocus={items.length === 0}
+              autoFocus={focusNewTask && items.length === 0}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);

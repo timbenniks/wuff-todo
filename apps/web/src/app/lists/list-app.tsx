@@ -259,6 +259,8 @@ export function ListApp({
         ownerId: userId,
         version: 0,
         color: "blue" as const,
+        mode: "simple" as const,
+        assignees: [],
         description: "",
         archived: false,
         sections: [],
@@ -735,6 +737,7 @@ export function ListApp({
                     {list.ownerId === userId
                       ? "Your list · Pack leader"
                       : "Shared with your pack"}
+                    {list.mode === "work" && " · Work"}
                   </p>
                 )}
               </div>

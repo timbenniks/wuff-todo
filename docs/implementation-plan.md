@@ -10,7 +10,7 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 - **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
-- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 27 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
+- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 28 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
 - **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
 - **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
@@ -41,6 +41,8 @@ Neon Realtime is enabled on the existing Vercel-managed project’s isolated dev
 Verified scenarios: synthetic shared-list changes arrive through the live transport; MCP additions/completion update an open shared and private web view; access revocation removes the open list; subscription renewal, dropped-connection recovery, and pending-input preservation work. Actual ChatGPT host usage remains a separate check; authenticated MCP protocol tests do not certify every client.
 
 ## Next milestone
+
+**Work features before native — October 17, 2026:** the user selected mostly personal work with occasional collaboration, real GitHub App synchronization, and API/MCP parity for future developer tooling. The staged [work-task plan](work-tasks-plan.md) takes precedence over the earlier native-next sequence. Stage 1 implements work lists, task metadata, keys and task pages; personal views, GitHub synchronization and authorized agent execution follow separately.
 
 **Mobile website check — October 17, 2026:** a fresh synthetic local responsive review exercised capture, rename, subtasks, notes, calendar dates, completion/reopening and keyboard reordering. See [mobile usability check](mobile-usability-check.md) for measured 320/390px layouts, screenshots, prioritized findings and verification limits. Resolve the review's recovery/navigation/discoverability decisions and perform physical iPhone/Android checks before detailed native planning. No native app or offline behavior was implemented by this review.
 

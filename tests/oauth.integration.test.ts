@@ -248,7 +248,11 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
   );
   const created = await rpc(token.access_token, "tools/call", {
     name: "create_list",
-    arguments: { title: "OAuth smoke list", operationId: crypto.randomUUID() },
+    arguments: {
+      title: "OAuth smoke list",
+      mode: "work",
+      operationId: crypto.randomUUID(),
+    },
   });
   assert.ok(!created.body.result.isError, "MCP list creation succeeds");
   let list = created.body.result.structuredContent.list;
@@ -283,6 +287,14 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         listId: list.id,
         version: list.version,
         title: "Web to MCP",
+        status: "in_progress",
+        priority: "high",
+        references: [
+          {
+            url: "https://github.com/example/repo/issues/42",
+            title: "Work reference",
+          },
+        ],
         dueDate: "2028-02-29",
         content: "## Web notes\n\n**Shared** de-tails.",
         operationId: crypto.randomUUID(),
@@ -298,6 +310,39 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     assert.equal(list.tasks[0].title, "Web to MCP");
     assert.equal(list.tasks[0].dueDate, "2028-02-29");
     assert.equal(list.tasks[0].content, "## Web notes\n\n**Shared** de-tails.");
+    assert.equal(list.mode, "work");
+    assert.equal(list.tasks[0].status, "in_progress");
+    const detail = await rpc(token.access_token, "tools/call", {
+      name: "get_task",
+      arguments: { task: list.tasks[0].key },
+    });
+    assert.equal(
+      detail.body.result.structuredContent.task.id,
+      list.tasks[0].id,
+    );
+    assert.equal(detail.body.result.structuredContent.task.priority, "high");
+    const taskResponse = await fetch(
+      `${origin}/api/v1/tasks/${list.tasks[0].key}`,
+      { headers: { Cookie: cookie } },
+    );
+    assert.equal(taskResponse.status, 200);
+    assert.equal(
+      (await taskResponse.json()).task.references[0].title,
+      "Work reference",
+    );
+    const taskPage = await fetch(`${origin}${list.tasks[0].path}`, {
+      headers: { Cookie: cookie },
+    });
+    assert.equal(taskPage.status, 200);
+    assert.ok((await taskPage.text()).includes("Work details"));
+    const signedOutTask = await fetch(`${origin}${list.tasks[0].path}`, {
+      redirect: "manual",
+    });
+    assert.equal(signedOutTask.status, 307);
+    assert.equal(
+      signedOutTask.headers.get("location"),
+      `/sign-in?next=${encodeURIComponent(list.tasks[0].path)}`,
+    );
     const ui = await rpc(token.access_token, "resources/read", {
       uri: "ui://wuff/lists.html",
     });
@@ -326,6 +371,8 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       })
     ).json();
     assert.equal(webState.tasks[0].completed, true);
+    assert.equal(webState.tasks[0].status, "done");
+    assert.ok(webState.tasks[0].completedAt);
     assert.equal(
       webState.tasks[0].content,
       "## MCP notes\n\n- Fetch treats\n- Take a walk",
