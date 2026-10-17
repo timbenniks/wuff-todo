@@ -12,7 +12,7 @@ The first release focuses on lists, tasks, and ordering. It should feel fast and
 
 ## Confirmed decisions
 
-October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) adds optional work lists before native apps, mostly for personal work with occasional sharing. All shipped features require web/API/MCP parity. Real GitHub App sync is planned; cloud-agent execution is a future explicitly authorized integration. Historical first-release deferrals below do not override this selected staged scope.
+October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) adds optional work lists before native apps, mostly for personal work with occasional sharing. All shipped features require web/API/MCP parity. Real [GitHub App issue sync](github-sync.md) is implemented with final production release validation recorded separately; cloud-agent execution is a future explicitly authorized integration. Historical first-release deferrals below do not override this selected staged scope.
 
 - Access is invitation-only. Public self-registration is unavailable.
 - Every person has an individual account and private lists.

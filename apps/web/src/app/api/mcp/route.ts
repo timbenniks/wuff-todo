@@ -1,4 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { after } from "next/server";
+import { processGithubJobs } from "@wuff/domain";
 import { createMcpServer } from "@/lib/mcp";
 import { bearerActor, unauthorizedMcp } from "@/lib/oauth";
 import { boundedBody } from "@/lib/bounded-body";
@@ -6,7 +8,7 @@ import { failure } from "@/lib/http";
 import { taskImageLimit } from "@wuff/contracts";
 import { appOrigin } from "@/lib/config";
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 120;
 async function handle(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== appOrigin())
@@ -37,6 +39,7 @@ async function handle(request: Request) {
   try {
     const response = await transport.handleRequest(request);
     const body = await response.text();
+    after(() => processGithubJobs());
     return new Response(body, {
       status: response.status,
       headers: {

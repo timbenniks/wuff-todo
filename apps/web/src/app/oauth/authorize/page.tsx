@@ -46,6 +46,8 @@ export default async function AuthorizePage({
     "lists:read": "Read your accessible lists and tasks",
     "tasks:write": "Add, edit, complete, delete, and reorder tasks",
     "lists:manage": "Create lists and manage lists you own",
+    "github:manage":
+      "Connect GitHub repositories and create or synchronize linked issues",
   };
   return (
     <main className="max-w-md mx-auto px-6 py-20">

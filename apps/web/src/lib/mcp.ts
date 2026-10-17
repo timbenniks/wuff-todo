@@ -9,6 +9,10 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  githubBindingSchema,
+  githubTaskSchema,
+  githubLinkSchema,
+  githubResolveSchema,
   updateListViewSchema,
   queryListViewSchema,
   Actor,
@@ -92,6 +96,97 @@ export function createMcpServer(actor: Actor) {
       };
     }
   }
+  const githubReads = [
+    [
+      "get_github_connections",
+      "Read your GitHub connection status. Requires github:manage consent.",
+      z.object({}),
+      (data: any) => domain.githubConnections(actor),
+    ],
+    [
+      "list_github_repositories",
+      "List repositories from verified personal GitHub installations. Requires github:manage consent.",
+      z.object({}),
+      (data: any) => domain.githubRepositories(actor),
+    ],
+    [
+      "get_github_list",
+      "Read an accessible list's repository binding.",
+      z.object({ listId: idSchema }),
+      (data: any) => domain.githubList(actor, data.listId),
+    ],
+    [
+      "get_github_task",
+      "Read an accessible task's issue link, sync state and conflict candidates.",
+      z.object({ taskId: idSchema }),
+      (data: any) => domain.githubTask(actor, data.taskId),
+    ],
+    [
+      "get_github_pull_requests",
+      "Read related PR context from an explicitly linked issue. Requires github:manage consent.",
+      z.object({ taskId: idSchema }),
+      (data: any) => domain.githubPullRequests(actor, data.taskId),
+    ],
+  ] as const;
+  for (const [name, description, schema, action] of githubReads)
+    server.registerTool(
+      name,
+      {
+        description,
+        inputSchema: schema,
+        annotations: { ...read, openWorldHint: true },
+      },
+      async (data: any) => result(async () => ({ github: await action(data) })),
+    );
+  const githubWrites = [
+    [
+      "bind_github_repository",
+      "Owner: bind an installed repository after explicit consent to share its issue content with this list's current/future members. Requires github:manage. Use current list version and operationId.",
+      githubBindingSchema,
+      domain.githubBind,
+    ],
+    [
+      "disconnect_github_repository",
+      "Owner: stop sync but retain copied task content. Requires github:manage. Use current list version and operationId.",
+      githubTaskSchema.omit({ taskId: true }),
+      domain.githubUnbind,
+    ],
+    [
+      "link_github_issue",
+      "Owner: explicitly link an existing issueNumber, or omit it to create an issue from title/notes. Shares supported content with the bound repository; private attachments are rejected. Requires github:manage. Use list version and operationId.",
+      githubLinkSchema,
+      domain.githubLink,
+    ],
+    [
+      "unlink_github_issue",
+      "Owner: unlink without deleting either resource. Requires github:manage. Use list version and operationId.",
+      githubTaskSchema,
+      domain.githubUnlink,
+    ],
+    [
+      "retry_github_sync",
+      "Reconcile a linked task; recover uncertain creates by finding the existing marker, never blindly creating twice. Requires github:manage. Use list version and operationId.",
+      githubTaskSchema,
+      domain.githubRetry,
+    ],
+    [
+      "resolve_github_conflict",
+      "After comparing both conflict candidates, choose wuff or github. Requires current conflict revision, list version, operationId and github:manage. Does not launch an agent.",
+      githubResolveSchema,
+      domain.githubResolve,
+    ],
+  ] as const;
+  for (const [name, description, schema, action] of githubWrites)
+    server.registerTool(
+      name,
+      {
+        description,
+        inputSchema: schema,
+        annotations: { ...write, openWorldHint: true },
+      },
+      async (data: unknown) =>
+        result(async () => ({ github: await action(actor, data) })),
+    );
   registerAppTool(
     server,
     "show_lists",

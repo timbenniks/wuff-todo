@@ -268,7 +268,12 @@ export type ListSummary = Pick<
   TodoList,
   "id" | "title" | "ownerId" | "version" | "color" | "archived"
 >;
-export const scopes = ["lists:read", "tasks:write", "lists:manage"] as const;
+export const scopes = [
+  "lists:read",
+  "tasks:write",
+  "lists:manage",
+  "github:manage",
+] as const;
 export type Scope = (typeof scopes)[number];
 export type Actor = { id: string; scopes: readonly string[] };
 
@@ -452,3 +457,28 @@ export function projectListView(
     );
   return groups;
 }
+
+// GitHub bindings are owner-managed; sync operations retain list/version checks.
+export const githubBindingSchema = listMutationSchema.extend({
+  installationId: z.number().int().positive().safe(),
+  repositoryId: z.number().int().positive().safe(),
+  shareWithList: z.literal(true),
+});
+export const githubTaskSchema = listMutationSchema.extend({ taskId: idSchema });
+export const githubLinkSchema = githubTaskSchema.extend({
+  issueNumber: z.number().int().positive().optional(),
+});
+export const githubResolveSchema = githubTaskSchema.extend({
+  revision: z.number().int().nonnegative(),
+  choice: z.enum(["wuff", "github"]),
+});
+export type GithubSyncFields = { title: string; body: string; closed: boolean };
+export type GithubTaskState = {
+  taskId: string;
+  issueNumber: number | null;
+  url: string | null;
+  state: string;
+  revision: number;
+  error: string | null;
+  conflict: { wuff: GithubSyncFields; github: GithubSyncFields } | null;
+};

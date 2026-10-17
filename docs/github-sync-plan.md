@@ -2,7 +2,7 @@
 
 Date: October 17, 2026
 
-Status: private App registration completed; integration implementation and installation remain pending. This elaborates the confirmed Stage 3 direction in [work tasks](work-tasks-plan.md). The initial planning pass made no external changes; the subsequent registration is recorded below.
+Status: implementation and isolated/live installed-App checks complete; production webhook/release validation in progress. See [implementation and evidence](github-sync.md). This elaborates the confirmed Stage 3 direction in [work tasks](work-tasks-plan.md). The initial planning pass made no external changes; the subsequent registration is recorded below.
 
 ## Registration progress — October 17
 

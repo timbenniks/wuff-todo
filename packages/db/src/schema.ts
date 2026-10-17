@@ -268,3 +268,77 @@ export const oauthTokens = pgTable(
   },
   (t) => [uniqueIndex("wuff_tokens_refresh_idx").on(t.refreshHash)],
 );
+
+export const githubAccounts = pgTable("wuff_github_accounts", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  githubId: text("github_id").notNull(),
+  login: text("login").notNull(),
+  credentials: text("credentials").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+export const githubAuthStates = pgTable("wuff_github_auth_states", {
+  hash: text("hash").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  verifier: text("verifier").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+export const githubBindings = pgTable("wuff_github_bindings", {
+  listId: uuid("list_id")
+    .primaryKey()
+    .references(() => lists.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id),
+  installationId: text("installation_id").notNull(),
+  repositoryId: text("repository_id").notNull(),
+  repository: text("repository").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: time("created_at"),
+});
+export const githubLinks = pgTable(
+  "wuff_github_links",
+  {
+    taskId: uuid("task_id")
+      .primaryKey()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    repositoryId: text("repository_id").notNull(),
+    issueNumber: integer("issue_number"),
+    nodeId: text("node_id"),
+    baseline:
+      jsonb("baseline").$type<import("@wuff/contracts").GithubSyncFields>(),
+    conflict: jsonb("conflict").$type<{
+      wuff: import("@wuff/contracts").GithubSyncFields;
+      github: import("@wuff/contracts").GithubSyncFields;
+    }>(),
+    state: text("state").notNull().default("pending"),
+    revision: integer("revision").notNull().default(0),
+    error: text("error"),
+    operationId: uuid("operation_id").notNull(),
+  },
+  (t) => [
+    uniqueIndex("wuff_github_issue_unique").on(t.repositoryId, t.issueNumber),
+  ],
+);
+export const githubJobs = pgTable("wuff_github_jobs", {
+  id: text("id").primaryKey(),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  generation: integer("generation").notNull().default(0),
+  attempts: integer("attempts").notNull().default(0),
+  availableAt: time("available_at"),
+  leaseUntil: timestamp("lease_until", { withTimezone: true }),
+  createdAt: time("created_at"),
+});
+export const githubDeliveries = pgTable("wuff_github_deliveries", {
+  id: text("id").primaryKey(),
+  digest: text("digest").notNull(),
+  createdAt: time("created_at"),
+});

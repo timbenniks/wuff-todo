@@ -23,6 +23,9 @@ export default async function ConnectionsPage() {
         {mcpResource()}
       </code>
       <Connections />
+      <a href="/github" className="block mt-6 text-primary underline">
+        Manage GitHub connections
+      </a>
     </main>
   );
 }

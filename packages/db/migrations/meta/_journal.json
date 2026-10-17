@@ -64,6 +64,13 @@
       "when": 1792220509803,
       "tag": "0008_thin_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792226450517,
+      "tag": "0009_rainy_red_wolf",
+      "breakpoints": true
     }
   ]
 }

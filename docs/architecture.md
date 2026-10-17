@@ -18,7 +18,7 @@ Use pnpm workspaces. Add build orchestration only when workspace dependencies an
 
 DM Sans upright/italic variable assets and their OFL license live in `apps/web/src/fonts`. The root layout uses `next/font/local`; the standalone MCP build embeds those same files, requiring no external font domain. Web native selects preserve browser/keyboard semantics with a decorative inset chevron; native details/summary retain disclosure state and keyboard behavior. See [typography](typography-review.md) and [design language](design-language.md).
 
-GitHub installation ownership, durable sync state and processing are planned separately in [GitHub synchronization](github-sync-plan.md); no GitHub App, webhook worker or agent-run service is implemented by the visual release.
+[GitHub issue synchronization](github-sync.md) adds owner-verified personal installations, encrypted expiring credentials, durable jobs and signed webhooks. The visual release remains separate; agent-run services are still deferred.
 
 ## Repository layout and future packages
 
@@ -73,7 +73,7 @@ The first technical proof must establish:
 
 The implemented OAuth authorization layer delegates MCP access while preserving Neon identity. It uses application-owned OAuth tables and does not install upstream Better Auth plugins into the managed service.
 
-Implemented MCP scopes are `lists:read`, `tasks:write`, and `lists:manage`. Codex tool interoperability is verified; other clients and named-host inline UI remain separate checks. List membership remains authoritative even when a token has a broad write scope.
+Implemented MCP scopes are `lists:read`, `tasks:write`, `lists:manage`, and explicit `github:manage`. Existing MCP grants do not acquire the GitHub permission through refresh. Codex tool interoperability is verified; other clients and named-host inline UI remain separate checks. List membership remains authoritative even when a token has a broad write scope.
 
 ## Conceptual data model
 
@@ -110,9 +110,9 @@ Live snapshots act as invalidation signals: a coalescing queue fetches authorita
 
 ## HTTP API
 
-Work-task expansion (October 17): the [work-task plan](work-tasks-plan.md) defines the selected sequence before native clients. Stage 1 extends existing task/list contracts and domain services with Work mode, workflow/priority/assignment/references, immutable readable keys and task-detail lookup. `GET /api/v1/tasks/:id-or-key` and MCP `get_task` share the same authorized read; existing mutations carry the new optional fields. Page rendering keeps the read-only auth adapter. Live list-version invalidation also refreshes task pages; it never overrides a pending local mutation or grants access after removal. View preferences, GitHub App sync and agent-run contracts remain later stages.
+Work-task expansion (October 17): the [work-task plan](work-tasks-plan.md) defines the selected sequence before native clients. Stage 1 extends existing task/list contracts and domain services with Work mode, workflow/priority/assignment/references, immutable readable keys and task-detail lookup. `GET /api/v1/tasks/:id-or-key` and MCP `get_task` share the same authorized read; existing mutations carry the new optional fields. Page rendering keeps the read-only auth adapter. Live list-version invalidation also refreshes task pages; it never overrides a pending local mutation or grants access after removal. Personal views and GitHub App sync are implemented in their feature documents; agent-run contracts remain later work.
 
-The implemented `/api/v1` interface exposes lists, members, invitations, tasks, and AI connections. See [development](development.md) for routes. User preferences remain future work.
+The implemented `/api/v1` interface exposes lists, members, invitations, tasks, and AI connections. See [development](development.md) for routes. Personal views and sidebar ordering use independently revisioned preferences.
 
 An OpenAPI description remains future work; when added, generate it from shared contracts or validate it against them. Specify pagination, input limits, stable error codes, conflict responses, and idempotency behavior. Unauthorized callers must not learn private list contents through errors.
 
@@ -120,7 +120,7 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 30 tools include:
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 41 tools include the original list/task/view/image tools and the eleven [GitHub tools](github-sync.md#surfaces):
 
 - `list_lists`, `get_list`, `get_task`, `create_list`, `rename_list`, `delete_list`.
 - `update_list`, `get_list_order`, `reorder_lists`.

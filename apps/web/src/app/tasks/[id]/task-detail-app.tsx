@@ -22,6 +22,7 @@ import {
   type DueDateDraft,
 } from "../../lists/task-due-date";
 import { Subtasks } from "../../lists/task-row";
+import { GithubTask } from "./github-task";
 import { WorkMetadata } from "./work-metadata";
 
 type Pending = { path: string; method: string; body: Record<string, unknown> };
@@ -276,6 +277,7 @@ export function TaskDetailApp({
       )}
       <div className="grid gap-4">
         <WorkMetadata task={task} list={list} busy={busy} change={change} />
+        <GithubTask task={task} list={list} userId={userId} refresh={refresh} />
         <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold">Notes</h2>

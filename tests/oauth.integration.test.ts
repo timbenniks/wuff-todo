@@ -386,6 +386,43 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       list.tasks[0].id,
     );
     assert.equal(detail.body.result.structuredContent.task.priority, "high");
+    const githubRead = await rpc(token.access_token, "tools/call", {
+      name: "get_github_task",
+      arguments: { taskId: list.tasks[0].id },
+    });
+    assert.equal(githubRead.body.result.structuredContent.github.link, null);
+    const githubHttp = await fetch(
+      `${origin}/api/v1/github?taskId=${list.tasks[0].id}`,
+      { headers: { Cookie: cookie } },
+    );
+    assert.equal(githubHttp.status, 200);
+    assert.equal((await githubHttp.json()).link, null);
+    const githubDenied = await rpc(token.access_token, "tools/call", {
+      name: "link_github_issue",
+      arguments: {
+        listId: list.id,
+        version: list.version,
+        taskId: list.tasks[0].id,
+        operationId: crypto.randomUUID(),
+      },
+    });
+    assert.equal(
+      githubDenied.body.result.structuredContent.error.code,
+      "forbidden",
+      "Existing task scopes do not grant GitHub writes",
+    );
+    const githubAnon = await fetch(`${origin}/api/v1/github`);
+    assert.equal(githubAnon.status, 401);
+    const githubOrigin = await fetch(`${origin}/api/v1/github`, {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        "Content-Type": "application/json",
+        Origin: "https://wrong.example",
+      },
+      body: JSON.stringify({ action: "connect" }),
+    });
+    assert.equal(githubOrigin.status, 403);
     const taskResponse = await fetch(
       `${origin}/api/v1/tasks/${list.tasks[0].key}`,
       { headers: { Cookie: cookie } },

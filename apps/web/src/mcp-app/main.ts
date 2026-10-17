@@ -1014,7 +1014,8 @@ function renderTask(
     ),
     detailsBody,
   );
-  if (current!.mode === "work") detailsBody.append(workDetails(task));
+  if (current!.mode === "work")
+    detailsBody.append(workDetails(task), githubDetails(task));
   detailsBody.append(taskDueDate(task), taskNotes(task));
   wrapper.append(secondary);
   queueMicrotask(refreshDueBadges);
@@ -1721,3 +1722,165 @@ app.connect().catch(() => {
 window.setInterval(refreshDueBadges, 30_000);
 window.addEventListener("focus", refreshDueBadges);
 document.addEventListener("visibilitychange", refreshDueBadges);
+
+function githubDetails(task: Task) {
+  const details = element("details"),
+    summary = element("summary", "GitHub issue"),
+    body = element("div");
+  details.append(summary, body);
+  let pending: { name: string; args: Record<string, unknown> } | null = null;
+  async function load() {
+    try {
+      const data = (await request("get_github_task", { taskId: task.id })) as {
+        github: { link: any };
+      };
+      const link = data.github.link;
+      body.replaceChildren();
+      const setup = element("a", "Manage repository connection");
+      setup.href = `${webOrigin}/github?listId=${current!.id}`;
+      setup.target = "_blank";
+      setup.rel = "noreferrer";
+      body.append(setup);
+      async function act(
+        name: string,
+        extra: Record<string, unknown> = {},
+        retry = false,
+      ) {
+        if (pending && !retry) {
+          status.textContent = "Retry the previous GitHub request first.";
+          return;
+        }
+        if (!pending)
+          pending = {
+            name,
+            args: {
+              listId: current!.id,
+              taskId: task.id,
+              version: current!.version,
+              operationId: crypto.randomUUID(),
+              ...extra,
+            },
+          };
+        try {
+          await request(pending.name, pending.args);
+          pending = null;
+          const result = (await request("get_list", {
+            listId: current!.id,
+          })) as { list: TodoList };
+          current = result.list;
+          await load();
+          status.textContent = "GitHub operation saved.";
+        } catch (e) {
+          status.textContent = (e as Error).message;
+          body.append(
+            button(
+              "Retry previous GitHub request",
+              () => void act(name, extra, true),
+            ),
+          );
+        }
+      }
+      if (link) {
+        const tag = element("span", link.active ? link.state : "Disconnected");
+        tag.className = "status-tag";
+        body.append(tag);
+        if (link.url) {
+          const a = element("a", `Issue #${link.issueNumber}`);
+          a.href = link.url;
+          a.target = "_blank";
+          a.rel = "noreferrer";
+          body.append(a);
+        }
+        if (link.error)
+          body.append(
+            element(
+              "p",
+              `Sync needs attention: ${link.error}. Reconcile before creating another issue.`,
+            ),
+          );
+        body.append(
+          button(
+            "Reconcile now",
+            () => void act("retry_github_sync"),
+            current!.archived,
+          ),
+        );
+        if (link.conflict) {
+          for (const side of ["wuff", "github"]) {
+            body.append(
+              element("h3", side === "wuff" ? "Wuff" : "GitHub"),
+              element("pre", JSON.stringify(link.conflict[side], null, 2)),
+              button(
+                `Keep ${side === "wuff" ? "Wuff" : "GitHub"}`,
+                () =>
+                  void act("resolve_github_conflict", {
+                    revision: link.revision,
+                    choice: side,
+                  }),
+                current!.archived,
+              ),
+            );
+          }
+        }
+        if (current!.ownerId === viewerId)
+          body.append(
+            button(
+              "Unlink issue",
+              () => void act("unlink_github_issue"),
+              current!.archived,
+            ),
+          );
+        body.append(
+          button("Load related pull requests", () => {
+            void request("get_github_pull_requests", { taskId: task.id })
+              .then((r: any) => {
+                for (const pr of r.github.pullRequests) {
+                  const a = element("a", `${pr.title} · ${pr.state}`);
+                  a.href = pr.url;
+                  a.target = "_blank";
+                  a.rel = "noreferrer";
+                  body.append(a);
+                }
+              })
+              .catch((e) => {
+                status.textContent = e.message;
+              });
+          }),
+        );
+      } else if (current!.ownerId === viewerId) {
+        const label = element("label", "Existing issue number"),
+          input = element("input");
+        input.inputMode = "numeric";
+        label.append(input);
+        body.append(
+          label,
+          button(
+            "Link existing issue",
+            () => {
+              if (/^\d+$/.test(input.value))
+                void act("link_github_issue", {
+                  issueNumber: Number(input.value),
+                });
+            },
+            current!.archived,
+          ),
+          button(
+            "Create GitHub issue",
+            () => void act("link_github_issue"),
+            current!.archived,
+          ),
+          element(
+            "p",
+            "Creates share this task’s title and supported notes with the connected repository. Private attachments are not exported.",
+          ),
+        );
+      }
+    } catch (e) {
+      body.replaceChildren(element("p", (e as Error).message));
+    }
+  }
+  details.ontoggle = () => {
+    if (details.open) void load();
+  };
+  return details;
+}

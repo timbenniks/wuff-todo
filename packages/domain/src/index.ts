@@ -806,6 +806,23 @@ export async function updateTask(actor: Actor, data: unknown) {
         .from(tasks)
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
       if (!task) fail("not_found", "Task not found.", 404);
+      if (
+        (input.title !== undefined ||
+          input.content !== undefined ||
+          input.completed !== undefined ||
+          input.status !== undefined) &&
+        !actor.scopes.includes("github:manage")
+      ) {
+        const linked = await tx.execute(
+          sql`select 1 from wuff_github_links where task_id=${task.id} limit 1`,
+        );
+        if (linked.rowCount)
+          fail(
+            "github_permission_required",
+            "Reconnect this client with GitHub permission before editing a synchronized task.",
+            403,
+          );
+      }
       if (task.parentTaskId && input.sectionId)
         fail(
           "invalid_section",
@@ -1472,3 +1489,5 @@ export async function cleanupTaskImages() {
   }
   return { removed, failed };
 }
+
+export * from "./github";
