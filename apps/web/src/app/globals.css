@@ -37,6 +37,15 @@ summary:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
+.view-disclosure > summary {
+  list-style: none;
+}
+.view-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.view-disclosure[open] > summary > svg {
+  transform: rotate(90deg);
+}
 h1,
 h2,
 .wordmark {

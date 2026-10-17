@@ -54,3 +54,9 @@ Evidence: [desktop list](screenshots/design-implemented-desktop.png), [phone act
 ## Release and verification limits
 
 Implemented and verified locally; no deployment, GitHub push or production smoke check was performed. Physical iPhone/Android behavior, a manual screen-reader review, actual browser zoom controls and named ChatGPT/Codex interactive-host rendering remain separate checks. Viewport and color-pair checks do not certify accessibility conformance or device performance.
+
+## View-control spacing refinement
+
+October 17 screenshot feedback: shared web NativeSelect now retains native select behavior with `appearance: none`, 40px text clearance and a non-interactive theme-colored Lucide chevron inset 12px. Your view and Sorting per section use explicit matching disclosure chevrons with native details/summary keyboard behavior. The collapsed header uses centered flex alignment within 44px; the expanded form replaces its 12px top margin with 4px padding and uses 12px group gaps.
+
+The optimized production build passed. Local Chrome against that build measured the collapsed summary at 44px with zero vertical text-center offset, and selects at 44px with a 12px chevron inset and zero vertical center offset. A synthetic personal-view save succeeded; Enter closed and reopened the disclosure. Expanded layouts had no horizontal document overflow at 320px and 390px. [Desktop controls](screenshots/view-controls-fixed.png) and [phone controls](screenshots/view-controls-fixed-phone.png) were visually inspected. These checks are local; deployment and physical-device rendering remain unverified.

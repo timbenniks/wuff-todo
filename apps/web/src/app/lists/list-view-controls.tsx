@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import {
   defaultListView,
   statusLabels,
@@ -61,12 +62,13 @@ export function ListViewControls({
   const options = (values: readonly string[]) =>
     values.map((v) => [v, v[0].toUpperCase() + v.slice(1)] as [string, string]);
   return (
-    <details className="list-view-controls rounded-xl border border-border bg-surface mb-3 px-3">
-      <summary className="text-sm font-medium py-2 min-h-11 cursor-pointer">
-        Your view{dirty ? " · Unsaved changes" : ""}
+    <details className="list-view-controls view-disclosure rounded-xl border border-border bg-surface mb-3 px-3">
+      <summary className="flex items-center gap-2 text-sm font-medium min-h-11 cursor-pointer">
+        <ChevronRight aria-hidden="true" size={16} className="shrink-0" />
+        <span>Your view{dirty ? " · Unsaved changes" : ""}</span>
       </summary>
       <form
-        className="mt-3 pb-3 grid gap-4"
+        className="pt-1 pb-3 grid gap-3"
         onSubmit={async (e) => {
           e.preventDefault();
           if (
@@ -208,8 +210,11 @@ export function ListViewControls({
           )}
         </div>
         {draft.groupBy === "section" && (
-          <details>
-            <summary className="text-sm py-2">Sorting per section</summary>
+          <details className="view-disclosure">
+            <summary className="flex items-center gap-2 text-sm min-h-11">
+              <ChevronRight aria-hidden="true" size={16} className="shrink-0" />
+              <span>Sorting per section</span>
+            </summary>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               {[{ id: null, title: "No section" }, ...list.sections].map(
                 (s) => (
