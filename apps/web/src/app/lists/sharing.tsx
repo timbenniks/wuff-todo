@@ -127,19 +127,20 @@ export function InvitationInbox({
       {(items.length > 0 || mutation.error) && (
         <section
           aria-label="List invitations"
-          className="rounded-2xl border border-blue-200 bg-blue-50 p-4 mb-8 grid gap-4"
+          className="rounded-2xl border border-border bg-accent p-4 mb-8 grid gap-4"
         >
           <h2 className="font-semibold">Your pack is calling</h2>
           {items.map((invite) => (
             <div key={invite.id} className="flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1 basis-48">
                 <p className="font-semibold break-words">{invite.listTitle}</p>
-                <p className="text-sm text-slate-600 break-words">
+                <p className="text-sm text-muted-foreground break-words">
                   A pack invite from {invite.ownerName} · {invite.ownerEmail}
                 </p>
               </div>
               <Button
                 size="sm"
+                variant="primary"
                 disabled={mutation.busy || !!mutation.retry}
                 aria-label={`Accept invitation to ${invite.listTitle}`}
                 onClick={() =>
@@ -170,7 +171,7 @@ export function InvitationInbox({
             </div>
           ))}
           {mutation.busy && (
-            <p role="status" className="text-sm text-slate-500">
+            <p role="status" className="text-sm text-muted-foreground">
               {wuffCopy.savingInvitation}
             </p>
           )}
@@ -178,7 +179,7 @@ export function InvitationInbox({
         </section>
       )}
       {readError && (
-        <p role="status" className="text-sm text-slate-500 mb-4">
+        <p role="status" className="text-sm text-muted-foreground mb-4">
           {readError}
         </p>
       )}
@@ -276,9 +277,7 @@ export function SharingDialog({
   return (
     <>
       <Button
-        variant="ghost"
-        size="icon"
-        className="h-11 w-11"
+        variant="outline"
         aria-label={owner ? "Share" : "People"}
         title={owner ? "Share" : "People"}
         disabled={disabled}
@@ -286,20 +285,20 @@ export function SharingDialog({
           setOpen(true);
         }}
       >
-        <Users size={16} />
+        <Users size={16} aria-hidden="true" /> {owner ? "Share" : "People"}
       </Button>
       <dialog
         ref={dialog}
         aria-labelledby={`sharing-title-${list.id}`}
         onClose={() => setOpen(false)}
-        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-white text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
+        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
       >
         <div className="flex items-start justify-between gap-4 mb-5">
           <div className="min-w-0">
             <h2 id={`sharing-title-${list.id}`} className="text-2xl font-bold">
               Share with your pack
             </h2>
-            <p className="text-sm text-slate-500 break-words mt-1">
+            <p className="text-sm text-muted-foreground break-words mt-1">
               {list.title}
             </p>
           </div>
@@ -359,7 +358,7 @@ export function SharingDialog({
                   </div>
                 ))}
               </section>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Pack rules: editors can change tasks. Only the owner can rename,
                 delete, or share the list.
               </p>
@@ -397,11 +396,14 @@ export function SharingDialog({
                         maxLength={254}
                         className="min-w-0 flex-1 basis-48"
                       />
-                      <Button disabled={mutation.busy || !!mutation.retry}>
+                      <Button
+                        variant="primary"
+                        disabled={mutation.busy || !!mutation.retry}
+                      >
                         Invite
                       </Button>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Roll out the wag-on: they’ll see an invitation in Wuff.
                       They need an existing account. No email is sent.
                     </p>
@@ -423,7 +425,7 @@ export function SharingDialog({
                             <p className="text-sm break-words">
                               {invite.email}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-muted-foreground">
                               Expires{" "}
                               {new Date(invite.expiresAt).toLocaleDateString()}
                             </p>
@@ -462,13 +464,13 @@ export function SharingDialog({
             </>
           )}
           {mutation.busy && (
-            <p role="status" className="text-sm text-slate-500">
+            <p role="status" className="text-sm text-muted-foreground">
               {wuffCopy.savingSharing}
             </p>
           )}
           <MutationError mutation={mutation} />
           {notice && (
-            <p role="status" className="text-sm text-slate-500">
+            <p role="status" className="text-sm text-muted-foreground">
               {notice}
             </p>
           )}
@@ -489,9 +491,10 @@ function Person({
   return (
     <div className="min-w-0">
       <p className="text-sm font-semibold break-words">
-        {name} <span className="font-normal text-slate-500">· {role}</span>
+        {name}{" "}
+        <span className="font-normal text-muted-foreground">· {role}</span>
       </p>
-      <p className="text-xs text-slate-500 break-words">{email}</p>
+      <p className="text-xs text-muted-foreground break-words">{email}</p>
     </div>
   );
 }

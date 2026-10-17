@@ -22,6 +22,8 @@ import { useActorApi } from "./actor-api";
 import { LiveUpdates } from "./live-updates";
 import type { LiveLists } from "@/lib/live-types";
 import { LiveRefreshQueue } from "@/lib/live-refresh";
+import { ListTheme } from "@/components/list-theme";
+import { listThemeVariables } from "@/lib/list-theme";
 import { listPalette } from "@/lib/list-colors";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
@@ -141,7 +143,15 @@ export function ListApp({
     },
     [cache, readError, api],
   );
-  function chooseList(id: string) {
+  function chooseList(id: string, navigate = true) {
+    if (navigate) {
+      const url = new URL(window.location.href);
+      if ((url.searchParams.get("listId") ?? "") !== id) {
+        if (id) url.searchParams.set("listId", id);
+        else url.searchParams.delete("listId");
+        window.history.pushState(null, "", url.pathname + url.search);
+      }
+    }
     selected.current = id;
     setSelectedId(id);
     const cached = cache.get(id);
@@ -417,9 +427,30 @@ export function ListApp({
   useEffect(() => {
     if (list) setShowArchive(list.archived);
   }, [list?.id, list?.archived]);
+  useEffect(() => {
+    const restore = () => {
+      const requested = new URL(window.location.href).searchParams.get(
+        "listId",
+      );
+      const id = summariesRef.current.find((s) => s.id === requested)?.id;
+      chooseList(
+        id ?? summariesRef.current.find((s) => !s.archived)?.id ?? "",
+        false,
+      );
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [cache]);
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[260px_1fr]">
+    <div
+      className="min-h-dvh md:grid md:grid-cols-[260px_1fr] bg-background text-foreground"
+      style={listThemeVariables(list?.color ?? "blue")}
+    >
+      <ListTheme color={list?.color ?? "blue"} />
+      <a className="skip-link" href="#list-content">
+        Skip to tasks
+      </a>
       {liveConfig && (
         <LiveUpdates
           config={liveConfig}
@@ -431,7 +462,7 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="bg-[#edf4fa] border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 md:min-h-dvh flex flex-col">
+      <aside className="bg-sidebar border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 md:min-h-dvh flex flex-col">
         <div className="flex gap-3 items-center md:mb-8">
           <Corgi size={48} />
           <span className="wordmark text-xl font-bold">Wuff Todo</span>
@@ -461,7 +492,7 @@ export function ListApp({
           }}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
+            <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
               {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
             </span>
             <Button
@@ -484,8 +515,15 @@ export function ListApp({
                 );
               }}
             >
+              <label
+                htmlFor="new-list-name"
+                className="text-xs text-muted-foreground"
+              >
+                List name
+              </label>
               <InputGroup>
                 <InputGroupInput
+                  id="new-list-name"
                   name="title"
                   aria-label="List name"
                   placeholder={wuffCopy.listPlaceholder}
@@ -496,13 +534,13 @@ export function ListApp({
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     type="submit"
-                    size="icon-sm"
-                    variant="ghost"
+                    size="sm"
+                    variant="primary"
                     disabled={busy}
                     aria-label="Create list"
                     title="Create list"
                   >
-                    <Plus size={18} />
+                    <Plus size={18} aria-hidden="true" /> Create
                   </InputGroupButton>
                 </InputGroupAddon>
               </InputGroup>
@@ -567,7 +605,7 @@ export function ListApp({
                             void reload(s.id).catch(() => {});
                         }}
                         aria-current={s.id === selectedId ? "page" : undefined}
-                        className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-white/60"}`}
+                        className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-surface/60"}`}
                         style={{
                           background:
                             s.id === selectedId
@@ -582,7 +620,7 @@ export function ListApp({
                         />
                         <span className="truncate">{s.title}</span>
                         {s.id === pendingCreate?.id && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">
                             {pendingCreate.status === "saving"
                               ? wuffCopy.saving
                               : "Retry"}
@@ -597,7 +635,7 @@ export function ListApp({
             </nav>
           </SortableList>
           {showArchive && visibleLists.length === 0 && (
-            <p className="text-sm text-slate-500 px-3 py-4">
+            <p className="text-sm text-muted-foreground px-3 py-4">
               No lists taking a paws yet.
             </p>
           )}
@@ -626,9 +664,13 @@ export function ListApp({
           </div>
         </div>
       </aside>
-      <main className="px-5 py-5 md:px-16 md:py-16 max-w-4xl w-full mx-auto">
+      <main
+        id="list-content"
+        tabIndex={-1}
+        className="list-content px-4 py-5 md:px-8 md:py-8 max-w-4xl w-full mx-auto min-w-0"
+      >
         {liveConfig && (
-          <p role="status" className="text-xs text-slate-500 mb-4">
+          <p role="status" className="text-xs text-muted-foreground mb-4">
             {liveStatus === "live"
               ? wuffCopy.liveConnected
               : liveStatus === "connecting"
@@ -638,7 +680,7 @@ export function ListApp({
         )}
         <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
         {readFailure && (
-          <p role="status" className="text-sm text-slate-500 mb-4">
+          <p role="status" className="text-sm text-muted-foreground mb-4">
             {readFailure}
           </p>
         )}
@@ -683,7 +725,7 @@ export function ListApp({
           </div>
         )}
         {loading && (
-          <p role="status" className="text-slate-500">
+          <p role="status" className="text-muted-foreground">
             {wuffCopy.fetchingList}
           </p>
         )}
@@ -695,12 +737,12 @@ export function ListApp({
                 ? "No lists taking a paws."
                 : "Small paws. Big plans."}
             </h1>
-            <p className="text-slate-500 mb-7">
+            <p className="text-muted-foreground mb-7">
               {showArchive
                 ? "Your lists can take a paws here until you need them again."
                 : "Groceries, weekend plans, anything your pack needs to remember."}
             </p>
-            <Button onClick={() => setCreating(true)}>
+            <Button variant="primary" onClick={() => setCreating(true)}>
               <Plus size={18} />
               Create your first list
             </Button>
@@ -708,14 +750,8 @@ export function ListApp({
         )}
         {list && (
           <>
-            <div
-              className="list-heading flex flex-wrap items-start gap-3 mb-6 rounded-2xl border p-5 [&>div:first-child]:flex-1 [&>div:first-child]:basis-full md:[&>div:first-child]:basis-40"
-              style={{
-                background: listPalette[list.color].tint,
-                borderColor: listPalette[list.color].accent + "30",
-              }}
-            >
-              <div className="min-w-0">
+            <div className="list-heading flex flex-wrap items-start gap-4 mb-4 rounded-2xl border border-border bg-accent p-5">
+              <div className="min-w-0 flex-1 basis-full sm:basis-60">
                 <InlineName
                   key={list.id}
                   value={list.title}
@@ -733,87 +769,94 @@ export function ListApp({
                   }
                 />
                 {!isPending && (
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     {list.ownerId === userId
                       ? "Your list · Pack leader"
                       : "Shared with your pack"}
                     {list.mode === "work" && " · Work"}
                   </p>
                 )}
+                {list.description && (
+                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed mt-3">
+                    {list.description}
+                  </p>
+                )}
               </div>
-              {!isPending && (
-                <SharingDialog
-                  key={list.id}
-                  list={list}
-                  userId={userId}
-                  disabled={busy}
-                  onChanged={sharingChanged}
-                />
-              )}
-              {list.ownerId === userId && !isPending && (
-                <div className="flex items-center gap-1">
-                  <ListSettings
+              <div className="list-management flex flex-wrap items-center gap-2">
+                {!isPending && (
+                  <SharingDialog
                     key={list.id}
                     list={list}
-                    busy={busy}
-                    change={change}
-                    retry={
-                      retryWrite
-                        ? () =>
-                            change(
-                              retryWrite.path,
-                              retryWrite.method,
-                              retryWrite.body,
-                              true,
-                            )
-                        : undefined
-                    }
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                    userId={userId}
                     disabled={busy}
-                    aria-label="Delete list"
-                    onClick={async () => {
-                      if (
-                        !window.confirm(
-                          `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
-                        )
-                      )
-                        return;
-                      if (mutating.current) return;
-                      setBusy(true);
-                      mutating.current = true;
-                      summaryEpoch.current++;
-                      cache.supersede(list.id);
-                      try {
-                        await api(`/api/v1/lists/${list.id}`, "DELETE", {
-                          version: list.version,
-                          operationId: crypto.randomUUID(),
-                        });
-                        cache.forget(list.id);
-                        const next = summariesRef.current.filter(
-                          (item) => item.id !== list.id,
-                        );
-                        setSummaries(next);
-                        if (selected.current === list.id)
-                          chooseList(next[0]?.id ?? "");
-                      } catch (e) {
-                        setError(wuffError((e as Error).message));
-                      } finally {
-                        mutating.current = false;
-                        setBusy(false);
-                        void liveRefresh.current?.flush();
+                    onChanged={sharingChanged}
+                  />
+                )}
+                {list.ownerId === userId && !isPending && (
+                  <div className="contents">
+                    <ListSettings
+                      key={list.id}
+                      list={list}
+                      busy={busy}
+                      change={change}
+                      retry={
+                        retryWrite
+                          ? () =>
+                              change(
+                                retryWrite.path,
+                                retryWrite.method,
+                                retryWrite.body,
+                                true,
+                              )
+                          : undefined
                       }
-                    }}
-                  >
-                    <Trash2 size={17} />
-                  </Button>
-                </div>
-              )}
+                    />
+                    <Button
+                      variant="danger"
+                      className="list-delete"
+                      disabled={busy}
+                      aria-label="Delete list"
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+                          )
+                        )
+                          return;
+                        if (mutating.current) return;
+                        setBusy(true);
+                        mutating.current = true;
+                        summaryEpoch.current++;
+                        cache.supersede(list.id);
+                        try {
+                          await api(`/api/v1/lists/${list.id}`, "DELETE", {
+                            version: list.version,
+                            operationId: crypto.randomUUID(),
+                          });
+                          cache.forget(list.id);
+                          const next = summariesRef.current.filter(
+                            (item) => item.id !== list.id,
+                          );
+                          setSummaries(next);
+                          if (selected.current === list.id)
+                            chooseList(next[0]?.id ?? "");
+                        } catch (e) {
+                          setError(wuffError((e as Error).message));
+                        } finally {
+                          mutating.current = false;
+                          setBusy(false);
+                          void liveRefresh.current?.flush();
+                        }
+                      }}
+                    >
+                      <Trash2 size={17} aria-hidden="true" /> Delete list
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             {isPending ? (
-              <div className="mt-6 text-sm text-slate-500">
+              <div className="mt-6 text-sm text-muted-foreground">
                 {pendingCreate?.status === "saving" ? (
                   <p role="status">Tucking your list into the pack…</p>
                 ) : (
@@ -830,11 +873,6 @@ export function ListApp({
               </div>
             ) : (
               <>
-                {list.description && (
-                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600 mb-8">
-                    {list.description}
-                  </p>
-                )}
                 <TaskGroups
                   key={list.id}
                   list={list}

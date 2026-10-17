@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wuff Todo · Design language proposal</title>
+  <style>
+    :root {
+      --page: #f7fafc;
+      --surface: #fff;
+      --ink: #263e55;
+      --muted: #536c82;
+      --blue: #315f9b;
+      --tint: #e7f0f8;
+      --line: #dce5ed;
+      --control: #708499;
+      --danger: #b91c1c;
+      --radius: 8px;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font:
+        16px/1.5 "Avenir Next",
+        "Segoe UI",
+        sans-serif;
+    }
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+    h1,
+    h2,
+    h3 {
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      letter-spacing: -0.035em;
+    }
+    h1 {
+      font-size: 30px;
+      line-height: 36px;
+    }
+    h2 {
+      font-size: 24px;
+      line-height: 32px;
+    }
+    h3 {
+      font-size: 18px;
+      line-height: 24px;
+    }
+    button,
+    input {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--control);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn.primary {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .btn.quiet {
+      border-color: transparent;
+      background: transparent;
+    }
+    .btn.danger {
+      color: var(--danger);
+    }
+    .icon {
+      padding: 0;
+      width: 44px;
+      flex-shrink: 0;
+    }
+    .btn:hover {
+      filter: brightness(0.96);
+    }
+    a {
+      color: var(--blue);
+    }
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 3px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 18px;
+      font-weight: 600;
+      background: #edf1f5;
+      color: #465b70;
+      white-space: nowrap;
+    }
+    .tag.blue {
+      background: #e7f0fb;
+      color: #315f9b;
+    }
+    .tag.red {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+    .tag.green {
+      background: #ecfdf5;
+      color: #166534;
+    }
+    .tag.violet {
+      background: #f3eefe;
+      color: #6b3bb0;
+    }
+    svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .tag svg {
+      width: 14px;
+      height: 14px;
+    }
+    .caption,
+    .meta {
+      font-size: 12px;
+      line-height: 18px;
+      color: var(--muted);
+    }
+    .proposal {
+      max-width: 1160px;
+      margin: auto;
+      padding: 32px 24px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .proposal p {
+      margin-top: 8px;
+      max-width: 70ch;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .brand img {
+      object-fit: contain;
+    }
+    .examples {
+      max-width: 1160px;
+      margin: auto;
+      padding: 32px 24px;
+      display: grid;
+      gap: 40px;
+    }
+    .example-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .screen {
+      padding: 24px 32px;
+      background: var(--page);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .list-header {
+      background: var(--tint);
+      border: 1px solid #c5d6e6;
+      border-radius: 16px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px 20px;
+    }
+    .title-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .list-header .meta {
+      margin-top: 4px;
+    }
+    .description {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .header-actions .danger {
+      margin-left: 8px;
+      border-left: 1px solid #c5d6e6;
+      border-radius: 0;
+    }
+    .viewbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .group-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+    .group-title:first-of-type {
+      margin-top: 0;
+    }
+    .group-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      column-gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .complete {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: transparent;
+      display: grid;
+      place-items: center;
+    }
+    .complete span {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #708499;
+    }
+    .task-name {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .task-name a {
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-name a:hover {
+      text-decoration: underline;
+    }
+    .row-meta {
+      grid-column: 2/-1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-bottom: 4px;
+    }
+    .row-actions {
+      display: flex;
+      align-items: center;
+    }
+    .row-actions .btn {
+      color: #536c82;
+    }
+    .row-actions .danger {
+      color: var(--danger);
+    }
+    .mobile-more {
+      display: none;
+    }
+    .composer {
+      margin-top: 12px;
+    }
+    .composer label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .capture {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--control);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 4px;
+    }
+    .capture input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 8px;
+      font-size: 16px;
+      outline-offset: 0;
+    }
+    .capture .btn {
+      min-height: 44px;
+    }
+    .section-add {
+      margin-top: 16px;
+    }
+    .backbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 44px;
+      margin-bottom: 16px;
+    }
+    .backbar a {
+      font-size: 14px;
+    }
+    .identity-key {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 44px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .task-title {
+      font-size: 32px;
+      line-height: 40px;
+      margin-top: 8px;
+      max-width: 36ch;
+      overflow-wrap: anywhere;
+    }
+    .status-band {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .action-band {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .panels {
+      display: grid;
+      gap: 16px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 20px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .panel-head .btn {
+      margin: -8px 0;
+    }
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 0;
+    }
+    .facts dt {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .facts dd {
+      margin: 0;
+      font-size: 14px;
+    }
+    .references {
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    .references .meta {
+      margin-bottom: 4px;
+    }
+    .reference-link {
+      overflow-wrap: anywhere;
+    }
+    .states {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .foot {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 16px;
+    }
+    .divider {
+      border-top: 1px solid var(--line);
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+    @media (max-width: 700px) {
+      .examples {
+        padding: 24px 16px;
+        gap: 32px;
+      }
+      .proposal {
+        padding: 24px 16px 16px;
+      }
+      .screen {
+        padding: 16px;
+        border-radius: 12px;
+      }
+      .list-header {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 16px;
+      }
+      .header-actions {
+        gap: 4px;
+      }
+      .header-actions .btn {
+        padding: 8px 10px;
+      }
+      .header-actions .danger {
+        margin-left: 0;
+      }
+      .row {
+        column-gap: 4px;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+      }
+      .complete {
+        margin-left: -4px;
+      }
+      .row-actions > .utility {
+        display: none;
+      }
+      .mobile-more {
+        display: inline-flex;
+      }
+      .row-actions .btn {
+        width: 44px;
+        min-width: 44px;
+      }
+      .task-title {
+        font-size: 26px;
+        line-height: 34px;
+      }
+      .panel {
+        padding: 16px;
+      }
+      .facts {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .viewbar {
+        font-size: 12px;
+      }
+      .title-line h1 {
+        font-size: 28px;
+      }
+      .row-meta {
+        grid-column: 2/-1;
+      }
+      .capture .btn {
+        padding-inline: 12px;
+      }
+    }
+  </style>
+  <svg style="position: absolute; width: 0; height: 0" aria-hidden="true">
+    <defs>
+      <symbol id="edit" viewBox="0 0 24 24">
+        <path d="m16 3 5 5-12 12-6 1 1-6Z M14 5l5 5" />
+      </symbol>
+      <symbol id="calendar" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4m8-4v4" />
+      </symbol>
+      <symbol id="copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="13" height="13" rx="2" />
+        <path d="M16 4H5a1 1 0 0 0-1 1v11" />
+      </symbol>
+      <symbol id="check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="grip" viewBox="0 0 24 24">
+        <path
+          d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01"
+          stroke-width="3"
+        />
+      </symbol>
+      <symbol id="delete" viewBox="0 0 24 24">
+        <path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" />
+      </symbol>
+      <symbol id="note" viewBox="0 0 24 24">
+        <path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h6" />
+      </symbol>
+    </defs>
+  </svg>
+  <header class="proposal">
+    <div class="brand">
+      <img
+        src="../apps/web/public/mascot/waffles-icon.webp"
+        alt="Waffles the corgi"
+        width="48"
+        height="48"
+      />Wuff Todo <span class="caption">Design language proposal</span>
+    </div>
+    <h2>A calmer pack of tasks.</h2>
+    <p>
+      Static visual specimen · Synthetic content · October 17, 2026. Controls
+      illustrate hierarchy and do not save or change data. Resize to compare
+      desktop and phone layouts.
+    </p>
+  </header>
+  <main class="examples">
+    <section aria-labelledby="list-example">
+      <p class="example-label" id="list-example">
+        List · identity, actions and aligned rows
+      </p>
+      <div class="screen">
+        <header class="list-header">
+          <div>
+            <div class="title-line">
+              <h1>Studio work</h1>
+              <button class="btn quiet icon" aria-label="Rename list">
+                <svg><use href="#edit" /></svg>
+              </button>
+            </div>
+            <p class="meta">Your list · Owner · Work</p>
+            <p class="description">
+              A little focus for the things we’re building.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="btn">Share</button
+            ><button class="btn">Settings</button
+            ><button class="btn quiet danger">Delete list</button>
+          </div>
+        </header>
+        <div class="viewbar">
+          <span>2 tasks · Manual order</span
+          ><button class="btn">Your view</button>
+        </div>
+        <div class="group-title">
+          <div class="group-name">
+            <h3>No section</h3>
+            <span class="caption">1 task</span>
+          </div>
+          <button class="btn quiet icon" aria-label="Collapse No section">
+            ⌃
+          </button>
+        </div>
+        <div class="row">
+          <button
+            class="complete"
+            aria-label="Complete Refine the task experience"
+          >
+            <span></span>
+          </button>
+          <div class="task-name">
+            <a href="#detail">Refine the task experience</a>
+          </div>
+          <div class="row-actions">
+            <button class="btn quiet icon utility" aria-label="Edit task">
+              <svg><use href="#edit" /></svg></button
+            ><button
+              class="btn quiet icon utility"
+              aria-label="Change due date"
+            >
+              <svg><use href="#calendar" /></svg></button
+            ><button class="btn quiet icon utility" aria-label="Edit notes">
+              <svg><use href="#note" /></svg></button
+            ><button
+              class="btn quiet icon mobile-more"
+              aria-label="More actions"
+            >
+              <svg><use href="#more" /></svg></button
+            ><button class="btn quiet danger icon" aria-label="Delete task">
+              <svg><use href="#delete" /></svg></button
+            ><button class="btn quiet icon" aria-label="Reorder task">
+              <svg><use href="#grip" /></svg>
+            </button>
+          </div>
+          <div class="row-meta">
+            <time class="tag" datetime="2026-10-18"
+              ><svg><use href="#calendar" /></svg>Due tomorrow</time
+            >
+          </div>
+        </div>
+        <div class="composer">
+          <label for="new-task">New task</label>
+          <div class="capture">
+            <input
+              id="new-task"
+              placeholder="What’s next for your pack?"
+            /><button class="btn primary">Add</button>
+          </div>
+        </div>
+        <div class="group-title">
+          <div class="group-name">
+            <h3>Integrations</h3>
+            <span class="caption">1 task</span>
+          </div>
+          <button class="btn quiet icon" aria-label="Collapse Integrations">
+            ⌃
+          </button>
+        </div>
+        <div class="row">
+          <button
+            class="complete"
+            aria-label="Complete Prepare the GitHub connection"
+          >
+            <span></span>
+          </button>
+          <div class="task-name">
+            <a href="#detail">Prepare the GitHub connection</a>
+          </div>
+          <div class="row-actions">
+            <button class="btn quiet icon utility" aria-label="Edit task">
+              <svg><use href="#edit" /></svg></button
+            ><button
+              class="btn quiet icon utility"
+              aria-label="Change due date"
+            >
+              <svg><use href="#calendar" /></svg></button
+            ><button class="btn quiet icon utility" aria-label="Edit notes">
+              <svg><use href="#note" /></svg></button
+            ><button
+              class="btn quiet icon mobile-more"
+              aria-label="More actions"
+            >
+              <svg><use href="#more" /></svg></button
+            ><button class="btn quiet danger icon" aria-label="Delete task">
+              <svg><use href="#delete" /></svg></button
+            ><button class="btn quiet icon" aria-label="Reorder task">
+              <svg><use href="#grip" /></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn quiet section-add">
+          <svg aria-hidden="true"><use href="#plus" /></svg>Add section
+        </button>
+        <p class="foot">
+          Visible buttons are actions. Compact date tags describe state.
+        </p>
+      </div>
+    </section>
+    <section id="detail" aria-labelledby="task-example">
+      <p class="example-label" id="task-example">
+        Task detail · compact header and explicit hierarchy
+      </p>
+      <div class="screen">
+        <nav class="backbar" aria-label="Task navigation">
+          <a href="#list-example">← Studio work</a
+          ><img
+            src="../apps/web/public/mascot/waffles-icon.webp"
+            alt="Waffles the corgi"
+            width="40"
+            height="40"
+          />
+        </nav>
+        <div class="identity-key">
+          WUFF-42<button class="btn quiet icon" aria-label="Copy task link">
+            <svg><use href="#copy" /></svg>
+          </button>
+        </div>
+        <h1 class="task-title">Refine the task experience</h1>
+        <div class="status-band">
+          <span class="tag blue">◷ In progress</span
+          ><time class="tag" datetime="2026-10-18"
+            ><svg><use href="#calendar" /></svg>Due tomorrow</time
+          >
+        </div>
+        <div class="action-band">
+          <button class="btn primary">
+            <svg aria-hidden="true"><use href="#check" /></svg>Complete task</button
+          ><button class="btn">
+            <svg aria-hidden="true"><use href="#calendar" /></svg>Change due
+            date
+          </button>
+        </div>
+        <div class="panels">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Work details</h3>
+              <button class="btn quiet">
+                <svg aria-hidden="true"><use href="#edit" /></svg>Edit details
+              </button>
+            </div>
+            <dl class="facts">
+              <div>
+                <dt>Status</dt>
+                <dd><span class="tag blue">◷ In progress</span></dd>
+              </div>
+              <div>
+                <dt>Priority</dt>
+                <dd>Normal</dd>
+              </div>
+              <div>
+                <dt>Assignee</dt>
+                <dd>Unassigned</dd>
+              </div>
+            </dl>
+            <div class="references">
+              <p class="meta">References</p>
+              <a class="reference-link" href="#task-example"
+                >Design review notes</a
+              >
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Notes</h3>
+              <button class="btn quiet">
+                <svg aria-hidden="true"><use href="#edit" /></svg>Edit notes
+              </button>
+            </div>
+            <p>
+              Make the next action obvious. Keep the small details together.
+            </p>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Subtasks</h3>
+              <span class="caption">0 of 1 done</span>
+            </div>
+            <div class="row">
+              <button
+                class="complete"
+                aria-label="Complete Review the mobile layout"
+              >
+                <span></span>
+              </button>
+              <div class="task-name">Review the mobile layout</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+    <section aria-labelledby="grammar">
+      <p class="example-label" id="grammar">
+        Shared grammar · actions and state
+      </p>
+      <div class="screen">
+        <h3>Actions have a clear hierarchy</h3>
+        <div class="states">
+          <button class="btn primary">Save changes</button
+          ><button class="btn">Cancel</button
+          ><button class="btn quiet">Copy link</button
+          ><button class="btn quiet danger">Delete task</button>
+        </div>
+        <div class="divider">
+          <h3>Statuses are readable values</h3>
+          <div class="states">
+            <span class="tag">○ Todo</span
+            ><span class="tag blue">◷ In progress</span
+            ><span class="tag violet">◇ In review</span
+            ><span class="tag red">⊘ Blocked</span
+            ><span class="tag green">✓ Done</span
+            ><time class="tag red" datetime="2026-10-16">Overdue · Oct 16</time>
+          </div>
+        </div>
+        <p class="foot">
+          Colors, type and spacing are proposed targets. This specimen does not
+          demonstrate saving, permissions, menu behavior or accessibility
+          conformance.
+        </p>
+      </div>
+    </section>
+  </main>
+</html>

@@ -53,7 +53,7 @@ export default async function AuthorizePage({
       <h1 className="text-3xl font-bold mt-8 mb-4">
         Connect {details.client.name}?
       </h1>
-      <p className="text-slate-500">
+      <p className="text-muted-foreground">
         This AI pal wants to join your pack. It is asking to:
       </p>
       <ul className="list-disc pl-5 my-6 space-y-3">
@@ -61,7 +61,7 @@ export default async function AuthorizePage({
           <li key={s}>{labels[s]}</li>
         ))}
       </ul>
-      <p className="text-sm text-slate-500 mb-7">
+      <p className="text-sm text-muted-foreground mb-7">
         Your AI pal follows your lead: it can access the same lists you can. You
         can disconnect it at any time in Connected AI clients.
       </p>

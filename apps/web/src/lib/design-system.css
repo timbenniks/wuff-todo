@@ -1,0 +1,104 @@
+:root {
+  --wuff-primary: #315f9b;
+  --wuff-primary-hover: #2b5488;
+  --wuff-background: #f9fafc;
+  --wuff-surface: #fefeff;
+  --wuff-sidebar: #ecf1f6;
+  --wuff-accent: #eaeff5;
+  --wuff-foreground: #1e324a;
+  --wuff-muted: #334c6b;
+  --wuff-border: #d2dce9;
+  --wuff-control: #5e82b1;
+}
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--wuff-accent);
+  color: var(--wuff-muted);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.status-tag svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.status-tag[data-tone="active"] {
+  color: var(--wuff-primary);
+}
+.status-tag[data-tone="review"] {
+  color: #6b3bb0;
+  background: #f3eefe;
+}
+.status-tag[data-tone="danger"] {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+.status-tag[data-tone="success"] {
+  color: #166534;
+  background: #ecfdf5;
+}
+@layer components {
+  .wuff-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    transition:
+      background-color 120ms,
+      color 120ms;
+  }
+  .wuff-button[data-variant="default"],
+  .wuff-button[data-variant="outline"] {
+    border: 1px solid var(--wuff-control);
+    background: var(--wuff-surface);
+    color: var(--wuff-foreground);
+  }
+  .wuff-button[data-variant="primary"] {
+    border: 1px solid var(--wuff-primary);
+    background: var(--wuff-primary);
+    color: white;
+  }
+  .wuff-button[data-variant="ghost"],
+  .wuff-button[data-variant="danger"] {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--wuff-muted);
+  }
+  .wuff-button[data-variant="danger"] {
+    color: #b91c1c;
+  }
+  .wuff-button[data-variant="destructive"] {
+    border: 1px solid #b91c1c;
+    background: #b91c1c;
+    color: white;
+  }
+  .wuff-button:hover:not(:disabled) {
+    background: var(--wuff-accent);
+  }
+  .wuff-button[data-variant="primary"]:hover:not(:disabled) {
+    background: var(--wuff-primary-hover);
+  }
+  .wuff-button[data-variant="destructive"]:hover:not(:disabled) {
+    background: #991b1b;
+  }
+  .wuff-button:active:not(:disabled) {
+    filter: brightness(0.96);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wuff-button {
+      transition: none;
+    }
+  }
+}

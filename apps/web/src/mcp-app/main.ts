@@ -20,6 +20,7 @@ import { renderTaskMarkdown } from "../lib/task-markdown";
 import type { Task } from "@wuff/contracts";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { taskImageLimit, taskImagePath, listColors } from "@wuff/contracts";
+import { applyListTheme } from "../lib/list-theme";
 import { listPalette } from "../lib/list-colors";
 const app = new App({ name: "Wuff Todo", version: "0.2.0" }, {});
 let current: TodoList | undefined,
@@ -63,6 +64,10 @@ async function call(name: string, args: Record<string, unknown>) {
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) {
   const e = document.createElement(tag);
   if (text) e.textContent = text;
+  if (tag === "button") {
+    e.className = "wuff-button";
+    e.dataset.variant = "default";
+  }
   return e;
 }
 function button(text: string, run: () => void, disabled = false) {
@@ -70,6 +75,9 @@ function button(text: string, run: () => void, disabled = false) {
   e.type = "button";
   e.disabled = disabled;
   e.onclick = run;
+  if (/^Save (my )?notes$/.test(text)) e.dataset.variant = "primary";
+  if (/^(Delete|Remove|Disconnect)/.test(text)) e.dataset.variant = "danger";
+  if (/^Delete task/.test(text)) e.dataset.variant = "destructive";
   return e;
 }
 function mutation(name: string, args: Record<string, unknown>) {
@@ -82,11 +90,24 @@ function mutation(name: string, args: Record<string, unknown>) {
 }
 // Some MCP hosts sandbox native form submission. Click/Enter still work through
 // explicit event handlers, with native constraint validation and no navigation.
+let fieldSequence = 0;
 function wireForm(
   form: HTMLFormElement,
   save: HTMLButtonElement,
   run: () => void,
 ) {
+  save.dataset.variant = "primary";
+  for (const control of form.querySelectorAll<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >("input:not([type=hidden]),textarea,select")) {
+    const name = control.getAttribute("aria-label");
+    if (!name || control.labels?.length) continue;
+    control.id ||= `wuff-field-${++fieldSequence}`;
+    const label = element("label", name);
+    label.htmlFor = control.id;
+    label.className = "field-label";
+    control.before(label);
+  }
   const submit = () => {
     if (!save.disabled && form.reportValidity()) {
       save.disabled = true;
@@ -511,7 +532,13 @@ function refreshDueBadges() {
     badge.textContent = display.label;
     badge.title = display.detail;
     badge.setAttribute("aria-label", display.detail);
-    badge.style.cssText = `display:block;font-size:12px;margin-top:4px;color:${display.tone === "overdue" ? "#b91c1c" : display.tone === "today" ? "#315f9b" : "#536c82"}`;
+    badge.className = "status-tag";
+    badge.dataset.tone =
+      display.tone === "overdue"
+        ? "danger"
+        : display.tone === "today"
+          ? "active"
+          : "neutral";
   }
 }
 function taskDueDate(task: Task) {
@@ -666,16 +693,12 @@ type WorkDraft = {
   request?: Record<string, unknown>;
 };
 const workDrafts = new Map<string, WorkDraft>();
+const taskExpanded = new Map<string, boolean>();
 function workDetails(task: Task) {
   const panel = element("details");
   const retained = workDrafts.get(task.id);
   panel.open = !!retained;
-  panel.append(
-    element(
-      "summary",
-      `${task.key} · ${task.status.replaceAll("_", " ")} · Work details`,
-    ),
-  );
+  panel.append(element("summary", `${task.key} · Work details`));
   const form = element("form");
   form.style.cssText = "display:grid;gap:10px;margin-block:12px";
   const draft: WorkDraft = retained ?? {
@@ -856,6 +879,7 @@ function renderTask(
 ) {
   const wrapper = element("div"),
     row = element("div");
+  wrapper.className = "task-item";
   row.className = "task";
   const check = element("input");
   check.type = "checkbox";
@@ -884,7 +908,8 @@ function renderTask(
         ),
       );
       if (task.dueDate) {
-        const badge = element("span");
+        const badge = element("time");
+        badge.dateTime = task.dueDate;
         badge.dataset.dueDate = task.dueDate;
         badge.dataset.completed = String(task.completed);
         name.append(badge);
@@ -911,20 +936,16 @@ function renderTask(
   }
   const children = current!.tasks.filter((t) => t.parentTaskId === task.id);
   if (!current!.archived) {
-    const remove = button("×", () => {
-      if (!children.length) {
-        void mutation("delete_task", { taskId: task.id });
-        return;
-      }
+    const remove = button("Delete", () => {
       const warning = element("div");
       warning.setAttribute("role", "alert");
       warning.append(
         element(
           "p",
-          `Paws before deleting: this removes “${task.title}” and all ${children.length} subtasks for everyone. This cannot be undone.`,
+          `Paws before deleting: this removes “${task.title}”${children.length ? ` and all ${children.length} subtasks` : ""} for everyone. This cannot be undone.`,
         ),
         button(
-          "Delete task and subtasks",
+          children.length ? "Delete task and subtasks" : "Delete task",
           () => void mutation("delete_task", { taskId: task.id }),
         ),
         button("Cancel", () => warning.remove()),
@@ -938,21 +959,64 @@ function renderTask(
     row.append(remove);
   }
   const taskLink = element("a", task.key);
+  taskLink.className = "task-key";
   taskLink.href = new URL(task.path, webOrigin).href;
   taskLink.target = "_blank";
   taskLink.rel = "noopener noreferrer";
   taskLink.setAttribute("aria-label", `Open ${task.key} task page`);
   wrapper.append(row, taskLink);
   const view = current!.personalView?.view ?? defaultListView();
-  if (view.layout === "detailed")
+  if (view.layout === "detailed" || current!.mode === "work") {
+    const tag = element("span", statusLabels[task.status]);
+    tag.className = "status-tag";
+    tag.dataset.tone = {
+      todo: "neutral",
+      in_progress: "active",
+      in_review: "review",
+      blocked: "danger",
+      done: "success",
+    }[task.status];
+    wrapper.append(tag);
+  }
+  if (view.layout === "detailed") {
     wrapper.append(
       element(
         "p",
-        `${statusLabels[task.status]} · ${task.priority} priority${task.assigneeId ? ` · ${current!.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}` : ""}${task.references.length ? ` · ${task.references.length} links` : ""}`,
+        `${task.priority} priority${task.assigneeId ? ` · ${current!.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}` : ""}${task.references.length ? ` · ${task.references.length} links` : ""}`,
       ),
     );
-  if (current!.mode === "work") wrapper.append(workDetails(task));
-  wrapper.append(taskDueDate(task), taskNotes(task));
+  }
+  const secondary = element("details"),
+    detailsBody = element("div");
+  secondary.className = "task-details";
+  secondary.setAttribute("aria-label", `Details for ${task.title}`);
+  detailsBody.className = "task-details-body";
+  const retained = (t: Task) =>
+    noteDrafts.has(t.id) ||
+    dateDrafts.has(t.id) ||
+    workDrafts.has(t.id) ||
+    subtaskDrafts.has(t.id);
+  secondary.open =
+    !!taskExpanded.get(task.id) || retained(task) || children.some(retained);
+  secondary.ontoggle = () => taskExpanded.set(task.id, secondary.open);
+  secondary.append(
+    element(
+      "summary",
+      [
+        "Task details",
+        task.content ? "Notes" : "",
+        children.length
+          ? `${children.filter((t) => t.completed).length}/${children.length} subtasks`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    ),
+    detailsBody,
+  );
+  if (current!.mode === "work") detailsBody.append(workDetails(task));
+  detailsBody.append(taskDueDate(task), taskNotes(task));
+  wrapper.append(secondary);
   queueMicrotask(refreshDueBadges);
   if (task.parentTaskId) {
     if (
@@ -985,7 +1049,28 @@ function renderTask(
             ?.focus(),
         );
       };
-      const handle = button("⠿", () => {});
+      const handle = button("Move", () => {
+        const existing = wrapper.querySelector("[data-move-position]");
+        if (existing) {
+          existing.remove();
+          return;
+        }
+        const label = element("label", "Move to position ");
+        label.dataset.movePosition = "true";
+        const picker = element("select");
+        picker.setAttribute("aria-label", `Position for ${task.title}`);
+        siblings.forEach((sibling, i) => {
+          const option = element("option", `${i + 1} · ${sibling.title}`);
+          option.value = String(i);
+          picker.append(option);
+        });
+        const from = siblings.findIndex((s) => s.id === task.id);
+        picker.value = String(from);
+        picker.onchange = () => move(from, Number(picker.value));
+        label.append(picker);
+        wrapper.append(label);
+        picker.focus();
+      });
       handle.setAttribute("aria-label", `Reorder ${task.title}`);
       handle.title = "Lend a paw: drag to reorder, or use Alt+Arrow Up/Down";
       handle.dataset.subtaskHandle = task.id;
@@ -1038,7 +1123,7 @@ function renderTask(
       );
     panel.setAttribute("aria-label", `Subtasks for ${task.title}`);
     panel.style.cssText =
-      "border-left:2px solid #dce5ed;padding-left:14px;margin:8px 0 16px 16px";
+      "border-left:2px solid var(--wuff-border);padding-left:14px;margin:8px 0 16px 16px";
     panel.open =
       subtaskExpanded.get(task.id) ??
       (children.length > 0 || subtaskDrafts.has(task.id));
@@ -1098,7 +1183,7 @@ function renderTask(
       });
       panel.append(form, notice);
     }
-    wrapper.append(panel);
+    detailsBody.append(panel);
   }
   return wrapper;
 }
@@ -1323,6 +1408,7 @@ function show(value: unknown) {
     dateDrafts.clear();
     subtaskExpanded.clear();
     workDrafts.clear();
+    taskExpanded.clear();
   }
   if (data.viewerId) viewerId = data.viewerId;
   if (data.webOrigin) webOrigin = data.webOrigin;
@@ -1332,11 +1418,13 @@ function show(value: unknown) {
   if (data.lists) {
     catalog = data.lists;
     current = undefined;
+    applyListTheme("blue", document.documentElement);
     renderCatalog();
     return;
   }
   if (!data.list) return;
   current = data.list;
+  applyListTheme(current.color, document.documentElement);
   for (const [id, draft] of noteDrafts)
     if (draft.listId === current.id && !current.tasks.some((t) => t.id === id))
       noteDrafts.delete(id);
@@ -1344,12 +1432,12 @@ function show(value: unknown) {
     if (!current.tasks.some((t) => t.id === id)) subtaskDrafts.delete(id);
   for (const id of dateDrafts.keys())
     if (!current.tasks.some((t) => t.id === id)) dateDrafts.delete(id);
-  const color = listPalette[current.color];
   root.append(button("← Your lists", () => void call("show_lists", {})));
   const header = element("div");
   header.className = "list-header";
-  header.style.background = color.tint;
-  header.style.borderColor = color.accent;
+
+  for (const id of taskExpanded.keys())
+    if (!current.tasks.some((t) => t.id === id)) taskExpanded.delete(id);
   const owner = current.ownerId === viewerId;
   header.append(
     inlineName(
@@ -1574,7 +1662,7 @@ function renderCatalog() {
       list.title,
       () => void call("show_list", { listId: list.id }),
     );
-    open.className = "list";
+    open.className = "wuff-button list";
     open.style.borderLeft = `5px solid ${listPalette[list.color].accent}`;
     row.append(open);
     for (const [dir, label] of [

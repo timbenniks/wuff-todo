@@ -1,17 +1,21 @@
 @import "tailwindcss";
+@import "../lib/design-system.css";
 @import "../lib/task-prose.css";
 @theme inline {
-  --color-background: #f7fafc;
-  --color-foreground: #263e55;
-  --color-primary: #315f9b;
-  --color-accent: #e7f0f8;
-  --color-border: #dce5ed;
-  --color-input: #dce5ed;
-  --color-ring: #315f9b;
-  --color-muted-foreground: #61768b;
+  --color-background: var(--wuff-background);
+  --color-foreground: var(--wuff-foreground);
+  --color-primary: var(--wuff-primary);
+  --color-accent: var(--wuff-accent);
+  --color-border: var(--wuff-border);
+  --color-input: var(--wuff-control);
+  --color-surface: var(--wuff-surface);
+  --color-sidebar: var(--wuff-sidebar);
+  --color-control: var(--wuff-control);
+  --color-ring: var(--wuff-primary);
+  --color-muted-foreground: var(--wuff-muted);
   --color-destructive: #b91c1c;
   --color-primary-foreground: #ffffff;
-  --font-sans: "Avenir Next", "Segoe UI", sans-serif;
+  --font-sans: var(--font-dm-sans), "DM Sans", "Segoe UI", sans-serif;
 }
 body {
   margin: 0;
@@ -36,14 +40,16 @@ summary:focus-visible {
 h1,
 h2,
 .wordmark {
-  font-family: "Trebuchet MS", "Avenir Next", sans-serif;
-  letter-spacing: -0.035em;
+  font-family: var(--font-sans);
+  letter-spacing: -0.025em;
+}
+h2 {
+  letter-spacing: -0.015em;
 }
 ::selection {
-  background: #dceafb;
-  color: #263e55;
+  background: var(--wuff-accent);
+  color: var(--wuff-foreground);
 }
-.task-due-icon,
 .task-more,
 .task-action-label {
   display: none;
@@ -56,7 +62,7 @@ h2,
   display: none;
 }
 .task-action-panel button {
-  color: #536c82;
+  color: var(--wuff-muted);
 }
 @media (width >= 40rem) {
   .task-actions .task-edit {
@@ -145,7 +151,7 @@ h2,
   .task-actions > .drag-handle {
     width: 44px;
     height: 44px;
-    color: #536c82;
+    color: var(--wuff-muted);
   }
   .task-more {
     display: inline-flex;
@@ -167,8 +173,8 @@ h2,
     padding: 6px;
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: white;
-    box-shadow: 0 8px 28px #263e5520;
+    background: var(--wuff-surface);
+    box-shadow: 0 8px 28px #17202a20;
     max-height: var(--task-menu-height);
     overflow-y: auto;
     overscroll-behavior-y: contain;
@@ -183,21 +189,21 @@ h2,
     margin: 0;
     overflow-wrap: anywhere;
     font-size: 12px;
-    color: #536c82;
+    color: var(--wuff-muted);
     border-bottom: 1px solid var(--color-border);
     flex-basis: 100%;
     order: 0;
   }
   .task-action-panel button {
-    width: 44px;
-    flex-shrink: 0;
+    width: auto;
+    flex: 1 1 110px;
     min-height: 44px;
-    justify-content: center;
-    padding: 0;
+    justify-content: flex-start;
+    padding: 8px 12px;
     order: 1;
   }
   .task-action-panel .task-action-label {
-    display: none;
+    display: inline;
   }
   .inline-name-compact .inline-name-extra {
     display: none;
@@ -250,8 +256,8 @@ h2,
   }
   .list-heading {
     padding: 16px;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 16px;
   }
   .list-heading h1 {
     font-size: 28px;
@@ -264,4 +270,109 @@ h2,
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Shared geometry: first-line controls never align against metadata height. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 12px 16px;
+  background: var(--wuff-surface);
+  border: 2px solid var(--wuff-primary);
+  border-radius: 8px;
+  transform: translateY(-150%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+.task-name {
+  min-width: 0;
+}
+.task-name > span {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.task-name > time {
+  margin: 0 0 4px;
+}
+.task-actions {
+  min-height: 44px;
+}
+.task-actions .task-delete {
+  color: var(--color-destructive);
+}
+.section-summary {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  padding-block: 10px;
+  min-height: 44px;
+}
+.list-heading h1 {
+  font-size: 30px;
+  line-height: 36px;
+}
+.list-delete {
+  margin-left: 4px;
+}
+.task-detail h1 {
+  font-size: 32px;
+  line-height: 40px;
+}
+.task-detail h2 {
+  font-size: 18px;
+  line-height: 24px;
+}
+.task-detail .task-subtask-panel {
+  padding-left: 0;
+}
+@media (width < 40rem) {
+  .task-name > span {
+    display: block;
+    min-height: 0;
+  }
+  .task-name > time {
+    padding: 4px;
+    margin: 0;
+  }
+  .task-detail h1 {
+    font-size: 26px;
+    line-height: 34px;
+  }
+  .task-detail .due-tag .task-due-text {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+    overflow: visible;
+  }
+  .task-detail .due-tag {
+    padding: 3px 8px;
+  }
+  .list-management {
+    width: 100%;
+  }
+  .list-management .wuff-button {
+    padding-inline: 10px;
+  }
+  .task-formatting > button {
+    min-height: 44px;
+  }
+}
+.feedback-toast {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 40;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px;
+  border: 1px solid var(--wuff-control);
+  border-radius: 8px;
+  background: var(--wuff-surface);
+  color: var(--wuff-foreground);
+  font-size: 14px;
+  box-shadow: 0 4px 16px #17202a12;
 }

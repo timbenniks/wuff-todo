@@ -11,7 +11,7 @@ export default function SetPasswordPage() {
           <span className="wordmark text-2xl font-bold">Wuff Todo</span>
         </Link>
         <h1 className="text-3xl font-bold mb-3">Welcome to the pack.</h1>
-        <p className="text-slate-500 mb-8">
+        <p className="text-muted-foreground mb-8">
           New here or fur-got your password? Fetch a code from your email to set
           or reset it.
         </p>

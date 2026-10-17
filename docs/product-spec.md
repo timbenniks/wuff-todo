@@ -22,7 +22,7 @@ October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) a
 - Web and MCP, including interactive MCP UI, ship first.
 - iPhone and Android apps follow against the same backend.
 - All surfaces use the same recognizable design language.
-- Shared owner-controlled list colors are implemented before mobile; images and broader themes follow later.
+- Shared owner-controlled list colors theme the entire selected-list experience on web and MCP. Seven named palettes are supported; arbitrary colors and broader theme customization remain later scope. See [design language and themes](design-language.md).
 - The project uses one monorepo.
 
 ## First-release scope
@@ -79,7 +79,7 @@ Accepted members share task changes and task order. Only the owner can manage ac
 
 The responsive [mobile website layout](mobile-web-ui.md) keeps names and editors readable, collapses list navigation on phones, and uses single-line task rows and rename fields on phones, with direct Delete and drag controls alongside a disclosure for secondary task actions. Desktop Edit/Notes controls remain direct.
 
-Routine controls favour familiar icons, accessible names and tooltips over repeated button words. Use quiet neutral/transparent buttons rather than solid-blue blocks. Keep meaningful date choices, consequence explanations and error/retry guidance readable.
+Primary actions and form submissions use filled theme-colored buttons with explicit labels; secondary actions use bordered surfaces. Routine utilities favour familiar icons with accessible names/tooltips and quiet transparent treatment. Workflow/due-date statuses use non-interactive tags, with semantic urgency colors preserved. Expanded phone actions and list management have visible labels. See [design language and themes](design-language.md).
 
 - A sidebar contains the user's accessible lists and a create-list action.
 - The selected list shows its title, active tasks, and completed tasks.
@@ -117,7 +117,7 @@ Revisit offline behavior when planning the React Native/Expo iPhone and Android 
 ## Future scope
 
 - Native iPhone and Android apps.
-- Per-list cover images and broader themes; named shared colors are implemented.
+- Per-list cover images, arbitrary colors and further theme customization; seven named shared app palettes are implemented.
 - Richer task details and organization, if the initial users need them.
 - Scheduling, reminders, recurring tasks, calendars, and integrations.
 - Import/export, attachments, widgets, and share extensions.

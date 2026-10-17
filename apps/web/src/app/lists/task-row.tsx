@@ -26,7 +26,8 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { statusLabels, type Task, type TodoList } from "@wuff/contracts";
+import { type Task, type TodoList } from "@wuff/contracts";
+import { StatusTag } from "@/components/ui/status-tag";
 import { Button } from "@/components/ui/button";
 import { InlineName } from "./inline-name";
 import { TaskNotes, type NoteDraft } from "./task-notes";
@@ -137,14 +138,14 @@ export function TaskRow({
     <li
       ref={rowRef}
       style={style}
-      className="task-row group flex flex-wrap items-start gap-x-2 sm:gap-x-3 gap-y-2 py-3"
+      className="task-row group flex flex-wrap items-start gap-x-2 gap-y-1 py-2"
       data-task-id={task.id}
     >
       <button
         type="button"
         aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`}
         disabled={disabled}
-        className="task-complete h-6 w-6 mt-1 shrink-0 rounded-full flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+        className="task-complete h-11 w-11 shrink-0 rounded-full flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
         onClick={() =>
           change("/api/v1/tasks", "PATCH", {
             ...body,
@@ -153,7 +154,7 @@ export function TaskRow({
         }
       >
         <span
-          className={`h-6 w-6 shrink-0 rounded-full border-2 flex items-center justify-center ${task.completed ? "bg-primary border-primary text-white" : "border-[#aabdcf] hover:bg-accent"}`}
+          className={`h-6 w-6 shrink-0 rounded-full border-2 flex items-center justify-center ${task.completed ? "bg-primary border-primary text-white" : "border-control hover:bg-accent"}`}
         >
           {task.completed && <Check size={15} />}
         </span>
@@ -184,7 +185,7 @@ export function TaskRow({
         additionalDirty={draftSection !== task.sectionId}
         additionalFields={
           list.sections.length > 0 && !task.completed && !task.parentTaskId ? (
-            <label className="grid gap-1 text-xs font-semibold text-slate-500">
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
               Section
               <NativeSelect
                 className="text-sm max-w-full"
@@ -253,7 +254,7 @@ export function TaskRow({
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className="task-edit h-8 w-8 text-slate-400 hover:text-primary"
+                  className="task-edit h-11 w-11 text-muted-foreground hover:text-primary"
                   title="Edit task"
                   aria-label={`Edit ${task.title}`}
                   disabled={busy || editing}
@@ -272,7 +273,7 @@ export function TaskRow({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className={`task-subtasks ${children.length ? "" : "task-secondary"} h-8 px-1.5 gap-1 ${children.length ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                  className={`task-subtasks ${children.length ? "" : "task-secondary"} h-11 px-2 gap-1 ${children.length ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                   aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
                   title="Little steps, big tail wags · Subtasks"
                   aria-expanded={subtasksOpen}
@@ -300,7 +301,7 @@ export function TaskRow({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className={`task-notes-action h-8 w-8 ${notesOpen ? "bg-accent text-primary" : task.content ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                className={`task-notes-action h-11 w-11 ${notesOpen ? "bg-accent text-primary" : task.content ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                 title={notesOpen ? "Hide notes" : "Notes"}
                 aria-label={`${notesOpen ? "Hide" : task.content ? "Edit" : "Add"} notes for ${task.title}`}
                 aria-expanded={notesOpen}
@@ -351,7 +352,7 @@ export function TaskRow({
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className={`task-subtasks ${children.length ? "" : "task-secondary"} h-8 px-1.5 gap-1 ${children.length ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                      className={`task-subtasks ${children.length ? "" : "task-secondary"} h-11 px-2 gap-1 ${children.length ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                       aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
                       title="Little steps, big tail wags · Subtasks"
                       aria-expanded={subtasksOpen}
@@ -373,7 +374,7 @@ export function TaskRow({
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className={`task-date task-secondary h-8 w-8 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-slate-400 hover:text-primary"}`}
+                  className={`task-date task-secondary h-11 w-11 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                   title="Due date"
                   aria-label={`${dateOpen ? "Hide" : task.dueDate ? "Change" : "Set"} due date for ${task.title}`}
                   aria-expanded={dateOpen}
@@ -403,14 +404,13 @@ export function TaskRow({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="task-delete task-secondary h-8 w-8 text-slate-400 hover:text-red-700"
+                className="task-delete task-secondary h-11 w-11 text-muted-foreground hover:text-red-700"
                 title="Delete task"
                 aria-label={`Delete ${task.title}`}
                 disabled={busy || editing}
                 onClick={() => {
                   setMoreOpen(false);
-                  if (children.length) setConfirmDelete(true);
-                  else void change("/api/v1/tasks", "DELETE", body);
+                  setConfirmDelete(true);
                 }}
               >
                 <Trash2 size={16} />
@@ -422,8 +422,8 @@ export function TaskRow({
         )}
       />
       {detailed && (
-        <p className="col-span-full min-w-0 basis-full text-xs text-slate-500 pl-8 pb-2 break-words">
-          {task.key} · {statusLabels[task.status]} ·{" "}
+        <p className="col-span-full min-w-0 basis-full text-xs text-muted-foreground pl-8 pb-2 break-words">
+          {task.key} · <StatusTag status={task.status} /> ·{" "}
           {task.priority === "none"
             ? "No priority"
             : `${task.priority} priority`}
@@ -457,22 +457,24 @@ export function TaskRow({
           />
         </div>
       )}
-      {confirmDelete && children.length > 0 && !list.archived && (
+      {confirmDelete && !list.archived && (
         <div
           className="task-panel basis-full min-w-0 pl-8 grid gap-2"
           role="alert"
         >
-          <p className="text-sm text-slate-600">
-            Paws before deleting: this removes “{task.title}” and all{" "}
-            {children.length} subtasks for everyone. This cannot be undone.
+          <p className="text-sm text-muted-foreground">
+            Paws before deleting: this removes “{task.title}”
+            {children.length ? ` and all ${children.length} subtasks` : ""} for
+            everyone. This cannot be undone.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
+              variant="destructive"
               disabled={busy}
               onClick={() => change("/api/v1/tasks", "DELETE", body)}
             >
-              Delete task and subtasks
+              {children.length ? "Delete task and subtasks" : "Delete task"}
             </Button>
             <Button
               size="sm"
@@ -565,7 +567,7 @@ export function Subtasks({
       aria-label={`Subtasks for ${parent.title}`}
       className="border-l-2 border-primary/20 pl-3 sm:pl-4"
     >
-      <p className="hidden sm:block text-xs text-slate-500 mb-1">
+      <p className="hidden sm:block text-xs text-muted-foreground mb-1">
         Little steps, big tail wags. {items.filter((t) => t.completed).length}{" "}
         of {items.length} done.
       </p>
@@ -608,7 +610,7 @@ export function Subtasks({
       </SortableList>
       {!list.archived && (
         <form
-          className="task-add flex gap-2 mt-2"
+          className="task-add grid gap-1 mt-3"
           onSubmit={async (e) => {
             e.preventDefault();
             const sent = title;
@@ -621,8 +623,15 @@ export function Subtasks({
             }
           }}
         >
+          <label
+            className="text-xs text-muted-foreground"
+            htmlFor={`new-child-${parent.id}`}
+          >
+            New subtask
+          </label>
           <InputGroup>
             <InputGroupInput
+              id={`new-child-${parent.id}`}
               ref={input}
               autoFocus={focusNewTask && items.length === 0}
               value={title}
@@ -642,13 +651,13 @@ export function Subtasks({
             <InputGroupAddon align="inline-end">
               <InputGroupButton
                 type="submit"
-                variant="ghost"
-                size="icon-sm"
+                variant="primary"
+                size="sm"
                 title="Add subtask"
                 disabled={disabled}
                 aria-label={`Add subtask to ${parent.title}`}
               >
-                <Plus size={18} />
+                <Plus size={18} aria-hidden="true" /> Add
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>

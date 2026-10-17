@@ -4,6 +4,8 @@ Date: October 15, 2026
 
 ## Implemented milestone
 
+October 17 design language and list themes: [implementation and fresh evidence](design-language.md) records the shared web/MCP action/status system, responsive layout repairs and seven list-driven app palettes. Local implementation checks are distinct from production, named-host and physical-device verification.
+
 October 17 work-task foundation: [delivery plan and evidence](work-tasks-plan.md) records the selected pre-native sequence, shared web/API/MCP implementation, 29 unit tests, 20 live development integration tests and responsive browser/SDK-host checks. GitHub sync and agent execution remain planned.
 
 October 17 auth rendering fix: see [session reads during server rendering](auth-rendering.md) for the production cookie-write failure, read-only page adapter, preserved Route Handler renewal and current regression/release evidence.

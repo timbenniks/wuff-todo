@@ -18,6 +18,8 @@ Use pnpm workspaces. Add build orchestration only when workspace dependencies an
 
 ## Repository layout and future packages
 
+The [design language and list themes](design-language.md) use a pure, client-safe palette derivation and shared CSS in `apps/web/src/lib`. Web renders selected-list tokens on its container and synchronizes the document root for gutters/dialogs; MCP applies the same palette to its standalone document. No theme state or database table is added, and the existing owner-controlled list color remains authoritative. Status/danger colors retain their semantic meaning.
+
 ```text
 apps/
   web/                 Next.js website, API routes, MCP transport

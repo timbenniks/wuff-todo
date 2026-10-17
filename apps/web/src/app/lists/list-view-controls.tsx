@@ -9,6 +9,7 @@ import {
   type ListView,
   type TodoList,
 } from "@wuff/contracts";
+import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import type { ListChange } from "./list-settings";
@@ -60,12 +61,12 @@ export function ListViewControls({
   const options = (values: readonly string[]) =>
     values.map((v) => [v, v[0].toUpperCase() + v.slice(1)] as [string, string]);
   return (
-    <details className="rounded-xl border border-border bg-white mb-5 p-3">
-      <summary className="text-sm font-medium py-3 min-h-11 cursor-pointer">
+    <details className="list-view-controls rounded-xl border border-border bg-surface mb-3 px-3">
+      <summary className="text-sm font-medium py-2 min-h-11 cursor-pointer">
         Your view{dirty ? " · Unsaved changes" : ""}
       </summary>
       <form
-        className="mt-4 grid gap-4"
+        className="mt-3 pb-3 grid gap-4"
         onSubmit={async (e) => {
           e.preventDefault();
           if (
@@ -78,7 +79,7 @@ export function ListViewControls({
             setDirty(false);
         }}
       >
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Only changes how you see this list.
         </p>
         {base !== saved.version && dirty && (
@@ -89,7 +90,7 @@ export function ListViewControls({
         )}
         <label className="grid gap-1 text-sm">
           Search title or key
-          <input
+          <Input
             aria-label="Search title or key"
             className="rounded-md border px-3 py-2 min-h-11 text-base w-full"
             maxLength={300}
@@ -242,7 +243,9 @@ export function ListViewControls({
           </details>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button disabled={busy || base !== saved.version}>Apply view</Button>
+          <Button variant="primary" disabled={busy || base !== saved.version}>
+            Apply view
+          </Button>
           <Button
             type="button"
             variant="ghost"

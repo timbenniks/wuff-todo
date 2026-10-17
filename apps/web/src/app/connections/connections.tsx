@@ -8,7 +8,9 @@ export function Connections() {
     ),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setError("");
     fetch("/api/v1/connections")
       .then(async (r) => {
         if (!r.ok)
@@ -18,18 +20,28 @@ export function Connections() {
         setClients(await r.json());
       })
       .catch((e) => setError(wuffError(e.message)));
-  }, []);
+  }, [attempt]);
   return (
     <div>
       {error && (
-        <p role="alert" className="text-red-800 mb-4">
-          {error}
-        </p>
+        <div
+          role="alert"
+          className="rounded-xl bg-red-50 text-red-800 p-4 mb-4"
+        >
+          <p>{error}</p>
+          <Button
+            className="mt-3"
+            disabled={busy}
+            onClick={() => setAttempt((n) => n + 1)}
+          >
+            Retry connections
+          </Button>
+        </div>
       )}
       {clients === null ? (
-        <p role="status">Fetching your AI pack…</p>
+        !error && <p role="status">Fetching your AI pack…</p>
       ) : clients.length === 0 ? (
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           No AI pals in your pack yet. Connect a client to get started.
         </p>
       ) : (
@@ -41,7 +53,7 @@ export function Connections() {
             >
               <span>{client.name}</span>
               <Button
-                variant="outline"
+                variant="danger"
                 disabled={busy}
                 onClick={async () => {
                   setBusy(true);

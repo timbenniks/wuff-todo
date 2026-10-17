@@ -2,10 +2,11 @@
 import { Input } from "@/components/ui/input";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function SetPassword() {
+  const errorId = useId();
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "password" | "done">("email");
   const [busy, setBusy] = useState(false);
@@ -16,12 +17,9 @@ export function SetPassword() {
         <p role="status">
           Paw-some, your password is ready. Sign in and fetch your lists.
         </p>
-        <Link
-          href="/sign-in"
-          className="font-semibold underline underline-offset-4"
-        >
-          Continue to sign in
-        </Link>
+        <Button variant="primary" asChild>
+          <Link href="/sign-in">Continue to sign in</Link>
+        </Button>
       </div>
     );
   return (
@@ -78,6 +76,7 @@ export function SetPassword() {
         <label className="grid gap-2 text-sm font-semibold">
           Your invited email
           <Input
+            aria-describedby={error ? errorId : undefined}
             type="email"
             name="email"
             autoComplete="email"
@@ -90,13 +89,14 @@ export function SetPassword() {
         </label>
       ) : (
         <>
-          <p role="status" className="text-sm text-slate-600">
+          <p role="status" className="text-sm text-muted-foreground">
             If {email} has been invited, a code is on its way. Fetch it from
             your inbox and spam folder.
           </p>
           <label className="grid gap-2 text-sm font-semibold">
             Email code
             <Input
+              aria-describedby={error ? errorId : undefined}
               name="otp"
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -109,6 +109,7 @@ export function SetPassword() {
           <label className="grid gap-2 text-sm font-semibold">
             New password
             <Input
+              aria-describedby={error ? errorId : undefined}
               name="password"
               type="password"
               autoComplete="new-password"
@@ -120,6 +121,7 @@ export function SetPassword() {
           <label className="grid gap-2 text-sm font-semibold">
             Confirm password
             <Input
+              aria-describedby={error ? errorId : undefined}
               name="confirm"
               type="password"
               autoComplete="new-password"
@@ -128,18 +130,18 @@ export function SetPassword() {
               required
             />
           </label>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Keep your pack protected: use at least 8 characters. Codes expire
             after a few minutes.
           </p>
         </>
       )}
       {error && (
-        <p role="alert" className="text-red-800 text-sm">
+        <p id={errorId} role="alert" className="text-red-800 text-sm">
           {error}
         </p>
       )}
-      <Button type="submit" disabled={busy}>
+      <Button variant="primary" type="submit" disabled={busy}>
         {busy
           ? "Just a little paws…"
           : step === "email"
@@ -161,7 +163,7 @@ export function SetPassword() {
       )}
       <Link
         href="/sign-in"
-        className="text-sm text-slate-500 underline underline-offset-4"
+        className="text-sm text-muted-foreground underline underline-offset-4"
       >
         Back to sign in
       </Link>

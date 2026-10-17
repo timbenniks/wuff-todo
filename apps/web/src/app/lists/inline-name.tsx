@@ -83,7 +83,7 @@ export function InlineName({
   }
   const typography =
     heading === "h1"
-      ? "text-3xl sm:text-4xl font-bold"
+      ? "text-3xl font-bold leading-tight"
       : heading === "h2"
         ? "text-lg font-bold"
         : "text-base";
@@ -102,7 +102,7 @@ export function InlineName({
         disabled={disabled}
         title={editLabel}
         aria-label={heading ? undefined : editLabel}
-        className="group/name inline-flex max-w-full items-start gap-2 rounded-md text-left py-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary disabled:cursor-default"
+        className="group/name inline-flex min-h-11 max-w-full items-start gap-2 rounded-md text-left py-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary disabled:cursor-default"
         onClick={() => {
           setDraft(value);
           setOriginal(value);
@@ -118,7 +118,7 @@ export function InlineName({
         <Pencil
           size={heading === "h1" ? 17 : 13}
           aria-hidden="true"
-          className="shrink-0 mt-1.5 text-slate-400 group-hover/name:text-primary group-focus-visible/name:text-primary"
+          className="shrink-0 mt-1.5 text-muted-foreground group-hover/name:text-primary group-focus-visible/name:text-primary"
         />
       </button>
     ) : (
@@ -254,7 +254,7 @@ export function InlineName({
               <p
                 id={`${id}-notice`}
                 role={error ? "alert" : "status"}
-                className={`text-xs ${error ? "text-red-800" : "text-slate-600"}`}
+                className={`text-xs ${error ? "text-red-800" : "text-muted-foreground"}`}
               >
                 {error ||
                   `New de-tails! The name changed to “${value}” while you were editing. Keep your draft or cancel to use the latest name.`}

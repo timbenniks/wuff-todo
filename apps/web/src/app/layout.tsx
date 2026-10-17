@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { appOrigin } from "@/lib/config";
 import "./globals.css";
+const dmSans = localFont({
+  src: [
+    { path: "../fonts/dm-sans.ttf", weight: "100 1000", style: "normal" },
+    {
+      path: "../fonts/dm-sans-italic.ttf",
+      weight: "100 1000",
+      style: "italic",
+    },
+  ],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 export const metadata: Metadata = {
   metadataBase: new URL(appOrigin()),
   applicationName: "Wuff Todo",
@@ -43,7 +56,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={dmSans.variable}>
       <body>{children}</body>
     </html>
   );

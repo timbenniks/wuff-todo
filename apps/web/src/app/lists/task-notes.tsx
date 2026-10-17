@@ -157,7 +157,7 @@ export function TaskNotes({
   return (
     <div
       id={`notes-${task.id}`}
-      className="task-notes w-full min-w-0 mt-1 rounded-xl border border-border bg-white overflow-hidden"
+      className="task-notes w-full min-w-0 mt-1 rounded-xl border border-border bg-surface overflow-hidden"
       onKeyDown={(e) => {
         if (e.nativeEvent.isComposing) return;
         if (e.key === "Escape" && !busy && !saving && !uploading) {
@@ -184,7 +184,7 @@ export function TaskNotes({
         />
       )}
       {uploading && (
-        <p role="status" className="px-4 py-2 text-sm text-slate-500">
+        <p role="status" className="px-4 py-2 text-sm text-muted-foreground">
           {wuffCopy.uploadingImage}
         </p>
       )}
@@ -216,13 +216,11 @@ export function TaskNotes({
             : error}
         </p>
       )}
-      <div className="flex items-center justify-end gap-1 px-2 py-1 border-t border-border bg-white">
+      <div className="flex items-center justify-end gap-1 px-2 py-1 border-t border-border bg-surface">
         {!list.archived && (
           <Button
             type="button"
-            size="icon"
-            variant="ghost"
-            className="h-11 w-11"
+            variant="primary"
             aria-label={
               saving ? "Saving notes" : changed ? "Save my notes" : "Save notes"
             }
@@ -230,14 +228,14 @@ export function TaskNotes({
             disabled={disabled || tooLong}
             onClick={() => void save()}
           >
-            <Check size={18} />
+            <Check size={18} aria-hidden="true" />{" "}
+            {saving ? "Saving…" : "Save notes"}
           </Button>
         )}
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="h-11 w-11"
+
           aria-label={
             list.archived && !retained ? "Close notes" : "Cancel notes"
           }
@@ -245,7 +243,8 @@ export function TaskNotes({
           disabled={busy || saving || uploading}
           onClick={close}
         >
-          <X size={18} />
+          <X size={18} aria-hidden="true" />{" "}
+          {list.archived ? "Close" : "Cancel"}
         </Button>
       </div>
     </div>

@@ -3,7 +3,7 @@
   line-height: 1.75;
   overflow-wrap: anywhere;
   min-width: 0;
-  color: #263e55;
+  color: var(--wuff-foreground);
 }
 .task-prose > :first-child {
   margin-top: 0;
@@ -54,24 +54,24 @@
   margin-top: 0.2em;
 }
 .task-prose a {
-  color: #315f9b;
+  color: var(--wuff-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 .task-prose blockquote {
-  border-left: 3px solid #aabdcf;
+  border-left: 3px solid var(--wuff-control);
   padding-left: 1em;
-  color: #536c82;
+  color: var(--wuff-muted);
 }
 .task-prose code {
   font-family: ui-monospace, monospace;
-  background: #edf2f7;
+  background: var(--wuff-accent);
   border-radius: 4px;
   padding: 0.1em 0.3em;
   font-size: 0.85em;
 }
 .task-prose pre {
-  background: #edf2f7;
+  background: var(--wuff-accent);
   padding: 1em;
   border-radius: 0.75rem;
   overflow: auto;
@@ -84,7 +84,7 @@
 }
 .task-prose hr {
   border: 0;
-  border-top: 1px solid #dce5ed;
+  border-top: 1px solid var(--wuff-border);
   margin: 1.5em 0;
 }
 .task-prose table {
@@ -95,12 +95,12 @@
 }
 .task-prose td,
 .task-prose th {
-  border: 1px solid #dce5ed;
+  border: 1px solid var(--wuff-border);
   padding: 0.4em 0.7em;
   min-width: 4em;
 }
 .task-prose th {
-  background: #edf4fa;
+  background: var(--wuff-sidebar);
   font-weight: 600;
 }
 .task-prose ul[data-type="taskList"] {
@@ -117,7 +117,7 @@
   min-width: 0;
 }
 .task-prose .note-image {
-  color: #536c82;
+  color: var(--wuff-muted);
   font-style: italic;
 }
 .task-editor {
@@ -128,10 +128,10 @@
   outline: none;
 }
 .task-editor:focus-visible {
-  box-shadow: inset 0 0 0 1px #315f9b;
+  box-shadow: inset 0 0 0 1px var(--wuff-primary);
 }
 .task-editor p.is-editor-empty:first-child::before {
-  color: #6b8294;
+  color: var(--wuff-muted);
   content: "Add a few de-tails…";
   float: left;
   height: 0;
@@ -142,14 +142,14 @@
   margin: 0;
 }
 .preserved-note {
-  border: 1px solid #dce5ed;
+  border: 1px solid var(--wuff-border);
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  background: #f9fbfd;
+  background: var(--wuff-surface);
 }
 .preserved-note.ProseMirror-selectednode {
-  outline: 2px solid #315f9b;
+  outline: 2px solid var(--wuff-primary);
 }
 
 .task-prose img {
@@ -159,12 +159,12 @@
   width: auto;
   height: auto;
   object-fit: contain;
-  border: 1px solid #dce5ed;
+  border: 1px solid var(--wuff-border);
   border-radius: 0.75rem;
   margin: 0.75rem 0;
-  background: #f7fafc;
+  background: var(--wuff-background);
 }
 .task-prose img.ProseMirror-selectednode {
-  outline: 2px solid #315f9b;
+  outline: 2px solid var(--wuff-primary);
   outline-offset: 2px;
 }

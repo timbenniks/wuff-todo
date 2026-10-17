@@ -6,7 +6,7 @@ import {
   InputGroupButton,
 } from "@/components/ui/input-group";
 
-import { wuffCopy, taskCount } from "@/lib/copy";
+import { wuffCopy } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
@@ -139,7 +139,7 @@ export function TaskGroups({
     return (
       !list.archived && (
         <form
-          className="task-add flex gap-2 mt-4"
+          className="task-add grid gap-1 mt-3"
           onSubmit={async (e) => {
             e.preventDefault();
             const form = e.currentTarget;
@@ -153,8 +153,15 @@ export function TaskGroups({
               form.reset();
           }}
         >
+          <label
+            className="text-xs text-muted-foreground"
+            htmlFor={`new-task-${sectionId ?? "none"}`}
+          >
+            New task
+          </label>
           <InputGroup>
             <InputGroupInput
+              id={`new-task-${sectionId ?? "none"}`}
               name="title"
               aria-label={
                 sectionId
@@ -168,8 +175,8 @@ export function TaskGroups({
             />
             <InputGroupAddon align="inline-end">
               <InputGroupButton
-                size="icon-sm"
-                variant="ghost"
+                size="sm"
+                variant="primary"
                 disabled={disabled}
                 type="submit"
                 title="Add task"
@@ -179,7 +186,7 @@ export function TaskGroups({
                     : "Add task"
                 }
               >
-                <Plus size={20} />
+                <Plus size={18} aria-hidden="true" /> Add
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
@@ -192,7 +199,7 @@ export function TaskGroups({
       {list.archived && (
         <p
           role="status"
-          className="rounded-xl border border-border bg-white p-4 text-sm mb-6"
+          className="rounded-xl border border-border bg-surface p-4 text-sm mb-6"
         >
           This list is taking a paws in the archive.{" "}
           {owner
@@ -201,17 +208,12 @@ export function TaskGroups({
         </p>
       )}
       <ListViewControls list={list} busy={busy} change={change} />
-      <p className="text-sm text-slate-500 mb-5">
-        {active.filter((t) => !t.completed).length === 0 &&
-        list.tasks.some((t) => t.parentTaskId && !t.completed)
-          ? "Main tasks fetched! Some subtasks still need a paw."
-          : taskCount(active.filter((t) => !t.completed).length)}
-      </p>
-      <p role="status" className="text-xs text-slate-500 mb-3">
-        {groups.reduce((n, g) => n + g.tasks.length, 0)} main tasks shown ·{" "}
+      <p role="status" className="text-xs text-muted-foreground mb-3">
+        {groups.reduce((n, g) => n + g.tasks.length, 0)} of {active.length}{" "}
+        tasks shown ·{" "}
         {view.sortBy === "manual"
           ? "Manual order"
-          : "Dragging off while sorted"}
+          : "Sorted view · Dragging off"}
       </p>
       {view.groupBy !== "section" ? (
         <>
@@ -234,17 +236,14 @@ export function TaskGroups({
         </>
       ) : (
         <>
-          {list.sections.length > 0 && (
-            <h2 className="text-lg font-bold mb-1">No section</h2>
-          )}
           <details
             open={!view.collapsed.includes("section:none")}
             onToggle={(e) =>
               saveCollapsed("section:none", e.currentTarget.open)
             }
           >
-            <summary className="text-xs py-2 min-h-11">
-              Tasks (
+            <summary className="section-summary">
+              {list.sections.length ? "No section" : "Tasks"} (
               {groups.find((g) => g.sectionId === null)?.tasks.length ?? 0})
             </summary>
             {rows(null)}
@@ -268,9 +267,9 @@ export function TaskGroups({
                   <section
                     ref={ref}
                     style={style}
-                    className="mt-8 border-t border-border pt-4"
+                    className="mt-6 border-t border-border pt-3"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="section-heading flex flex-wrap items-center gap-2 [&>div:first-child]:basis-full sm:[&>div:first-child]:basis-0">
                       <InlineName
                         value={section.title}
                         heading="h2"
@@ -294,7 +293,7 @@ export function TaskGroups({
                                     type="button"
                                     size="icon"
                                     variant="ghost"
-                                    className="h-8 w-8"
+                                    className="h-11 w-11"
                                     aria-label={`Rename section ${section.title}`}
                                     title="Rename section"
                                     disabled={busy || editing}
@@ -306,7 +305,7 @@ export function TaskGroups({
                                     type="button"
                                     size="icon"
                                     variant="ghost"
-                                    className="h-8 w-8 text-slate-400 hover:text-red-700"
+                                    className="h-11 w-11 text-muted-foreground hover:text-red-700"
                                     disabled={busy || editing}
                                     title="Remove section"
                                     aria-label={`Remove section ${section.title}`}
@@ -330,30 +329,40 @@ export function TaskGroups({
                             : undefined
                         }
                       />
-                    </div>
-                    <div className="mt-1">
-                      <details
-                        open={!view.collapsed.includes(`section:${section.id}`)}
-                        onToggle={(e) =>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={busy}
+                        aria-expanded={
+                          !view.collapsed.includes(`section:${section.id}`)
+                        }
+                        aria-label={`${view.collapsed.includes(`section:${section.id}`) ? "Expand" : "Collapse"} section ${section.title}`}
+                        onClick={() =>
                           saveCollapsed(
                             `section:${section.id}`,
-                            e.currentTarget.open,
+                            view.collapsed.includes(`section:${section.id}`),
                           )
                         }
-                        className="min-w-0 flex-1 group/section"
                       >
-                        <summary className="text-xs font-medium text-slate-500 py-2 min-h-11">
-                          Tasks (
-                          {groups.find((g) => g.sectionId === section.id)?.tasks
-                            .length ?? 0}
-                          )
-                        </summary>
-                        <div className="mt-1">
-                          {rows(section.id)}
-                          {addTask(section.id)}
-                        </div>
-                      </details>
+                        {groups.find((g) => g.sectionId === section.id)?.tasks
+                          .length ?? 0}{" "}
+                        task
+                        {(groups.find((g) => g.sectionId === section.id)?.tasks
+                          .length ?? 0) === 1
+                          ? ""
+                          : "s"}{" "}
+                        ·{" "}
+                        {view.collapsed.includes(`section:${section.id}`)
+                          ? "Show"
+                          : "Hide"}
+                      </Button>
                     </div>
+                    {!view.collapsed.includes(`section:${section.id}`) && (
+                      <div className="mt-2">
+                        {rows(section.id)}
+                        {addTask(section.id)}
+                      </div>
+                    )}
                   </section>
                 )}
               </SortableItem>
@@ -377,8 +386,15 @@ export function TaskGroups({
                   setAddingSection(false);
               }}
             >
+              <label
+                htmlFor={`new-section-${list.id}`}
+                className="text-xs text-muted-foreground"
+              >
+                Section name
+              </label>
               <InputGroup>
                 <InputGroupInput
+                  id={`new-section-${list.id}`}
                   name="title"
                   aria-label="Section name"
                   placeholder={wuffCopy.sectionPlaceholder}
@@ -390,13 +406,13 @@ export function TaskGroups({
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     type="submit"
-                    size="icon-sm"
-                    variant="ghost"
+                    size="sm"
+                    variant="primary"
                     disabled={busy}
                     aria-label="Save section"
                     title="Save section"
                   >
-                    <Check size={18} />
+                    <Check size={18} aria-hidden="true" /> Add
                   </InputGroupButton>
                   <InputGroupButton
                     type="button"
@@ -414,7 +430,7 @@ export function TaskGroups({
           ) : (
             <Button
               variant="ghost"
-              className="px-2 text-slate-600"
+              className="px-2 text-muted-foreground"
               aria-label="Add section"
               title="Add section"
               disabled={busy || list.sections.length >= 50}

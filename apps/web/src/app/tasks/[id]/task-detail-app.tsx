@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, Pencil } from "lucide-react";
 import type { TaskDetail, TodoList } from "@wuff/contracts";
+import { ListTheme } from "@/components/list-theme";
+import { listThemeVariables } from "@/lib/list-theme";
+import { StatusTag } from "@/components/ui/status-tag";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { TaskMarkdown } from "@/components/task-markdown";
@@ -50,6 +53,11 @@ export function TaskDetailApp({
     children = useRef(new Map<string, string>());
   const queue = useRef<LiveRefreshQueue | null>(null);
   const today = useCalendarDay();
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(""), 3500);
+    return () => clearTimeout(timer);
+  }, [notice]);
   const refresh = useCallback(async () => {
     if (unavailable.current) return;
     const started = epoch.current;
@@ -149,7 +157,11 @@ export function TaskDetailApp({
     );
   const body = { listId: list.id, version: list.version, taskId: task.id };
   return (
-    <main className="max-w-3xl mx-auto px-5 sm:px-8 py-6 sm:py-10">
+    <main
+      className="task-detail max-w-4xl min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8"
+      style={listThemeVariables(list.color)}
+    >
+      <ListTheme color={list.color} />
       {liveConfig && (
         <LiveUpdates
           config={liveConfig}
@@ -158,16 +170,16 @@ export function TaskDetailApp({
           onStatus={() => {}}
         />
       )}
-      <nav className="flex items-center justify-between mb-8">
+      <nav className="flex items-center justify-between mb-3 min-h-11">
         <a
           href={`/lists?listId=${list.id}`}
           className="text-sm text-primary underline"
         >
           ← {list.title}
         </a>
-        <Corgi />
+        <Corgi size={40} />
       </nav>
-      <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+      <div className="flex items-center gap-0 text-xs text-muted-foreground mb-2">
         <span className="font-semibold tracking-wide">{task.key}</span>
         <Button
           size="icon"
@@ -213,13 +225,20 @@ export function TaskDetailApp({
           Retry previous change
         </Button>
       )}
-      <p role="status" className="text-sm text-slate-500 min-h-6 mt-3">
+      <p
+        role="status"
+        className={busy || notice ? "feedback-toast" : "sr-only"}
+      >
         {busy ? "Saving…" : notice}
       </p>
-      <div className="flex flex-wrap gap-3 items-center my-5">
+      <div className="flex flex-wrap gap-2 items-center mt-3">
+        {list.mode === "work" && <StatusTag status={task.status} />}
+        <DueDateBadge task={task} today={today} />
+      </div>
+      <div className="flex flex-wrap gap-2 items-center mt-4 mb-6">
         <Button
           disabled={busy || list.archived}
-          variant="ghost"
+          variant="primary"
           onClick={() =>
             change("/api/v1/tasks", "PATCH", {
               ...body,
@@ -230,15 +249,14 @@ export function TaskDetailApp({
           <Check size={16} />
           {task.completed ? "Reopen task" : "Complete task"}
         </Button>
-        <DueDateBadge task={task} today={today} />
         <Button
-          variant="ghost"
-          disabled={busy}
+          variant="outline"
+          disabled={busy || list.archived}
           onClick={() => setDateOpen(!dateOpen)}
           ref={dateTrigger}
           aria-expanded={dateOpen}
         >
-          Due date
+          {task.dueDate ? "Change due date" : "Set due date"}
         </Button>
       </div>
       {dateOpen && (
@@ -256,21 +274,20 @@ export function TaskDetailApp({
           />
         </div>
       )}
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <WorkMetadata task={task} list={list} busy={busy} change={change} />
-        <section className="rounded-2xl border border-border bg-white p-4 sm:p-6 min-w-0">
-          <div className="flex items-center justify-between mb-4">
+        <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold">Notes</h2>
             {!notesOpen && !list.archived && (
               <Button
                 variant="ghost"
-                size="icon"
                 aria-label="Edit task notes"
                 ref={noteTrigger}
                 disabled={busy}
                 onClick={() => setNotesOpen(true)}
               >
-                <Pencil size={16} />
+                <Pencil size={16} aria-hidden="true" /> Edit notes
               </Button>
             )}
           </div>
@@ -290,13 +307,13 @@ export function TaskDetailApp({
           ) : task.content ? (
             <TaskMarkdown content={task.content} />
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               A little context for your next step.
             </p>
           )}
         </section>
         {!task.parentTaskId && (
-          <section className="rounded-2xl border border-border bg-white p-4 sm:p-6 min-w-0">
+          <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
             <h2 className="text-lg font-bold mb-4">Subtasks</h2>
             <Subtasks
               focusNewTask={false}

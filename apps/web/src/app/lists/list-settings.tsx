@@ -44,9 +44,7 @@ export function ListSettings({
   return (
     <>
       <Button
-        size="icon"
-        variant="ghost"
-        className="h-11 w-11"
+        variant="outline"
         aria-label="List settings"
         title="List settings"
         disabled={busy}
@@ -55,7 +53,7 @@ export function ListSettings({
           dialog.current?.showModal();
         }}
       >
-        <Settings2 size={16} />
+        <Settings2 size={16} aria-hidden="true" /> Settings
       </Button>
       <dialog
         ref={dialog}
@@ -63,14 +61,14 @@ export function ListSettings({
         onCancel={(e) => {
           if (busy) e.preventDefault();
         }}
-        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-white text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
+        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
       >
         <div className="flex justify-between items-start gap-3 mb-5">
           <div>
             <h2 id={`settings-${list.id}`} className="text-2xl font-bold">
               List settings
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               A few de-tails, shared with everyone on this list.
             </p>
           </div>
@@ -100,6 +98,7 @@ export function ListSettings({
           <label className="grid gap-2 text-sm font-semibold">
             List type
             <NativeSelect
+              aria-label="List type"
               value={draft.mode}
               disabled={busy}
               onChange={(e) =>
@@ -109,7 +108,7 @@ export function ListSettings({
               <option value="simple">Simple</option>
               <option value="work">Work</option>
             </NativeSelect>
-            <span className="text-xs font-normal text-slate-500">
+            <span className="text-xs font-normal text-muted-foreground">
               Work adds workflow, priority and links. Share the list to assign
               tasks.
             </span>
@@ -125,14 +124,15 @@ export function ListSettings({
                 setDraft({ ...draft, description: e.target.value })
               }
             />
-            <span className="font-normal text-xs text-slate-500">
+            <span className="font-normal text-xs text-muted-foreground">
               A few de-tails for your pack. Plain text, up to 4,000 characters.
             </span>
           </label>
           <fieldset>
             <legend className="text-sm font-semibold mb-3">List color</legend>
-            <p className="text-xs text-slate-500 mb-3">
-              Give your list a little paw-sonality.
+            <p className="text-xs text-muted-foreground mb-3">
+              This color themes the app while you’re in this list, including
+              backgrounds, text and controls.
             </p>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {listColors.map((color) => {
@@ -199,16 +199,16 @@ export function ListSettings({
           <Button
             disabled={busy}
             type="submit"
-            size="icon"
-            variant="ghost"
+            variant="primary"
             aria-label={busy ? "Saving settings" : "Save settings"}
             title="Save settings"
           >
-            <Check size={18} />
+            <Check size={18} aria-hidden="true" />{" "}
+            {busy ? "Saving…" : "Save changes"}
           </Button>
         </form>
         <div className="border-t border-border mt-6 pt-5">
-          <p className="text-sm text-slate-500 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             {list.archived
               ? "Paws over? Restore this list so everyone can edit its tasks again."
               : "Let this list take a paws for everyone. Its tasks and sharing are kept."}

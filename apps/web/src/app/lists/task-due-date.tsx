@@ -24,7 +24,14 @@ export function DueDateBadge({
   return (
     <time
       dateTime={task.dueDate}
-      className={`mt-1 text-xs font-semibold break-words ${display.tone === "overdue" ? "text-red-700" : display.tone === "today" ? "text-primary" : "text-slate-500"}`}
+      className="status-tag due-tag"
+      data-tone={
+        display.tone === "overdue"
+          ? "danger"
+          : display.tone === "today"
+            ? "active"
+            : "neutral"
+      }
       title={display.detail}
       aria-label={display.detail}
     >
@@ -99,7 +106,7 @@ export function TaskDueDate({
     <form
       noValidate
       aria-label={`Due date for ${task.title}`}
-      className="rounded-xl border border-border bg-white p-3 sm:p-4 grid gap-3"
+      className="rounded-xl border border-border bg-surface p-3 sm:p-4 grid gap-3"
       onSubmit={(e) => {
         e.preventDefault();
         void save(String(new FormData(e.currentTarget).get("dueDate") ?? ""));
@@ -113,7 +120,7 @@ export function TaskDueDate({
         }
       }}
     >
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Give this task a fetching finish date.
       </p>
       {list.archived ? (
@@ -142,7 +149,7 @@ export function TaskDueDate({
               Tomorrow
             </Button>
           </div>
-          <label className="grid gap-1 text-xs font-semibold text-slate-500">
+          <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
             Due date
             <Input
               autoFocus
@@ -159,7 +166,7 @@ export function TaskDueDate({
             />
           </label>
           {changed && (
-            <p role="status" className="text-xs text-slate-600">
+            <p role="status" className="text-xs text-muted-foreground">
               New de-tails! The due date changed to{" "}
               {task.dueDate ? formatDueDate(task.dueDate) : "no date"} while you
               were choosing. Your pick is kept.
@@ -168,33 +175,31 @@ export function TaskDueDate({
           <div className="flex flex-wrap gap-2">
             <Button
               type="submit"
-              size="icon"
-              variant="ghost"
+              variant="primary"
               disabled={disabled}
               aria-label={
                 busy ? "Saving date" : changed ? "Save my date" : "Save date"
               }
               title={changed ? "Save my date" : "Save date"}
             >
-              <Check size={18} />
+              <Check size={18} aria-hidden="true" />{" "}
+              {busy ? "Saving…" : "Save date"}
             </Button>
             {task.dueDate && (
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
                 aria-label="Clear date"
                 title="Clear date"
                 disabled={disabled}
                 onClick={() => void save(null)}
               >
-                <Eraser size={18} />
+                <Eraser size={18} aria-hidden="true" /> Clear date
               </Button>
             )}
             <Button
               type="button"
               variant="ghost"
-              size="icon"
               aria-label="Cancel date"
               title="Cancel date"
               disabled={busy}
@@ -203,7 +208,7 @@ export function TaskDueDate({
                 onClose();
               }}
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" /> Cancel
             </Button>
           </div>
         </>

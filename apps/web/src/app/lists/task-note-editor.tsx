@@ -226,7 +226,7 @@ export default function TaskNoteEditor({
     ],
   ] as const;
   return (
-    <div className="overflow-hidden bg-white">
+    <div className="overflow-hidden bg-surface">
       <div
         role="group"
         aria-label="Text formatting"
@@ -308,7 +308,7 @@ export default function TaskNoteEditor({
       </div>
       {state?.image && (
         <div className="flex flex-wrap items-end gap-2 border-b border-border p-3">
-          <label className="grid flex-1 min-w-0 gap-1 text-xs font-semibold text-slate-500">
+          <label className="grid flex-1 min-w-0 gap-1 text-xs font-semibold text-muted-foreground">
             Image description
             <Input
               value={state.alt ?? ""}
@@ -389,7 +389,7 @@ export default function TaskNoteEditor({
         </div>
       )}
       {preserved && (
-        <p role="status" className="px-4 pt-3 text-xs text-slate-500">
+        <p role="status" className="px-4 pt-3 text-xs text-muted-foreground">
           Your original de-tails are kept intact below. Add to them, or select
           the saved block to replace it.
         </p>

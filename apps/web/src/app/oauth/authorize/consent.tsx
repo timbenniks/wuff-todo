@@ -33,7 +33,7 @@ export function Consent({ query }: { query: string }) {
         </p>
       )}
       <div className="flex gap-3">
-        <Button disabled={busy} onClick={() => decide(true)}>
+        <Button variant="primary" disabled={busy} onClick={() => decide(true)}>
           Allow connection
         </Button>
         <Button disabled={busy} variant="outline" onClick={() => decide(false)}>

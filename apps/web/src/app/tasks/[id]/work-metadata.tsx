@@ -8,6 +8,7 @@ import {
   type Task,
   type TodoList,
 } from "@wuff/contracts";
+import { StatusTag } from "@/components/ui/status-tag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -40,20 +41,19 @@ export function WorkMetadata({
   }
   if (list.mode !== "work" && !editing) return null;
   return (
-    <section className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-3 mb-4">
+    <section className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-lg font-bold">Work details</h2>
         {!list.archived && !editing && (
           <Button
             type="button"
             variant="ghost"
-            size="icon"
             aria-label="Edit work details"
             disabled={busy}
             ref={trigger}
             onClick={() => setEditing(true)}
           >
-            <Pencil size={16} />
+            <Pencil size={16} aria-hidden="true" /> Edit details
           </Button>
         )}
       </div>
@@ -69,24 +69,28 @@ export function WorkMetadata({
         <>
           <dl className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-4 text-sm">
             <div>
-              <dt className="text-slate-500 text-xs mb-1">Status</dt>
-              <dd className="font-semibold">{statusLabel(task.status)}</dd>
+              <dt className="text-muted-foreground text-xs mb-1">Status</dt>
+              <dd>
+                <StatusTag status={task.status} />
+              </dd>
             </div>
             <div>
-              <dt className="text-slate-500 text-xs mb-1">Priority</dt>
+              <dt className="text-muted-foreground text-xs mb-1">Priority</dt>
               <dd className="capitalize">
                 {task.priority === "none" ? "No priority" : task.priority}
               </dd>
             </div>
             <div>
-              <dt className="text-slate-500 text-xs mb-1">Assignee</dt>
+              <dt className="text-muted-foreground text-xs mb-1">Assignee</dt>
               <dd>
                 {list.assignees.find((p) => p.id === task.assigneeId)?.name ??
                   "Unassigned"}
               </dd>
             </div>
           </dl>
-          <h3 className="text-xs text-slate-500 mt-5 mb-2">References</h3>
+          <h3 className="text-xs text-muted-foreground mt-5 mb-2">
+            References
+          </h3>
           {task.references.length ? (
             <ul className="grid gap-2 text-sm">
               {task.references.map((ref, i) => (
@@ -103,7 +107,7 @@ export function WorkMetadata({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Link an issue, pull request or document.
             </p>
           )}
@@ -169,7 +173,7 @@ function WorkForm({
       }}
     >
       {list.mode !== "work" && (
-        <p role="status" className="text-sm text-slate-500">
+        <p role="status" className="text-sm text-muted-foreground">
           This list switched to Simple. Your work draft is kept until the owner
           enables Work again.
         </p>
@@ -177,6 +181,7 @@ function WorkForm({
       <label className="grid gap-2 text-sm">
         Status
         <NativeSelect
+          aria-label="Status"
           ref={statusInput}
           value={draft.status}
           disabled={disabled}
@@ -194,6 +199,7 @@ function WorkForm({
       <label className="grid gap-2 text-sm">
         Priority
         <NativeSelect
+          aria-label="Priority"
           value={draft.priority}
           disabled={disabled}
           onChange={(e) =>
@@ -211,6 +217,7 @@ function WorkForm({
         <label className="grid gap-2 text-sm">
           Assignee
           <NativeSelect
+            aria-label="Assignee"
             value={draft.assigneeId ?? ""}
             disabled={disabled}
             onChange={(e) =>
@@ -226,7 +233,7 @@ function WorkForm({
           </NativeSelect>
         </label>
       ) : (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Share this list to assign tasks.
         </p>
       )}
@@ -332,14 +339,16 @@ function WorkForm({
           aria-label="Cancel work details"
           onClick={close}
         >
-          <X size={16} />
+          <X size={16} aria-hidden="true" /> Cancel
         </Button>
         <Button
           type="submit"
+          variant="primary"
           disabled={disabled}
           aria-label="Save work details"
         >
-          <Check size={16} />
+          <Check size={16} aria-hidden="true" />{" "}
+          {busy ? "Saving…" : "Save changes"}
         </Button>
       </div>
     </form>
