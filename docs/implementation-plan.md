@@ -45,7 +45,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Recommended next build: Stage 3 GitHub App synchronization.** Follow the [GitHub delivery plan](github-sync-plan.md), extending the confirmed [work-task direction](work-tasks-plan.md). Start with installation ownership and explicit issue linking, then deliver durable two-way issue synchronization and visible conflict/retry controls through web/API/MCP. Do not implement agent execution yet. Close the design release smoke gap alongside this planning; keep physical-device/native checks explicitly outstanding.
+**Recommended next build: Stage 3 GitHub App synchronization.** Follow the [GitHub delivery plan](github-sync-plan.md), extending the confirmed [work-task direction](work-tasks-plan.md). The private `@timbenniks` GitHub App `wuff-todo` is registered (App ID `5355720`), with no installation, repository access or active webhook. Continue with installation ownership and explicit issue linking, then deliver durable two-way issue synchronization and visible conflict/retry controls through web/API/MCP. Do not implement agent execution yet. Close the design release smoke gap alongside this planning; keep physical-device/native checks explicitly outstanding.
 
 ### Completed design work and earlier milestones
 

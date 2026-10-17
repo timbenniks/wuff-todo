@@ -2,7 +2,13 @@
 
 Date: October 17, 2026
 
-Status: implementation plan, not an implemented integration. This elaborates the confirmed Stage 3 direction in [work tasks](work-tasks-plan.md). No GitHub App registration, installation, repository mutation, migration or agent launch was performed in this planning pass.
+Status: private App registration completed; integration implementation and installation remain pending. This elaborates the confirmed Stage 3 direction in [work tasks](work-tasks-plan.md). The initial planning pass made no external changes; the subsequent registration is recorded below.
+
+## Registration progress — October 17
+
+The user authorized browser/CLI registration and completed GitHub account re-verification. Registered **Wuff Todo**, slug `wuff-todo`, owned by `@timbenniks`, App ID `5355720`; [registration settings](https://github.com/settings/apps/wuff-todo). Homepage: `https://wuff-todo.vercel.app`. Visibility is private (only this account); no installation or repository grant was performed. No repository permissions were selected. Webhooks are inactive, callback/setup URLs are unset, and no private key or client secret was generated/configured by this workflow.
+
+This reserves the App identity; it does not implement connection ownership, a webhook receiver, synchronization or installed-App proof. Stage 3A remains open. Its live Wuff task notes record the registration. Do not register a duplicate; configure this App after implementing the verified callback/owner-binding and receiver design. Generating credentials and granting repository access remain separate operations.
 
 ## Outcome
 

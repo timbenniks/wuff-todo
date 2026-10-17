@@ -51,6 +51,10 @@ The initial synthetic accounts were created on development with verification ema
 
 The activation test additionally requires a dedicated synthetic identity, provisioned with the operator command below using target `development`, email `activation-fixture@example.invalid`, and name `Activation fixture`. This test asks managed Auth to create an expiring challenge for a reserved, non-deliverable address; it does not prove mailbox delivery or successful code redemption.
 
+## GitHub App registration
+
+Private App `wuff-todo` under `@timbenniks` (App ID `5355720`) is registered at [GitHub settings](https://github.com/settings/apps/wuff-todo). It is not installed or connected to Wuff; no credentials were generated/configured by the registration workflow. Webhooks are disabled and callback/setup URLs unset until the backend exists. Reuse this registration rather than creating another. See [GitHub synchronization progress](github-sync-plan.md#registration-progress--october-17). Store future secrets only in ignored/configured environment stores; never in this document or task notes.
+
 ## Design assets and client connections
 
 DM Sans source assets and their OFL license are in `apps/web/src/fonts`. Keep upright/italic files aligned across the root `next/font/local` configuration and `scripts/build-mcp.mjs`; MCP embeds them and needs no runtime font CDN. `pnpm build` rebuilds both delivery paths. [Typography](typography-review.md) and [shared design language](design-language.md) record decisions and verification limits.
