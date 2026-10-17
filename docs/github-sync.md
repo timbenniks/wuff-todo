@@ -1,6 +1,6 @@
 # GitHub issue synchronization
 
-October 17, 2026. Implemented; final installed-App webhook and production release checks are being completed in this change.
+October 17, 2026. Implemented and released; evidence and limits are recorded below.
 
 ## Ownership and consent
 
@@ -30,7 +30,7 @@ Webhook bytes are bounded to 256 KiB, HMAC verified before parsing, and persiste
 
 Next.js `after` wakes the durable queue under the platform's managed request lifetime; jobs survive interruption and lease expiry. Batches have a 45-second budget plus bounded provider timeouts and process at most eight jobs. Failures back off and stop automatic retries after eight attempts; explicit Reconcile resets the retry budget. A daily authenticated Vercel cron (`47 3 * * *`, UTC) enqueues missed-state reconciliation without resetting existing retry schedules. This accommodates the existing project's daily cron plan; it is not a promise of minute-level missed-event recovery under an idle or overloaded queue. Actual incoming events and task writes wake processing promptly. CRON_SECRET is server-only.
 
-Last-synced comparisons, a second provider read before PATCH and provider conditional headers reduce races. GitHub external writes are not part of a database transaction; exact provider-side compare-and-swap support must not be claimed without verifying its behavior. Divergence observed by Wuff is surfaced rather than resolved by an intentional last-write-wins policy.
+Last-synced comparisons and a second provider read before PATCH reduce races. A live stale If-Match probe returned HTTP 400; this implementation does not rely on provider conditional writes. GitHub external writes are not part of a database transaction; exact provider-side compare-and-swap support must not be claimed without verifying its behavior. Divergence observed by Wuff is surfaced rather than resolved by an intentional last-write-wins policy.
 
 ## Surfaces
 
@@ -38,11 +38,23 @@ Last-synced comparisons, a second provider read before PATCH and provider condit
 
 MCP adds eleven tools (41 total): `get_github_connections`, `list_github_repositories`, `get_github_list`, `get_github_task`, `get_github_pull_requests`, `bind_github_repository`, `disconnect_github_repository`, `link_github_issue`, `unlink_github_issue`, `retry_github_sync`, `resolve_github_conflict`. The embedded task details provide linking, create, status, reconcile, conflict choices, unlink and PR-context controls; connection setup follows the authenticated website link, matching the existing sharing setup pattern. Web task pages expose the same operations. Refresh the MCP tool catalog and reconnect for GitHub permission when needed.
 
-## Evidence so far
+## Verification evidence
 
 - Full optimized web/MCP build, workspace/root typechecks and all 39 unit tests passed. All 22 isolated-development integration tests passed. The added GitHub integration uses a real isolated database and a mocked provider; it verifies account-bound one-time authorization, repository ownership, scope boundaries, mutation retries, signed/duplicate deliveries, two-way state, stale/conflicting writes, uncertain-create recovery and disconnect handling. It is not live installed-App proof by itself.
 - A separate real installed-App test on the private disposable repository created issue #1, synchronized title/notes in both directions, closed/reopened into Done/Todo, exposed/resolved divergent titles and passed Wuff disconnect/rebind recovery. A synthetic PR was created and returned by the authorized PR-context reader. Fixture content was synthetic; no real code repository was granted to the App. See `scripts/verify-github-development.ts` for the guarded development check.
 - The additive migration was applied first to isolated development, then through the existing production direct connection. Before/after hashes of existing list, task and membership rows matched (2 lists, 19 tasks, 1 membership). No auth-managed table or existing row content was changed by migration.
 - The separate production visual smoke saved all seven themes, restored Slate, verified Detailed/Compact saves across reloads, restored Compact, and saved/reloaded rendered italic notes. The corresponding Wuff task is Done with explicit named-host/device limits. No temporary production list was needed.
 
-Production webhook, final release, responsive SDK-host evidence and cleanup are recorded below after completion. A named ChatGPT/Codex interactive host and physical iPhone/Android checks remain separate from local SDK/browser verification.
+Production release and cleanup are recorded below. A named ChatGPT/Codex interactive host and physical iPhone/Android checks remain separate from local SDK/browser verification.
+
+## Installed-App production and client verification
+
+- Source `9e65dad44beec6437dd9e0f1bd5398b96a2bd5c6` passed [GitHub CI 39019976600](https://github.com/timbenniks/wuff-todo/actions/runs/39019976600). Vercel CLI deployed it to `https://wuff-todo-7vy4zuxjo-tim-benniks-projects-1b967033.vercel.app` and assigned the canonical alias. The final MCP refinement/release is recorded in the verification log.
+- The admitted production owner completed GitHub OAuth and explicitly consented to a sandbox binding for Tim's work. Creating issue #3 from our 3D release task succeeded. An actual signed `issues.edited` delivery returned HTTP 200 / accepted true, and its synthetic note marker appeared in the open Wuff page automatically. A temporary Wuff title edit reached GitHub, then was restored. Closing and reopening issue #3 automatically changed Wuff Done/Todo. No repository-wide import or code-repository permission was granted.
+- A real installation suspension produced Disconnected in Wuff after refresh and a stopped binding. Unsuspending did not silently restore consent; explicit owner reconnection recovered the same link. Mocked development tests additionally cover repository removal, uninstall/revocation, duplicates and delayed events. A real uninstall/reinstall was not performed.
+- The official local MCP Apps SDK host linked existing issue #1, exposed both initial conflict candidates, applied Keep GitHub, refreshed the task title/notes and retained the open panel. Pending polling reached synced; the authorized PR reader displayed synthetic PR #2. The 600px embedded panel was inspected; a spacing refinement gives controls their own grid gaps and wraps long content. This is local authenticated SDK evidence, not certification of a named ChatGPT/Codex production host.
+- Both disposable development fixture lists were removed and independently reread as not found. Their grants were revoked by fixture shutdown; real GitHub credentials/states were removed from the synthetic development user. Local servers were stopped. Synthetic issues #1/#3 and PR #2 were closed; the synthetic PR branch was deleted. Issue #3 was unlinked from the real release task before closing it, and Tim's work sandbox binding was stopped. The approved App installation and production GitHub identity connection remain available; real lists, membership and pre-existing user tasks were retained.
+
+## Remaining limits
+
+Physical phones, manual screen-reader/zoom review, named-host interactive production rendering, a second human's production GitHub connection, organization installations and assignee identity mapping are not certified here. Missed events may wait for the daily recovery cron; visible failed/uncertain work requires Reconcile. Provider writes retain a race window between the final read and GitHub PATCH; no atomic compare-and-swap guarantee is claimed. These limits do not enable cloud agents, merges or deployments from task content.

@@ -11,12 +11,12 @@ Web and MCP ship first. iPhone and Android apps follow using the same backend.
 - [Architecture](docs/architecture.md): monorepo layout, backend boundaries, authentication, and deployment.
 - [Implementation plan](docs/implementation-plan.md): delivery phases, validation, and unresolved decisions.
 - [Design language and themes](docs/design-language.md): shared controls, list palettes, DM Sans, spacing fixes and release evidence.
-- [Next: GitHub synchronization](docs/github-sync-plan.md): proposed delivery slices and acceptance gates.
+- [GitHub synchronization](docs/github-sync.md): installed-App setup, issue synchronization, operations and release evidence.
 - [Todoist research](docs/todoist-research.md): reference features and deferred ideas.
 
-The app implements private/shared lists, task ordering, admitted-user login, in-app sharing, work lists with immutable task keys and task pages, personal views, rich notes/private images, subtasks and calendar due dates. Web/API/MCP use shared permission and concurrency contracts; MCP currently exposes 30 tools. Live invalidation refreshes authorized state, with polling/focus fallback. The selected list’s seven named palettes theme the web and MCP App; controls distinguish actions from status tags and use DM Sans throughout.
+The app implements private/shared lists, task ordering, admitted-user login, in-app sharing, work lists with immutable task keys and task pages, personal views, rich notes/private images, subtasks and calendar due dates. Web/API/MCP use shared permission and concurrency contracts; MCP currently exposes 41 tools. Live invalidation refreshes authorized state, with polling/focus fallback. The selected list’s seven named palettes theme the web and MCP App; controls distinguish actions from status tags and use DM Sans throughout.
 
-The design/theme/font update (`4c80aea`) and select/disclosure spacing fix (`c9578d9`) are pushed to main and passed CI. The canonical Vercel production alias was inspected Ready in `fra1` on October 17; fresh authenticated production interaction checks remain outstanding. See [design release evidence](docs/design-language.md#source-and-deployment-status). GitHub App synchronization is the next planned feature; native apps/auth and offline decisions remain later.
+GitHub App synchronization is implemented across web/API/MCP, with explicit issue linking/creation, two-way title/notes/completion, durable signed events, retry/conflict controls and related PR context. The installed App is restricted to the approved private sandbox repository. Authenticated production design smoke and real signed issue deliveries passed; see [release evidence](docs/github-sync.md). Agent execution, native apps/auth and offline decisions remain later work.
 
 - [Development and operations](docs/development.md)
 - [Verification evidence and limitations](docs/verification.md)

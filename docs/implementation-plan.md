@@ -1,6 +1,6 @@
 # Wuff Todo implementation plan
 
-Status: work tasks, personal views and shared design language implemented; GitHub synchronization planned next
+Status: work tasks, personal views, shared design language and GitHub synchronization implemented
 
 Updated: October 17, 2026
 
@@ -10,13 +10,14 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 - **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
-- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 30 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
+- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 41 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
 - **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native icon source assets exist; native apps do not. See [mascot details](waffles-mascot.md).
 - **Typography and controls:** DM Sans is selected and self-hosted across web/MCP with real italics; shared web selects have inset chevrons and Your view has centered disclosures and tighter spacing. [Typography](typography-review.md) records the decision.
 - **Design language:** [shared controls, status tags and list-driven themes](design-language.md) unify web/MCP appearance. The selected list's named color drives app surfaces, text, controls and focus; semantic status/danger colors remain explicit. See that document for local checks and release limits.
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
 - **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Revisit offline needs during React Native/Expo mobile planning; native offline support is not assumed.
-- **Verification:** design implementation passed 36 unit and 21 development integration tests plus optimized web/MCP builds. Subsequent font changes passed build/typecheck and local font/rendering checks; dropdown refinement passed build and targeted browser checks. Both source commits passed GitHub CI. Production alias inspected Ready in `fra1`; authenticated production interaction, physical-device and named-host checks remain separate. Historical test counts below belong to their dated milestones. See [verification](verification.md).
+- **Verification:** the GitHub release passed 39 unit tests, TypeScript, optimized web/MCP builds and all 22 isolated-development integration cases. Actual installed-App create/edit/close/reopen, signed production deliveries, suspension/reconnection and local MCP SDK controls passed. Production palette/view/italic-note smoke passed. Named ChatGPT/Codex interactive-host and physical-device checks remain separate. See [GitHub evidence](github-sync.md) and [verification](verification.md).
+- **GitHub:** owner-authorized personal-account repository bindings, explicit issue link/create, two-way title/notes/open-state, durable jobs/webhooks, conflicts/retries and related PR context. The App is installed only on the approved private test repository; production test links were removed after verification. External clients need explicit `github:manage` consent.
 - **Task notes:** formatted text and canonical Markdown are implemented for web/API/MCP, with an on-demand Tiptap toolbar, safe shared renderer and MCP App source editor. Website task actions now open editing directly, hide Markdown implementation details and use drag handles for tasks, sections and the sidebar; see [task controls](task-controls.md). Corgi wordplay covers app guidance and feedback. Release verification is recorded in [task content and voice](task-content.md).
 - **Later scope:** due times/reminders, new-account invitation delivery, native apps/auth, offline editing, arbitrary theme colors and dark mode. Custom SMTP remains an operational follow-up.
 - **Subtasks:** one level beneath a task, with inline names, independent completion, shared ordering and parent progress across web/API/MCP. Children follow their parent’s section; parent deletion cascades. See [subtasks](subtasks.md) for contracts and release evidence.
@@ -45,7 +46,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Recommended next build: Stage 3 GitHub App synchronization.** Follow the [GitHub delivery plan](github-sync-plan.md), extending the confirmed [work-task direction](work-tasks-plan.md). The private `@timbenniks` GitHub App `wuff-todo` is registered (App ID `5355720`), with no installation, repository access or active webhook. Continue with installation ownership and explicit issue linking, then deliver durable two-way issue synchronization and visible conflict/retry controls through web/API/MCP. Do not implement agent execution yet. Close the design release smoke gap alongside this planning; keep physical-device/native checks explicitly outstanding.
+**Next planned direction: Stage 4 developer-agent handoff.** Stage 3 [GitHub synchronization](github-sync.md) is implemented and verified within its documented provider/client limits. Before implementing Stage 4, select the cloud-agent provider and define explicit launch authorization, repository/base-ref boundaries, run/cancellation/retry contracts and runtime/cost limits in [work-task direction](work-tasks-plan.md). No agent execution is implemented or launched by the GitHub release. Physical-device and independent-account checks remain distinct follow-ups.
 
 ### Completed design work and earlier milestones
 

@@ -1,14 +1,12 @@
-# Next milestone: GitHub synchronization
+# GitHub synchronization delivery plan
 
 Date: October 17, 2026
 
-Status: implementation and isolated/live installed-App checks complete; production webhook/release validation in progress. See [implementation and evidence](github-sync.md). This elaborates the confirmed Stage 3 direction in [work tasks](work-tasks-plan.md). The initial planning pass made no external changes; the subsequent registration is recorded below.
+Status: slices 3A–3D implemented, deployed and verified within the limits in [implementation and evidence](github-sync.md). This document preserves the original delivery gates and decisions; the implementation document is authoritative for the selected design.
 
-## Registration progress — October 17
+## Registration and release — October 17
 
-The user authorized browser/CLI registration and completed GitHub account re-verification. Registered **Wuff Todo**, slug `wuff-todo`, owned by `@timbenniks`, App ID `5355720`; [registration settings](https://github.com/settings/apps/wuff-todo). Homepage: `https://wuff-todo.vercel.app`. Visibility is private (only this account); no installation or repository grant was performed. No repository permissions were selected. Webhooks are inactive, callback/setup URLs are unset, and no private key or client secret was generated/configured by this workflow.
-
-This reserves the App identity; it does not implement connection ownership, a webhook receiver, synchronization or installed-App proof. Stage 3A remains open. Its live Wuff task notes record the registration. Do not register a duplicate; configure this App after implementing the verified callback/owner-binding and receiver design. Generating credentials and granting repository access remain separate operations.
+The approved private `@timbenniks` App `wuff-todo` (5355720) is configured and installed only on `timbenniks/wuff-github-sync-test`. It has Issues read/write, Pull requests read and Metadata read, exact callbacks, encrypted expiring user tokens, signed issue/lifecycle deliveries and server-only secrets. Production OAuth, issue creation, two-way edits, close/reopen, signed webhook delivery and suspension/reconnection passed. Temporary production task links were removed and the Work list sandbox binding stopped after verification. See [release evidence](github-sync.md).
 
 ## Outcome
 
@@ -18,7 +16,7 @@ Example: link WUFF-15 to a selected repository issue. Closing the issue marks th
 
 ## Entry gate: finish the visual release check
 
-The shared design, palettes, DM Sans and dropdown/spacing fixes are pushed and passed CI. The production alias is Ready in Frankfurt; fresh authenticated production interaction is still a separate gate. Check a signed-in list and task, list palette changes, view Apply/reload, notes italics and dropdown spacing. Use synthetic data and remove it afterward. Exercise a named MCP interactive host when the connection is available. Physical iPhone/Android checks remain a distinct follow-up before native implementation; browser viewport checks do not substitute for them.
+The production design gate passed: signed-in list/task, all seven palette saves with Slate restored, Detailed/Compact save/reload with Compact restored, rendered italic notes and the corrected view controls. Named MCP interactive-host and physical iPhone/Android validation remain separate; the local official SDK host was exercised for GitHub controls.
 
 ## Delivery slices
 
@@ -31,9 +29,9 @@ The shared design, palettes, DM Sans and dropdown/spacing fixes are pushed and p
 
 Each slice must leave a coherent, reviewable state. Connection-only or link-only delivery must not be described as completed two-way synchronization. Keep the selected design language for setup buttons, sync tags, errors and retry actions.
 
-## Decisions to settle during 3A design
+## Original 3A design questions (resolved in implementation)
 
-These are implementation decisions still to resolve, not reasons to start building unrelated features:
+The selected policies are documented in [GitHub sync](github-sync.md); the original design prompts are retained below for context:
 
 - **Installation proof and owner binding:** define the verified GitHub identity/callback flow and who can connect, unlink and retry. Recommended starting policy: owners bind repositories to their Work lists; task editors can operate only within explicitly granted bindings. An installation ID or URL alone is not proof of ownership.
 - **Audience boundary:** linking a private issue to a shared list exposes supported issue content to that list's members. Define explicit owner consent and what happens on member changes, repository removal and revoked GitHub access. Do not fetch private data before the current Wuff and installation checks pass.
@@ -51,9 +49,9 @@ Assignee sync requires a verified identity mapping to currently eligible list pa
 - Unlink/revocation stops future reads/writes. Define the safe handling of already copied content and pending operations explicitly; avoid silent deletion of Wuff tasks or GitHub issues.
 - First scope is explicit issue linking, not repository-wide import. No repository creation, code writes, agent execution, merge, deployment automation, recurrence or notifications are added by this milestone.
 
-## First implementation handoff
+## Handoff
 
-Start with 3A ownership/auth design and 3B contract/schema sketch, including migration and failure-state examples. Confirm the app registration owner, disposable test repository and required GitHub permissions using the actual endpoints before registering/installing. Implement against the existing isolated development branch; do not create a replacement Neon project. Add focused ownership/revocation tests before connecting real data. No product database migration is required merely to approve this plan.
+Preserve the existing installed App, additive migration and owner/audience boundaries. Do not rerun registration or migrations on a new chat without inspecting current state. Reconnect external MCP clients with explicit `github:manage` consent to use the eleven new tools. Next work is Stage 4 planning; agent execution is outside this release.
 
 ## Research checked October 17
 

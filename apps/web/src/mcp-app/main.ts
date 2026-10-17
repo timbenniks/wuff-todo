@@ -23,6 +23,7 @@ import { taskImageLimit, taskImagePath, listColors } from "@wuff/contracts";
 import { applyListTheme } from "../lib/list-theme";
 import { listPalette } from "../lib/list-colors";
 const app = new App({ name: "Wuff Todo", version: "0.2.0" }, {});
+const githubExpanded = new Set<string>();
 let current: TodoList | undefined,
   webOrigin = "https://wuff-todo.vercel.app",
   viewerId = "",
@@ -1410,6 +1411,7 @@ function show(value: unknown) {
     subtaskExpanded.clear();
     workDrafts.clear();
     taskExpanded.clear();
+    githubExpanded.clear();
   }
   if (data.viewerId) viewerId = data.viewerId;
   if (data.webOrigin) webOrigin = data.webOrigin;
@@ -1727,7 +1729,10 @@ function githubDetails(task: Task) {
   const details = element("details"),
     summary = element("summary", "GitHub issue"),
     body = element("div");
+  body.className = "github-panel";
   details.append(summary, body);
+  details.open = githubExpanded.has(task.id);
+  let polls = 0;
   let pending: { name: string; args: Record<string, unknown> } | null = null;
   async function load() {
     try {
@@ -1735,6 +1740,10 @@ function githubDetails(task: Task) {
         github: { link: any };
       };
       const link = data.github.link;
+      if (link && ["pending", "creating"].includes(link.state) && polls++ < 12)
+        setTimeout(() => {
+          if (details.isConnected && details.open) void load();
+        }, 3000);
       body.replaceChildren();
       const setup = element("a", "Manage repository connection");
       setup.href = `${webOrigin}/github?listId=${current!.id}`;
@@ -1767,8 +1776,7 @@ function githubDetails(task: Task) {
           const result = (await request("get_list", {
             listId: current!.id,
           })) as { list: TodoList };
-          current = result.list;
-          await load();
+          show(result);
           status.textContent = "GitHub operation saved.";
         } catch (e) {
           status.textContent = (e as Error).message;
@@ -1880,7 +1888,10 @@ function githubDetails(task: Task) {
     }
   }
   details.ontoggle = () => {
-    if (details.open) void load();
+    if (details.open) {
+      githubExpanded.add(task.id);
+      void load();
+    } else githubExpanded.delete(task.id);
   };
   return details;
 }

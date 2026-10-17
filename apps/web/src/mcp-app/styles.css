@@ -291,3 +291,28 @@ summary {
     margin-left: 0;
   }
 }
+
+.github-panel {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-top: 0.75rem;
+}
+.github-panel > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.github-panel a {
+  overflow-wrap: anywhere;
+}
+.github-panel pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 12rem;
+  overflow: auto;
+}
+.github-panel label {
+  display: grid;
+  gap: 0.5rem;
+}

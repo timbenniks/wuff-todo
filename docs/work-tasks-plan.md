@@ -26,9 +26,9 @@ Persist per-account/per-list filters (section, status, assignee, priority, date)
 
 Keep subtasks attached to their parent; define filter matches on children and expose why a parent appears. Missing dates sort last, ties are deterministic. Per-section sort overrides apply only when grouping by section. Disable task dragging under computed sort; filtered manual reordering must preserve hidden positions. Archived/completed visibility stays explicit. Search includes key/title. Add optional planned dates only after distinguishing planned work from existing due dates; do not reinterpret old dates. Tags, recurrence, dependencies, boards and cross-list views remain separate follow-ups.
 
-## Stage 3 — GitHub App and real synchronization (next planned feature)
+## Stage 3 — GitHub App and real synchronization (implemented)
 
-The [delivery plan](github-sync-plan.md) breaks this confirmed scope into reviewable slices and explicitly identifies decisions still needed before implementation. The design/theme/typography release is delivered separately; agent execution remains Stage 4.
+The [delivery plan](github-sync-plan.md) records the delivery slices; [implementation and verification](github-sync.md) record the final decisions and evidence. The design/theme/typography release is delivered separately; agent execution remains Stage 4.
 
 1. Register a GitHub App and install on a disposable repository before production rollout. Bind installation/repository access to an authorized Wuff owner. Start with metadata read, issues read/write, pull requests read; request additional permissions only when a concrete feature needs them. Keep app keys, webhook secret and short-lived installation tokens server-only. Revocation/uninstallation stops synchronization and clears access.
 2. Explicitly link an existing issue or create one from a Wuff task; no automatic import of all repository issues. One primary issue per task; additional PRs/issues remain references. Record provider IDs, repository IDs and node IDs rather than relying on mutable URLs.
@@ -46,7 +46,7 @@ Build a provider-neutral task execution contract: task/version, authorized repos
 
 ## Delivery state
 
-Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stages 3–4 remain planned. Native implementation remains deferred until the shared model and selected work features are stable.
+Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stage 3 GitHub synchronization is implemented and released within its documented scope; Stage 4 remains planned. Native implementation remains deferred until the shared model and selected work features are stable.
 
 ## Stage 1 development verification
 
@@ -68,4 +68,4 @@ The existing signed-in production browser created a disposable private list, cha
 
 A separate authorized domain read verified exact mode, key, status, priority, reference and null private-list assignment. The disposable list was then deleted and its task confirmed inaccessible. Production returned to 2 lists, 13 tasks and 1 membership; no real task or membership was edited. Development fixture deletion was independently confirmed by a 404 task lookup, and the temporary local server was stopped. Browser tabs were closed and viewport overrides reset.
 
-Anonymous task/list API and MCP checks returned 401; task links redirect through sign-in with the task return path. Authenticated production MCP calls, a named-host interactive UI and second-human production assignment were not repeated in this release; the authenticated API/MCP, shared-assignment and SDK-host evidence above is from isolated development. At that Stage 1 release, personal views were still upcoming; Stage 2 is now implemented and released. GitHub App synchronization, planned dates and cloud-agent execution remain planned follow-ups.
+Anonymous task/list API and MCP checks returned 401; task links redirect through sign-in with the task return path. Authenticated production MCP calls, a named-host interactive UI and second-human production assignment were not repeated in this release; the authenticated API/MCP, shared-assignment and SDK-host evidence above is from isolated development. At that Stage 1 release, personal views were still upcoming; Stage 2 is now implemented and released. That historical release predates Stage 3; current GitHub release evidence is in [GitHub sync](github-sync.md). Planned dates and cloud-agent execution remain follow-ups.
