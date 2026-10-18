@@ -39,6 +39,10 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
+If local Webpack hydration reports an invalid lazy element alongside missing React `forwardRef`/`createContext` exports after dependency or build changes, stop Next.js and clear the generated `apps/web/.next` directory before restarting. Clearing only `.next/dev` did not clear the October 18 reproduction; a fresh full output directory restored hydrated sign-in and client navigation to `/set-password`. This affects generated build/cache output only, not `.env.local` or application data. Do not change React versions or component exports solely on the basis of that symptom.
+
+October 18 live incident: the user reported the invalid-lazy-element error on Lists and confirmed a hard reload resolved it. Both an existing production session and a fresh production page successfully opened Work, Notes and task details/Back without captured production errors. Stale loaded assets are a plausible explanation; the exact live cause was not captured, and the separately reproduced local cache issue does not establish production causation. No application-code change or redeployment was needed for this incident.
+
 Integration tests require the local application on port 3000, `.vercel/dev-users.json`, and development Realtime configuration. Test files run serially to avoid shared-service auth throttling; explicit concurrency cases still run within tests. Synthetic sign-in setup honors bounded retry delays after HTTP 429. They verify real Neon sessions and database operations using disposable synthetic identities. They must never target production. The loopback-only browser fixture can be started with:
 
 ```sh
