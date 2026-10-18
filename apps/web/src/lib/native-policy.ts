@@ -5,6 +5,7 @@ export {
   nativeClientId,
   nativeRedirectUri,
   nativeScopes,
+  nativeAllowedScopes,
 } from "@wuff/contracts";
 
 export function validResourceClient(

@@ -296,6 +296,7 @@ export const githubBindings = pgTable("wuff_github_bindings", {
   installationId: text("installation_id").notNull(),
   repositoryId: text("repository_id").notNull(),
   repository: text("repository").notNull(),
+  autoCreateIssues: boolean("auto_create_issues").notNull().default(false),
   active: boolean("active").notNull().default(true),
   createdAt: time("created_at"),
 });

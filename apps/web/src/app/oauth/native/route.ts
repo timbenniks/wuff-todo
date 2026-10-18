@@ -4,6 +4,7 @@ import {
   nativeClientId,
   nativeRedirectUri,
   nativeScopes,
+  nativeAllowedScopes,
 } from "@/lib/native-policy";
 import { failure, privateJson } from "@/lib/http";
 
@@ -23,6 +24,9 @@ export async function GET() {
       redirectUri: nativeRedirectUri,
       resource: nativeResource(),
       scopes: nativeScopes,
+      optionalScopes: nativeAllowedScopes.filter(
+        (scope) => !(nativeScopes as readonly string[]).includes(scope),
+      ),
       issuer: appOrigin(),
     });
   } catch (error) {

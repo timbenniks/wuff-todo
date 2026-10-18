@@ -1,0 +1,1 @@
+ALTER TABLE "wuff_github_bindings" ADD COLUMN "auto_create_issues" boolean DEFAULT false NOT NULL;

@@ -1,6 +1,14 @@
 # Implementation verification
 
-Updated: October 17, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 18, 2026. Older sections retain their milestone-specific evidence and test counts.
+
+## Pre-mobile hardening — October 18, 2026
+
+See [the checkpoint](pre-mobile-checkpoint.md) for the five selected deliverables, exact test/run boundaries, real Tim/Joreel reports and MCP confirmation, optional native GitHub consent, phone UI measurements and agreed native notes/images release requirements. The current local release checks include 49 passing unit tests, TypeScript, web/MCP builds, native exports/bundle scans and all 24 distinct integration cases across an initial run and the five-case auth rerun. Source/deployment and physical-phone evidence are recorded there.
+
+## Automatic GitHub issue creation — October 18, 2026
+
+[Feature evidence](github-sync.md#automatic-issue-creation--october-18-2026) records the owner opt-in, transactional task/link/job, existing two-way notes/description and completion contract, migration and release boundaries. Workspace/root TypeScript checks, 48 unit tests and optimized web/MCP builds passed. The expanded provider-mocked GitHub integration passed against the existing isolated development database, including simultaneous duplicate requests and lost-response recovery. Additive migration `0010_motionless_blink.sql` was applied to development then production, preserving exact existing list/task/membership hashes (2/1/1). The user selected the existing test repository for Tim’s work and automatic creation is enabled there. The production smoke uncovered worker contention/pooling lock handling; a transaction-scoped lock and lease-retry correction passed the expanded isolated integration and final TypeScript/build checks. See the feature document for final deployment/live evidence.
 
 ## Native mobile development — October 17, 2026
 

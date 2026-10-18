@@ -24,6 +24,9 @@ import {
   listPreferences,
   listViews,
   attachments,
+  githubBindings,
+  githubLinks,
+  githubJobs,
 } from "@wuff/db";
 import {
   defaultListView,
@@ -63,6 +66,7 @@ import {
 } from "@wuff/contracts";
 
 import { taskImageReferences } from "./task-images";
+import { githubSafeFields } from "./github-policy";
 import {
   normalizeTaskImage,
   storeTaskImage,
@@ -154,6 +158,22 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
     .select()
     .from(listViews)
     .where(and(eq(listViews.userId, actor.id), eq(listViews.listId, listId)));
+  const [binding] = await tx
+    .select({
+      repository: githubBindings.repository,
+      active: githubBindings.active,
+      autoCreateIssues: githubBindings.autoCreateIssues,
+    })
+    .from(githubBindings)
+    .where(eq(githubBindings.listId, listId));
+  const links = await tx
+    .select({
+      taskId: githubLinks.taskId,
+      issueNumber: githubLinks.issueNumber,
+      state: githubLinks.state,
+    })
+    .from(githubLinks)
+    .where(eq(githubLinks.listId, listId));
   const snapshot = {
     personalView: {
       version: personalView?.version ?? 0,
@@ -162,6 +182,7 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
         : defaultListView(),
     },
     ...list,
+    github: binding ?? null,
     assignees,
     sections: await tx
       .select({
@@ -200,6 +221,20 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
     tasks: snapshot.tasks.map(
       ({ number, createdAt, updatedAt, completedAt, ...task }) => ({
         ...task,
+        github: (() => {
+          const link = links.find((link) => link.taskId === task.id);
+          return link && binding
+            ? {
+                issueNumber: link.issueNumber,
+                state: link.state,
+                active:
+                  binding.active && !list.archived && list.mode === "work",
+                url: link.issueNumber
+                  ? `https://github.com/${binding.repository}/issues/${link.issueNumber}`
+                  : null,
+              }
+            : null;
+        })(),
         key: `WUFF-${number}`,
         path: taskPath(task.id),
         createdAt: createdAt.toISOString(),
@@ -766,27 +801,67 @@ export async function createTask(actor: Actor, data: unknown) {
           "Create the task before adding images.",
           400,
         );
-      await tx.insert(tasks).values({
-        listId: input.listId,
-        parentTaskId: input.parentTaskId ?? null,
-        title: input.title,
-        status: input.status ?? "todo",
-        completed: input.status === "done",
-        completedAt: input.status === "done" ? new Date() : null,
-        priority: input.priority ?? "none",
-        assigneeId: input.assigneeId ?? null,
-        references: input.references ?? [],
-        dueDate: input.dueDate ?? null,
-        sectionId: input.sectionId ?? null,
-        content: input.content ?? "",
-        position:
-          Math.max(
-            -1,
-            ...existing
-              .filter((t) => t.parentTaskId === (input.parentTaskId ?? null))
-              .map((t) => t.position),
-          ) + 1,
-      });
+      const [binding] =
+        !input.parentTaskId && list.mode === "work"
+          ? await tx
+              .select()
+              .from(githubBindings)
+              .where(
+                and(
+                  eq(githubBindings.listId, input.listId),
+                  eq(githubBindings.active, true),
+                  eq(githubBindings.autoCreateIssues, true),
+                ),
+              )
+          : [];
+      if (binding) {
+        if (!actor.scopes.includes("github:manage"))
+          fail(
+            "github_permission_required",
+            "This list automatically creates GitHub issues. Reconnect with GitHub permission before adding a task.",
+            403,
+          );
+        githubSafeFields({
+          title: input.title,
+          body: input.content ?? "",
+          closed: input.status === "done",
+        });
+      }
+      const [created] = await tx
+        .insert(tasks)
+        .values({
+          listId: input.listId,
+          parentTaskId: input.parentTaskId ?? null,
+          title: input.title,
+          status: input.status ?? "todo",
+          completed: input.status === "done",
+          completedAt: input.status === "done" ? new Date() : null,
+          priority: input.priority ?? "none",
+          assigneeId: input.assigneeId ?? null,
+          references: input.references ?? [],
+          dueDate: input.dueDate ?? null,
+          sectionId: input.sectionId ?? null,
+          content: input.content ?? "",
+          position:
+            Math.max(
+              -1,
+              ...existing
+                .filter((t) => t.parentTaskId === (input.parentTaskId ?? null))
+                .map((t) => t.position),
+            ) + 1,
+        })
+        .returning({ id: tasks.id });
+      if (binding) {
+        await tx.insert(githubLinks).values({
+          taskId: created.id,
+          listId: input.listId,
+          repositoryId: binding.repositoryId,
+          operationId: input.operationId,
+        });
+        await tx
+          .insert(githubJobs)
+          .values({ id: `task:${created.id}`, taskId: created.id });
+      }
       return { id: input.listId };
     },
   );

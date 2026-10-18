@@ -385,7 +385,7 @@ export async function githubConnections(actor: Actor) {
     [actor.id],
   );
   const { rows: bindings } = await db().query(
-    'select b.list_id as "listId",b.repository,b.active from wuff_github_bindings b join wuff_lists l on l.id=b.list_id where l.owner_id=$1',
+    'select b.list_id as "listId",b.repository,b.active,b.auto_create_issues as "autoCreateIssues" from wuff_github_bindings b join wuff_lists l on l.id=b.list_id where l.owner_id=$1',
     [actor.id],
   );
   return {
@@ -462,13 +462,14 @@ export async function githubBind(actor: Actor, data: unknown) {
     )
       fail("github_linked", "Unlink tasks before changing the repository.");
     await c.query(
-      "insert into wuff_github_bindings(list_id,owner_id,installation_id,repository_id,repository) values($1,$2,$3,$4,$5) on conflict(list_id) do update set owner_id=excluded.owner_id,installation_id=excluded.installation_id,repository_id=excluded.repository_id,repository=excluded.repository,active=true",
+      "insert into wuff_github_bindings(list_id,owner_id,installation_id,repository_id,repository,auto_create_issues) values($1,$2,$3,$4,$5,coalesce($6,false)) on conflict(list_id) do update set owner_id=excluded.owner_id,installation_id=excluded.installation_id,repository_id=excluded.repository_id,repository=excluded.repository,auto_create_issues=coalesce($6,wuff_github_bindings.auto_create_issues),active=true",
       [
         input.listId,
         actor.id,
         String(repo.installationId),
         String(repo.repositoryId),
         repo.name,
+        input.autoCreateIssues ?? null,
       ],
     );
     await c.query("update wuff_lists set version=version+1 where id=$1", [
@@ -483,7 +484,7 @@ export async function githubList(actor: Actor, listId: string) {
     const {
       rows: [binding],
     } = await c.query(
-      "select repository,active from wuff_github_bindings where list_id=$1",
+      'select repository,active,auto_create_issues as "autoCreateIssues" from wuff_github_bindings where list_id=$1',
       [listId],
     );
     return { binding: binding ?? null };
@@ -821,18 +822,30 @@ export async function processGithubJobs(limit = 8) {
     const {
       rows: [job],
     } = await db().query(
-      "update wuff_github_jobs set lease_until=now()+interval '90 seconds' where id=(select id from wuff_github_jobs where available_at<=now() and (lease_until is null or lease_until<now()) order by available_at for update skip locked limit 1) returning *",
+      "update wuff_github_jobs set lease_until=now()+interval '90 seconds' where id=(select id from wuff_github_jobs where available_at<=now() and (lease_until is null or lease_until<now()) order by available_at for update skip locked limit 1) returning *,lease_until::text as lease_identity",
     );
     if (!job) break;
     const c = await db().connect();
     try {
+      // Pin the pooled backend until the transaction-scoped lock is released.
+      await c.query("begin");
       const {
         rows: [lock],
       } = await c.query(
-        "select pg_try_advisory_lock(hashtextextended($1,0)) as locked",
+        "select pg_try_advisory_xact_lock(hashtextextended($1,0)) as locked",
         [`github:${job.task_id}`],
       );
-      if (!lock.locked) continue;
+      if (!lock.locked) {
+        // Another worker or mutation still owns this task. Do not strand its
+        // next generation behind a lease for work we never started.
+        await db().query(
+          "update wuff_github_jobs set lease_until=null where id=$1 and lease_until=$2",
+          [job.id, job.lease_identity],
+        );
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        n--;
+        continue;
+      }
       try {
         await syncTask(job.task_id);
         await db().query(
@@ -854,13 +867,13 @@ export async function processGithubJobs(limit = 8) {
           "update wuff_github_jobs set attempts=attempts+1,available_at=case when attempts>=7 then 'infinity'::timestamptz else now()+ make_interval(secs=>least(86400,30*power(2,least(attempts,11)))) end,lease_until=null where id=$1",
           [job.id],
         );
-      } finally {
-        await c.query("select pg_advisory_unlock(hashtextextended($1,0))", [
-          `github:${job.task_id}`,
-        ]);
       }
     } finally {
-      c.release();
+      try {
+        await c.query("rollback");
+      } finally {
+        c.release();
+      }
     }
   }
   return { processed };

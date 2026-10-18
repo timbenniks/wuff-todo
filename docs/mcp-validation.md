@@ -4,6 +4,14 @@ October 15, 2026
 
 Endpoint: `https://wuff-todo.vercel.app/api/mcp`.
 
+## Current connection and real-account checks — October 18, 2026
+
+The saved refresh grant initially returned `invalid_grant`. Interactive DCR login restored the existing Wuff connection; the installed Codex app-server runtime then discovered all 41 tools, retrieved the MCP App HTML, read accessible lists, checked owner sharing/inbox tools and rejected a self-invitation without mutation, replayed a create request, created/completed/read a synthetic task and rejected a stale write. Its disposable list was removed. This is actual Codex runtime evidence; it does not certify ChatGPT or a second human’s MCP client.
+
+The current chat’s Wuff MCP tools also created the disposable real Tim/Joreel verification list. Joreel’s independent website actions were reported by the user; subsequent MCP reads confirmed accepted membership, saved rename/notes, a Done state and later reopening. The user confirmed removed access hid that test list while Pawvisions remained available; the owner’s explicitly approved fixture deletion was reread as unavailable. See [the pre-mobile checkpoint](pre-mobile-checkpoint.md). Credentials remain managed by Codex and are not copied into source.
+
+The reconnect used the installed CLI’s supported DCR login and discovered/explicit requested scopes, following the [official MCP guidance](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). Tool metadata should be refreshed after the hardening deployment to pick up authorized issue summaries. Named-host interactive rendering remains distinct from successful resource delivery.
+
 ## Catalog history and later sharing checks
 
 The sharing milestone deployed 18 tools: the original 11 below plus `get_list_sharing`, `list_invitations`, `invite_to_list`, `respond_to_invitation`, `cancel_invitation`, `remove_list_member`, and `leave_list`. Authenticated production Codex calls validated sharing reads and rejection of self-invitation without mutation; development tests exercised the two-user sharing lifecycle through both HTTP and MCP. See [verification](verification.md#existing-account-sharing--october-15-2026).

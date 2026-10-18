@@ -17,6 +17,9 @@ import {
   githubTask,
   githubResolve,
   githubRetry,
+  githubList,
+  githubUnbind,
+  githubUnlink,
   githubWebhook,
   processGithubJobs,
 } from "@wuff/domain";
@@ -177,16 +180,63 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
       { code: "forbidden" },
     );
     await assert.rejects(githubTask(b, task.id), { code: "not_found" });
+    await assert.rejects(getList(b, list.id), { code: "not_found" });
+    const pendingSnapshot = await getList(a, list.id);
+    assert.equal(
+      pendingSnapshot.tasks.find((t) => t.id === task.id)!.github?.state,
+      "pending",
+    );
+    assert.equal(
+      pendingSnapshot.github?.repository,
+      "synthetic-owner/sync-test",
+    );
     await processGithubJobs();
     assert.equal(created, 1);
     assert.equal((await githubTask(a, task.id)).link?.state, "synced");
+    const syncedSnapshot = await getList(a, list.id);
+    assert.equal(
+      syncedSnapshot.tasks.find((t) => t.id === task.id)!.github?.issueNumber,
+      1,
+    );
+    assert.equal(
+      syncedSnapshot.tasks.find((t) => t.id === task.id)!.github?.state,
+      "synced",
+    );
     list = await getList(a, list.id);
     list = await updateTask(a, {
       ...write(list),
       taskId: task.id,
       title: "Wuff edit",
     });
-    await processGithubJobs();
+    const holding = await database().pool.connect();
+    try {
+      await holding.query("begin");
+      await holding.query(
+        "select pg_advisory_xact_lock(hashtextextended($1,0))",
+        [`github:${task.id}`],
+      );
+      const processing = processGithubJobs();
+      try {
+        // Wait until the worker has claimed the job, then let it encounter
+        // the held task lock. Its lease must be released and retried promptly.
+        for (let n = 0; n < 40; n++) {
+          const {
+            rows: [job],
+          } = await database().pool.query(
+            "select lease_until from wuff_github_jobs where task_id=$1",
+            [task.id],
+          );
+          if (job?.lease_until) break;
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } finally {
+        await holding.query("rollback");
+      }
+      await processing;
+    } finally {
+      holding.release();
+    }
     assert.equal(issues[0].title, "Wuff edit");
     issues[0].body = "GitHub notes";
     issues[0].state = "closed";
@@ -256,6 +306,141 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
     assert.equal(created, 2);
     assert.equal(issues[1].title, "Changed while uncertain");
     assert.equal((await githubTask(a, uncertain.id)).link?.state, "synced");
+    // Owner opt-in affects only future top-level tasks, atomically with creation.
+    list = await getList(a, list.id);
+    await githubBind(a, { ...bind, ...write(list), autoCreateIssues: true });
+    assert.equal((await githubList(a, list.id)).binding.autoCreateIssues, true);
+    assert.equal((await githubTask(a, uncertain.id)).link?.issueNumber, 2);
+    list = await getList(a, list.id);
+    const beforeAutomatic = list.tasks.length;
+    await assert.rejects(
+      createTask(
+        { ...a, scopes: ["lists:read", "tasks:write"] },
+        { ...write(list), title: "Missing GitHub consent" },
+      ),
+      { code: "github_permission_required" },
+    );
+    await assert.rejects(
+      createTask(a, {
+        ...write(list),
+        title: "Unsafe export",
+        content: "<script>private</script>",
+      }),
+      { code: "github_unsupported_content" },
+    );
+    assert.equal((await getList(a, list.id)).tasks.length, beforeAutomatic);
+    const automatic = {
+      ...write(list),
+      title: "Automatic issue",
+      status: "done",
+    };
+    await Promise.all([createTask(a, automatic), createTask(a, automatic)]);
+    list = await getList(a, list.id);
+    const autoTask = list.tasks.find((t) => t.title === "Automatic issue")!;
+    assert.equal(list.tasks.length, beforeAutomatic + 1);
+    assert.equal((await githubTask(a, autoTask.id)).link?.state, "pending");
+    loseCreateResponse = true;
+    await processGithubJobs();
+    assert.equal(
+      (await githubTask(a, autoTask.id)).link?.error,
+      "github_create_uncertain",
+    );
+    list = await getList(a, list.id);
+    await githubRetry(a, { ...write(list), taskId: autoTask.id });
+    await processGithubJobs();
+    assert.equal(created, 3);
+    assert.equal(issues[2].state, "closed");
+    assert.equal((await githubTask(a, autoTask.id)).link?.issueNumber, 3);
+    list = await getList(a, list.id);
+    list = await updateTask(a, {
+      ...write(list),
+      taskId: autoTask.id,
+      status: "in_progress",
+      content: "**Shared description**",
+    });
+    await processGithubJobs();
+    assert.equal(issues[2].state, "open");
+    assert.ok(issues[2].body.includes("**Shared description**"));
+    issues[2].state = "closed";
+    issues[2].body = "Changed description on GitHub";
+    const autoPayload = JSON.stringify({
+      installation: { id: 500 },
+      repository: { id: 600 },
+      issue: { number: 3 },
+    });
+    const autoSignature = `sha256=${createHmac("sha256", process.env.GITHUB_WEBHOOK_SECRET!).update(autoPayload).digest("hex")}`;
+    await githubWebhook(
+      autoPayload,
+      autoSignature,
+      crypto.randomUUID(),
+      "issues",
+    );
+    await processGithubJobs();
+    list = await getList(a, list.id);
+    assert.equal(list.tasks.find((t) => t.id === autoTask.id)!.status, "done");
+    assert.equal(
+      list.tasks.find((t) => t.id === autoTask.id)!.content,
+      "Changed description on GitHub",
+    );
+    issues[2].state = "open";
+    await githubWebhook(
+      autoPayload,
+      autoSignature,
+      crypto.randomUUID(),
+      "issues",
+    );
+    await processGithubJobs();
+    list = await getList(a, list.id);
+    assert.equal(list.tasks.find((t) => t.id === autoTask.id)!.status, "todo");
+    list = await createTask(a, {
+      ...write(list),
+      title: "Local subtask",
+      parentTaskId: autoTask.id,
+    });
+    const child = list.tasks.find((t) => t.title === "Local subtask")!;
+    assert.equal((await githubTask(a, child.id)).link, null);
+    // Unlink is persistent; ordinary edits never silently recreate the link.
+    await githubUnlink(a, { ...write(list), taskId: autoTask.id });
+    list = await getList(a, list.id);
+    list = await updateTask(a, {
+      ...write(list),
+      taskId: autoTask.id,
+      title: "Unlinked task",
+    });
+    assert.equal((await githubTask(a, autoTask.id)).link, null);
+    // Older clients omitting the option preserve the owner's selection.
+    await githubBind(a, { ...bind, ...write(list) });
+    assert.equal((await githubList(a, list.id)).binding.autoCreateIssues, true);
+    list = await getList(a, list.id);
+    await githubUnbind(a, write(list));
+    list = await getList(a, list.id);
+    list = await createTask(a, { ...write(list), title: "Stopped automation" });
+    assert.equal(
+      (
+        await githubTask(
+          a,
+          list.tasks.find((t) => t.title === "Stopped automation")!.id,
+        )
+      ).link,
+      null,
+    );
+    await githubBind(a, { ...bind, ...write(list), autoCreateIssues: false });
+    list = await getList(a, list.id);
+    list = await createTask(a, {
+      ...write(list),
+      title: "Manual linking again",
+    });
+    assert.equal(
+      (
+        await githubTask(
+          a,
+          list.tasks.find((t) => t.title === "Manual linking again")!.id,
+        )
+      ).link,
+      null,
+    );
+    await processGithubJobs();
+    assert.equal(created, 3);
     await assert.rejects(
       updateTask(
         { ...a, scopes: ["lists:read", "tasks:write"] },
@@ -277,7 +462,7 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
     await githubRetry(a, { ...write(list), taskId: task.id });
     await processGithubJobs();
     assert.equal((await githubTask(a, task.id)).link?.error, "github_inactive");
-    assert.equal(created, 2);
+    assert.equal(created, 3);
   } finally {
     await deleteList(a, {
       ...write(await getList(a, list.id)),

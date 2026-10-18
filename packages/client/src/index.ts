@@ -8,6 +8,7 @@ export {
   nativeClientId,
   nativeRedirectUri,
   nativeScopes,
+  nativeAllowedScopes,
 } from "@wuff/contracts";
 
 export type NativeTokens = {
@@ -141,7 +142,7 @@ export class NativeClient {
     } catch {
       // Best effort revoke if secure storage cannot retain the new credentials.
       await this.revoke(tokens).catch(() => {});
-      await this.clear();
+      if (generation === this.generation) await this.clear();
       throw new ClientError(
         "Your phone couldn’t securely save sign-in. Please try again.",
       );
@@ -154,7 +155,12 @@ export class NativeClient {
     return tokens;
   }
   async exchange(code: string, verifier: string) {
-    return this.tokenRequest(
+    const previous = this.tokens;
+    // An interactive permission upgrade supersedes in-flight requests/refreshes.
+    // A late basic-grant refresh must not replace the newly consented grant.
+    this.generation++;
+    this.refresh = null;
+    const tokens = await this.tokenRequest(
       {
         grant_type: "authorization_code",
         code,
@@ -163,6 +169,8 @@ export class NativeClient {
       },
       this.generation,
     );
+    if (previous) await this.revoke(previous).catch(() => {});
+    return tokens;
   }
   private async accessToken() {
     if (!this.tokens)
@@ -178,7 +186,7 @@ export class NativeClient {
         },
         generation,
       ).finally(() => {
-        this.refresh = null;
+        if (generation === this.generation) this.refresh = null;
       });
     }
     return (await this.refresh).accessToken;

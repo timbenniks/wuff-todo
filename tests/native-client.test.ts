@@ -92,6 +92,50 @@ test("parallel native reads share one rotating refresh and never use browser coo
   assert.equal(refreshes, 1);
   assert.equal(store.value?.refreshToken, "rotated-refresh");
 });
+test("interactive native consent cannot be overwritten by a late basic-grant refresh", async () => {
+  const store = memory({ ...fresh(), expiresAt: 0 });
+  const refreshResponse = deferred<Response>(),
+    refreshStarted = deferred<void>();
+  const revoked: string[] = [];
+  const client = new NativeClient(origin, store, async (url, init) => {
+    const params = new URLSearchParams(String(init?.body));
+    if (String(url).endsWith("/oauth/revoke")) {
+      revoked.push(params.get("token")!);
+      return new Response(null, { status: 200 });
+    }
+    if (params.get("grant_type") === "refresh_token") {
+      refreshStarted.resolve();
+      return refreshResponse.promise;
+    }
+    if (params.get("grant_type") === "authorization_code")
+      return Response.json({
+        access_token: "consented-access",
+        refresh_token: "consented-refresh",
+        expires_in: 900,
+      });
+    assert.equal(
+      (init!.headers as Record<string, string>).Authorization,
+      "Bearer consented-access",
+    );
+    return Response.json([]);
+  });
+  await client.restore();
+  const lateRead = assert.rejects(client.lists(), /cancelled|changed/i);
+  await refreshStarted.promise;
+  await client.exchange("new-explicit-consent", "synthetic-verifier");
+  refreshResponse.resolve(
+    Response.json({
+      access_token: "late-basic",
+      refresh_token: "late-basic-refresh",
+      expires_in: 900,
+    }),
+  );
+  await lateRead;
+  await client.lists();
+  assert.equal(store.value?.refreshToken, "consented-refresh");
+  assert.ok(revoked.includes("synthetic-refresh"));
+  assert.ok(revoked.includes("late-basic-refresh"));
+});
 test("sign-out discards a response arriving during JSON parsing", async () => {
   const store = memory(),
     payload = deferred<unknown>();

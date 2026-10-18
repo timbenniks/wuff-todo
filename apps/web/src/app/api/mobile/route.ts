@@ -71,7 +71,8 @@ export async function POST(request: Request) {
     }
     const { action, input } = envelope.parse(await jsonInput(request, 131_072));
     let result: unknown;
-    if (action === "session") result = { userId: actor.id };
+    if (action === "session")
+      result = { userId: actor.id, scopes: actor.scopes };
     else if (action === "getList")
       result = await getList(actor, idSchema.parse(input));
     else if (action === "getTask")

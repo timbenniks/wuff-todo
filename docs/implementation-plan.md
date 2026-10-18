@@ -2,11 +2,15 @@
 
 Status: web/MCP and GitHub synchronization released; online-only native mobile development started
 
-Updated: October 17, 2026
+Updated: October 18, 2026
 
-The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent activation/client verification and native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
+The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
+
+- **Pre-mobile hardening (October 18):** visible issue/sync summaries, optional native GitHub consent and phone notes/progress cues are implemented; real Joreel sharing/revocation and Tim recovery were reported and checked within the documented boundaries. Native notes and private images are required for the first mobile release. See [checkpoint and release evidence](pre-mobile-checkpoint.md).
+
+- **GitHub follow-up (October 18):** opt-in automatic linked-issue creation for future top-level Work tasks is implemented; the user selected the existing test repository for Tim’s work and automatic creation is enabled there. The existing two-way title/notes/completion contract also applies. Production migration preserved existing rows. Worker contention and pooled advisory-lock handling were hardened; release evidence is recorded in the feature document. See [automatic issue creation](github-sync.md#automatic-issue-creation--october-18-2026).
 
 - **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).

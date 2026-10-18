@@ -385,3 +385,38 @@ h2 {
   font-size: 14px;
   box-shadow: 0 4px 16px #17202a12;
 }
+
+/* Content cues get their own quiet line; the name keeps the full first row. */
+.task-summary {
+  overflow-wrap: anywhere;
+}
+.task-summary .due-tag {
+  margin: 0;
+}
+.task-summary .task-due-text {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+.task-open-details {
+  display: none;
+}
+@media (width < 40rem) {
+  .task-open-details {
+    display: inline-flex;
+    flex-basis: 100%;
+  }
+  .task-summary {
+    grid-column: 2 / -1;
+    padding-left: 0;
+  }
+  .task-summary button,
+  .task-summary a {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .task-action-panel {
+    overscroll-behavior: contain;
+  }
+}

@@ -5,6 +5,7 @@ import {
 } from "../lib/due-date";
 import {
   defaultListView,
+  githubSyncLabel,
   projectListView,
   statusLabels,
   viewSorts,
@@ -881,6 +882,7 @@ function renderTask(
   const wrapper = element("div"),
     row = element("div");
   wrapper.className = "task-item";
+  wrapper.dataset.taskId = task.id;
   row.className = "task";
   const check = element("input");
   check.type = "checkbox";
@@ -966,6 +968,21 @@ function renderTask(
   taskLink.rel = "noopener noreferrer";
   taskLink.setAttribute("aria-label", `Open ${task.key} task page`);
   wrapper.append(row, taskLink);
+  if (task.github) {
+    const sync = element(
+      "a",
+      `${task.github.issueNumber ? `#${task.github.issueNumber} · ` : ""}${githubSyncLabel(task.github)}`,
+    );
+    sync.className = "task-sync-summary";
+    sync.href = new URL(`${task.path}#github`, webOrigin).href;
+    sync.target = "_blank";
+    sync.rel = "noopener noreferrer";
+    sync.setAttribute(
+      "aria-label",
+      `GitHub sync: ${githubSyncLabel(task.github)}. Open sync controls for ${task.title}`,
+    );
+    wrapper.append(sync);
+  }
   const view = current!.personalView?.view ?? defaultListView();
   if (view.layout === "detailed" || current!.mode === "work") {
     const tag = element("span", statusLabels[task.status]);
@@ -1740,6 +1757,16 @@ function githubDetails(task: Task) {
         github: { link: any };
       };
       const link = data.github.link;
+      const rowSummary = details
+        .closest(".task-item")
+        ?.querySelector<HTMLAnchorElement>(".task-sync-summary");
+      if (rowSummary && link) {
+        rowSummary.textContent = `${link.issueNumber ? `#${link.issueNumber} · ` : ""}${githubSyncLabel(link)}`;
+        rowSummary.setAttribute(
+          "aria-label",
+          `GitHub sync: ${githubSyncLabel(link)}. Open sync controls for ${task.title}`,
+        );
+      }
       if (link && ["pending", "creating"].includes(link.state) && polls++ < 12)
         setTimeout(() => {
           if (details.isConnected && details.open) void load();

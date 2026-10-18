@@ -2,6 +2,8 @@
 
 Date: October 17, 2026
 
+October 18 follow-up: [the pre-mobile checkpoint](pre-mobile-checkpoint.md) records visible notes/progress/sync cues, full-title navigation, new phone target measurements and the required physical-phone checks. Its confirmed online-only/native scope supersedes the earlier planning wording below.
+
 ## Scope and result
 
 Reviewed the current website before React Native/Expo planning. The starting checkout was clean. This check changes documentation only; it does not redesign the agreed single-line rows, remove direct Delete/drag controls, implement native apps, or change the online/offline boundary.

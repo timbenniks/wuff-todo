@@ -30,6 +30,7 @@ import { randomUUID } from "expo-crypto";
 import { ClientError, PendingMutation } from "@wuff/client";
 import {
   dueDateSchema,
+  githubSyncLabel,
   listColors,
   projectListView,
   defaultListView,
@@ -217,6 +218,7 @@ function Wuff() {
     epoch = useRef(0),
     working = useRef(false),
     refreshingRef = useRef(false);
+  const [githubEnabled, setGithubEnabled] = useState(false);
   const mounted = useRef(true);
   const refreshAgain = useRef(false);
   const afterRetry = useRef<(() => void) | undefined>(undefined);
@@ -230,6 +232,7 @@ function Wuff() {
     mutation.clear();
     afterRetry.current = undefined;
     setSignedIn(false);
+    setGithubEnabled(false);
     setUserId("");
     setLists([]);
     select(null);
@@ -295,9 +298,13 @@ function Wuff() {
     void (async () => {
       try {
         if (await client.restore()) {
-          const session = await client.call<{ userId: string }>("session");
+          const session = await client.call<{
+            userId: string;
+            scopes?: string[];
+          }>("session");
           if (!mounted.current) return;
           setUserId(session.userId);
+          setGithubEnabled(session.scopes?.includes("github:manage") ?? false);
           setSignedIn(true);
           await refresh();
         }
@@ -437,16 +444,23 @@ function Wuff() {
       setBusy(false);
     }
   }
-  async function connect() {
+  async function connect(withGithub = false) {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      if (await signIn()) {
-        const session = await client.call<{ userId: string }>("session");
+      if (await signIn(withGithub)) {
+        // The browser may authorize a different admitted account. Drop the old
+        // account's in-memory list/drafts before reading the new session.
+        clear();
+        const session = await client.call<{
+          userId: string;
+          scopes?: string[];
+        }>("session");
         setUserId(session.userId);
+        setGithubEnabled(session.scopes?.includes("github:manage") ?? false);
         setSignedIn(true);
-        await refresh();
+        await refresh(true);
       }
     } catch (e) {
       setError(message(e));
@@ -458,6 +472,14 @@ function Wuff() {
     const children = list!.tasks.filter((t) => t.parentTaskId === task.id);
     return (
       <View key={task.id} style={child ? s.child : s.taskBlock}>
+        {task.github && (
+          <Label muted>
+            {task.github.issueNumber
+              ? `GitHub #${task.github.issueNumber} · `
+              : "GitHub · "}
+            {githubSyncLabel(task.github)}
+          </Label>
+        )}
         <View style={s.row}>
           <Pressable
             accessibilityRole="checkbox"
@@ -642,6 +664,13 @@ function Wuff() {
                       <Button title="Back" disabled={locked} onPress={goBack} />
                     )}
                     <View style={s.grow} />
+                    {!githubEnabled && (
+                      <Button
+                        title="Enable GitHub sync"
+                        disabled={locked}
+                        onPress={() => void connect(true)}
+                      />
+                    )}
                     <Button
                       title="Sign out"
                       disabled={busy}
@@ -664,6 +693,12 @@ function Wuff() {
                       }}
                     />
                   </View>
+                  {!githubEnabled && (
+                    <Label muted>
+                      GitHub-linked Work tasks need extra permission. Enable
+                      GitHub sync to review and approve it in your browser.
+                    </Label>
+                  )}
                   {!list ? (
                     <View style={s.stack}>
                       <Text style={[s.heading, { color: theme.foreground }]}>

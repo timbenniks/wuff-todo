@@ -26,7 +26,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { type Task, type TodoList } from "@wuff/contracts";
+import { githubSyncLabel, type Task, type TodoList } from "@wuff/contracts";
 import { StatusTag } from "@/components/ui/status-tag";
 import { Button } from "@/components/ui/button";
 import { InlineName } from "./inline-name";
@@ -163,7 +163,6 @@ export function TaskRow({
         className="task-name"
         compact
         focusFallback={moreTrigger}
-        afterName={<DueDateBadge task={task} today={today} />}
         value={task.title}
         readHref={task.path}
         label="Task name"
@@ -248,6 +247,12 @@ export function TaskRow({
               }
             >
               <p className="task-menu-title">{task.title}</p>
+              <a
+                href={task.path}
+                className="task-open-details text-sm text-primary underline min-h-11 inline-flex items-center px-3"
+              >
+                Open task details
+              </a>
               {!list.archived && (
                 <Button
                   ref={trigger}
@@ -421,6 +426,59 @@ export function TaskRow({
           </div>
         )}
       />
+      {(task.dueDate || task.content || children.length > 0 || task.github) && (
+        <div className="task-summary col-span-full basis-full min-w-0 flex flex-wrap items-center gap-x-3 gap-y-1 pl-8 text-xs text-muted-foreground">
+          <DueDateBadge task={task} today={today} />
+          {task.content && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 min-h-8 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+              aria-label={`Read notes for ${task.title}`}
+              onClick={() => {
+                setNotesOpen(true);
+                setMoreOpen(false);
+              }}
+            >
+              <FileText size={13} aria-hidden="true" /> Notes
+            </button>
+          )}
+          {children.length > 0 && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 min-h-8 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+              aria-expanded={subtasksOpen}
+              aria-controls={`subtasks-${task.id}`}
+              aria-label={`Subtasks for ${task.title}: ${children.filter((t) => t.completed).length} of ${children.length} done`}
+              onClick={() => setExpanded(!subtasksOpen)}
+            >
+              <ListTree size={13} aria-hidden="true" />
+              {children.filter((t) => t.completed).length}/{children.length}
+            </button>
+          )}
+          {task.github && (
+            <span className="inline-flex flex-wrap items-center gap-2">
+              {task.github.url && (
+                <a
+                  href={task.github.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-h-8 inline-flex items-center underline text-primary"
+                  aria-label={`GitHub issue ${task.github.issueNumber} for ${task.title}`}
+                >
+                  #{task.github.issueNumber}
+                </a>
+              )}
+              <a
+                href={`${task.path}#github`}
+                className={`min-h-8 inline-flex items-center underline ${["Needs attention", "Disconnected"].includes(githubSyncLabel(task.github)) ? "text-destructive" : ""}`}
+                aria-label={`GitHub sync: ${githubSyncLabel(task.github)}. Open sync controls for ${task.title}`}
+              >
+                GitHub · {githubSyncLabel(task.github)}
+              </a>
+            </span>
+          )}
+        </div>
+      )}
       {detailed && (
         <p className="col-span-full min-w-0 basis-full text-xs text-muted-foreground pl-8 pb-2 break-words">
           {task.key} · <StatusTag status={task.status} /> ·{" "}

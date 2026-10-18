@@ -142,6 +142,10 @@ No subscriptions, billing, enterprise workspaces, or built-in AI model usage are
 
 The first end-to-end scenario is a shared grocery list: one user creates and shares it, the other adds an item, the owner reorders tasks on the web, and an authorized AI client completes an item. Both users see the same result; unrelated private lists remain private.
 
+## First native release gate
+
+October 18: native notes and private image viewing/upload/removal are required alongside the existing list/task/sharing foundation. GitHub writes use optional explicit browser consent; basic sign-in stays unchanged. Installed-device and physical-phone checks remain separate from protocol/bundle checks. See [pre-mobile checkpoint](pre-mobile-checkpoint.md) for accepted scope and delivery evidence.
+
 ## Personal list views
 
 Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization is released; online-only native apps are now in development.

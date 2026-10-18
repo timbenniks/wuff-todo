@@ -246,6 +246,7 @@ export type Task = {
   position: number;
   sectionId: string | null;
   images?: TaskImage[];
+  github?: GithubTaskSummary | null;
 };
 export type ListSection = { id: string; title: string; position: number };
 export type ListOrder = { version: number; listIds: string[] };
@@ -262,6 +263,11 @@ export type TodoList = {
   archived: boolean;
   sections: ListSection[];
   tasks: Task[];
+  github?: {
+    repository: string;
+    active: boolean;
+    autoCreateIssues: boolean;
+  } | null;
 };
 export type TaskDetail = { list: TodoList; task: Task };
 export type ListSummary = Pick<
@@ -463,6 +469,7 @@ export const githubBindingSchema = listMutationSchema.extend({
   installationId: z.number().int().positive().safe(),
   repositoryId: z.number().int().positive().safe(),
   shareWithList: z.literal(true),
+  autoCreateIssues: z.boolean().optional(),
 });
 export const githubTaskSchema = listMutationSchema.extend({ taskId: idSchema });
 export const githubLinkSchema = githubTaskSchema.extend({
@@ -482,6 +489,17 @@ export type GithubTaskState = {
   error: string | null;
   conflict: { wuff: GithubSyncFields; github: GithubSyncFields } | null;
 };
+export type GithubTaskSummary = Pick<
+  GithubTaskState,
+  "issueNumber" | "url" | "state"
+> & { active: boolean };
+export function githubSyncLabel(link: GithubTaskSummary) {
+  if (!link.active) return "Disconnected";
+  if (link.state === "synced") return "Synced";
+  if (link.state === "conflict" || link.state === "failed")
+    return "Needs attention";
+  return "Pending";
+}
 
 // First-party native OAuth configuration, shared by client and authorization server.
 export const nativeClientId = "wuff-native-v1";
@@ -491,3 +509,5 @@ export const nativeScopes = [
   "tasks:write",
   "lists:manage",
 ] as const;
+// Optional privileges require a new interactive authorization, never refresh.
+export const nativeAllowedScopes = [...nativeScopes, "github:manage"] as const;

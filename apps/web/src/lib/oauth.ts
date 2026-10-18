@@ -13,7 +13,7 @@ import { appOrigin, mcpResource } from "./config";
 import {
   nativeClientId,
   nativeRedirectUri,
-  nativeScopes,
+  nativeAllowedScopes,
   validResourceClient,
 } from "./native-policy";
 
@@ -57,7 +57,7 @@ export function oauthServer(resource = mcpResource()) {
       if (!(await admitted(user.id))) return false;
       return requested?.length &&
         requested.every((s) =>
-          (resource === mcpResource() ? scopes : nativeScopes).some(
+          (resource === mcpResource() ? scopes : nativeAllowedScopes).some(
             (allowed) => allowed === s,
           ),
         ) &&
@@ -253,7 +253,7 @@ export async function authorizationDetails(params: URLSearchParams) {
     !requested.includes("lists:read") ||
     requested.some(
       (s) =>
-        !(client.id === nativeClientId ? nativeScopes : scopes).some(
+        !(client.id === nativeClientId ? nativeAllowedScopes : scopes).some(
           (allowed) => allowed === s,
         ),
     )

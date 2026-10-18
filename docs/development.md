@@ -172,9 +172,15 @@ Apply additive migration `0008_thin_pyro.sql` using the existing direct-connecti
 
 ## GitHub synchronization operation
 
+October 18 local addition: `0010_motionless_blink.sql` adds the owner-selected `autoCreateIssues` binding setting, default false. It was applied to isolated development, then production with existing row fingerprints preserved. Apply it before deploying the new readers in another environment. `/github` and `bind_github_repository` configure automatic issue creation for future top-level tasks. New task creation in such a list requires explicit `github:manage`; older clients need renewed consent. Existing tasks/subtasks are not backfilled. See [automatic issue creation](github-sync.md#automatic-issue-creation--october-18-2026) for checks and release limits.
+
 See [GitHub sync](github-sync.md) for the auth model, eleven tools, contracts, queue behavior and release evidence. Apply additive migration `0009_rainy_red_wolf.sql` with the existing direct-connection runner, development before production. Configure the server-only GITHUB_* values in `.env.example`; GITHUB_TOKEN_SECRET must be stable and environment-specific for encrypted credentials. No GITHUB_* value belongs in a browser bundle. Expiring GitHub App user tokens are supported; optional signing-key installation tokens require GITHUB_APP_PRIVATE_KEY_BASE64. The registered App's exact callbacks are production `/api/github/callback` and loopback `http://localhost:3000/api/github/callback`; wildcards/device flow remain off. Signed webhooks target production `/api/github/webhook`.
 
 The verified installation is restricted to the disposable private `timbenniks/wuff-github-sync-test` repository. Do not silently expand it to the application's code repository. The new `github:manage` OAuth permission needs explicit renewed client consent. The daily `/api/internal/github` recovery cron uses the existing CRON_SECRET; incoming events/writes also wake the durable worker. Preserve failed/uncertain operations and use Reconcile rather than recreating issues.
+
+## Pre-mobile hardening
+
+See [the October 18 checkpoint](pre-mobile-checkpoint.md) for row-level issue summaries, explicit optional native GitHub consent, phone content cues, real-user/client checks, the agreed native notes/images release gate and source/deployment evidence. Reconnect only clients whose stored grants are rejected; never add scopes during refresh or weaken managed auth to simplify tests. Run browser checks separately from the auth integration suite to avoid upstream rate limits.
 
 ## Native mobile development
 

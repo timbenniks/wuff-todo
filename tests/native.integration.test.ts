@@ -8,6 +8,7 @@ import {
   nativeRedirectUri,
 } from "../apps/web/src/lib/native-policy";
 import type { TodoList } from "@wuff/contracts";
+import { database } from "@wuff/db";
 const origin = "http://localhost:3000",
   resource = origin + "/api/mobile";
 const users = JSON.parse(await readFile(".vercel/dev-users.json", "utf8"));
@@ -109,7 +110,11 @@ async function grant(
     body: new URLSearchParams(exchange),
   });
   assert.ok(replay.status >= 400, "Authorization code is single-use");
-  return token as { access_token: string; refresh_token: string };
+  return token as {
+    access_token: string;
+    refresh_token: string;
+    scope: string;
+  };
 }
 async function revoke(refreshToken: string) {
   return fetch(origin + "/oauth/revoke", {
@@ -328,7 +333,7 @@ test("native PKCE, audience isolation, task retries/conflicts, membership revoca
   }
 });
 
-test("native read-only grants cannot write or gain GitHub scope through authorization", async () => {
+test("native read-only grants cannot write; GitHub scope requires fresh explicit consent", async () => {
   const cookie = await loginFixture(users[0]);
   const reader = await grant(cookie, "lists:read");
   try {
@@ -350,7 +355,7 @@ test("native read-only grants cannot write or gain GitHub scope through authoriz
       code_challenge: "a".repeat(43),
       state: "synthetic",
       resource,
-      scope: "lists:read github:manage",
+      scope: "lists:read admin:all",
     });
     const denied = await fetch(origin + "/oauth/authorize/decision", {
       method: "POST",
@@ -362,6 +367,106 @@ test("native read-only grants cannot write or gain GitHub scope through authoriz
       body: JSON.stringify({ query: query.toString(), accept: true }),
     });
     assert.equal(denied.status, 400);
+    const escalation = await fetch(origin + "/oauth/token", {
+      method: "POST",
+      headers: form,
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: nativeClientId,
+        refresh_token: reader.refresh_token,
+        resource,
+        scope: "lists:read github:manage",
+      }),
+    });
+    assert.equal(
+      escalation.status,
+      400,
+      "Refresh must not add an unconsented GitHub scope",
+    );
+    const basic = await grant(cookie);
+    const enabled = await grant(
+      cookie,
+      "lists:read tasks:write lists:manage github:manage",
+    );
+    let list: TodoList | undefined;
+    try {
+      assert.ok(!basic.scope.split(" ").includes("github:manage"));
+      assert.ok(enabled.scope.split(" ").includes("github:manage"));
+      const session = await (
+        await mobile(enabled.access_token, "session")
+      ).json();
+      assert.ok(session.scopes.includes("github:manage"));
+      list = await (
+        await mobile(basic.access_token, "createList", {
+          title: "Synthetic native GitHub consent",
+          mode: "work",
+          operationId: crypto.randomUUID(),
+        })
+      ).json();
+      // No synthetic identity has a provider account. Jobs cannot contact GitHub.
+      await database().pool.query(
+        "insert into wuff_github_bindings(list_id,owner_id,installation_id,repository_id,repository,auto_create_issues) values($1,$2,'synthetic','synthetic','synthetic-owner/consent-test',true)",
+        [list!.id, users[0].id],
+      );
+      const input = {
+        listId: list!.id,
+        version: list!.version,
+        title: "Automatic native issue",
+        operationId: crypto.randomUUID(),
+      };
+      assert.equal(
+        (await mobile(basic.access_token, "createTask", input)).status,
+        403,
+      );
+      const created = await mobile(enabled.access_token, "createTask", input);
+      assert.equal(created.status, 200);
+      list = await created.json();
+      assert.ok(
+        list!.tasks[0].github,
+        "Native snapshots include the authorized issue summary",
+      );
+      const edit = await mobile(enabled.access_token, "updateTask", {
+        listId: list!.id,
+        version: list!.version,
+        taskId: list!.tasks[0].id,
+        title: "Consented linked edit",
+        operationId: crypto.randomUUID(),
+      });
+      assert.equal(edit.status, 200);
+      list = await edit.json();
+      assert.equal(
+        (
+          await mobile(basic.access_token, "updateTask", {
+            listId: list!.id,
+            version: list!.version,
+            taskId: list!.tasks[0].id,
+            completed: true,
+            operationId: crypto.randomUUID(),
+          })
+        ).status,
+        403,
+      );
+    } finally {
+      if (list) {
+        const current = await (
+          await mobile(enabled.access_token, "getList", list.id)
+        ).json();
+        assert.equal(
+          (
+            await mobile(enabled.access_token, "deleteList", {
+              listId: list.id,
+              version: current.version,
+              operationId: crypto.randomUUID(),
+              confirmed: true,
+            })
+          ).status,
+          200,
+        );
+      }
+      await revoke(basic.refresh_token);
+      await revoke(enabled.refresh_token);
+      await database().pool.end();
+    }
   } finally {
     await revoke(reader.refresh_token);
   }

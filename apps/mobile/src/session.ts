@@ -43,7 +43,7 @@ export const client = new NativeClient(origin, {
   clear: () => SecureStore.deleteItemAsync(key),
 });
 
-export async function signIn() {
+export async function signIn(withGithub = false) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
   try {
@@ -66,6 +66,10 @@ export async function signIn() {
       throw new Error(
         "This server returned an unexpected sign-in configuration.",
       );
+    if (withGithub && !config.optionalScopes?.includes("github:manage"))
+      throw new Error(
+        "This Wuff server needs an update before enabling GitHub sync on your phone.",
+      );
   } finally {
     clearTimeout(timeout);
   }
@@ -73,7 +77,7 @@ export async function signIn() {
     clientId: nativeClientId,
     redirectUri: nativeRedirectUri,
     responseType: ResponseType.Code,
-    scopes: [...nativeScopes],
+    scopes: [...nativeScopes, ...(withGithub ? ["github:manage"] : [])],
     usePKCE: true,
     codeChallengeMethod: CodeChallengeMethod.S256,
     extraParams: { resource: client.origin + "/api/mobile" },

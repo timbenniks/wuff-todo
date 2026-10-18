@@ -128,6 +128,7 @@ export function InlineName({
             href={readHref}
             className="block truncate py-3 -my-3 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
             title={`Open task: ${value}`}
+            aria-label={`Open task: ${value}`}
           >
             {value}
           </a>

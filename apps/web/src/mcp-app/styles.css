@@ -316,3 +316,14 @@ summary {
   display: grid;
   gap: 0.5rem;
 }
+
+.task-sync-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  margin-inline: 8px;
+  font-size: 12px;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}

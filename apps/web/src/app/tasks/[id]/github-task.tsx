@@ -88,7 +88,10 @@ export function GithubTask({
   }
   if (list.mode !== "work") return null;
   return (
-    <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 grid gap-3 min-w-0">
+    <section
+      id="github"
+      className="rounded-xl border border-border bg-surface p-4 sm:p-5 grid gap-3 min-w-0 scroll-mt-4"
+    >
       <h2 className="text-lg font-bold">GitHub issue</h2>
       {error && (
         <p role="alert" className="text-destructive">

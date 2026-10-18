@@ -71,6 +71,13 @@
       "when": 1792226450517,
       "tag": "0009_rainy_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792345588769,
+      "tag": "0010_motionless_blink",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,12 @@ export function GithubConnections({
       configured: boolean;
       account: string | null;
       installUrl: string;
-      bindings?: { listId: string; repository: string; active: boolean }[];
+      bindings?: {
+        listId: string;
+        repository: string;
+        active: boolean;
+        autoCreateIssues: boolean;
+      }[];
     } | null>(null),
     [repos, setRepos] = useState<Repository[]>([]),
     [listId, setListId] = useState(
@@ -30,10 +35,17 @@ export function GithubConnections({
     [list, setList] = useState<TodoList | null>(null),
     [repo, setRepo] = useState(""),
     [consent, setConsent] = useState(false),
+    [autoCreateIssues, setAutoCreateIssues] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const pending = useRef<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    setAutoCreateIssues(
+      info?.bindings?.find((b) => b.listId === listId)?.autoCreateIssues ??
+        false,
+    );
+  }, [info, listId]);
   async function refresh() {
     setInfo(await api("/api/v1/github"));
     if (listId) setList(await api(`/api/v1/lists/${listId}`));
@@ -140,6 +152,9 @@ export function GithubConnections({
               .map((b) => (
                 <p key={b.listId} className="text-sm">
                   {b.repository} · {b.active ? "Connected" : "Stopped"}
+                  {b.autoCreateIssues
+                    ? " · New tasks create issues automatically"
+                    : " · Manual issue linking"}
                 </p>
               ))}
             <label className="grid gap-1 text-sm">
@@ -191,9 +206,27 @@ export function GithubConnections({
               I allow this list’s current and future members to see synchronized
               issue titles and notes, including private repository content.
             </label>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={autoCreateIssues}
+                disabled={busy}
+                onChange={(e) => setAutoCreateIssues(e.target.checked)}
+                className="mt-1"
+              />
+              Automatically create a GitHub issue for each new top-level task.
+              Titles, supported notes and completion sync both ways. Existing
+              tasks and subtasks are not added automatically.
+            </label>
             <Button
               variant="primary"
-              disabled={busy || !consent || !repo || list?.mode !== "work"}
+              disabled={
+                busy ||
+                !consent ||
+                !repo ||
+                list?.id !== listId ||
+                list?.mode !== "work"
+              }
               onClick={() => {
                 const selected = repos.find(
                   (r) => String(r.repositoryId) === repo,
@@ -205,10 +238,11 @@ export function GithubConnections({
                     version: list.version,
                     ...selected,
                     shareWithList: true,
+                    autoCreateIssues,
                   });
               }}
             >
-              Connect repository
+              Save repository connection
             </Button>
             {list && (
               <Button
