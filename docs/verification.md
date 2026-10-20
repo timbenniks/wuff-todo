@@ -1,6 +1,6 @@
 # Implementation verification
 
-Updated: October 18, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 20, 2026. Older sections retain their milestone-specific evidence and test counts.
 
 ## Pre-mobile hardening — October 18, 2026
 
@@ -164,3 +164,15 @@ Migration `0009_rainy_red_wolf.sql` was applied to existing development then pro
 Production design smoke saved all seven palettes (restored Slate), Detailed/Compact preferences across reload (restored Compact), and rendered italic notes. Disposable development lists were independently confirmed missing; synthetic development GitHub credentials were removed. Production issue links were removed and the sandbox binding stopped; issues and the PR were closed, and the synthetic branch deleted. Existing user tasks and list membership were retained. Current release metadata follows after final deployment inspection.
 
 Final application source `1f28701e85e2c7e8f8112e60fbb0f3803b9de625` passed [GitHub CI 39020915713](https://github.com/timbenniks/wuff-todo/actions/runs/39020915713). Vercel CLI deployment `dpl_7AoBawFodmsyXe46LALSxRU2Aoxh` is Ready, holds `https://wuff-todo.vercel.app`, and inspection confirms function region `fra1`. The final `pnpm check` passed. Production sign-in/discovery returned 200; anonymous list/GitHub API/MCP calls and an unsigned webhook returned 401. Subsequent documentation-only commits do not change the verified application bundle.
+
+## Cursor agents and PR tracking — October 20, 2026
+
+The first local implementation passed `pnpm check` (55 unit tests, TypeScript, optimized web/MCP builds), focused agent/GitHub development integration suites with mocked providers, and authenticated OAuth/HTTP/MCP scope checks. Synthetic Chrome checks against the production build covered the ticket/setup UI and measured 320/390/1280px ticket layout. Development migrations only; no paid run or production deployment. See [Cursor agents](cursor-agents.md#release-gates-and-verification) for evidence, earlier failures, and remaining live-provider/worker/account setup gates.
+
+## Local development runtime recovery — October 20, 2026
+
+Fresh Chrome reproduced the Turbopack missing process module factory error. Moving the 390 MB generated output aside and switching to Webpack did not restore hydration: React createContext/forwardRef failures persisted. The bundler change was reverted. `pnpm build` passed and a local `next start` restored interactive Lists (settings opened) and Cursor setup (encryption configuration recognized). Added `pnpm preview:local` for reproducible local integration testing with `.env.local`; no deployment or application-data mutation. Development-mode root cause remains unresolved.
+
+Cursor server-credential follow-up: read-only `/v1/me` returned HTTP 200. TypeScript and optimized build passed; the isolated provider-mocked lifecycle test additionally proved deployment-key owner isolation and denial after mismatched owner configuration. Browser Connections recognized the configured account and showed no API-key input. No paid run was launched.
+
+Personal Cursor connection consolidation: all accounts now use encrypted Neon records, including Tim; the global key fallback was removed. The focused lifecycle suite passed with separate personal connection status and ciphertext checks. Existing production user/list/task/member fingerprints were preserved through additive migrations 0011/0012 (counts 2/5/20/1). Credential ciphertext was read back and decrypted successfully before removing plaintext local/Vercel API-key configuration. No paid agent was launched or application deployed.

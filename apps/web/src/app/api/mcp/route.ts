@@ -1,6 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { after } from "next/server";
-import { processGithubJobs } from "@wuff/domain";
+import { processGithubJobs, processAgentJobs } from "@wuff/domain";
 import { createMcpServer } from "@/lib/mcp";
 import { bearerActor, unauthorizedMcp } from "@/lib/oauth";
 import { boundedBody } from "@/lib/bounded-body";
@@ -40,6 +40,7 @@ async function handle(request: Request) {
     const response = await transport.handleRequest(request);
     const body = await response.text();
     after(() => processGithubJobs());
+    after(() => processAgentJobs());
     return new Response(body, {
       status: response.status,
       headers: {

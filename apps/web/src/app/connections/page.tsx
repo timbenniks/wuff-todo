@@ -1,20 +1,37 @@
 import { redirect } from "next/navigation";
 import { pageActor } from "@/lib/auth/server";
+import { getList, listLists } from "@wuff/domain";
+import { AgentSettings } from "../agents/settings";
 import { Connections } from "./connections";
 import { mcpResource } from "@/lib/config";
 export const dynamic = "force-dynamic";
-export default async function ConnectionsPage() {
+export default async function ConnectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ listId?: string }>;
+}) {
+  let actor;
   try {
-    await pageActor();
+    actor = await pageActor();
   } catch {
     redirect("/sign-in");
   }
+  const owned = (await listLists(actor)).filter(
+    (l) => l.ownerId === actor.id && !l.archived,
+  );
+  const work = await Promise.all(
+    owned.map(async (l) => ({
+      summary: l,
+      mode: (await getList(actor, l.id)).mode,
+    })),
+  );
+  const lists = work.filter((l) => l.mode === "work").map((l) => l.summary);
   return (
     <main className="max-w-xl mx-auto px-6 py-16">
       <a href="/lists" className="text-primary hover:underline text-sm">
         ← Back to your lists
       </a>
-      <h1 className="text-3xl font-bold mt-8 mb-4">Connected AI clients</h1>
+      <h1 className="text-3xl font-bold mt-8 mb-4">Connections</h1>
       <p className="text-muted-foreground mb-4">
         Give your AI a helping paw. Add this MCP server address in your AI
         client, then sign in and choose its permissions.
@@ -22,10 +39,23 @@ export default async function ConnectionsPage() {
       <code className="block rounded-xl border border-border p-4 bg-surface break-all text-sm mb-8">
         {mcpResource()}
       </code>
+      <h2 className="text-xl font-bold mb-3">Connected AI clients</h2>
       <Connections />
       <a href="/github" className="block mt-6 text-primary underline">
         Manage GitHub connections
       </a>
+      <section id="cursor" className="mt-10 border-t border-border pt-6">
+        <h2 className="text-xl font-bold mb-3">Cursor environments</h2>
+        <p className="text-muted-foreground mb-4">
+          Give each Work list a development environment. Keep production
+          credentials out of coding environments.
+        </p>
+        <AgentSettings
+          lists={lists}
+          userId={actor.id}
+          initialId={(await searchParams).listId}
+        />
+      </section>
     </main>
   );
 }

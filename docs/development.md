@@ -31,6 +31,7 @@ Required variables are listed in [the environment template](../.env.example). Us
 
 ```sh
 pnpm dev
+pnpm preview:local
 pnpm typecheck
 pnpm test
 pnpm test:integration
@@ -40,6 +41,8 @@ pnpm db:migrate
 ```
 
 If local Webpack hydration reports an invalid lazy element alongside missing React `forwardRef`/`createContext` exports after dependency or build changes, stop Next.js and clear the generated `apps/web/.next` directory before restarting. Clearing only `.next/dev` did not clear the October 18 reproduction; a fresh full output directory restored hydrated sign-in and client navigation to `/set-password`. This affects generated build/cache output only, not `.env.local` or application data. Do not change React versions or component exports solely on the basis of that symptom.
+
+October 20: the Turbopack missing `process.js` factory failure recurred on Lists. A fresh cache with Webpack also produced missing React exports during hydration, so switching bundlers is not a verified fix. For local integration testing, stop the dev server and run `pnpm preview:local`. This builds and serves on localhost with the existing `.env.local` development services; it does not deploy to Vercel. It has no hot reload: rebuild after source edits. The underlying development-mode failure remains unresolved.
 
 October 18 live incident: the user reported the invalid-lazy-element error on Lists and confirmed a hard reload resolved it. Both an existing production session and a fresh production page successfully opened Work, Notes and task details/Back without captured production errors. Stale loaded assets are a plausible explanation; the exact live cause was not captured, and the separately reproduced local cache issue does not establish production causation. No application-code change or redeployment was needed for this incident.
 
@@ -191,3 +194,9 @@ See [the October 18 checkpoint](pre-mobile-checkpoint.md) for row-level issue su
 React Native/Expo online-only development is in `apps/mobile`; [native mobile](native-mobile.md) records the full auth design, feature scope, simulator/device setup and release limits. Run `pnpm dev:mobile` for Metro after installing a development binary; `pnpm --filter @wuff/mobile ios` or `android` requires the respective toolchain. `pnpm build:mobile` exports both platforms without signing or distributing binaries. CI checks both exports after `pnpm check`.
 
 The only mobile environment input is the public `EXPO_PUBLIC_WUFF_ORIGIN`. Reuse the existing isolated backend and align its `WUFF_ORIGIN` exactly. Never expose database/auth/provider secrets in a mobile bundle. The fixed first-party OAuth registration uses existing app tables and requires no migration. No production deployment or EAS project registration is implied by local native work.
+
+## Personal Cursor connections — October 20, 2026
+
+Every user connects a personal Cursor API key under `/connections#cursor`. The server validates it and stores only AES-256-GCM ciphertext in `wuff_agent_accounts`, indexed by Wuff user ID. `CURSOR_TOKEN_SECRET` is the independent encryption key; keep it stable, server-only and securely backed up. No global `CURSOR_API_KEY` or owner-ID fallback remains.
+
+Tim’s previously supplied key was migrated into his production personal connection and the isolated Alex development connection. Readback/decryption matched before plaintext env entries and Vercel API-key/owner variables were removed. Production additive migrations 0011/0012 preserved existing user/list/task/member row counts and fingerprints (2/5/20/1), with no managed-auth writes. Vercel retains the hidden encryption secret. `/agents` redirects to `/connections`, preserving list context. No paid run or application deployment was performed.

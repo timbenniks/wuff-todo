@@ -19,6 +19,12 @@ Delivered UI:
 
 Notes, private image rendering/upload, assignee/reference editing, section administration, sidebar ordering controls, native personal-view controls and GitHub setup/synchronization controls are not yet native UI features. Task details offer an authenticated website link for full content; no WebView is embedded. Existing GitHub-linked tasks retain the explicit `github:manage` permission requirement for synchronized-field edits. Default native sign-in does not request it; the explicit “Enable GitHub sync” action starts a new browser consent and allows synchronized Work writes only after approval. Old grants cannot gain it through refresh. Notes and private images are now required for the first native release, but their native UI/transport are still a next implementation slice. See [pre-mobile checkpoint](pre-mobile-checkpoint.md).
 
+## Future push notifications — noted October 20, 2026
+
+The user requested that native push notifications be recorded for later research and implementation. This remains deferred and does not change the current online-only delivery scope.
+
+For the proposed GitHub/Cursor workflow, candidate notifications are agent completion or failure, an agent needing user input, and a PR ready for review. Later planning should select the delivery provider, define opt-in preferences, register and revoke device tokens, protect private content on lock screens, and deep-link into the authorized task or agent conversation. Recheck current account/list access before delivery and when opening a notification. Provider selection and notification behavior are not yet decided.
+
 ## Authentication and backend boundary
 
 Keep managed Neon Auth and its existing website sign-in/activation flow. Do not install an upstream Better Auth native plugin into the managed service or send a database credential to a device. The system browser visits Wuff's existing `/oauth/authorize`, which signs in through the website and requires explicit consent. The mobile app is a public client with no client secret.

@@ -10,6 +10,12 @@ import {
 import { z } from "zod";
 import {
   githubBindingSchema,
+  agentBindingSchema,
+  agentEnvironmentSchema,
+  agentLaunchSchema,
+  agentMessageSchema,
+  agentCancelSchema,
+  agentRecoverSchema,
   githubTaskSchema,
   githubLinkSchema,
   githubResolveSchema,
@@ -128,6 +134,105 @@ export function createMcpServer(actor: Actor) {
       (data: any) => domain.githubPullRequests(actor, data.taskId),
     ],
   ] as const;
+  const agentReads = [
+    [
+      "get_agent_connection",
+      "Read Cursor connection status and secure setup path. Never request API keys or secret values in chat.",
+      z.object({}),
+      () => domain.cursorConnection(actor),
+    ],
+    [
+      "list_agent_environments",
+      "Owner: list Cursor environments containing only this Work list’s repository. Requires agents:manage.",
+      z.object({ listId: idSchema }),
+      (d: any) => domain.cursorEnvironments(actor, d.listId),
+    ],
+    [
+      "get_agent_readiness",
+      "Owner: check the list environment and missing secret names. Secret values must be entered on the secure website, never in chat.",
+      z.object({ listId: idSchema }),
+      (d: any) => domain.cursorReadiness(actor, d.listId),
+    ],
+    [
+      "get_task_agent",
+      "Read the accessible ticket’s agent conversation and run history. A finished agent does not mean the ticket is complete.",
+      z.object({ taskId: idSchema }),
+      (d: any) => domain.agentTask(actor, d.taskId),
+    ],
+    [
+      "get_agent_activity",
+      "Owner: read a short batch of live assistant/thinking text and tool status. Optional cursor resumes a run; expired streams require reading final run state. Private code may be present; tool arguments/results are excluded.",
+      z.object({
+        taskId: idSchema,
+        runId: idSchema,
+        cursor: z
+          .string()
+          .max(2048)
+          .regex(/^[^\r\n]*$/)
+          .optional(),
+      }),
+      (d: any) => domain.agentActivity(actor, d.taskId, d.runId, d.cursor),
+    ],
+  ] as const;
+  for (const [name, description, schema, action] of agentReads)
+    server.registerTool(
+      name,
+      {
+        description,
+        inputSchema: schema,
+        annotations: { ...read, openWorldHint: true },
+      },
+      async (data: any) => result(async () => ({ agents: await action(data) })),
+    );
+  const agentWrites = [
+    [
+      "recover_agent_run",
+      "Owner: after inspecting an uncertain delivery in Cursor, explicitly attach its actual providerRunId to the local runId. Requires confirmed=true. This reads an existing run; it never sends the message again.",
+      agentRecoverSchema,
+      domain.recoverAgentRun,
+    ],
+    [
+      "create_agent_environment",
+      "Owner: create a reusable personal Cursor environment for this list’s GitHub repository. Installation/start commands run in Cursor. Never include credentials in commands. Use current list version and operationId; requires agents:manage.",
+      agentEnvironmentSchema,
+      domain.createCursorEnvironment,
+    ],
+    [
+      "bind_agent_environment",
+      "Owner: select a Cursor environment and required secret names, consenting to share agent conversation results with current/future list members. Use list version and operationId. Secret values are configured through the secure website.",
+      agentBindingSchema,
+      domain.bindCursorEnvironment,
+    ],
+    [
+      "launch_task_agent",
+      "Owner: launch PAID Cursor work only on explicit user authorization, confirmed=true. Defaults to plan mode; agent mode codes and can open a PR. Sends task title/notes and optional message to Cursor. Use current list version and operationId; retry the same operationId after an unknown outcome. Requires agents:manage and tasks:write. Does not merge or deploy.",
+      agentLaunchSchema,
+      domain.launchAgent,
+    ],
+    [
+      "message_task_agent",
+      "Owner: send a PAID follow-up in the existing ticket conversation. Requires explicit user authorization and confirmed=true. Choose plan or agent mode. Wait for or cancel the active run first. Reuse operationId on retries; delivery uncertainty never permits blind resending.",
+      agentMessageSchema,
+      domain.messageAgent,
+    ],
+    [
+      "cancel_task_agent",
+      "Owner: stop the specified run. Does not undo code, delete its branch or close PRs. Requires agents:manage.",
+      agentCancelSchema,
+      domain.cancelAgent,
+    ],
+  ] as const;
+  for (const [name, description, schema, action] of agentWrites)
+    server.registerTool(
+      name,
+      {
+        description,
+        inputSchema: schema,
+        annotations: { ...write, openWorldHint: true },
+      },
+      async (data: any) =>
+        result(async () => ({ agents: await action(actor, data) })),
+    );
   for (const [name, description, schema, action] of githubReads)
     server.registerTool(
       name,

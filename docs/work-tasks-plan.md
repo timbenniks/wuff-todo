@@ -40,9 +40,9 @@ Exit: signed webhook tests, duplicates/reordering, issue creation/link/edit/clos
 
 Research: GitHub's [webhook best practices](https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks), [signature validation](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [App permissions](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app).
 
-## Stage 4 — developer-agent handoff (deferred)
+## Stage 4 — developer-agent handoff (resumed October 20)
 
-User decision, October 17, 2026: wait with developer-agent handoff; it is too deep for the current scope. The outline below is retained for later. Provider research and implementation should wait until the user explicitly resumes this stage. The user subsequently selected online-only React Native/Expo mobile; see [native mobile](native-mobile.md).
+The user resumed provider research and then explicitly authorized implementation on October 20, including PR tracking, Cursor environment secrets, ongoing ticket conversations and MCP controls. See [implementation and release gates](cursor-agents.md). The earlier October 17 deferral is superseded for this work. Native push notifications remain deferred.
 
 Build a provider-neutral task execution contract: task/version, authorized repository and base ref, acceptance criteria, run identity, status, logs/artifact references and PR links. Model runs separately from task workflow status; a failed run need not mark the task Done or Blocked automatically. Require explicit launch authorization, scoped repository credentials, retry-safe creation, cancellation and cost/runtime limits. Research the selected provider's supported cloud-agent API at implementation time. Keep task content as untrusted work input rather than permission to execute tools or reveal secrets. Keep merges/deployments as separate authorized operations.
 

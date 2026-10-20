@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { reconcileGithub } from "@wuff/domain";
+import { reconcileGithub, processAgentJobs } from "@wuff/domain";
 import { failure, privateJson } from "@/lib/http";
 export const maxDuration = 120;
 export async function GET(request: Request) {
@@ -12,7 +12,10 @@ export async function GET(request: Request) {
   )
     return new Response(null, { status: 401 });
   try {
-    return privateJson(await reconcileGithub());
+    return privateJson({
+      github: await reconcileGithub(),
+      agents: await processAgentJobs(),
+    });
   } catch (e) {
     return failure(e);
   }

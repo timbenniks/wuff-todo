@@ -1,0 +1,1 @@
+ALTER TABLE "wuff_agent_runs" ADD COLUMN "pull_request_urls" jsonb DEFAULT '[]'::jsonb NOT NULL;

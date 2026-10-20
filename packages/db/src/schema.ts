@@ -343,3 +343,86 @@ export const githubDeliveries = pgTable("wuff_github_deliveries", {
   digest: text("digest").notNull(),
   createdAt: time("created_at"),
 });
+
+export const githubPrSnapshots = pgTable("wuff_github_pr_snapshots", {
+  taskId: uuid("task_id")
+    .primaryKey()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  repositoryId: text("repository_id").notNull(),
+  issueNumber: integer("issue_number").notNull(),
+  pullRequests: jsonb("pull_requests")
+    .$type<import("@wuff/contracts").GithubPullRequest[]>()
+    .notNull()
+    .default([]),
+  stale: boolean("stale").notNull().default(true),
+  fetchedAt: time("fetched_at"),
+});
+
+export const agentAccounts = pgTable("wuff_agent_accounts", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  credentials: text("credentials").notNull(),
+  createdAt: time("created_at"),
+});
+export const agentBindings = pgTable("wuff_agent_bindings", {
+  listId: uuid("list_id")
+    .primaryKey()
+    .references(() => lists.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id),
+  environmentId: uuid("environment_id").notNull(),
+  environmentName: text("environment_name").notNull(),
+  repository: text("repository").notNull(),
+  requiredSecrets: jsonb("required_secrets")
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+});
+export const agentConversations = pgTable("wuff_agent_conversations", {
+  taskId: uuid("task_id")
+    .primaryKey()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  listId: uuid("list_id")
+    .notNull()
+    .references(() => lists.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id),
+  agentId: text("agent_id").notNull().unique(),
+  environmentId: uuid("environment_id").notNull(),
+  environmentName: text("environment_name").notNull(),
+  repository: text("repository").notNull(),
+  createdAt: time("created_at"),
+});
+export const agentRuns = pgTable(
+  "wuff_agent_runs",
+  {
+    id: uuid("id").primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => users.id),
+    operationId: uuid("operation_id").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    providerRunId: text("provider_run_id"),
+    initial: boolean("initial").notNull(),
+    mode: text("mode").notNull(),
+    prompt: text("prompt").notNull(),
+    status: text("status").notNull().default("queued"),
+    result: text("result"),
+    pullRequestUrls: jsonb("pull_request_urls")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    error: text("error"),
+    lastEventId: text("last_event_id"),
+    cancelRequested: boolean("cancel_requested").notNull().default(false),
+    leaseUntil: timestamp("lease_until", { withTimezone: true }),
+    createdAt: time("created_at"),
+  },
+  (t) => [uniqueIndex("wuff_agent_operation").on(t.actorId, t.operationId)],
+);

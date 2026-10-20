@@ -1,3 +1,4 @@
+import { reviewState, checkState } from "./github-pr-policy";
 import {
   createCipheriv,
   createDecipheriv,
@@ -15,6 +16,7 @@ import {
   scopes,
   type Actor,
   type GithubSyncFields,
+  type GithubPullRequest,
 } from "@wuff/contracts";
 import {
   githubSafeFields,
@@ -494,6 +496,19 @@ export async function githubUnbind(actor: Actor, data: unknown) {
   const input = githubTaskSchema.omit({ taskId: true }).parse(data);
   await githubMutation(actor, input, "github_unbind", true, async (c) => {
     await access(c, actor, input.listId, true, input.version);
+    if (
+      (
+        await c.query(
+          `select 1 from wuff_agent_runs r join wuff_tasks t on t.id=r.task_id
+      where t.list_id=$1 and r.status not in ('FINISHED','ERROR','CANCELLED','EXPIRED') limit 1`,
+          [input.listId],
+        )
+      ).rowCount
+    )
+      fail(
+        "agent_active",
+        "Stop active agents and resolve uncertain deliveries before disconnecting their repository.",
+      );
     await c.query(
       "update wuff_github_bindings set active=false where list_id=$1",
       [input.listId],
@@ -934,6 +949,29 @@ export async function githubWebhook(
         "update wuff_github_bindings set active=false where owner_id in (select user_id from wuff_github_accounts where github_id=$1)",
         [String(value.sender?.id ?? "")],
       );
+    if (
+      [
+        "pull_request",
+        "pull_request_review",
+        "check_run",
+        "check_suite",
+        "status",
+      ].includes(event)
+    ) {
+      // A newly linked PR is not yet in our cache. Invalidate all issue-backed
+      // tasks in this installation/repository; readers discover authoritative links.
+      await c.query(
+        `update wuff_github_pr_snapshots s set stale=true from wuff_github_links g
+        join wuff_github_bindings b on b.list_id=g.list_id
+        where s.task_id=g.task_id and b.repository_id=$1 and b.installation_id=$2 and b.active`,
+        [repo, installation],
+      );
+      await c.query(
+        `update wuff_lists set version=version+1 where id in
+        (select list_id from wuff_github_bindings where repository_id=$1 and installation_id=$2 and active)`,
+        [repo, installation],
+      );
+    }
     if (event === "issues" && value.issue?.number) {
       const { rows: links } = await c.query(
         "select g.task_id from wuff_github_links g join wuff_github_bindings b on b.list_id=g.list_id where g.repository_id=$1 and g.issue_number=$2 and b.installation_id=$3 and b.active",
@@ -961,31 +999,137 @@ export async function reconcileGithub() {
 export async function githubPullRequests(actor: Actor, taskId: string) {
   githubPermission(actor);
   const { link } = await githubTask(actor, taskId);
-  if (!link?.issueNumber) return { pullRequests: [] };
-  const v = await context(db(), taskId),
-    token = await installationToken(
-      v.installation_id,
-      v.repository_id,
-      v.owner_id,
-    );
-  const events = await provider<any[]>(
-    `/repos/${v.repository}/issues/${link.issueNumber}/timeline?per_page=100`,
-    token,
+  if (!link?.issueNumber) return { pullRequests: [] as GithubPullRequest[] };
+  const v = await context(db(), taskId);
+  const {
+    rows: [cached],
+  } = await db().query(
+    "select * from wuff_github_pr_snapshots where task_id=$1 and repository_id=$2 and issue_number=$3",
+    [taskId, v.repository_id, link.issueNumber],
   );
-  return {
-    pullRequests: events
-      .filter(
-        (e) =>
-          e.event === "cross-referenced" &&
-          e.source?.issue?.pull_request &&
-          (e.source.issue.repository?.id === Number(v.repository_id) ||
-            e.source.issue.repository_url ===
-              `https://api.github.com/repos/${v.repository}`),
+  if (
+    cached &&
+    !cached.stale &&
+    Date.now() - new Date(cached.fetched_at).getTime() < 30000
+  )
+    return {
+      pullRequests: cached.pull_requests as GithubPullRequest[],
+      fetchedAt: cached.fetched_at,
+    };
+  const token = await installationToken(
+    v.installation_id,
+    v.repository_id,
+    v.owner_id,
+  );
+  const numbers = new Set<number>();
+  const agentLinks = await db().query(
+    "select pull_request_urls from wuff_agent_runs where task_id=$1",
+    [taskId],
+  );
+  for (const row of agentLinks.rows)
+    for (const url of row.pull_request_urls ?? []) {
+      const prefix = `https://github.com/${v.repository}/pull/`;
+      if (
+        typeof url === "string" &&
+        url.startsWith(prefix) &&
+        /^[1-9][0-9]*$/.test(url.slice(prefix.length))
       )
-      .map((e) => ({
-        title: e.source.issue.title,
-        url: e.source.issue.html_url,
-        state: e.source.issue.state,
-      })),
-  };
+        numbers.add(Number(url.slice(prefix.length)));
+    }
+  // Bounded pagination reports truncation instead of silently treating a partial
+  // history as complete. Only same-repository references are eligible.
+  let truncated = false;
+  for (let page = 1; page <= 5; page++) {
+    const events = await provider<any[]>(
+      `/repos/${v.repository}/issues/${link.issueNumber}/timeline?per_page=100&page=${page}`,
+      token,
+    );
+    for (const e of events) {
+      const issue = e.source?.issue;
+      if (
+        e.event === "cross-referenced" &&
+        issue?.pull_request &&
+        (issue.repository?.id === Number(v.repository_id) ||
+          issue.repository_url ===
+            `https://api.github.com/repos/${v.repository}`) &&
+        Number.isSafeInteger(issue.number)
+      )
+        numbers.add(issue.number);
+    }
+    if (events.length < 100) break;
+    if (page === 5) truncated = true;
+  }
+  const pullRequests: GithubPullRequest[] = [];
+  if (numbers.size > 20) truncated = true;
+  for (const number of [...numbers].slice(-20)) {
+    const p = await provider(`/repos/${v.repository}/pulls/${number}`, token);
+    if (String(p.base?.repo?.id) !== v.repository_id) continue;
+    let review: GithubPullRequest["review"] = "unavailable";
+    let checks: GithubPullRequest["checks"] = "unavailable";
+    try {
+      const reviews = await provider<any[]>(
+        `/repos/${v.repository}/pulls/${number}/reviews?per_page=100`,
+        token,
+      );
+      if (reviews.length < 100) review = reviewState(reviews);
+    } catch {
+      /* Preserve the PR when additional provider reads are unavailable. */
+    }
+    try {
+      const result = await provider(
+        `/repos/${v.repository}/commits/${encodeURIComponent(p.head.sha)}/check-runs?per_page=100&filter=latest`,
+        token,
+      );
+      if (result.total_count <= 100) checks = checkState(result.check_runs);
+    } catch {
+      /* Existing installations may not yet grant Checks read. */
+    }
+    pullRequests.push({
+      number,
+      title: String(p.title),
+      url: `https://github.com/${v.repository}/pull/${number}`,
+      state: p.merged_at
+        ? "merged"
+        : p.state === "closed"
+          ? "closed"
+          : p.draft
+            ? "draft"
+            : "open",
+      headSha: p.head.sha,
+      review,
+      checks,
+    });
+  }
+  // Recheck audience and binding after remote reads, including concurrent unlink.
+  await tx(async (c) => {
+    await access(c, actor, v.list_id);
+    const current = await context(c, taskId);
+    const {
+      rows: [still],
+    } = await c.query(
+      "select issue_number from wuff_github_links where task_id=$1",
+      [taskId],
+    );
+    if (
+      current.repository_id !== v.repository_id ||
+      still?.issue_number !== link.issueNumber
+    )
+      fail(
+        "conflict",
+        "The GitHub link changed. Reload before reading pull requests.",
+      );
+    await c.query(
+      `insert into wuff_github_pr_snapshots(task_id,repository_id,issue_number,pull_requests,stale)
+      values($1,$2,$3,$4,$5) on conflict(task_id) do update set repository_id=excluded.repository_id,
+      issue_number=excluded.issue_number,pull_requests=excluded.pull_requests,stale=excluded.stale,fetched_at=now()`,
+      [
+        taskId,
+        v.repository_id,
+        link.issueNumber,
+        JSON.stringify(pullRequests),
+        truncated || current.list_version !== v.list_version,
+      ],
+    );
+  });
+  return { pullRequests, truncated, fetchedAt: new Date().toISOString() };
 }

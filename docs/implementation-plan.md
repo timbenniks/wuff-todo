@@ -2,11 +2,13 @@
 
 Status: web/MCP and GitHub synchronization released; online-only native mobile development started
 
-Updated: October 18, 2026
+Updated: October 20, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
+
+- **PR tracking and Cursor agents (October 20):** the user resumed Stage 4 and authorized implementation, including environment secrets, ticket conversations and MCP parity. Local implementation and release gates are recorded in [Cursor agents](cursor-agents.md). Native push notifications remain deferred. No production agent execution is enabled.
 
 - **Pre-mobile hardening (October 18):** visible issue/sync summaries, optional native GitHub consent and phone notes/progress cues are implemented; real Joreel sharing/revocation and Tim recovery were reported and checked within the documented boundaries. Native notes and private images are required for the first mobile release. See [checkpoint and release evidence](pre-mobile-checkpoint.md).
 
@@ -52,7 +54,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 **Current milestone: online-only React Native/Expo for iPhone and Android.** The user selected native mobile and confirmed online-only operation on October 17. The initial local app, secure browser-based sign-in, separate native API authorization, list/task/sharing screens and shared design tokens are implemented. See [native mobile](native-mobile.md) for scope, architecture, run instructions and verification limits. Installed simulator/device auth, native UI review and distribution remain the next gate; a bundle build is not device proof.
 
-Stage 4 developer-agent handoff remains deferred because the user considers it too deep for the current scope. Preserve its outline in [work-task direction](work-tasks-plan.md); do not begin provider research or implementation until explicitly resumed. Stage 3 [GitHub synchronization](github-sync.md) is released within its documented limits. No agent execution is enabled.
+On October 20 the user explicitly resumed Stage 4 research and implementation. The first local PR tracking and Cursor agent handoff implementation is now built alongside the existing native milestone; see [Cursor agents](cursor-agents.md). Stage 3 [GitHub synchronization](github-sync.md) remains released within its documented limits. Paid production agent execution is not enabled.
 
 ### Completed design work and earlier milestones
 

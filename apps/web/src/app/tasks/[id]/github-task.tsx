@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { GithubTaskState, Task, TodoList } from "@wuff/contracts";
+import type {
+  GithubTaskState,
+  GithubPullRequest,
+  Task,
+  TodoList,
+} from "@wuff/contracts";
 export function GithubTask({
   task,
   list,
@@ -21,9 +26,7 @@ export function GithubTask({
     [number, setNumber] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [prs, setPrs] = useState<{ title: string; url: string; state: string }[]>(
-      [],
-    );
+    [prs, setPrs] = useState<GithubPullRequest[]>([]);
   const pending = useRef<Record<string, unknown> | null>(null);
   async function load() {
     setLink(
@@ -36,6 +39,13 @@ export function GithubTask({
         )
       ).link,
     );
+    const prResult = await api<{ pullRequests: GithubPullRequest[] }>(
+      `/api/v1/github?pullRequests=${task.id}`,
+      "GET",
+      undefined,
+      userId,
+    );
+    setPrs(prResult.pullRequests);
   }
   useEffect(() => {
     let active = true;
@@ -221,12 +231,13 @@ export function GithubTask({
               href={p.url}
               className="text-primary underline break-words"
             >
-              {p.title} · {p.state}
+              {p.title} · {p.state} · Checks: {p.checks} · Review:{" "}
+              {p.review.replaceAll("_", " ")}
             </a>
           ))}
           <p className="text-sm text-muted-foreground">
-            Unlinking keeps both the task and issue. Merge events do not
-            automatically finish tasks.
+            Unlinking keeps both the task and issue. A PR merge only finishes
+            the task when GitHub closes its linked issue.
           </p>
         </>
       ) : (

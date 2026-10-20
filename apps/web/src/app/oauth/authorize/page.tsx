@@ -50,6 +50,8 @@ export default async function AuthorizePage({
     "lists:manage": "Create lists and manage lists you own",
     "github:manage":
       "Connect GitHub repositories and create or synchronize linked issues",
+    "agents:manage":
+      "Configure cloud-agent environments and launch, message or stop paid coding agents for lists you own",
   };
   return (
     <main className="max-w-md mx-auto px-6 py-20">

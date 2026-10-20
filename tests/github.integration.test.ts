@@ -22,6 +22,7 @@ import {
   githubUnlink,
   githubWebhook,
   processGithubJobs,
+  githubPullRequests,
 } from "@wuff/domain";
 if (!process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l"))
   throw Error("Isolated development only");
@@ -58,6 +59,15 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
   let created = 0,
     loseCreateResponse = false;
   const issues: any[] = [];
+  const pull = {
+    number: 42,
+    title: "Synthetic PR",
+    state: "open",
+    draft: true,
+    merged_at: null as string | null,
+    base: { repo: { id: 600 } },
+    head: { sha: "synthetic-head" },
+  };
   const response = (v: any) => Response.json(v);
   globalThis.fetch = async (input: any, init?: RequestInit) => {
     const url = new URL(String(input));
@@ -92,6 +102,29 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
       return response({ id: 600, full_name: "synthetic-owner/sync-test" });
     if (url.pathname === "/app/installations/500/access_tokens")
       return response({ token: "synthetic-installation" });
+    if (url.pathname.endsWith("/timeline"))
+      return response([
+        {
+          event: "cross-referenced",
+          source: {
+            issue: { number: 42, pull_request: {}, repository: { id: 600 } },
+          },
+        },
+        {
+          event: "cross-referenced",
+          source: {
+            issue: { number: 99, pull_request: {}, repository: { id: 999 } },
+          },
+        },
+      ]);
+    if (url.pathname.endsWith("/pulls/42")) return response(pull);
+    if (url.pathname.endsWith("/pulls/42/reviews"))
+      return response([{ user: { id: 1 }, state: "APPROVED" }]);
+    if (url.pathname.endsWith("/check-runs"))
+      return response({
+        total_count: 1,
+        check_runs: [{ status: "completed", conclusion: "failure" }],
+      });
     if (url.pathname === "/repos/synthetic-owner/sync-test/issues") {
       if (init?.method === "POST") {
         created++;
@@ -193,6 +226,39 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
     await processGithubJobs();
     assert.equal(created, 1);
     assert.equal((await githubTask(a, task.id)).link?.state, "synced");
+    const prs = await githubPullRequests(a, task.id);
+    assert.equal(prs.pullRequests.length, 1);
+    assert.equal(prs.pullRequests[0].state, "draft");
+    assert.equal(prs.pullRequests[0].review, "approved");
+    assert.equal(prs.pullRequests[0].checks, "failing");
+    await assert.rejects(githubPullRequests(b, task.id), { code: "not_found" });
+    pull.merged_at = new Date().toISOString();
+    pull.state = "closed";
+    const prPayload = JSON.stringify({
+      action: "closed",
+      installation: { id: 500 },
+      repository: { id: 600 },
+      pull_request: { number: 42 },
+    });
+    const prSignature = `sha256=${createHmac("sha256", process.env.GITHUB_WEBHOOK_SECRET!).update(prPayload).digest("hex")}`;
+    const prDelivery = crypto.randomUUID();
+    await githubWebhook(prPayload, prSignature, prDelivery, "pull_request");
+    const versionAfterPr = (await getList(a, list.id)).version;
+    await githubWebhook(prPayload, prSignature, prDelivery, "pull_request");
+    assert.equal(
+      (await getList(a, list.id)).version,
+      versionAfterPr,
+      "duplicate PR event does not bump version twice",
+    );
+    assert.equal(
+      (await githubPullRequests(a, task.id)).pullRequests[0].state,
+      "merged",
+    );
+    assert.equal(
+      (await getList(a, list.id)).tasks[0].status,
+      "todo",
+      "PR merge alone does not finish the task",
+    );
     const syncedSnapshot = await getList(a, list.id);
     assert.equal(
       syncedSnapshot.tasks.find((t) => t.id === task.id)!.github?.issueNumber,

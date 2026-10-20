@@ -438,6 +438,50 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       body: JSON.stringify({ action: "connect" }),
     });
     assert.equal(githubOrigin.status, 403);
+    const agentRead = await rpc(token.access_token, "tools/call", {
+      name: "get_task_agent",
+      arguments: { taskId: list.tasks[0].id },
+    });
+    assert.deepEqual(agentRead.body.result.structuredContent.agents, {
+      conversation: null,
+      runs: [],
+    });
+    const agentHttp = await fetch(
+      `${origin}/api/v1/agents?taskId=${list.tasks[0].id}`,
+      { headers: { Cookie: cookie } },
+    );
+    assert.equal(agentHttp.status, 200);
+    assert.deepEqual(await agentHttp.json(), { conversation: null, runs: [] });
+    const agentDenied = await rpc(token.access_token, "tools/call", {
+      name: "launch_task_agent",
+      arguments: {
+        listId: list.id,
+        taskId: list.tasks[0].id,
+        version: list.version,
+        operationId: crypto.randomUUID(),
+        confirmed: true,
+      },
+    });
+    assert.equal(
+      agentDenied.body.result.structuredContent.error.code,
+      "forbidden",
+      "Existing task grants cannot launch paid agents",
+    );
+    assert.equal((await fetch(`${origin}/api/v1/agents`)).status, 401);
+    assert.equal(
+      (
+        await fetch(`${origin}/api/v1/agents`, {
+          method: "POST",
+          headers: {
+            Cookie: cookie,
+            "Content-Type": "application/json",
+            Origin: "https://wrong.example",
+          },
+          body: JSON.stringify({ action: "connect" }),
+        })
+      ).status,
+      403,
+    );
     const taskResponse = await fetch(
       `${origin}/api/v1/tasks/${list.tasks[0].key}`,
       { headers: { Cookie: cookie } },

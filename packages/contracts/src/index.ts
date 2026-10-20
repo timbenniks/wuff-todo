@@ -279,6 +279,7 @@ export const scopes = [
   "tasks:write",
   "lists:manage",
   "github:manage",
+  "agents:manage",
 ] as const;
 export type Scope = (typeof scopes)[number];
 export type Actor = { id: string; scopes: readonly string[] };
@@ -501,6 +502,16 @@ export function githubSyncLabel(link: GithubTaskSummary) {
   return "Pending";
 }
 
+export type GithubPullRequest = {
+  number: number;
+  title: string;
+  url: string;
+  state: "draft" | "open" | "closed" | "merged";
+  headSha: string;
+  review: "approved" | "changes_requested" | "pending" | "unavailable";
+  checks: "passing" | "failing" | "pending" | "none" | "unavailable";
+};
+
 // First-party native OAuth configuration, shared by client and authorization server.
 export const nativeClientId = "wuff-native-v1";
 export const nativeRedirectUri = "com.timbenniks.wufftodo://oauth/callback";
@@ -511,3 +522,49 @@ export const nativeScopes = [
 ] as const;
 // Optional privileges require a new interactive authorization, never refresh.
 export const nativeAllowedScopes = [...nativeScopes, "github:manage"] as const;
+
+export const agentBindingSchema = listMutationSchema.extend({
+  environmentId: idSchema,
+  requiredSecrets: z
+    .array(z.string().regex(/^[A-Z_][A-Z0-9_]{0,127}$/))
+    .max(50)
+    .default([]),
+  shareWithList: z.literal(true),
+});
+export const agentEnvironmentSchema = listMutationSchema.extend({
+  name: z.string().trim().min(1).max(100),
+  install: z.string().max(4000).default("pnpm install --frozen-lockfile"),
+  start: z.string().max(4000).default(""),
+});
+export const agentLaunchSchema = listMutationSchema.extend({
+  taskId: idSchema,
+  message: z.string().trim().max(16000).default(""),
+  mode: z.enum(["plan", "agent"]).default("plan"),
+  confirmed: z.literal(true),
+});
+export const agentMessageSchema = agentLaunchSchema.extend({
+  message: z.string().trim().min(1).max(16000),
+});
+export const agentCancelSchema = operationSchema.extend({
+  taskId: idSchema,
+  runId: idSchema,
+});
+export const agentRecoverSchema = agentCancelSchema.extend({
+  providerRunId: z.string().regex(/^run-[a-f0-9-]{36}$/i),
+  confirmed: z.literal(true),
+});
+export type AgentRun = {
+  id: string;
+  providerRunId: string | null;
+  status: string;
+  mode: string;
+  prompt: string;
+  result: string | null;
+  pullRequestUrls: string[];
+  error: string | null;
+  createdAt: string;
+};
+export type AgentTaskState = {
+  conversation: { agentId: string; url: string } | null;
+  runs: AgentRun[];
+};

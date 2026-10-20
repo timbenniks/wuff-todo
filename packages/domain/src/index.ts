@@ -550,6 +550,7 @@ export async function deleteList(actor: Actor, data: unknown) {
     { ...input, kind: "delete_list" } as typeof input,
     async (tx) => {
       await locked(tx, actor, input, true);
+      await noActiveAgents(tx, input.listId);
       await tx.delete(lists).where(eq(lists.id, input.listId));
       return { id: input.listId };
     },
@@ -568,6 +569,7 @@ export async function updateList(actor: Actor, data: unknown) {
     async (tx) => {
       await locked(tx, actor, input, true);
       const { title, description, color, archived, mode } = input;
+      if (archived || mode === "simple") await noActiveAgents(tx, input.listId);
       if (mode === "simple") {
         const rows = await tx
           .select()
@@ -961,6 +963,7 @@ export async function deleteTask(actor: Actor, data: unknown) {
     { ...input, kind: "delete_task" } as typeof input,
     async (tx) => {
       await locked(tx, actor, input, false, true);
+      await noActiveAgents(tx, input.listId, input.taskId);
       await tx
         .delete(tasks)
         .where(and(eq(tasks.id, input.taskId), eq(tasks.listId, input.listId)));
@@ -968,6 +971,18 @@ export async function deleteTask(actor: Actor, data: unknown) {
     },
   );
   return getList(actor, input.listId);
+}
+async function noActiveAgents(tx: Tx, listId: string, taskId?: string) {
+  const result =
+    await tx.execute(sql`select 1 from wuff_agent_runs r join wuff_tasks t on t.id=r.task_id
+    where t.list_id=${listId} and (${taskId ?? null}::uuid is null or t.id=${taskId ?? null}::uuid or t.parent_task_id=${taskId ?? null}::uuid)
+    and r.status not in ('FINISHED','ERROR','CANCELLED','EXPIRED') limit 1`);
+  if (result.rows.length)
+    fail(
+      "agent_active",
+      "Stop active agents and resolve uncertain deliveries before deleting or archiving their work.",
+      409,
+    );
 }
 export async function reorderTasks(actor: Actor, data: unknown) {
   requireScope(actor, "tasks:write");
@@ -1566,3 +1581,4 @@ export async function cleanupTaskImages() {
 }
 
 export * from "./github";
+export * from "./agents";
