@@ -41,6 +41,7 @@ test("Cursor owner isolation, secrets, concurrent launches, lost responses, foll
     loseFollowup = false,
     secretConfigured = false;
   let listId: string | undefined;
+  let validationStatus = 200;
   const write = async () => {
     const l = await getList(owner, listId!);
     return {
@@ -59,7 +60,11 @@ test("Cursor owner isolation, secrets, concurrent launches, lost responses, foll
     assert.equal(url.origin, "https://api.cursor.com");
     assert.equal((init?.headers as any).Authorization, "Bearer synthetic-key");
     const path = url.pathname.replace("/v1", "");
-    if (path === "/me") return Response.json({ id: "synthetic-cursor" });
+    if (path === "/me")
+      return Response.json(
+        { id: "synthetic-cursor" },
+        { status: validationStatus },
+      );
     if (path === "/environments")
       return Response.json({
         items: [
@@ -165,7 +170,14 @@ test("Cursor owner isolation, secrets, concurrent launches, lost responses, foll
     await assert.rejects(cursorEnvironments(owner, listId), {
       code: "cursor_connect",
     });
-    await cursorConnect(stranger, "synthetic-key");
+    validationStatus = 401;
+    await assert.rejects(cursorConnect(stranger, "synthetic-key"), {
+      code: "cursor_invalid_key",
+      status: 400,
+    });
+    assert.equal((await cursorConnection(stranger)).connected, false);
+    validationStatus = 200;
+    await cursorConnect(stranger, "  synthetic-key\n");
     assert.equal((await cursorConnection(stranger)).connected, true);
     assert.equal((await cursorConnection(owner)).connected, false);
     const storedKey = (

@@ -132,10 +132,32 @@ async function repository(c: Client, listId: string) {
 }
 export async function cursorConnect(actor: Actor, apiKey: string) {
   await admitted(db(), actor, true);
-  if (!apiKey || apiKey.length > 4096 || /[\r\n]/.test(apiKey))
-    fail("invalid_key", "Enter a valid Cursor API key.", 400);
+  apiKey = apiKey.trim();
+  if (!apiKey || apiKey.length > 4096 || /\s/.test(apiKey))
+    fail(
+      "invalid_key",
+      "Paste only the Cursor API key, without a Bearer or Basic prefix.",
+      400,
+    );
   const sealed = sealCursorKey(apiKey);
-  await cursorJson(apiKey, "/me");
+  try {
+    await cursorJson(apiKey, "/me");
+  } catch (error) {
+    if (error instanceof CursorError) {
+      console.warn("Cursor key validation rejected", {
+        providerStatus: error.providerStatus,
+      });
+      throw error;
+    }
+    console.warn("Cursor key validation unavailable", {
+      kind: error instanceof Error ? error.name : "UnknownError",
+    });
+    fail(
+      "cursor_connection_failed",
+      "Could not reach Cursor to validate the key. Please retry.",
+      503,
+    );
+  }
   // Replacing an identity while runs exist could route follow-ups to another account.
   await tx(async (c) => {
     await admitted(c, actor, true);

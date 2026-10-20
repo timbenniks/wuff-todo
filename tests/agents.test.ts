@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  CursorError,
   environmentMatches,
   publicAgentEvent,
   sealCursorKey,
@@ -115,4 +116,15 @@ test("review and check summaries preserve failures and superseded approvals", ()
     "failing",
   );
   assert.equal(checkState([]), "none");
+});
+
+test("Cursor authentication errors distinguish invalid credentials from provider failure", () => {
+  const rejected = new CursorError(401);
+  assert.equal(rejected.code, "cursor_invalid_key");
+  assert.equal(rejected.status, 400);
+  assert.match(rejected.message, /HTTP 401/);
+  assert.equal(new CursorError(403).status, 403);
+  assert.equal(new CursorError(429).status, 503);
+  assert.equal(new CursorError(503).status, 502);
+  assert.match(new CursorError(503).message, /HTTP 503/);
 });

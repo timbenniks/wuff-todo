@@ -38,11 +38,27 @@ export function openCursorKey(value: string) {
 export class CursorError extends AppError {
   constructor(public providerStatus: number) {
     super(
-      "cursor_unavailable",
-      providerStatus === 403
-        ? "Cursor denied access. Check your API key, repository access and plan."
-        : "Cursor could not complete the request. Check the connection and retry.",
-      502,
+      providerStatus === 401
+        ? "cursor_invalid_key"
+        : providerStatus === 403
+          ? "cursor_access_denied"
+          : providerStatus === 429
+            ? "cursor_rate_limited"
+            : "cursor_unavailable",
+      providerStatus === 401
+        ? "Cursor rejected this API key (HTTP 401). Copy a user API key from Cursor Dashboard → API Keys. Use the Cursor key, not Wuff’s encryption secret."
+        : providerStatus === 403
+          ? "Cursor denied access (HTTP 403). Check this key’s permissions and account access."
+          : providerStatus === 429
+            ? "Cursor is rate limiting requests (HTTP 429). Wait a moment and retry."
+            : `Cursor returned HTTP ${providerStatus}. Please retry; if it persists, contact the administrator.`,
+      providerStatus === 401
+        ? 400
+        : providerStatus === 403
+          ? 403
+          : providerStatus === 429
+            ? 503
+            : 502,
     );
   }
 }
