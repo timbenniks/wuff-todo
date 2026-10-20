@@ -8,7 +8,7 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
-- **PR tracking and Cursor agents (October 20):** the user resumed Stage 4 and authorized implementation, including environment secrets, ticket conversations and MCP parity. Local implementation and release gates are recorded in [Cursor agents](cursor-agents.md). Native push notifications remain deferred. No production agent execution is enabled.
+- **PR tracking and Cursor agents (October 20):** the user resumed Stage 4 and authorized implementation, including environment secrets, ticket conversations and MCP parity. Personal connections and PR tracking are deployed; release evidence and execution gates are recorded in [Cursor agents](cursor-agents.md). Native push notifications remain deferred. No production agent execution is enabled.
 
 - **Pre-mobile hardening (October 18):** visible issue/sync summaries, optional native GitHub consent and phone notes/progress cues are implemented; real Joreel sharing/revocation and Tim recovery were reported and checked within the documented boundaries. Native notes and private images are required for the first mobile release. See [checkpoint and release evidence](pre-mobile-checkpoint.md).
 
