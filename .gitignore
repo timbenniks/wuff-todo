@@ -21,3 +21,6 @@ apps/mobile/android/
 # Tauri build output and generated platform projects
 apps/native/src-tauri/target/
 apps/native/src-tauri/gen/
+
+# Python release tooling
+__pycache__/

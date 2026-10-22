@@ -1,6 +1,6 @@
 # Tauri platform and distribution gates
 
-The private repository's **Native test builds** workflow creates unsigned macOS/Windows debug packages, an Android debug APK and an unsigned iOS simulator build. Artifacts expire after 14 days and are accessible through authenticated GitHub repository access. No production credentials, signing certificates or release publication permissions are supplied to PR jobs. These are validation artifacts, not signed end-user releases. Generated mobile projects are ephemeral CI output; the checked-in Tauri configuration remains the source of truth.
+The private repository's **Native test builds** workflow creates unsigned macOS/Windows debug packages, an Android debug APK and an unsigned iOS simulator build. Actions artifacts expire after 14 days. Each successful main-branch build now also publishes the complete set as a private GitHub prerelease with durable download assets; see [native releases](native-releases.md). Downloads require authenticated repository access. No production credentials, signing certificates or release publication permissions are supplied to PR jobs. These are validation artifacts, not signed end-user releases. Generated mobile projects are ephemeral CI output; the checked-in Tauri configuration remains the source of truth.
 
 ## Build evidence — October 22, 2026
 
@@ -25,9 +25,9 @@ For every installed target record OS/device, commit, cold and warm callbacks, ca
 
 ## Private release preparation
 
-Keep distribution private. Desktop signed installers require the owner's Apple Developer signing/notarization identity and a Windows code-signing identity. iPhone TestFlight requires an Apple developer team/app record and provisioning; Android requires an owned release keystore and a private testing channel. No accounts or certificates have been invented, no public GitHub release is published, and no auto-updater is enabled before signed-update keys and an authenticated distribution design exist.
+Keep distribution private. Desktop signed installers require the owner's Apple Developer signing/notarization identity and a Windows code-signing identity. iPhone TestFlight requires an Apple developer team/app record and provisioning; Android requires an owned release keystore and a private testing channel. No accounts or certificates have been invented, GitHub test prereleases remain inside the private repository, and no auto-updater is enabled before signed-update keys and an authenticated distribution design exist.
 
-For now distribute test artifacts through repository access. iOS simulator output cannot be installed on a physical iPhone. An Android debug APK is test-only and must be replaced with a stable owner-controlled signing key before persistent private releases. Unsigned desktop builds may trigger OS trust checks and are not a production installation experience.
+Distribute test packages through the private repository’s [Releases page](https://github.com/timbenniks/wuff-todo/releases), or download and share the files directly with the authorized testers. iOS simulator output cannot be installed on a physical iPhone. An Android debug APK is test-only and must be replaced with a stable owner-controlled signing key before persistent private releases. Unsigned desktop builds may trigger OS trust checks and are not a production installation experience.
 
 Installed app versions are decoupled from the API. Preserve existing native audience/client ID, additive request fields and optional GitHub scope; deploy backend additions before shipping a client that calls them. Retain old actions during rollout. Release notes should record native version/commit and minimum backend capability, and exercise the previous client against each backend release. Do not force-update by silently changing authentication or discarding pending drafts.
 
