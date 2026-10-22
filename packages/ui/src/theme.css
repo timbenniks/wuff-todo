@@ -1,0 +1,17 @@
+@theme inline {
+  --color-background: var(--wuff-background);
+  --color-foreground: var(--wuff-foreground);
+  --color-primary: var(--wuff-primary);
+  --color-accent: var(--wuff-accent);
+  --color-border: var(--wuff-border);
+  --color-input: var(--wuff-control);
+  --color-surface: var(--wuff-surface);
+  --color-sidebar: var(--wuff-sidebar);
+  --color-control: var(--wuff-control);
+  --color-ring: var(--wuff-primary);
+  --color-muted-foreground: var(--wuff-muted);
+  --color-destructive: #b91c1c;
+  --color-primary-foreground: #ffffff;
+  --font-sans:
+    var(--font-dm-sans, "DM Sans"), "DM Sans", "Segoe UI", sans-serif;
+}

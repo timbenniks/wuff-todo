@@ -116,6 +116,9 @@ importers:
 
   apps/native:
     dependencies:
+      "@wuff/ui":
+        specifier: workspace:*
+        version: link:../../packages/ui
       "@tauri-apps/api":
         specifier: 2.12.4
         version: 2.12.4
@@ -144,6 +147,12 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
     devDependencies:
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      "@tailwindcss/postcss":
+        specifier: ^4.3.3
+        version: 4.3.3
       "@tauri-apps/cli":
         specifier: 2.12.4
         version: 2.12.4
@@ -168,6 +177,9 @@ importers:
 
   apps/web:
     dependencies:
+      "@wuff/ui":
+        specifier: workspace:*
+        version: link:../../packages/ui
       "@dnd-kit/core":
         specifier: 6.3.1
         version: 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -345,6 +357,37 @@ importers:
       "@types/markdown-it":
         specifier: 14.2.0
         version: 14.2.0
+
+  packages/ui:
+    dependencies:
+      '@radix-ui/react-slot':
+        specifier: ^1.5.0
+        version: 1.5.0(@types/react@19.3.0)(react@19.3.1)
+      '@wuff/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      lucide-react:
+        specifier: ^1.57.0
+        version: 1.57.0(@types/react@19.3.0)(react@19.3.1)
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      tailwind-merge:
+        specifier: ^3.7.0
+        version: 3.7.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
   2g@1.0.1:

@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
-  transpilePackages: ["@wuff/contracts", "@wuff/db", "@wuff/domain"],
+  transpilePackages: [
+    "@wuff/contracts",
+    "@wuff/db",
+    "@wuff/domain",
+    "@wuff/ui",
+  ],
   poweredByHeader: false,
   outputFileTracingIncludes: { "/api/mcp": ["./.mcp/ui.html"] },
   async headers() {
