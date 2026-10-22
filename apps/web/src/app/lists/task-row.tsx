@@ -5,6 +5,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type HTMLAttributes,
 } from "react";
 import {
   CalendarDays,
@@ -43,7 +44,8 @@ export function TaskRow({
   subtaskDrafts,
   dueDrafts,
   today,
-  dragHandle,
+  rowProps,
+  moveControl,
   rowRef,
   style,
   detailed = false,
@@ -60,7 +62,8 @@ export function TaskRow({
   subtaskDrafts: Map<string, string>;
   dueDrafts: Map<string, DueDateDraft>;
   today: string | null;
-  dragHandle?: ReactNode;
+  rowProps?: HTMLAttributes<HTMLElement>;
+  moveControl?: ReactNode;
   rowRef?: (node: HTMLElement | null) => void;
   style?: CSSProperties;
   detailed?: boolean;
@@ -100,6 +103,30 @@ export function TaskRow({
   };
   return (
     <li
+      {...rowProps}
+      onClick={(event) => {
+        if (
+          !(event.target instanceof Element) ||
+          event.target.closest(".task-row") !== event.currentTarget
+        )
+          return;
+        const control = event.target.closest(
+          "button, a, input, textarea, select, summary, [contenteditable], .task-panel, .task-subtask-panel, .task-summary, .task-metadata",
+        );
+        if (control && event.currentTarget.contains(control)) return;
+        event.currentTarget
+          .querySelector<HTMLAnchorElement>(".task-name a")
+          ?.click();
+      }}
+      onKeyDown={(event) => {
+        rowProps?.onKeyDown?.(event);
+        if (event.target === event.currentTarget && event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget
+            .querySelector<HTMLAnchorElement>(".task-name a")
+            ?.click();
+        }
+      }}
       ref={rowRef}
       style={style}
       className="task-row"
@@ -107,7 +134,6 @@ export function TaskRow({
       data-density={detailed ? "comfortable" : "compact"}
       data-completed={task.completed}
     >
-      <div className="task-drag-slot">{dragHandle}</div>
       <button
         type="button"
         className="task-complete"
@@ -178,6 +204,7 @@ export function TaskRow({
           >
             {(close) => (
               <>
+                {moveControl}
                 <a
                   href={task.path}
                   onClick={(event) => {
@@ -465,35 +492,37 @@ export function Subtasks({
           change("/api/v1/tasks", "PUT", { ...body, taskIds })
         }
       >
-        <ul aria-label={`Subtasks of ${parent.title}`}>
-          {items.map((task) => (
-            <SortableItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              disabled={disabled || disableDrag}
-            >
-              {({ ref, style, handle }) => (
-                <TaskRow
-                  task={task}
-                  list={list}
-                  userId={userId}
-                  busy={busy}
-                  change={change}
-                  drafts={drafts}
-                  subtaskDrafts={subtaskDrafts}
-                  dueDrafts={dueDrafts}
-                  today={today}
-                  rowRef={ref}
-                  style={style}
-                  dragHandle={
-                    !list.archived && !disableDrag ? handle : undefined
-                  }
-                />
-              )}
-            </SortableItem>
-          ))}
-        </ul>
+        {(orderedItems) => (
+          <ul aria-label={`Subtasks of ${parent.title}`}>
+            {orderedItems.map((task) => (
+              <SortableItem
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                disabled={disabled || disableDrag}
+                entireRow
+              >
+                {({ ref, style, rowProps, moveControl }) => (
+                  <TaskRow
+                    task={task}
+                    list={list}
+                    userId={userId}
+                    busy={busy}
+                    change={change}
+                    drafts={drafts}
+                    subtaskDrafts={subtaskDrafts}
+                    dueDrafts={dueDrafts}
+                    today={today}
+                    rowRef={ref}
+                    style={style}
+                    rowProps={rowProps}
+                    moveControl={moveControl}
+                  />
+                )}
+              </SortableItem>
+            ))}
+          </ul>
+        )}
       </SortableList>
       {!list.archived && (
         <form

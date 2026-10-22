@@ -99,48 +99,48 @@ export function TaskGroups({
           return false;
         }}
       >
-        <ul
-          aria-label={
-            sectionId
-              ? `Tasks in ${list.sections.find((s) => s.id === sectionId)?.title}`
-              : "Active tasks"
-          }
-          className="divide-y divide-border"
-        >
-          {items.map((task) => (
-            <SortableItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              disabled={disabled || !manual || task.completed}
-            >
-              {({ ref, style, handle }) => (
-                <TaskRow
-                  userId={userId}
-                  rowRef={ref}
-                  style={style}
-                  task={task}
-                  list={list}
-                  busy={busy}
-                  change={change}
-                  drafts={noteDrafts.current}
-                  subtaskDrafts={subtaskDrafts.current}
-                  dueDrafts={dueDrafts.current}
-                  today={today}
-                  detailed={view.layout === "detailed"}
-                  matchedChildren={childMatches[task.id]}
-                  disableChildDrag={!manual}
-                  onOpenTask={setOpenTaskId}
-                  dragHandle={
-                    !list.archived && manual && !task.completed
-                      ? handle
-                      : undefined
-                  }
-                />
-              )}
-            </SortableItem>
-          ))}
-        </ul>
+        {(orderedItems) => (
+          <ul
+            aria-label={
+              sectionId
+                ? `Tasks in ${list.sections.find((s) => s.id === sectionId)?.title}`
+                : "Active tasks"
+            }
+            className="divide-y divide-border"
+          >
+            {orderedItems.map((task) => (
+              <SortableItem
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                disabled={disabled || !manual || task.completed}
+                entireRow
+              >
+                {({ ref, style, rowProps, moveControl }) => (
+                  <TaskRow
+                    userId={userId}
+                    rowRef={ref}
+                    style={style}
+                    task={task}
+                    list={list}
+                    busy={busy}
+                    change={change}
+                    drafts={noteDrafts.current}
+                    subtaskDrafts={subtaskDrafts.current}
+                    dueDrafts={dueDrafts.current}
+                    today={today}
+                    detailed={view.layout === "detailed"}
+                    matchedChildren={childMatches[task.id]}
+                    disableChildDrag={!manual}
+                    onOpenTask={setOpenTaskId}
+                    rowProps={rowProps}
+                    moveControl={moveControl}
+                  />
+                )}
+              </SortableItem>
+            ))}
+          </ul>
+        )}
       </SortableList>
     );
   }

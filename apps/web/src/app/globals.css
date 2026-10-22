@@ -47,10 +47,10 @@ h2 {
   color: var(--wuff-foreground);
 }
 
-/* Stable row geometry: a reserved drag slot, completion, content, one action. */
+/* Completion, flexible content, and one trailing action; no empty drag gutter. */
 .task-row {
   display: grid;
-  grid-template-columns: 24px 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   column-gap: 8px;
   row-gap: 0;
   padding-block: 4px;
@@ -59,20 +59,25 @@ h2 {
 .task-row[data-density="comfortable"] {
   padding-block: 12px;
 }
-.task-drag-slot {
-  grid-column: 1;
-  grid-row: 1;
+.task-drag-preview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+  background: var(--wuff-background);
+  box-shadow: 0 3px 12px #17202a18;
 }
-.task-drag-slot .drag-handle {
-  width: 24px;
-  opacity: 0;
+.task-row[data-row-draggable] {
+  cursor: grab;
+  touch-action: pan-y;
 }
-.task-row:hover > .task-drag-slot .drag-handle,
-.task-row:focus-within > .task-drag-slot .drag-handle {
-  opacity: 1;
+.task-row:focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: -2px;
+  border-radius: 6px;
 }
 .task-complete {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   width: 44px;
   height: 44px;
@@ -102,12 +107,12 @@ h2 {
   color: #fff;
 }
 .task-name {
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 1;
   min-width: 0;
 }
 .task-name:has(form) {
-  grid-column: 3 / -1;
+  grid-column: 2 / -1;
 }
 .task-name > span {
   display: block;
@@ -137,7 +142,7 @@ h2 {
   color: var(--wuff-muted);
 }
 .task-actions {
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 1;
 }
 .task-row:has(.inline-name-form) > .task-actions {
@@ -198,7 +203,7 @@ h2 {
 }
 .task-summary,
 .task-metadata {
-  grid-column: 3 / -1;
+  grid-column: 2 / -1;
   min-width: 0;
 }
 .task-summary {
@@ -245,7 +250,7 @@ button.task-cue:hover {
 }
 .task-panel,
 .task-subtask-panel {
-  grid-column: 3 / -1;
+  grid-column: 2 / -1;
   min-width: 0;
   margin-top: 12px;
 }
@@ -439,26 +444,17 @@ button:focus-visible {
   outline: 2px solid var(--wuff-primary);
   outline-offset: 2px;
 }
-@media (hover: none) {
-  .task-drag-slot .drag-handle {
-    opacity: 1;
-  }
-}
 @media (width < 40rem) {
   .task-row {
-    grid-template-columns: 44px 44px minmax(0, 1fr) 44px;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
     column-gap: 4px;
-  }
-  .task-drag-slot .drag-handle {
-    width: 44px;
-    opacity: 1;
   }
   .task-panel,
   .task-subtask-panel {
     grid-column: 1 / -1;
   }
   .task-summary {
-    grid-column: 3 / -1;
+    grid-column: 2 / -1;
   }
   .task-cue:is(a, button) {
     min-height: 44px;
