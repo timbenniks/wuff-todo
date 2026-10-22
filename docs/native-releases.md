@@ -24,7 +24,7 @@ In Actions → **Native test builds** → **Run workflow**, select **main**. CLI
 gh workflow run native-builds.yml --ref main
 ```
 
-This rebuilds and publishes the current main commit with a new run ID. Manual runs on other branches only build; they cannot publish. Automatic builds are queued without cancellation so a newer merge does not interrupt an in-progress release.
+This rebuilds and publishes the current main commit with a new run ID. Manual runs on other branches only build; they cannot publish. An active release build is never interrupted by a newer merge. GitHub retains only the newest pending run, so rapid merges while a build is running are grouped into the next release.
 
 For a failed publication, use **Re-run failed jobs** on the original run while its build artifacts still exist. The same run ID resumes its draft and replaces draft assets before validation. A retry of a completed publication verifies its commit and asset set and preserves the published files. It never clobbers published assets. If a draft contains unexpected files, publication fails rather than silently dropping them; inspect and correct that draft before retrying. After artifact expiry, run a fresh main build.
 
@@ -32,7 +32,7 @@ The existing [platform checklist and signing gates](tauri-platforms.md) still ap
 
 ## Verification
 
-Seven synthetic Python tests cover complete package checksums/source names, missing or wrong-commit artifacts, ambiguous packages, version mismatch, immutable published-release retries, interrupted uploads and incomplete upload sets. Run with Python 3.12:
+Nine synthetic Python tests cover complete package checksums/source names, missing or wrong-commit artifacts, ambiguous packages, version mismatch, immutable published-release retries, wrong-commit releases, interrupted uploads, incomplete upload sets and complete-draft publication. Run with Python 3.12:
 
 ```sh
 python3 -m unittest discover -s tests -p test_native_release.py -v

@@ -83,6 +83,26 @@ class NativeReleaseTests(unittest.TestCase):
             self.assertEqual(gh.call_count, 1)
             self.assertEqual(gh.call_args.args[:2], ("release", "upload"))
 
+    def test_complete_draft_is_published_only_after_asset_validation(self):
+        tag, version = self.assemble()
+        existing = {"targetCommitish": SHA, "isDraft": True}
+        uploaded = {"assets": [
+            {"name": p.name, "size": p.stat().st_size}
+            for p in self.output.iterdir() if p.name != "RELEASE-NOTES.md"
+        ]}
+        with patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, json.dumps(existing))), patch.object(release, "gh", side_effect=["", json.dumps(uploaded), "", "https://example.test/release"]) as gh:
+            self.assertEqual(release.publish(self.output, tag, version, SHA), "https://example.test/release")
+            self.assertEqual([call.args[1] for call in gh.call_args_list], ["upload", "view", "edit", "view"])
+            self.assertIn("--draft=false", gh.call_args_list[2].args)
+
+    def test_existing_release_for_another_commit_is_never_changed(self):
+        tag, version = self.assemble()
+        existing = {"targetCommitish": "b" * 40, "isDraft": True}
+        with patch.object(release.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, json.dumps(existing))), patch.object(release, "gh") as gh:
+            with self.assertRaisesRegex(ValueError, "another commit"):
+                release.publish(self.output, tag, version, SHA)
+            gh.assert_not_called()
+
     def test_incomplete_upload_set_cannot_publish(self):
         tag, version = self.assemble()
         existing = {"targetCommitish": SHA, "isDraft": True}
