@@ -53,7 +53,7 @@ Empty or whitespace-only titles are rejected. Titles are treated as content, nev
 
 **Proposed:** completed tasks appear in a collapsible section. Completing a task removes it from the active order; reopening appends it to the active list. Task order is shared by everyone with access to the list.
 
-The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). One-level subtasks are implemented in [subtasks](subtasks.md), with independent completion, shared sibling order and parent progress. Optional calendar due dates are implemented in [due dates](due-dates.md), independently for tasks and subtasks. Work-list priorities are implemented. Labels, due times, recurrence, and reminders remain deferred. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
+The original first release deferred task descriptions. Markdown task notes are now implemented in the next milestone; see [task content and voice](task-content.md). One-level subtasks are implemented in [subtasks](subtasks.md), with independent completion, shared sibling order and parent progress. Optional calendar due dates are implemented in [due dates](due-dates.md), independently for tasks and subtasks. Work-list priorities are implemented. Labels, shared due times and task recurrence remain deferred. Personal reminders were selected October 22; [reminder decisions](reminders.md) define the account/list/task controls and delivery gates. Private image uploads are implemented in the follow-up [task-image milestone](task-images.md).
 
 ### Sharing and invitations
 

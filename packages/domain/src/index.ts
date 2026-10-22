@@ -27,6 +27,7 @@ import {
   githubBindings,
   githubLinks,
   githubJobs,
+  reminderJobs,
 } from "@wuff/db";
 import {
   defaultListView,
@@ -574,6 +575,7 @@ export async function updateList(actor: Actor, data: unknown) {
     async (tx) => {
       await locked(tx, actor, input, true);
       const { title, description, color, archived, mode } = input;
+      if (archived) await cancelListReminders(tx, input.listId);
       if (archived || mode === "simple") await noActiveAgents(tx, input.listId);
       if (mode === "simple") {
         const rows = await tx
@@ -1304,6 +1306,7 @@ export async function removeListMember(actor: Actor, data: unknown) {
             eq(members.userId, input.userId),
           ),
         );
+      await cancelListReminders(tx, input.listId, input.userId);
       await clearDepartedAssignee(tx, input.listId, input.userId);
       return { id: input.listId };
     },
@@ -1326,6 +1329,7 @@ export async function leaveList(actor: Actor, data: unknown) {
         .where(
           and(eq(members.listId, input.listId), eq(members.userId, actor.id)),
         );
+      await cancelListReminders(tx, input.listId, actor.id);
       await clearDepartedAssignee(tx, input.listId, actor.id);
       return { id: input.listId };
     },
@@ -1587,3 +1591,21 @@ export async function cleanupTaskImages() {
 
 export * from "./github";
 export * from "./agents";
+
+export * from "./reminders";
+
+async function cancelListReminders(tx: Tx, listId: string, userId?: string) {
+  await tx
+    .update(reminderJobs)
+    .set({
+      enabled: false,
+      scheduling: "cancelled",
+      version: sql`${reminderJobs.version}+1`,
+    })
+    .where(
+      and(
+        sql`${reminderJobs.taskId} in (select id from ${tasks} where ${tasks.listId}=${listId})`,
+        userId ? eq(reminderJobs.userId, userId) : undefined,
+      ),
+    );
+}

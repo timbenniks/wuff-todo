@@ -1,6 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { api } from "@/lib/api";
+import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
 import { authClient } from "@/lib/auth/client";
 import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
 export { useActorApi } from "@wuff/ui/features/actor-api";
@@ -15,6 +16,7 @@ export function ActorApiProvider({
     () => ({
       api: (path, method, body) => api(path, method, body, userId),
       signOut: async () => {
+        await disableBrowserOnSignOut();
         await authClient.signOut();
         window.location.assign("/sign-in");
       },

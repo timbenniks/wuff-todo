@@ -1,4 +1,5 @@
 "use client";
+import { TaskReminder } from "../../../components/reminders/task-reminder";
 import { useRef, useState } from "react";
 import { Check, Copy, Pencil } from "lucide-react";
 import type { Task, TodoList } from "@wuff/contracts";
@@ -51,6 +52,7 @@ export function TaskDetailContent({
   const notes = useRef(new Map<string, NoteDraft>()),
     dates = useRef(new Map<string, DueDateDraft>()),
     children = useRef(new Map<string, string>());
+  const [reminderOpen, setReminderOpen] = useState(false);
   const [githubVisited, setGithubVisited] = useState(false);
   const [agentVisited, setAgentVisited] = useState(false);
   const today = useCalendarDay();
@@ -115,7 +117,26 @@ export function TaskDetailContent({
         >
           {task.dueDate ? "Change due date" : "Set due date"}
         </Button>
+        <Button
+          variant="outline"
+          disabled={busy}
+          aria-expanded={reminderOpen}
+          onClick={() => setReminderOpen(!reminderOpen)}
+        >
+          Remind me
+        </Button>
       </div>
+      {reminderOpen && (
+        <div className="mb-6">
+          <TaskReminder
+            key={`${task.id}:${task.completed}`}
+            listId={list.id}
+            taskId={task.id}
+            userId={userId}
+            inactive={task.completed || list.archived}
+          />
+        </div>
+      )}
       {dateOpen && (
         <div className="mb-6">
           <TaskDueDate

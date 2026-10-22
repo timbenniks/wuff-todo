@@ -119,3 +119,51 @@ test("native image decoding uses transport headers even when Response internal h
   assert.equal(blob.type, "image/webp");
   assert.equal(blob.size, 3);
 });
+
+test("native reminder controls use bearer operations and preserve personal revisions", async () => {
+  const calls: unknown[][] = [];
+  const api = featureApi(
+    {
+      call: async (...args: unknown[]) => {
+        calls.push(args);
+        return {} as any;
+      },
+    },
+    "reminder-actor",
+  );
+  await api("/api/v1/reminders");
+  await api("/api/v1/reminders?listId=list-id");
+  await api("/api/v1/reminders?listId=list-id&taskId=task-id");
+  const input = {
+    listId: "list-id",
+    taskId: "task-id",
+    version: 7,
+    runAt: "2026-10-23T09:00:00Z",
+    operationId: crypto.randomUUID(),
+  };
+  await api("/api/v1/reminders", "POST", { action: "task", input });
+  await api("/api/v1/reminders", "POST", { action: "task", input });
+  const local = { local: "2026-10-23T09:00", timezone: "Europe/Paris" };
+  await api("/api/v1/reminders", "POST", { action: "localTime", input: local });
+  assert.deepEqual(calls, [
+    ["getReminderSettings", undefined, "reminder-actor"],
+    ["getListReminders", { listId: "list-id" }, "reminder-actor"],
+    [
+      "getTaskReminder",
+      { listId: "list-id", taskId: "task-id" },
+      "reminder-actor",
+    ],
+    ["setTaskReminder", input, "reminder-actor"],
+    ["setTaskReminder", input, "reminder-actor"],
+    ["resolveReminderLocalTime", local, "reminder-actor"],
+  ]);
+  await assert.rejects(
+    api("/api/v1/reminders", "POST", { action: "unknown", input: {} }),
+    ApiError,
+  );
+  await assert.rejects(
+    api("/api/v1/reminders/arbitrary", "POST", { action: "task", input }),
+    ApiError,
+  );
+  assert.equal(calls.length, 6);
+});

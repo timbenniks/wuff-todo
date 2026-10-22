@@ -188,3 +188,7 @@ The task row gains nullable PostgreSQL `date` in Drizzle string mode, exposed as
 ## Personal list views
 
 Account/list preferences use the separate `wuff_list_views` table and revision, never the shared list/task version. Shared contracts provide one pure filter/group/sort projection for web, HTTP and MCP. Authorized snapshots carry only the actor's preferences; the sealed live query includes only that actor's view revision. View writes serialize with membership changes under the existing list lock and operation receipts. Browser caches merge task and view revisions independently. See [personal views](personal-views.md) for concurrency, child context, calendar and sorting rules.
+
+## Personal reminder delivery — October 22
+
+See [reminders](reminders.md) for personal revisions, delayed jobs, provider adapters and privacy. Scheduled callbacks and a single daily recovery pass replace minute polling. The push-only web service worker is explicitly selected for notifications; it adds no fetch interception, offline list storage or offline writes. Native registration still requires signed installed-client proof.

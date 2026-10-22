@@ -664,10 +664,10 @@ export function ListApp({
           )}
           <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
             <a
-              href={runtime.webOrigin + "/connections"}
+              href={runtime.webOrigin + "/settings"}
               className="block px-3 py-2 text-primary hover:underline"
             >
-              Connected AI clients
+              Settings
             </a>
             {runtime.githubConsent && (
               <Button
@@ -826,25 +826,28 @@ export function ListApp({
                     onChanged={sharingChanged}
                   />
                 )}
+                {!isPending && (
+                  <ListSettings
+                    key={list.id}
+                    list={list}
+                    userId={userId}
+                    busy={busy}
+                    change={change}
+                    retry={
+                      retryWrite
+                        ? () =>
+                            change(
+                              retryWrite.path,
+                              retryWrite.method,
+                              retryWrite.body,
+                              true,
+                            )
+                        : undefined
+                    }
+                  />
+                )}
                 {list.ownerId === userId && !isPending && (
                   <div className="contents">
-                    <ListSettings
-                      key={list.id}
-                      list={list}
-                      busy={busy}
-                      change={change}
-                      retry={
-                        retryWrite
-                          ? () =>
-                              change(
-                                retryWrite.path,
-                                retryWrite.method,
-                                retryWrite.body,
-                                true,
-                              )
-                          : undefined
-                      }
-                    />
                     <Button
                       variant="danger"
                       className="list-delete"

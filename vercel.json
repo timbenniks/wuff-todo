@@ -1,6 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "crons": [
     {
       "path": "/api/internal/task-images",
@@ -9,6 +11,10 @@
     {
       "path": "/api/internal/github",
       "schedule": "47 3 * * *"
+    },
+    {
+      "path": "/api/internal/reminders",
+      "schedule": "23 4 * * *"
     }
   ]
 }
