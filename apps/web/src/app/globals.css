@@ -72,6 +72,14 @@ h2 {
 .task-row[data-density="comfortable"] {
   padding-block: 12px;
 }
+.task-drag-preview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+  background: var(--wuff-background);
+  box-shadow: 0 3px 12px #17202a18;
+}
 .task-row[data-row-draggable] {
   cursor: grab;
   touch-action: pan-y;

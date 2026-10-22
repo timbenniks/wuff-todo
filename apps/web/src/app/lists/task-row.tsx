@@ -492,35 +492,37 @@ export function Subtasks({
           change("/api/v1/tasks", "PUT", { ...body, taskIds })
         }
       >
-        <ul aria-label={`Subtasks of ${parent.title}`}>
-          {items.map((task) => (
-            <SortableItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              disabled={disabled || disableDrag}
-              entireRow
-            >
-              {({ ref, style, rowProps, moveControl }) => (
-                <TaskRow
-                  task={task}
-                  list={list}
-                  userId={userId}
-                  busy={busy}
-                  change={change}
-                  drafts={drafts}
-                  subtaskDrafts={subtaskDrafts}
-                  dueDrafts={dueDrafts}
-                  today={today}
-                  rowRef={ref}
-                  style={style}
-                  rowProps={rowProps}
-                  moveControl={moveControl}
-                />
-              )}
-            </SortableItem>
-          ))}
-        </ul>
+        {(orderedItems) => (
+          <ul aria-label={`Subtasks of ${parent.title}`}>
+            {orderedItems.map((task) => (
+              <SortableItem
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                disabled={disabled || disableDrag}
+                entireRow
+              >
+                {({ ref, style, rowProps, moveControl }) => (
+                  <TaskRow
+                    task={task}
+                    list={list}
+                    userId={userId}
+                    busy={busy}
+                    change={change}
+                    drafts={drafts}
+                    subtaskDrafts={subtaskDrafts}
+                    dueDrafts={dueDrafts}
+                    today={today}
+                    rowRef={ref}
+                    style={style}
+                    rowProps={rowProps}
+                    moveControl={moveControl}
+                  />
+                )}
+              </SortableItem>
+            ))}
+          </ul>
+        )}
       </SortableList>
       {!list.archived && (
         <form

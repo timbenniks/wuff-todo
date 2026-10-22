@@ -19,6 +19,7 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
+  type Modifier,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -35,6 +36,7 @@ import { NativeSelect } from "./ui/native-select";
 
 const MoveContext = createContext<{
   items: { id: string; title: string }[];
+  nodes: { current: Map<string, HTMLElement> };
   dragging: { current: boolean };
   suppressClickUntil: { current: number };
   move: (id: string, position: number) => Promise<unknown>;
@@ -133,24 +135,60 @@ function MoveDialog({
     document.body,
   );
 }
-export function SortableList({
+export function SortableList<T extends { id: string; title: string }>({
   items,
   disabled,
   onReorder,
   children,
 }: {
-  items: { id: string; title: string }[];
+  items: T[];
   disabled: boolean;
   onReorder: (ids: string[], before: string[]) => Promise<unknown>;
-  children: ReactNode;
+  children: ReactNode | ((items: T[]) => ReactNode);
 }) {
   const id = useId(),
     started = useRef<string[]>([]),
     [dragged, setDragged] = useState<string | null>(null),
     [notice, setNotice] = useState("");
+  const nodes = useRef(new Map<string, HTMLElement>());
+  const boundary = useRef<HTMLElement | null>(null);
+  const [preview, setPreview] = useState<{
+    html: string;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<{
+    before: string[];
+    after: string[];
+  } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const rowList = typeof children === "function";
+  const sourceIds = items.map((item) => item.id);
+  // A refreshed membership or a different authoritative order supersedes a local projection.
+  const projected =
+    pendingOrder && sourceIds.join() === pendingOrder.before.join()
+      ? pendingOrder.after.map((id) => items.find((item) => item.id === id)!)
+      : items;
+  const persistOrder = async (next: string[], before: string[]) => {
+    if (rowList) setPendingOrder({ before, after: next });
+    setSaving(true);
+    try {
+      return await onReorder(next, before);
+    } finally {
+      setPendingOrder(null);
+      setSaving(false);
+    }
+  };
+  const restrictToList: Modifier = ({ transform, draggingNodeRect }) => {
+    const bounds = boundary.current?.getBoundingClientRect();
+    if (!bounds || !draggingNodeRect) return { ...transform, x: 0 };
+    const min = bounds.top - draggingNodeRect.top;
+    const max = bounds.bottom - draggingNodeRect.bottom;
+    return { ...transform, x: 0, y: Math.max(min, Math.min(max, transform.y)) };
+  };
   const dragging = useRef(false);
   const suppressClickUntil = useRef(0);
-  const ids = items.map((i) => i.id),
+  const ids = projected.map((i) => i.id),
     name = (id: string | number) =>
       items.find((i) => i.id === id)?.title ?? "item";
   const sensors = useSensors(
@@ -165,17 +203,27 @@ export function SortableList({
   return (
     <MoveContext.Provider
       value={{
-        items,
+        items: projected,
+        nodes,
         dragging,
         suppressClickUntil,
         move: async (id, position) => {
           const from = ids.indexOf(id);
-          if (disabled || from < 0 || position < 0 || position >= ids.length)
+          if (
+            disabled ||
+            saving ||
+            from < 0 ||
+            position < 0 ||
+            position >= ids.length
+          )
             return false;
           if (from === position) return true;
           setNotice("Saving order…");
           try {
-            const saved = await onReorder(arrayMove(ids, from, position), ids);
+            const saved = await persistOrder(
+              arrayMove(ids, from, position),
+              ids,
+            );
             setNotice(
               saved === false
                 ? "Order wasn’t saved. Check the list message."
@@ -192,6 +240,7 @@ export function SortableList({
       <DndContext
         id={id}
         sensors={sensors}
+        modifiers={rowList ? [restrictToList] : undefined}
         collisionDetection={closestCenter}
         accessibility={{
           screenReaderInstructions: {
@@ -214,6 +263,44 @@ export function SortableList({
         }}
         onDragStart={({ active }) => {
           dragging.current = true;
+          const node = nodes.current.get(String(active.id));
+          boundary.current = node?.parentElement ?? null;
+          if (rowList && node) {
+            const rect = node.getBoundingClientRect();
+            const clone = node.cloneNode(true) as HTMLElement;
+            const computed = getComputedStyle(node);
+            for (const element of [
+              clone,
+              ...clone.querySelectorAll<HTMLElement>("*"),
+            ]) {
+              for (const attr of [
+                "id",
+                "data-sort-id",
+                "data-task-id",
+                "aria-describedby",
+                "aria-controls",
+                "autofocus",
+              ])
+                element.removeAttribute(attr);
+              element.removeAttribute("tabindex");
+            }
+            Object.assign(clone.style, {
+              transform: "none",
+              transition: "none",
+              opacity: "1",
+              width: "100%",
+              height: `${rect.height}px`,
+              boxSizing: "border-box",
+              borderTopWidth: computed.borderTopWidth,
+              borderTopStyle: computed.borderTopStyle,
+              borderTopColor: computed.borderTopColor,
+            });
+            setPreview({
+              html: clone.outerHTML,
+              width: rect.width,
+              height: rect.height,
+            });
+          }
           started.current = [...ids];
           setDragged(String(active.id));
         }}
@@ -241,7 +328,7 @@ export function SortableList({
             to = ids.indexOf(String(over.id));
           if (from >= 0 && to >= 0) {
             setNotice("Getting your pack in order… Saving order.");
-            void onReorder(arrayMove(ids, from, to), ids)
+            void persistOrder(arrayMove(ids, from, to), ids)
               .then((saved) => {
                 setNotice(
                   saved === false
@@ -267,15 +354,23 @@ export function SortableList({
         <SortableContext
           items={ids}
           strategy={verticalListSortingStrategy}
-          disabled={disabled}
+          disabled={disabled || saving}
         >
-          {children}
+          {typeof children === "function" ? children(projected) : children}
         </SortableContext>
         <p role="status" className="sr-only">
           {notice}
         </p>
         <DragOverlay dropAnimation={null}>
-          {dragged ? (
+          {dragged && preview ? (
+            <ul
+              aria-hidden="true"
+              inert
+              className="task-drag-preview"
+              style={{ width: preview.width, height: preview.height }}
+              dangerouslySetInnerHTML={{ __html: preview.html }}
+            />
+          ) : dragged ? (
             <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-surface px-4 py-3 shadow-lg max-w-sm">
               <GripVertical size={16} className="text-muted-foreground" />
               <span className="truncate">{name(dragged)}</span>
@@ -316,7 +411,11 @@ export function SortableItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id, disabled });
+  } = useSortable({
+    id,
+    disabled,
+    animateLayoutChanges: entireRow ? () => false : undefined,
+  });
   const moveContext = useContext(MoveContext);
   const [moving, setMoving] = useState(false);
   const closeMove = () => {
@@ -354,6 +453,8 @@ export function SortableItem({
   return children({
     ref: (node) => {
       setNodeRef(node);
+      if (node) moveContext?.nodes.current.set(id, node);
+      else moveContext?.nodes.current.delete(id);
       if (entireRow) setActivatorNodeRef(node);
     },
     rowProps: entireRow
@@ -402,7 +503,7 @@ export function SortableItem({
     style: {
       transform: DndCSS.Transform.toString(transform),
       transition,
-      opacity: isDragging ? 0.3 : undefined,
+      opacity: isDragging ? (entireRow ? 0 : 0.3) : undefined,
       position: "relative",
       zIndex: isDragging ? 1 : undefined,
     },
