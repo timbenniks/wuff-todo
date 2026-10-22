@@ -427,12 +427,12 @@ export function TaskRow({
         )}
       />
       {(task.dueDate || task.content || children.length > 0 || task.github) && (
-        <div className="task-summary col-span-full basis-full min-w-0 flex flex-wrap items-center gap-x-3 gap-y-1 pl-8 text-xs text-muted-foreground">
+        <div className="task-summary col-span-full basis-full min-w-0 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
           <DueDateBadge task={task} today={today} />
           {task.content && (
             <button
               type="button"
-              className="inline-flex items-center gap-1 min-h-8 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+              className="task-summary-action inline-flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
               aria-label={`Read notes for ${task.title}`}
               onClick={() => {
                 setNotesOpen(true);
@@ -445,7 +445,7 @@ export function TaskRow({
           {children.length > 0 && (
             <button
               type="button"
-              className="inline-flex items-center gap-1 min-h-8 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+              className="task-summary-action inline-flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
               aria-expanded={subtasksOpen}
               aria-controls={`subtasks-${task.id}`}
               aria-label={`Subtasks for ${task.title}: ${children.filter((t) => t.completed).length} of ${children.length} done`}
@@ -456,31 +456,33 @@ export function TaskRow({
             </button>
           )}
           {task.github && (
-            <span className="inline-flex flex-wrap items-center gap-2">
+            <span className="task-github-summary inline-flex items-center gap-1.5">
               {task.github.url && (
                 <a
                   href={task.github.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="min-h-8 inline-flex items-center underline text-primary"
+                  className="task-summary-action inline-flex items-center hover:underline"
                   aria-label={`GitHub issue ${task.github.issueNumber} for ${task.title}`}
                 >
-                  #{task.github.issueNumber}
+                  GitHub #{task.github.issueNumber}
                 </a>
               )}
+              {task.github.url && <span aria-hidden="true">·</span>}
               <a
                 href={`${task.path}#github`}
-                className={`min-h-8 inline-flex items-center underline ${["Needs attention", "Disconnected"].includes(githubSyncLabel(task.github)) ? "text-destructive" : ""}`}
+                className={`task-summary-action inline-flex items-center hover:underline ${["Needs attention", "Disconnected"].includes(githubSyncLabel(task.github)) ? "text-destructive" : ""}`}
                 aria-label={`GitHub sync: ${githubSyncLabel(task.github)}. Open sync controls for ${task.title}`}
               >
-                GitHub · {githubSyncLabel(task.github)}
+                {task.github.url ? "" : "GitHub · "}
+                {githubSyncLabel(task.github)}
               </a>
             </span>
           )}
         </div>
       )}
       {detailed && (
-        <p className="col-span-full min-w-0 basis-full text-xs text-muted-foreground pl-8 pb-2 break-words">
+        <p className="task-metadata col-span-full min-w-0 basis-full text-xs text-muted-foreground break-words">
           {task.key} · <StatusTag status={task.status} /> ·{" "}
           {task.priority === "none"
             ? "No priority"
@@ -492,7 +494,7 @@ export function TaskRow({
         </p>
       )}
       {!!matchedChildren?.length && (
-        <p className="col-span-full min-w-0 basis-full text-xs text-primary pl-8">
+        <p className="task-metadata col-span-full min-w-0 basis-full text-xs text-primary">
           Shown because {matchedChildren.length} subtasks match your filters.
           Open subtasks to see the context.
         </p>

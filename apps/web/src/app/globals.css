@@ -93,6 +93,33 @@ h2 {
     order: 6;
   }
 }
+/* One shared text column keeps titles, content cues and open panels aligned. */
+.task-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 8px;
+  row-gap: 0;
+  padding-block: 4px;
+}
+.task-complete {
+  grid-column: 1;
+  grid-row: 1;
+}
+.task-name {
+  grid-column: 2;
+  grid-row: 1;
+}
+.task-name:has(form) {
+  grid-column: 2 / -1;
+}
+.task-name > span > a {
+  min-width: 0;
+  max-width: 100%;
+}
+.task-actions {
+  grid-column: 3;
+  grid-row: 1;
+}
 .task-actions[data-editing="true"] {
   display: none;
 }
@@ -102,8 +129,6 @@ h2 {
     display: grid;
     grid-template-columns: 32px minmax(0, 1fr) auto;
     column-gap: 4px;
-    row-gap: 0;
-    padding-block: 4px;
   }
   .task-complete {
     width: 44px;
@@ -111,8 +136,6 @@ h2 {
     margin: 0 0 0 -6px;
   }
   .task-name {
-    grid-column: 2;
-    grid-row: 1;
     align-self: center;
     min-width: 0;
     display: flex;
@@ -150,8 +173,6 @@ h2 {
     display: block;
   }
   .task-actions {
-    grid-column: 3;
-    grid-row: 1;
     position: relative;
     align-self: center;
     margin: 0;
@@ -386,9 +407,37 @@ h2 {
   box-shadow: 0 4px 16px #17202a12;
 }
 
-/* Content cues get their own quiet line; the name keeps the full first row. */
+.task-summary,
+.task-metadata {
+  grid-column: 2 / -1;
+  padding-left: 0;
+}
 .task-summary {
   overflow-wrap: anywhere;
+  line-height: 20px;
+}
+.task-summary-action {
+  min-height: 24px;
+}
+.task-github-summary {
+  white-space: nowrap;
+}
+.task-summary-action:hover {
+  color: var(--wuff-primary);
+}
+.task-summary-action.text-destructive:hover {
+  color: var(--color-destructive);
+}
+.task-metadata {
+  padding-block: 2px;
+}
+@media (width >= 40rem) {
+  .task-row > .task-panel,
+  .task-row > .task-subtask-panel {
+    grid-column: 2 / -1;
+    padding-left: 0;
+    margin-top: 8px;
+  }
 }
 .task-summary .due-tag {
   margin: 0;
@@ -403,6 +452,9 @@ h2 {
   display: none;
 }
 @media (width < 40rem) {
+  .task-metadata {
+    grid-column: 1 / -1;
+  }
   .task-open-details {
     display: inline-flex;
     flex-basis: 100%;
