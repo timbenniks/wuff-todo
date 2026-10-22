@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-15
             bundle: app
             artifact: macos-debug
             path: apps/native/src-tauri/target/debug/bundle/macos/*.app
@@ -99,7 +99,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   ios:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +115,7 @@ jobs:
         with:
           workspaces: apps/native/src-tauri
       - run: pnpm install --frozen-lockfile
+      - run: sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
       - run: pnpm --filter @wuff/native tauri ios init --ci --skip-targets-install
       - run: cargo clean --manifest-path apps/native/src-tauri/Cargo.toml -p tauri-plugin-deep-link
       - run: pnpm --filter @wuff/native tauri ios build --debug --target aarch64-sim --no-sign --archive-only --ci

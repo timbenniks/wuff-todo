@@ -8,6 +8,8 @@ The private repository's **Native test builds** workflow creates unsigned macOS/
 
 Inspecting the compiled iOS Info.plist revealed missing callback registration despite a successful build. A checked-in Info.ios.plist now declares the fixed scheme. CI regenerates the deep-link plugin metadata after mobile project initialization even with restored Cargo caches, and verifies callback entries in the final iOS plist and Android APK manifest before upload. This is package-registration evidence; an installed browser callback is still a device test.
 
+The final Apple jobs use the supported Apple Silicon `macos-15` runner with Xcode 26.3 for iOS. This pins the host instead of following `macos-latest`; the initial macOS 26 jobs remained queued for over ten minutes and a single restart did not immediately resolve the queue. [GitHub runner image inventory](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md) lists this host/toolchain combination.
+
 ## Acceptance matrix
 
 | Platform | Build evidence | Installed evidence | Remaining release gate |
