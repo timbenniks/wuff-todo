@@ -141,3 +141,7 @@ Named shared list colors were delivered before mobile in the mature-list milesto
 Focus automated tests on permission isolation, invitation lifecycle, ordering, concurrency, and idempotency. Test the same core operations through API and MCP adapters. Use browser checks for the two-user workflow, keyboard controls, responsive layouts, and recoverable failures.
 
 Auth and MCP claims require live integration evidence. A successful build alone does not prove login, authorization, sharing, or production behavior. Record commands and outcomes when implementation begins.
+
+## Tauri cross-platform client — October 22, 2026
+
+Workspace PR #11, sign-in PR #12 and shared-controls PR #13 are merged. macOS/Windows CI passes for the auth/shared UI slice; packaged macOS warm/cold callbacks, restart and Keychain restoration are verified. See [auth](tauri-auth.md), [shared UI](shared-ui.md) and [live transport](tauri-live.md). Core editing, cache integration, notes/images and Work context are next. Installed Windows/iOS/Android and signed distribution remain release gates.

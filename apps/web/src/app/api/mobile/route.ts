@@ -27,11 +27,13 @@ import {
   updateListView,
   getTask,
   processGithubJobs,
+  requireScope,
 } from "@wuff/domain";
 import { bearerActor } from "@/lib/oauth";
 import { nativeResource } from "@/lib/config";
 import { failure, jsonInput, privateJson } from "@/lib/http";
 import { z } from "zod";
+import { sealLiveLists } from "@/lib/live-server";
 
 // A bearer-only native adapter: cookies and Origin headers never grant access.
 // All permissions, versions, receipts and validation stay in domain services.
@@ -73,7 +75,26 @@ export async function POST(request: Request) {
     let result: unknown;
     if (action === "session")
       result = { userId: actor.id, scopes: actor.scopes };
-    else if (action === "getList")
+    else if (action === "getLive") {
+      requireScope(actor, "lists:read");
+      const expected = z
+        .object({ userId: z.string().min(1).max(200) })
+        .strict()
+        .parse(input);
+      if (expected.userId !== actor.id)
+        throw new AppError(
+          "account_changed",
+          "Your signed-in account changed. Sign in again.",
+          409,
+        );
+      result = await sealLiveLists(actor);
+      if (!result)
+        throw new AppError(
+          "live_unavailable",
+          "Live updates are unavailable. Regular refresh is still active.",
+          503,
+        );
+    } else if (action === "getList")
       result = await getList(actor, idSchema.parse(input));
     else if (action === "getTask")
       result = await getTask(actor, taskLookupSchema.parse(input));

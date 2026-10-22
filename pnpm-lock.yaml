@@ -177,6 +177,9 @@ importers:
 
   apps/web:
     dependencies:
+      "@wuff/client":
+        specifier: workspace:*
+        version: link:../../packages/client
       "@wuff/ui":
         specifier: workspace:*
         version: link:../../packages/ui
@@ -360,6 +363,12 @@ importers:
 
   packages/ui:
     dependencies:
+      "@neon/realtime-react":
+        specifier: 0.1.0
+        version: 0.1.0(@neon/realtime@0.1.0(ws@8.21.2))(react@19.3.1)
+      "@neon/realtime":
+        specifier: 0.1.0
+        version: 0.1.0(ws@8.21.2)
       '@radix-ui/react-slot':
         specifier: ^1.5.0
         version: 1.5.0(@types/react@19.3.0)(react@19.3.1)

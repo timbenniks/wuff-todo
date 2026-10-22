@@ -1,3 +1,4 @@
+mod live;
 use tauri_plugin_keyring::KeyringExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -10,6 +11,12 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder.plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}));
     builder
+        .manage(live::LiveSockets::default())
+        .invoke_handler(tauri::generate_handler![
+            live::live_open,
+            live::live_send,
+            live::live_close
+        ])
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
@@ -19,7 +26,8 @@ pub fn run() {
             // The plugin default protected store requires a provisioning profile.
             #[cfg(target_os = "macos")]
             keyring_core::set_default_store(apple_native_keyring_store::keychain::Store::new()?);
-            app.keyring().initialize_service("com.timbenniks.wufftodo.tauri".into())?;
+            app.keyring()
+                .initialize_service("com.timbenniks.wufftodo.tauri".into())?;
             Ok(())
         })
         .run(tauri::generate_context!())

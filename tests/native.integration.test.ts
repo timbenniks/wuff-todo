@@ -1,4 +1,10 @@
 import { test } from "node:test";
+import {
+  createRealtimeClient,
+  waitForLive,
+  disconnectLiveConnections,
+} from "./helpers/live";
+import type { LiveLists } from "../apps/web/src/lib/live-types";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -518,5 +524,77 @@ test("Tauri fixed identity uses native permissions, refresh and revocation", asy
     assert.equal((await mobile(rotated.access_token, "listLists")).status, 401);
   } finally {
     await revoke(refresh, tauriClientId);
+  }
+});
+
+test("Tauri bearer live capabilities pin the actor and stream authorized changes", async () => {
+  const cookie = await loginFixture(users[0]);
+  const identity = {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  };
+  const reader = await grant(cookie, "lists:read", identity);
+  const writer = await grant(cookie, "lists:read lists:manage", identity);
+  let list: TodoList | undefined;
+  let live: ReturnType<typeof createRealtimeClient> | undefined;
+  try {
+    const session = await (await mobile(reader.access_token, "session")).json();
+    assert.equal(
+      (await mobile(reader.access_token, "getLive", { userId: users[1].id }))
+        .status,
+      409,
+    );
+    const response = await mobile(reader.access_token, "getLive", {
+      userId: session.userId,
+    });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control")!, /no-store/);
+    const config = (await response.json()) as LiveLists;
+    live = createRealtimeClient({ url: config.url, logLevel: "silent" });
+    const subscription = live.subscribe(config.query);
+    await waitForLive(subscription, () => true);
+    list = await (
+      await mobile(writer.access_token, "createList", {
+        title: "Tauri stream synthetic",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    await waitForLive(subscription, (rows) =>
+      rows.some((row) => row.id === list!.id),
+    );
+    assert.equal(
+      (
+        await mobile(writer.access_token, "deleteList", {
+          listId: list!.id,
+          version: list!.version,
+          operationId: crypto.randomUUID(),
+        })
+      ).status,
+      200,
+    );
+    await waitForLive(
+      subscription,
+      (rows) => !rows.some((row) => row.id === list!.id),
+    );
+    list = undefined;
+    await revoke(reader.refresh_token, tauriClientId);
+    assert.equal(
+      (await mobile(reader.access_token, "getLive", { userId: session.userId }))
+        .status,
+      401,
+    );
+    subscription.unsubscribe();
+  } finally {
+    live?.close();
+    disconnectLiveConnections();
+    if (list)
+      await mobile(writer.access_token, "deleteList", {
+        listId: list.id,
+        version: list.version,
+        operationId: crypto.randomUUID(),
+      });
+    await revoke(reader.refresh_token, tauriClientId);
+    await revoke(writer.refresh_token, tauriClientId);
   }
 });
