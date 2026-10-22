@@ -18,6 +18,10 @@
     "test:integration": "node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/*.integration.test.ts",
     "format": "prettier --write . --ignore-path .gitignore",
     "format:check": "prettier --check . --ignore-path .gitignore",
+    "dev:native": "pnpm --filter @wuff/native tauri dev",
+    "dev:native:web": "pnpm --filter @wuff/native dev",
+    "build:native:web": "pnpm --filter @wuff/native build",
+    "build:native": "pnpm --filter @wuff/native tauri build --no-bundle",
     "dev:mobile": "pnpm --filter @wuff/mobile start",
     "build:mobile": "pnpm --filter @wuff/mobile export && node scripts/verify-mobile-bundle.mjs"
   },
