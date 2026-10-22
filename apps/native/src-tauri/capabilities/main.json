@@ -1,0 +1,39 @@
+{
+  "identifier": "main",
+  "description": "Local Wuff window: browser sign-in, scoped HTTP and native credentials.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "deep-link:allow-get-current",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://wuff-todo.vercel.app/oauth/authorize*"
+        }
+      ]
+    },
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://wuff-todo.vercel.app/api/mobile"
+        },
+        {
+          "url": "https://wuff-todo.vercel.app/oauth/tauri"
+        },
+        {
+          "url": "https://wuff-todo.vercel.app/oauth/token"
+        },
+        {
+          "url": "https://wuff-todo.vercel.app/oauth/revoke"
+        }
+      ]
+    },
+    "keyring:allow-get-password",
+    "keyring:allow-set-password",
+    "keyring:allow-delete-password",
+    "keyring:allow-has-password"
+  ]
+}

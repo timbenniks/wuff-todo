@@ -12,4 +12,17 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "=2.7.4", features = [] }
 
 [dependencies]
+serde_json = "1"
 tauri = { version = "=2.12.5", features = [] }
+
+tauri-plugin-http = { version = "=2.8.3", default-features = false, features = ["rustls-tls"] }
+tauri-plugin-opener = "=2.7.2"
+tauri-plugin-deep-link = "=2.6.2"
+tauri-plugin-keyring = { git = "https://github.com/charlesportwoodii/tauri-plugin-keyring", rev = "b0a137bab0c3e592c637c32c328040d86f28256a" }
+
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring-core = "=1.0.1"
+apple-native-keyring-store = { version = "=1.0.2", features = ["keychain"] }

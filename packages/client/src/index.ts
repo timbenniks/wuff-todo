@@ -11,6 +11,8 @@ export {
   nativeAllowedScopes,
 } from "@wuff/contracts";
 
+export type NativeClientIdentity = { clientId: string; redirectUri: string };
+
 export type NativeTokens = {
   accessToken: string;
   refreshToken: string;
@@ -64,6 +66,10 @@ export class NativeClient {
     origin: string,
     private storage: TokenStorage,
     private fetcher = fetch,
+    private identity: NativeClientIdentity = {
+      clientId: nativeClientId,
+      redirectUri: nativeRedirectUri,
+    },
   ) {
     this.origin = serverOrigin(origin);
   }
@@ -106,7 +112,7 @@ export class NativeClient {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         ...params,
-        client_id: nativeClientId,
+        client_id: this.identity.clientId,
         resource: this.origin + "/api/mobile",
       }).toString(),
     });
@@ -144,7 +150,7 @@ export class NativeClient {
       await this.revoke(tokens).catch(() => {});
       if (generation === this.generation) await this.clear();
       throw new ClientError(
-        "Your phone couldn’t securely save sign-in. Please try again.",
+        "This device couldn’t securely save sign-in. Please try again.",
       );
     }
     if (generation !== this.generation) {
@@ -165,7 +171,7 @@ export class NativeClient {
         grant_type: "authorization_code",
         code,
         code_verifier: verifier,
-        redirect_uri: nativeRedirectUri,
+        redirect_uri: this.identity.redirectUri,
       },
       this.generation,
     );
@@ -228,7 +234,7 @@ export class NativeClient {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: nativeClientId,
+        client_id: this.identity.clientId,
         token: tokens.refreshToken,
       }).toString(),
     });
@@ -252,11 +258,11 @@ export class NativeClient {
     }
     if (!localCleared)
       throw new ClientError(
-        "Your phone couldn’t remove saved sign-in. Revoke this connection on the website before using this phone again.",
+        "This device couldn’t remove saved sign-in. Revoke this connection on the website before using this device again.",
       );
     if (!remoteRevoked)
       throw new ClientError(
-        "Signed out on this phone. Revoke its connection on the website to finish disconnecting it.",
+        "Signed out on this device. Revoke its connection on the website to finish disconnecting it.",
       );
   }
   async clear() {
