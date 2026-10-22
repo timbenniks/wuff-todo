@@ -1,6 +1,15 @@
 import { after } from "next/server";
 import { AppError, idSchema, taskLookupSchema } from "@wuff/contracts";
 import {
+  resolveReminderLocalTime,
+  getReminderSettings,
+  getListReminders,
+  getTaskReminder,
+  updateReminderSettings,
+  updateListReminders,
+  setTaskReminder,
+  registerReminderDevice,
+  removeReminderDevice,
   listLists,
   getList,
   createList,
@@ -46,6 +55,14 @@ import { sealLiveLists } from "@/lib/live-server";
 // A bearer-only native adapter: cookies and Origin headers never grant access.
 // All permissions, versions, receipts and validation stay in domain services.
 const operations = {
+  resolveReminderLocalTime,
+  getListReminders,
+  getTaskReminder,
+  updateReminderSettings,
+  updateListReminders,
+  setTaskReminder,
+  registerReminderDevice,
+  removeReminderDevice,
   listLists,
   createList,
   updateList,
@@ -99,6 +116,8 @@ export async function POST(request: Request) {
     let result: unknown;
     if (action === "session")
       result = { userId: actor.id, scopes: actor.scopes };
+    else if (action === "getReminderSettings")
+      result = await getReminderSettings(actor);
     else if (action === "githubTask")
       result = await githubTask(actor, idSchema.parse(input));
     else if (action === "githubPullRequests")

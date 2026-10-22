@@ -44,7 +44,8 @@
     "./features/api": "./src/features/api.ts",
     "./features/actor-api": "./src/features/actor-api.tsx",
     "./features/runtime": "./src/features/runtime.ts",
-    "./features/live-updates": "./src/features/live-updates.tsx"
+    "./features/live-updates": "./src/features/live-updates.tsx",
+    "./features/components/reminders/request": "./src/features/components/reminders/request.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

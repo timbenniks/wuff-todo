@@ -426,3 +426,88 @@ export const agentRuns = pgTable(
   },
   (t) => [uniqueIndex("wuff_agent_operation").on(t.actorId, t.operationId)],
 );
+
+// Personal reminder data never changes a shared list's revision.
+export const reminderPreferences = pgTable("wuff_reminder_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  version: integer("version").notNull().default(0),
+  preferences: jsonb("preferences")
+    .$type<import("@wuff/contracts").ReminderPreferences>()
+    .notNull(),
+});
+export const reminderLists = pgTable(
+  "wuff_reminder_lists",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(0),
+    dailyIncluded: boolean("daily_included").notNull().default(true),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.listId] })],
+);
+export const reminderDevices = pgTable(
+  "wuff_reminder_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    transport: text("transport")
+      .$type<import("@wuff/contracts").ReminderDevice["transport"]>()
+      .notNull(),
+    address: text("address").notNull(),
+    subscription: jsonb("subscription").$type<{
+      endpoint: string;
+      keys: { p256dh: string; auth: string };
+    }>(),
+    createdAt: time("created_at"),
+  },
+  (t) => [
+    uniqueIndex("wuff_reminder_address").on(t.transport, t.address),
+    index("wuff_reminder_device_user").on(t.userId),
+  ],
+);
+export const reminderJobs = pgTable(
+  "wuff_reminder_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"task" | "digest">().notNull(),
+    version: integer("version").notNull().default(1),
+    runAt: time("run_at"),
+    enabled: boolean("enabled").notNull().default(true),
+    scheduling: text("scheduling").notNull().default("pending"),
+    messageId: text("message_id"),
+  },
+  (t) => [
+    uniqueIndex("wuff_reminder_task_user").on(t.userId, t.taskId),
+    uniqueIndex("wuff_reminder_digest_user")
+      .on(t.userId)
+      .where(sql`${t.kind} = 'digest'`),
+    index("wuff_reminder_pending").on(t.scheduling),
+  ],
+);
+export const reminderDeliveries = pgTable(
+  "wuff_reminder_deliveries",
+  {
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => reminderJobs.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    deviceId: uuid("device_id")
+      .notNull()
+      .references(() => reminderDevices.id, { onDelete: "cascade" }),
+    sentAt: time("sent_at"),
+  },
+  (t) => [primaryKey({ columns: [t.jobId, t.version, t.deviceId] })],
+);

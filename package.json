@@ -10,7 +10,7 @@
     "preview:local": "pnpm build && pnpm --filter @wuff/web start",
     "build": "pnpm build:mcp && pnpm --filter @wuff/web build",
     "typecheck": "pnpm -r typecheck && tsc --noEmit",
-    "test": "node --import tsx --test tests/contracts.test.ts tests/oauth-policy.test.ts tests/list-cache.test.ts tests/session-result.test.ts tests/page-session.test.ts tests/work-tasks.test.ts tests/list-view.test.ts tests/live-refresh.test.ts tests/task-content.test.ts tests/editor-ordering.test.ts tests/task-images.test.ts tests/due-dates.test.ts tests/list-theme.test.ts tests/github-policy.test.ts tests/native-client.test.ts tests/tauri-auth.test.ts tests/native-socket.test.ts tests/native-features.test.ts tests/agents.test.ts tests/task-metadata.test.ts",
+    "test": "node --import tsx --test tests/contracts.test.ts tests/oauth-policy.test.ts tests/list-cache.test.ts tests/session-result.test.ts tests/page-session.test.ts tests/work-tasks.test.ts tests/list-view.test.ts tests/live-refresh.test.ts tests/task-content.test.ts tests/editor-ordering.test.ts tests/task-images.test.ts tests/due-dates.test.ts tests/list-theme.test.ts tests/github-policy.test.ts tests/native-client.test.ts tests/tauri-auth.test.ts tests/native-socket.test.ts tests/native-features.test.ts tests/agents.test.ts tests/task-metadata.test.ts tests/reminders.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build",

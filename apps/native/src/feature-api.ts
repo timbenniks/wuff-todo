@@ -25,7 +25,36 @@ export function featureApi(
     if (parts[0] !== "api" || parts[1] !== "v1")
       throw new ApiError("Unsupported app operation.", 400);
     const [, , kind, id, sub, subId] = parts;
-    if (kind === "lists" && !id)
+    if (kind === "reminders" && !id) {
+      if (method === "GET") {
+        action = url.searchParams.has("taskId")
+          ? "getTaskReminder"
+          : url.searchParams.has("listId")
+            ? "getListReminders"
+            : "getReminderSettings";
+        input =
+          action === "getTaskReminder"
+            ? {
+                listId: url.searchParams.get("listId"),
+                taskId: url.searchParams.get("taskId"),
+              }
+            : action === "getListReminders"
+              ? { listId: url.searchParams.get("listId") }
+              : undefined;
+      } else if (method === "POST") {
+        action = (
+          {
+            settings: "updateReminderSettings",
+            list: "updateListReminders",
+            task: "setTaskReminder",
+            localTime: "resolveReminderLocalTime",
+            device: "registerReminderDevice",
+            removeDevice: "removeReminderDevice",
+          } as Record<string, string>
+        )[String(data.action)];
+        input = data.input;
+      }
+    } else if (kind === "lists" && !id)
       action =
         method === "GET"
           ? "listLists"

@@ -200,3 +200,27 @@ The only mobile environment input is the public `EXPO_PUBLIC_WUFF_ORIGIN`. Reuse
 Every user connects a personal Cursor API key under `/connections#cursor`. The server validates it and stores only AES-256-GCM ciphertext in `wuff_agent_accounts`, indexed by Wuff user ID. `CURSOR_TOKEN_SECRET` is the independent encryption key; keep it stable, server-only and securely backed up. No global `CURSOR_API_KEY` or owner-ID fallback remains.
 
 Tim’s previously supplied key was migrated into his production personal connection and the isolated Alex development connection. Readback/decryption matched before plaintext env entries and Vercel API-key/owner variables were removed. Production additive migrations 0011/0012 preserved existing user/list/task/member row counts and fingerprints (2/5/20/1), with no managed-auth writes. Vercel retains the hidden encryption secret. `/agents` redirects to `/connections`, preserving list context. No paid run or application deployment was performed.
+
+## Personal reminder setup — October 22
+
+See [reminders](reminders.md). Additive migration `0013_vengeful_lila_cheney.sql` creates only application reminder tables; `0014_reminder_completion.sql` cancels pending task reminders on any completion transition, including GitHub synchronization writes. Apply both to isolated development before production. Scheduler and all push credentials are optional server-only configuration from `.env.example`. An HTTPS public WUFF_ORIGIN is required for QStash; loopback can test the domain with mocked providers but cannot receive public callbacks. Use the existing Vercel deployment for a signed-provider smoke rather than exposing credentials through a tunnel or logs.
+
+QStash publishes only job IDs/generations to `/api/internal/reminders`. POST verifies its signature against the canonical URL and body; GET requires CRON_SECRET for once-daily recovery. Set both signing keys for rotation. Generate VAPID keys privately and store the private key only in ignored environment files/Vercel; only the public key reaches browsers. Never print APNs/FCM/WNS credentials or device addresses. Missing provider configuration is displayed in personal Settings; saving a preference does not assert deliverability.
+
+### QStash Marketplace provisioning attempt — October 22
+
+Vercel CLI 64.2.0 supports `upstash/upstash-qstash`. The project resource inventory showed only the existing Neon resource. Attempted provisioning with:
+
+```sh
+vercel integration add upstash/upstash-qstash --name wuff-todo-reminders --plan free --metadata primaryRegion=fra1 --metadata prodPack=false --environment production --no-env-pull --scope tim-benniks-projects-1b967033
+```
+
+The CLI returned `integration_terms_acceptance_required` and `userActionRequired: true`; no QStash provisioning success is claimed. The account owner must complete [Upstash Marketplace terms acceptance](https://vercel.com/tim-benniks-projects-1b967033/~/integrations/accept-terms/upstash?source=cli), then retry the same command after checking current installations/resources. Preserve the development database/auth values: do not use automatic environment pulling. QSTASH_URL is supplied by the integration for the selected region and is automatically read by the installed SDK; keep it alongside the token and signing keys. Resource provisioning does not deploy the reminder application or apply production database migrations.
+
+### QStash provisioning completed — October 22
+
+After the account owner accepted the Marketplace terms, the same CLI command succeeded. `wuff-todo-reminders` is Available and connected to `wuff-todo` in Production only, on the selected free plan with `primaryRegion=fra1` and `prodPack=false`. Upstash installation ID: `icfg_qFRKCRsDxXsYK1TwDHIJoZaz`; resource ID: `store_OoHLdZCNmYWdcMsg`.
+
+The integration supplied QSTASH_URL, QSTASH_TOKEN, QSTASH_CURRENT_SIGNING_KEY and QSTASH_NEXT_SIGNING_KEY. A read-only SDK schedules-list call authenticated successfully against `qstash-eu-central-1.upstash.io` and returned zero active schedules. No message was published. Only these four variables were merged into the existing ignored `.env.production.local`; other production values and the entire `.env.local` development file were preserved. The temporary ignored environment download was removed. Secret values were not displayed.
+
+No application deployment or production reminder migrations were performed. A new deployment is required to receive the integration environment, and end-to-end signed callback delivery remains a release check. Native/Web Push provider credentials remain separate from QStash.
