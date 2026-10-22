@@ -7,11 +7,13 @@ import {
   useRef,
   type CSSProperties,
   type ReactNode,
+  type HTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   KeyboardSensor,
   closestCenter,
   useSensor,
@@ -34,6 +36,7 @@ import { NativeSelect } from "./ui/native-select";
 const MoveContext = createContext<{
   items: { id: string; title: string }[];
   dragging: { current: boolean };
+  suppressClickUntil: { current: number };
   move: (id: string, position: number) => Promise<unknown>;
 } | null>(null);
 
@@ -146,11 +149,15 @@ export function SortableList({
     [dragged, setDragged] = useState<string | null>(null),
     [notice, setNotice] = useState("");
   const dragging = useRef(false);
+  const suppressClickUntil = useRef(0);
   const ids = items.map((i) => i.id),
     name = (id: string | number) =>
       items.find((i) => i.id === id)?.title ?? "item";
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -160,6 +167,7 @@ export function SortableList({
       value={{
         items,
         dragging,
+        suppressClickUntil,
         move: async (id, position) => {
           const from = ids.indexOf(id);
           if (disabled || from < 0 || position < 0 || position >= ids.length)
@@ -210,12 +218,14 @@ export function SortableList({
           setDragged(String(active.id));
         }}
         onDragCancel={() => {
+          suppressClickUntil.current = Date.now() + 300;
           setDragged(null);
           setTimeout(() => {
             dragging.current = false;
           }, 0);
         }}
         onDragEnd={({ active, over }) => {
+          suppressClickUntil.current = Date.now() + 300;
           setTimeout(() => {
             dragging.current = false;
           }, 0);
@@ -280,15 +290,22 @@ export function SortableItem({
   id,
   title,
   disabled,
+  entireRow = false,
   children,
 }: {
   id: string;
   title: string;
   disabled: boolean;
+  entireRow?: boolean;
   children: (props: {
     ref: (node: HTMLElement | null) => void;
     style: CSSProperties;
     handle: ReactNode;
+    rowProps?: HTMLAttributes<HTMLElement> & {
+      "data-sort-id"?: string;
+      "data-row-draggable"?: boolean;
+    };
+    moveControl?: ReactNode;
   }) => ReactNode;
 }) {
   const {
@@ -335,7 +352,53 @@ export function SortableItem({
     </>
   );
   return children({
-    ref: setNodeRef,
+    ref: (node) => {
+      setNodeRef(node);
+      if (entireRow) setActivatorNodeRef(node);
+    },
+    rowProps: entireRow
+      ? {
+          tabIndex: disabled ? undefined : 0,
+          "aria-describedby": attributes["aria-describedby"],
+          "aria-roledescription": disabled ? undefined : "sortable task",
+          "data-sort-id": id,
+          "data-row-draggable": !disabled || undefined,
+          onMouseDown: (event) => {
+            if (!disabled && rowDragTarget(event.target, event.currentTarget))
+              listeners?.onMouseDown?.(event);
+          },
+          onTouchStart: (event) => {
+            if (!disabled && rowDragTarget(event.target, event.currentTarget))
+              listeners?.onTouchStart?.(event);
+          },
+          onKeyDown: (event) => {
+            if (
+              !disabled &&
+              event.target === event.currentTarget &&
+              event.code === "Space"
+            )
+              listeners?.onKeyDown?.(event);
+          },
+          onClickCapture: (event) => {
+            if (
+              moveContext?.dragging.current ||
+              Date.now() < (moveContext?.suppressClickUntil.current ?? 0)
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          },
+        }
+      : undefined,
+    moveControl:
+      entireRow && !disabled ? (
+        <>
+          <Button type="button" variant="ghost" onClick={() => setMoving(true)}>
+            <GripVertical size={16} /> Move to position
+          </Button>
+          {moving && <MoveDialog id={id} title={title} close={closeMove} />}
+        </>
+      ) : undefined,
     style: {
       transform: DndCSS.Transform.toString(transform),
       transition,
@@ -345,4 +408,19 @@ export function SortableItem({
     },
     handle,
   });
+}
+
+// Only the summary surface starts a row drag. Nested editors and controls retain
+// their own gestures, including controls in expanded subtasks and popovers.
+function rowDragTarget(target: EventTarget, row: HTMLElement) {
+  if (!(target instanceof Element) || target.closest(".task-row") !== row)
+    return false;
+  const panel = target.closest(
+    ".task-panel, .task-subtask-panel, .task-summary, .task-metadata",
+  );
+  if (panel && row.contains(panel)) return false;
+  const control = target.closest(
+    "button, a, input, textarea, select, summary, [contenteditable], [role=button], [role=checkbox]",
+  );
+  return !control || control.matches(".task-name > span > a");
 }

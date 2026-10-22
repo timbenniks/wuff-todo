@@ -113,8 +113,9 @@ export function TaskGroups({
               id={task.id}
               title={task.title}
               disabled={disabled || !manual || task.completed}
+              entireRow
             >
-              {({ ref, style, handle }) => (
+              {({ ref, style, rowProps, moveControl }) => (
                 <TaskRow
                   userId={userId}
                   rowRef={ref}
@@ -131,11 +132,8 @@ export function TaskGroups({
                   matchedChildren={childMatches[task.id]}
                   disableChildDrag={!manual}
                   onOpenTask={setOpenTaskId}
-                  dragHandle={
-                    !list.archived && manual && !task.completed
-                      ? handle
-                      : undefined
-                  }
+                  rowProps={rowProps}
+                  moveControl={moveControl}
                 />
               )}
             </SortableItem>

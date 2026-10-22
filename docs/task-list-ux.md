@@ -59,3 +59,11 @@ These are local UI and synthetic persistence checks. No production deployment, p
 - [MCP list catalog at 320px](screenshots/task-ux-mcp-catalog-320.png)
 
 The earlier [spacing preview](screenshots/task-row-spacing-desktop.png) records the previous row design. All new screenshots use synthetic development/component fixtures.
+
+## Row dragging and the leading gutter — October 22 follow-up
+
+Removed the reserved drag column from website task rows (including subtasks and read-only/completed rows). Completion now starts at the row's leading edge; title, metadata and trailing actions retain fixed alignment. The MCP task layout already uses three columns without this drag gutter.
+
+Reorderable website rows use the existing sortable/domain ordering flow with a 6px mouse activation threshold. Touch requires a 250ms hold with 5px movement tolerance; ordinary vertical swipes retain scrolling. Checkbox, metadata, menu, nested task and editor interactions do not start a parent drag. A completed/cancelled drag suppresses its release click. Clicking summary space or pressing Enter on the focused row opens the task; Space picks it up for arrow-key ordering. “Move to position” remains in the trailing actions menu. Other sortable surfaces retain their existing dedicated handles.
+
+Local verification uses the real React task/sortable components with an in-memory synthetic list and mutation adapter, without account or database writes. Chromium checks passed for blank-row/Enter opening, checkbox isolation, menu/position picker, keyboard ordering, mouse drag ordering and release-click suppression. At measured 320px, 390px and 1280px widths the checkbox starts at the row edge, retains a 44px target, and the document has no horizontal overflow. Chromium touch emulation passed ordinary swipe scrolling with no mutation, held-touch ordering without opening details, and independent checkbox tapping. Both densities passed the responsive geometry checks. `pnpm check` passed all workspace/root TypeScript checks, 60 tests, and optimized web/MCP builds. This is browser emulation, not physical-device or deployed-session proof. [390px screenshot](screenshots/task-row-no-gutter-390.png).
