@@ -116,6 +116,24 @@ importers:
 
   apps/native:
     dependencies:
+      "@tauri-apps/api":
+        specifier: 2.12.4
+        version: 2.12.4
+      "@tauri-apps/plugin-deep-link":
+        specifier: 2.6.2
+        version: 2.6.2
+      "@tauri-apps/plugin-http":
+        specifier: 2.8.3
+        version: 2.8.3
+      "@tauri-apps/plugin-opener":
+        specifier: 2.7.2
+        version: 2.7.2
+      "@wuff/client":
+        specifier: workspace:*
+        version: link:../../packages/client
+      "@wuff/contracts":
+        specifier: workspace:*
+        version: link:../../packages/contracts
       "@wuff/design":
         specifier: workspace:*
         version: link:../../packages/design
@@ -4171,6 +4189,12 @@ packages:
     peerDependencies:
       react: ^18 || ^19
 
+  "@tauri-apps/api@2.12.4":
+    resolution:
+      {
+        integrity: sha512-pVmfis+4zT8H0Qhp3xPZx9Ju7kpzvA6rr/PSJPyuwfvucTQ8sVt61NYU9KMkK703UFlYadFmjKA4HhybOtN0gg==,
+      }
+
   "@tauri-apps/cli-darwin-arm64@2.12.4":
     resolution:
       integrity: sha512-OxqKSckIkoJ6vX2AjifIJpTasFC0Hbdoo7gEiCmAjauABO3U8m2MRsLWe+QTiBwDx1mIrvgA+rvI7tvDnbnHVg==
@@ -4297,6 +4321,24 @@ packages:
     engines:
       node: ">= 10"
     hasBin: true
+
+  "@tauri-apps/plugin-deep-link@2.6.2":
+    resolution:
+      {
+        integrity: sha512-uMsF1VQt1OdYq3jDGsSBlBdtbTp6o7WYFYFnjiNuLfFpBvZsdH0XnolJoSzBOlTzhroROBUys/j1y1PQqdiMZA==,
+      }
+
+  "@tauri-apps/plugin-http@2.8.3":
+    resolution:
+      {
+        integrity: sha512-MrgCnnxSnzxkMX+Tk1XXB8rSI9hfhUHQmtbn0EpflEDcSx04K1BDfrv51tcK27SCuU/B1j8sNHL0UZur/1iqKA==,
+      }
+
+  "@tauri-apps/plugin-opener@2.7.2":
+    resolution:
+      {
+        integrity: sha512-LyybP1VSzTMQiaFYcsbAse47KpivlyXdLZMQzGLEnkgQacGESnpjAfFoQ6h5sqWgAdZDH9szYjPzHMpv0Sz+TQ==,
+      }
 
   "@tiptap/core@3.32.0":
     resolution:
@@ -9108,6 +9150,8 @@ packages:
       }
 
 snapshots:
+
+  "@tauri-apps/api@2.12.4": {}
   2g@1.0.1(typescript@6.0.3):
     optionalDependencies:
       typescript: 6.0.3
@@ -11735,6 +11779,18 @@ snapshots:
       "@tauri-apps/cli-win32-arm64-msvc": 2.12.4
       "@tauri-apps/cli-win32-ia32-msvc": 2.12.4
       "@tauri-apps/cli-win32-x64-msvc": 2.12.4
+
+  "@tauri-apps/plugin-deep-link@2.6.2":
+    dependencies:
+      "@tauri-apps/api": 2.12.4
+
+  "@tauri-apps/plugin-http@2.8.3":
+    dependencies:
+      "@tauri-apps/api": 2.12.4
+
+  "@tauri-apps/plugin-opener@2.7.2":
+    dependencies:
+      "@tauri-apps/api": 2.12.4
 
   "@tiptap/core@3.32.0(@tiptap/pm@3.32.0)":
     dependencies:

@@ -1,0 +1,10 @@
+{
+  "build": {
+    "beforeBuildCommand": "pnpm build:local"
+  },
+  "app": {
+    "security": {
+      "capabilities": ["main", "local-backend"]
+    }
+  }
+}

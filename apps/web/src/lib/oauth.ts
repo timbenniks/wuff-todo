@@ -11,8 +11,7 @@ import {
 import { AppError, scopes } from "@wuff/contracts";
 import { appOrigin, mcpResource } from "./config";
 import {
-  nativeClientId,
-  nativeRedirectUri,
+  firstPartyRedirect,
   nativeAllowedScopes,
   validResourceClient,
 } from "./native-policy";
@@ -241,8 +240,8 @@ export async function authorizationDetails(params: URLSearchParams) {
   const resource = params.get("resource") ?? "";
   if (
     !validResourceClient(client.id, resource, appOrigin()) ||
-    (client.id === nativeClientId &&
-      params.get("redirect_uri") !== nativeRedirectUri)
+    (firstPartyRedirect(client.id) !== null &&
+      params.get("redirect_uri") !== firstPartyRedirect(client.id))
   )
     throw new AppError(
       "invalid_target",
@@ -253,9 +252,9 @@ export async function authorizationDetails(params: URLSearchParams) {
     !requested.includes("lists:read") ||
     requested.some(
       (s) =>
-        !(client.id === nativeClientId ? nativeAllowedScopes : scopes).some(
-          (allowed) => allowed === s,
-        ),
+        !(
+          firstPartyRedirect(client.id) !== null ? nativeAllowedScopes : scopes
+        ).some((allowed) => allowed === s),
     )
   )
     throw new AppError("invalid_scope", "Choose supported Wuff permissions.");

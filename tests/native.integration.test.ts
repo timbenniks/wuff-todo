@@ -7,7 +7,11 @@ import {
   nativeClientId,
   nativeRedirectUri,
 } from "../apps/web/src/lib/native-policy";
-import type { TodoList } from "@wuff/contracts";
+import {
+  tauriClientId,
+  tauriRedirectUri,
+  type TodoList,
+} from "@wuff/contracts";
 import { database } from "@wuff/db";
 const origin = "http://localhost:3000",
   resource = origin + "/api/mobile";
@@ -26,12 +30,17 @@ async function mobile(token: string, action: string, input?: unknown) {
 async function grant(
   cookie: string,
   scopes = "lists:read tasks:write lists:manage",
+  identity = {
+    clientId: nativeClientId,
+    redirectUri: nativeRedirectUri,
+    path: "/oauth/native",
+  },
 ) {
-  assert.equal((await fetch(origin + "/oauth/native")).status, 200);
+  assert.equal((await fetch(origin + identity.path)).status, 200);
   const verifier = randomBytes(32).toString("base64url");
   const query = new URLSearchParams({
-    client_id: nativeClientId,
-    redirect_uri: nativeRedirectUri,
+    client_id: identity.clientId,
+    redirect_uri: identity.redirectUri,
     response_type: "code",
     code_challenge_method: "S256",
     state: randomBytes(16).toString("hex"),
@@ -55,13 +64,13 @@ async function grant(
   );
   const redirect = new URL((await response.json()).redirect);
   assert.equal(redirect.origin, "null");
-  assert.equal(redirect.protocol, "com.timbenniks.wufftodo:");
+  assert.equal(redirect.protocol, new URL(identity.redirectUri).protocol);
   assert.equal(redirect.searchParams.get("iss"), origin);
   const exchange = {
     grant_type: "authorization_code",
-    client_id: nativeClientId,
+    client_id: identity.clientId,
     code: redirect.searchParams.get("code")!,
-    redirect_uri: nativeRedirectUri,
+    redirect_uri: identity.redirectUri,
     code_verifier: verifier,
     resource,
   };
@@ -116,12 +125,12 @@ async function grant(
     scope: string;
   };
 }
-async function revoke(refreshToken: string) {
+async function revoke(refreshToken: string, clientId = nativeClientId) {
   return fetch(origin + "/oauth/revoke", {
     method: "POST",
     headers: form,
     body: new URLSearchParams({
-      client_id: nativeClientId,
+      client_id: clientId,
       token: refreshToken,
     }),
   });
@@ -469,5 +478,45 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
     }
   } finally {
     await revoke(reader.refresh_token);
+  }
+});
+
+test("Tauri fixed identity uses native permissions, refresh and revocation", async () => {
+  const cookie = await loginFixture(users[0]);
+  const tokens = await grant(cookie, "lists:read", {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  });
+  let refresh = tokens.refresh_token;
+  try {
+    assert.equal((await mobile(tokens.access_token, "listLists")).status, 200);
+    assert.equal(
+      (
+        await mobile(tokens.access_token, "createList", {
+          title: "Denied Tauri fixture",
+          operationId: crypto.randomUUID(),
+        })
+      ).status,
+      403,
+    );
+    const result = await fetch(origin + "/oauth/token", {
+      method: "POST",
+      headers: form,
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refresh,
+        client_id: tauriClientId,
+        resource,
+      }),
+    });
+    assert.equal(result.status, 200);
+    const rotated = await result.json();
+    refresh = rotated.refresh_token;
+    assert.equal((await mobile(rotated.access_token, "listLists")).status, 200);
+    assert.equal((await revoke(refresh, tauriClientId)).status, 200);
+    assert.equal((await mobile(rotated.access_token, "listLists")).status, 401);
+  } finally {
+    await revoke(refresh, tauriClientId);
   }
 });

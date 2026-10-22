@@ -50,3 +50,33 @@ p {
   margin-top: 36px;
   font-size: 0.875rem;
 }
+button {
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--wuff-primary);
+  border-radius: 12px;
+  background: var(--wuff-primary);
+  color: white;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+.lists {
+  list-style: none;
+  text-align: left;
+  padding: 0;
+}
+.lists li {
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+[role="alert"] {
+  color: #922138;
+}

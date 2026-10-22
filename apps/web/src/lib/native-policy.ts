@@ -1,6 +1,11 @@
-// One first-party public client. Custom schemes are never enabled for dynamic
+// Fixed first-party public clients. Custom schemes are never enabled for dynamic
 // third-party registration. PKCE protects intercepted authorization codes.
-import { nativeClientId } from "@wuff/contracts";
+import {
+  nativeClientId,
+  nativeRedirectUri,
+  tauriClientId,
+  tauriRedirectUri,
+} from "@wuff/contracts";
 export {
   nativeClientId,
   nativeRedirectUri,
@@ -13,7 +18,13 @@ export function validResourceClient(
   resource: string,
   origin: string,
 ) {
-  return clientId === nativeClientId
+  return firstPartyRedirect(clientId) !== null
     ? resource === `${origin}/api/mobile`
     : resource === `${origin}/api/mcp`;
+}
+
+export function firstPartyRedirect(clientId: string): string | null {
+  if (clientId === nativeClientId) return nativeRedirectUri;
+  if (clientId === tauriClientId) return tauriRedirectUri;
+  return null;
 }
