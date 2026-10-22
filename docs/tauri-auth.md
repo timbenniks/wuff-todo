@@ -33,3 +33,5 @@ The default build uses the hosted production server. Mobile schemes are declared
 Remaining WUFF-71 acceptance: installed warm/cold browser callback, session restoration, a synthetic task mutation and sign-out on supported platforms. Core interface and live transport are separate follow-on tasks. Do not close #9 solely because a foundation PR merges.
 
 Packaged macOS follow-up: the explicit localhost development build opened Chrome, completed consent, received the warm custom-scheme callback and displayed the synthetic account's lists. Quitting and relaunching restored the session from Keychain and reloaded lists. Sign-out returned to the sign-in screen without error. This is installed macOS evidence for that flow, not Windows/phone proof. The initial unsigned protected-store failure was resolved by selecting macOS Keychain as described above. Core task mutation UI is still pending.
+
+Cold-callback follow-up also passed on macOS: started sign-in, quit the app before consent, approved in Chrome, and the registered scheme launched Wuff and recovered the pending PKCE state from Keychain to display lists. Windows/iOS/Android remain unverified.
