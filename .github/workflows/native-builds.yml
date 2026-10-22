@@ -1,0 +1,116 @@
+name: Native test builds
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/native-builds.yml'
+      - 'apps/native/**'
+      - 'packages/ui/**'
+      - 'packages/client/**'
+      - 'packages/contracts/**'
+      - 'pnpm-lock.yaml'
+permissions:
+  contents: read
+concurrency:
+  group: native-builds-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            bundle: app
+            artifact: macos-debug
+            path: apps/native/src-tauri/target/debug/bundle/macos/*.app
+          - os: windows-latest
+            bundle: nsis
+            artifact: windows-debug
+            path: apps/native/src-tauri/target/debug/bundle/nsis/*.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wuff/native tauri build --debug --bundles ${{ matrix.bundle }} --config '{"bundle":{"active":true}}'
+      - if: runner.os == 'macOS'
+        run: ditto -c -k --sequesterRsrc --keepParent "apps/native/src-tauri/target/debug/bundle/macos/Wuff Todo.app" wuff-macos-debug.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}-${{ github.sha }}
+          path: ${{ runner.os == 'macOS' && 'wuff-macos-debug.zip' || matrix.path }}
+          if-no-files-found: error
+          retention-days: 14
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.0.13004108'
+          echo "NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wuff/native tauri android init --ci --skip-targets-install
+      - run: pnpm --filter @wuff/native tauri android build --debug --target aarch64 --apk --ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-${{ github.sha }}
+          path: apps/native/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wuff/native tauri ios init --ci --skip-targets-install
+      - run: pnpm --filter @wuff/native tauri ios build --debug --target aarch64-sim --no-sign --archive-only --ci
+      - name: Package simulator build
+        run: |
+          app_path=$(find apps/native/src-tauri/gen/apple -type d -name '*.app' -print -quit)
+          test -n "$app_path"
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" wuff-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-${{ github.sha }}
+          path: wuff-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14
