@@ -42,7 +42,7 @@ jobs:
         with:
           workspaces: apps/native/src-tauri
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @wuff/native tauri build --debug --bundles ${{ matrix.bundle }} --config '{"bundle":{"active":true}}'
+      - run: pnpm --filter @wuff/native tauri build --debug --bundles ${{ matrix.bundle }} --config src-tauri/tauri.ci.conf.json
       - if: runner.os == 'macOS'
         run: ditto -c -k --sequesterRsrc --keepParent "apps/native/src-tauri/target/debug/bundle/macos/Wuff Todo.app" wuff-macos-debug.zip
       - uses: actions/upload-artifact@v4
@@ -66,6 +66,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - run: |
           sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.0.13004108'
           echo "NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> "$GITHUB_ENV"

@@ -24,3 +24,16 @@ For now distribute test artifacts through repository access. iOS simulator outpu
 Installed app versions are decoupled from the API. Preserve existing native audience/client ID, additive request fields and optional GitHub scope; deploy backend additions before shipping a client that calls them. Retain old actions during rollout. Release notes should record native version/commit and minimum backend capability, and exercise the previous client against each backend release. Do not force-update by silently changing authentication or discarding pending drafts.
 
 References: [Tauri distribution](https://v2.tauri.app/distribute/), [GitHub pipelines](https://v2.tauri.app/distribute/pipelines/github/). Current CLI help verifies the Android APK and iOS simulator/no-sign/archive options used here. Local host has Command Line Tools but no full Xcode or attached phone tooling; CI builds do not replace device acceptance.
+
+## Feature coverage
+
+| Feature | Website | Tauri | MCP |
+| --- | --- | --- | --- |
+| Lists, tasks, sections, subtasks, dates, personal views | Shared screens | Same shared screens through bearer adapters | Existing domain-backed tools |
+| Sharing and owner controls | Shared screens | Same screens and server permissions | Existing sharing tools |
+| Formatted notes/private images | Cookie-authorized editor and image streams | Same editor; bearer streams and bounded blob previews | Canonical Markdown and attachment tools |
+| Work metadata, linked issues and PR context | Existing screens | Shared context; synchronized mutations require optional GitHub consent | Existing Work/GitHub tools |
+| Agent conversations/run context | Existing screens | Readable task context | Existing agent tools |
+| Agent launch/recovery, personal credentials and repository administration | Existing authorized website flows | Explicit system-browser handoff | Existing tools subject to personal credentials and execution gates |
+
+No native offline write queue, reminders or push notification service is introduced. Existing Expo remains until the Tauri installed-platform gates pass.
