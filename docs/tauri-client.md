@@ -4,7 +4,13 @@ Updated: October 22, 2026
 
 The client is tracked in the private **Wuff Todo** Work list, bound to `timbenniks/wuff-todo` with automatic GitHub issue creation. Specs live in WUFF-70 through WUFF-79; the sequencing and architecture are in [the client plan](tauri-client-plan.md).
 
-## Delivered foundation — WUFF-70
+## Current implementation
+
+PRs #11–15 are merged: system-browser authentication and native credentials, shared controls, native live transport, and the full shared list/task workspace with cache, notes/private images and Work context. See [feature evidence](tauri-features.md) and [platform/distribution matrix](tauri-platforms.md). Core checks include 74 unit tests and 28 isolated development integration tests. Packaged macOS flows are verified within those documents; remaining installed targets and signed releases are not yet certified.
+
+The following foundation section is historical WUFF-70 evidence and does not describe the current authentication/feature set.
+
+## Initial foundation — WUFF-70
 
 `apps/native` contains the React/Vite frontend and minimal Tauri 2 Rust shell. It uses the existing Waffles image, DM Sans font and `@wuff/design` palette. The frontend explicitly identifies itself as a development preview: login, API operations and live updates are follow-up tasks, not implemented behavior.
 

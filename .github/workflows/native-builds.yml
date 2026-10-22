@@ -80,7 +80,18 @@ jobs:
           workspaces: apps/native/src-tauri
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @wuff/native tauri android init --ci --skip-targets-install
+      # This plugin mutates generated manifests in its build script. Regenerate
+      # after init even when Cargo artifacts were restored from a previous run.
+      - run: cargo clean --manifest-path apps/native/src-tauri/Cargo.toml -p tauri-plugin-deep-link
       - run: pnpm --filter @wuff/native tauri android build --debug --target aarch64 --apk --ci
+      - name: Verify APK callback registration
+        run: |
+          apk_path=$(find apps/native/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$apk_path"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$apk_path" AndroidManifest.xml > /tmp/wuff-manifest.txt
+          grep -F 'com.timbenniks.wufftodo.tauri' /tmp/wuff-manifest.txt
+          grep -F 'android.intent.action.VIEW' /tmp/wuff-manifest.txt
+          grep -F '/callback' /tmp/wuff-manifest.txt
       - uses: actions/upload-artifact@v4
         with:
           name: android-debug-${{ github.sha }}
@@ -105,11 +116,20 @@ jobs:
           workspaces: apps/native/src-tauri
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @wuff/native tauri ios init --ci --skip-targets-install
+      - run: cargo clean --manifest-path apps/native/src-tauri/Cargo.toml -p tauri-plugin-deep-link
       - run: pnpm --filter @wuff/native tauri ios build --debug --target aarch64-sim --no-sign --archive-only --ci
       - name: Package simulator build
         run: |
           app_path=$(find apps/native/src-tauri/gen/apple -type d -name '*.app' -print -quit)
           test -n "$app_path"
+          python3 - "$app_path/Info.plist" <<'PYTHON'
+          import plistlib, sys
+          with open(sys.argv[1], 'rb') as f:
+              info = plistlib.load(f)
+          schemes = [scheme for entry in info.get('CFBundleURLTypes', []) for scheme in entry.get('CFBundleURLSchemes', [])]
+          assert 'com.timbenniks.wufftodo.tauri' in schemes, 'Missing login callback scheme'
+          assert 'iPhoneSimulator' in info.get('CFBundleSupportedPlatforms', []), 'Wrong platform artifact'
+          PYTHON
           ditto -c -k --sequesterRsrc --keepParent "$app_path" wuff-ios-simulator.zip
       - uses: actions/upload-artifact@v4
         with:
