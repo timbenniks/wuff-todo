@@ -1,8 +1,8 @@
 # Wuff Todo implementation plan
 
-Status: web/MCP and GitHub synchronization released; online-only native mobile development started
+Status: web/MCP and GitHub synchronization released; online-only Tauri cross-platform client foundation started
 
-Updated: October 20, 2026
+Updated: October 22, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
@@ -52,7 +52,9 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Current milestone: online-only React Native/Expo for iPhone and Android.** The user selected native mobile and confirmed online-only operation on October 17. The initial local app, secure browser-based sign-in, separate native API authorization, list/task/sharing screens and shared design tokens are implemented. See [native mobile](native-mobile.md) for scope, architecture, run instructions and verification limits. Installed simulator/device auth, native UI review and distribution remain the next gate; a bundle build is not device proof.
+**Current milestone: online-only Tauri 2 for macOS, Windows, iPhone and Android.** On October 22 the user requested a client-side React/shadcn application using the existing hosted APIs and live refresh, tracked through Wuff itself. See [Tauri client plan](tauri-client-plan.md) for phases and gates. WUFF-70 introduces the React/Vite workspace and Tauri shell; frontend checks pass, while native compilation awaits toolchain setup. WUFF-71/72 cover installed sign-in, secure storage, API access and a live subscription probe before full interface migration. The dedicated Wuff Todo Work list is bound to `timbenniks/wuff-todo`; [development and task map](tauri-client.md) record all ten tasks and evidence.
+
+The October 17 React Native/Expo slice remains available as a reference for authentication and client behavior. Its historical implementation and verification limits are recorded in [native mobile](native-mobile.md). Preserve it until the Tauri replacement passes its gates; its earlier milestone wording below is historical and does not override the new client plan.
 
 On October 20 the user explicitly resumed Stage 4 research and implementation. The first local PR tracking and Cursor agent handoff implementation is now built alongside the existing native milestone; see [Cursor agents](cursor-agents.md). Stage 3 [GitHub synchronization](github-sync.md) remains released within its documented limits. Paid production agent execution is not enabled.
 

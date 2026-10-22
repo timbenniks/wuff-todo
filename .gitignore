@@ -17,3 +17,7 @@ skills-lock.json
 .expo/
 apps/mobile/ios/
 apps/mobile/android/
+
+# Tauri build output and generated platform projects
+apps/native/src-tauri/target/
+apps/native/src-tauri/gen/
