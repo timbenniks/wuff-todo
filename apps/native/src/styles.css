@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@wuff/ui/design-system.css";
 @import "@wuff/ui/theme.css";
+@import "@wuff/ui/features/views.css";
+@import "@wuff/ui/features/task-prose.css";
 @source "../../../packages/ui/src";
 
 @font-face {
@@ -18,7 +20,7 @@ body {
   margin: 0;
   font-family: "DM Sans", system-ui, sans-serif;
 }
-main {
+.login-screen {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
@@ -41,7 +43,7 @@ main {
   font-weight: 700;
   color: var(--wuff-primary);
 }
-h1 {
+.welcome h1 {
   font-weight: 700;
   margin: 0.67em 0;
   font-size: clamp(1.8rem, 5vw, 2.5rem);
@@ -49,7 +51,7 @@ h1 {
   letter-spacing: -0.035em;
   text-wrap: balance;
 }
-p {
+.welcome p {
   margin: 1em 0;
   line-height: 1.6;
   color: var(--wuff-muted);
@@ -70,3 +72,6 @@ p {
 [role="alert"] {
   color: #922138;
 }
+
+.native-workspace { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+:root { --font-sans: "DM Sans", system-ui, sans-serif; }

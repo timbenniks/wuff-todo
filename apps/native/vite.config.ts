@@ -27,6 +27,7 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   plugins: [clientBoundary(), react()],
+  publicDir: "../web/public",
   clearScreen: false,
   server: {
     port: 1420,

@@ -111,3 +111,19 @@ test("task and personal view snapshots cannot roll back each other's independent
   assert.equal(cache.get("list-a")?.version, 3);
   assert.equal(cache.get("list-a")?.personalView?.view.groupBy, "status");
 });
+
+test("inactive cache retention is bounded and evicted in-flight reads cannot reappear", async () => {
+  const cache = new ListCache(null, 2);
+  cache.write({ ...snapshot(1), id: "a" });
+  cache.write({ ...snapshot(1), id: "b" });
+  const delayed = deferred<TodoList>();
+  const loading = cache.load("a", () => delayed.promise);
+  cache.get("b");
+  cache.write({ ...snapshot(1), id: "c" });
+  assert.equal(cache.get("a"), null);
+  delayed.resolve({ ...snapshot(2), id: "a" });
+  assert.equal(await loading, null);
+  assert.equal(cache.get("a"), null);
+  assert.ok(cache.get("b"));
+  assert.ok(cache.get("c"));
+});

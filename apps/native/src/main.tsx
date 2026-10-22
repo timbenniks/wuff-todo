@@ -1,18 +1,17 @@
 import { installNativeSocket } from "./native-socket";
-import { NativeLive } from "./live";
+import { Workspace, loadWorkspace, type WorkspaceData } from "./workspace";
 import { Button } from "@wuff/ui/button";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createRoot } from "react-dom/client";
 import { isTauri } from "@tauri-apps/api/core";
 import { listThemeVariables } from "@wuff/design";
-import type { ListSummary } from "@wuff/contracts";
 import { client, signIn, signOut, listenForSignIn } from "./session";
-import waffles from "../../web/public/mascot/waffles-icon.webp";
 import "./styles.css";
 
 function App() {
-  const [lists, setLists] = useState<ListSummary[] | null>(null);
+  const [lists, setLists] = useState<WorkspaceData | null>(null);
   const [busy, setBusy] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState("");
   const generation = useRef(0);
@@ -26,7 +25,7 @@ function App() {
     const current = ++generation.current;
     setBusy(true);
     try {
-      const result = await client.lists();
+      const result = await loadWorkspace();
       if (current === generation.current) setLists(result);
     } catch (error) {
       if (current === generation.current) report(error);
@@ -44,15 +43,20 @@ function App() {
     client.onSignedOut = () => {
       generation.current++;
       setLists(null);
+      setHasSession(false);
       setBusy(false);
     };
     void (async () => {
       try {
-        if ((await client.restore()) && active) await load();
+        const restored = await client.restore();
+        if (active) setHasSession(restored);
+        if (restored && active) await load();
         if (!active) return;
         stop = await listenForSignIn(
           () => {
             setWaiting(false);
+            setHasSession(true);
+            setLists(null);
             setError("");
             void load();
           },
@@ -97,42 +101,41 @@ function App() {
       setBusy(false);
     }
   }
+  if (lists)
+    return (
+      <Workspace
+        key={lists.userId + ":" + generation.current}
+        data={lists}
+        onSignOut={logout}
+        onError={report}
+      />
+    );
   return (
-    <main style={listThemeVariables("lavender") as CSSProperties}>
+    <main
+      className="login-screen"
+      style={listThemeVariables("lavender") as CSSProperties}
+    >
       <section className="welcome" aria-labelledby="welcome-title">
-        <img src={waffles} alt="Waffles the corgi" width="144" height="144" />
+        <img
+          src="/mascot/waffles-icon.webp"
+          alt="Waffles the corgi"
+          width="144"
+          height="144"
+        />
         <p className="brand">Wuff Todo</p>
-        <h1 id="welcome-title">
-          {lists ? "Your lists" : "Your pack, wherever you work."}
-        </h1>
+        <h1 id="welcome-title">Your pack, wherever you work.</h1>
         {error && <p role="alert">{error}</p>}
+        {error && hasSession && (
+          <Button disabled={busy} onClick={() => void load()}>
+            Retry loading lists
+          </Button>
+        )}
         {busy && <p role="status">Fetching your pack…</p>}
         {!isTauri() ? (
           <p>
             Open the installed Wuff app to sign in. This browser preview shows
             the bundled interface.
           </p>
-        ) : lists ? (
-          <>
-            <NativeLive refresh={load} />
-            <ul className="lists">
-              {lists.map((list) => (
-                <li key={list.id}>{list.title}</li>
-              ))}
-            </ul>
-            {!lists.length && <p>Your pack has no lists yet.</p>}
-            <p>List editing is coming in the next development milestone.</p>
-            <Button
-              variant="primary"
-              disabled={busy}
-              onClick={() => void load()}
-            >
-              Refresh
-            </Button>{" "}
-            <Button variant="primary" onClick={() => void logout()}>
-              Sign out
-            </Button>
-          </>
         ) : waiting ? (
           <>
             <p role="status">

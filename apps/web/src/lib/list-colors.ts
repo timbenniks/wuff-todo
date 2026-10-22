@@ -1,1 +1,1 @@
-export { listPalette } from "@wuff/design";
+export { listPalette } from "@wuff/ui/features/lib/list-colors";

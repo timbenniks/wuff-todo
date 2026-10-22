@@ -1,7 +1,9 @@
 {
   "identifier": "main",
   "description": "Local Wuff window: browser sign-in, scoped HTTP and native credentials.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:event:allow-listen",
     "core:event:allow-unlisten",
@@ -10,7 +12,10 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         {
-          "url": "https://wuff-todo.vercel.app/oauth/authorize*"
+          "url": "https://*"
+        },
+        {
+          "url": "mailto:*"
         }
       ]
     },
@@ -28,6 +33,9 @@
         },
         {
           "url": "https://wuff-todo.vercel.app/oauth/revoke"
+        },
+        {
+          "url": "https://wuff-todo.vercel.app/api/mobile/images*"
         }
       ]
     },
