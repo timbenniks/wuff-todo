@@ -115,28 +115,26 @@ async function accessible(tx: Tx | Db, actor: Actor, id: string, lock = false) {
 }
 async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
   const list = await accessible(tx, actor, listId);
-  const participantIds =
-    list.mode === "work"
+  const participantIds = await tx
+    .select({ id: members.userId })
+    .from(members)
+    .where(eq(members.listId, listId));
+  const assignees =
+    list.mode === "work" && participantIds.length
       ? await tx
-          .select({ id: members.userId })
-          .from(members)
-          .where(eq(members.listId, listId))
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(
+            and(
+              inArray(users.id, [
+                list.ownerId,
+                ...participantIds.map((p) => p.id),
+              ]),
+              eq(users.enabled, true),
+            ),
+          )
+          .orderBy(asc(users.name), asc(users.id))
       : [];
-  const assignees = participantIds.length
-    ? await tx
-        .select({ id: users.id, name: users.name })
-        .from(users)
-        .where(
-          and(
-            inArray(users.id, [
-              list.ownerId,
-              ...participantIds.map((p) => p.id),
-            ]),
-            eq(users.enabled, true),
-          ),
-        )
-        .orderBy(asc(users.name), asc(users.id))
-    : [];
   const images = await tx
     .select({
       id: attachments.id,
@@ -182,6 +180,7 @@ async function snapshot(tx: Tx | Db, actor: Actor, listId: string) {
         : defaultListView(),
     },
     ...list,
+    shared: participantIds.length > 0,
     github: binding ?? null,
     assignees,
     sections: await tx
@@ -323,6 +322,12 @@ async function catalog(tx: Tx | Db, actor: Actor) {
       id: lists.id,
       title: lists.title,
       ownerId: lists.ownerId,
+      shared: exists(
+        tx
+          .select({ id: members.listId })
+          .from(members)
+          .where(eq(members.listId, lists.id)),
+      ).mapWith(Boolean),
       version: lists.version,
       color: lists.color,
       archived: lists.archived,

@@ -243,6 +243,11 @@ test("identity-bound invitations: expiry, decline, cancellation, acceptance, and
     };
     let sharing = await inviteToList(a, request);
     assert.equal(sharing.invitations.length, 1);
+    assert.equal((await getList(a, list.id)).shared, false);
+    assert.equal(
+      (await listLists(a)).find((i) => i.id === list.id)?.shared,
+      false,
+    );
     assert.equal(
       (await inviteToList(a, request)).version,
       sharing.version,
@@ -350,6 +355,13 @@ test("identity-bound invitations: expiry, decline, cancellation, acceptance, and
       respondToInvitation(b, accepted),
     ]);
     assert.ok(results.every((r) => r.accepted));
+    for (const actor of [a, b]) {
+      assert.equal((await getList(actor, list.id)).shared, true);
+      assert.equal(
+        (await listLists(actor)).find((i) => i.id === list.id)?.shared,
+        true,
+      );
+    }
     assert.equal(
       (
         await database()
@@ -400,6 +412,11 @@ test("identity-bound invitations: expiry, decline, cancellation, acceptance, and
     );
     const revoke = { ...input(), version: sharing.version, userId: b.id };
     sharing = await removeListMember(a, revoke);
+    assert.equal((await getList(a, list.id)).shared, false);
+    assert.equal(
+      (await listLists(a)).find((i) => i.id === list.id)?.shared,
+      false,
+    );
     await removeListMember(a, revoke);
     await assert.rejects(getList(b, list.id), { code: "not_found" });
     await assert.rejects(respondToInvitation(b, accepted), {

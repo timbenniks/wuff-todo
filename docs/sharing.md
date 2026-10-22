@@ -31,3 +31,11 @@ Desktop and 390px browser checks covered owner sharing, recipient acceptance, ed
 ![Owner sharing controls](screenshots/sharing-desktop.jpg)
 
 ![Editor controls at phone width](screenshots/sharing-mobile.jpg)
+
+## Sidebar sharing cue — October 22, 2026
+
+Shared lists show a small people icon beside their title in the website sidebar, including archived lists. The icon has a `Shared list` tooltip and screen-reader text. Private lists retain the existing row appearance. The embedded MCP list catalog uses a matching `Shared` status tag.
+
+List summaries and snapshots expose an additive `shared` boolean from current membership records. A pending invitation alone does not mark a list shared. Owners and editors receive the same status; removing the last editor returns the list to private. Existing live refresh/polling updates the catalog, and mutation snapshots retain the status when updating the sidebar. No migration or permission change is needed.
+
+Verification: `pnpm check` passed (workspace/root TypeScript, 56 unit tests, optimized web/MCP builds). The focused isolated-development identity-bound invitation integration test passed with assertions for pending invitations, accepted owner/editor snapshots/catalogs and removal of the last member. The final MCP tag styling was bundled again successfully with `pnpm build:mcp`. A signed-in synthetic browser on the local production build showed the people icon and accessible label only on the shared preview list, alongside private lists. [Desktop screenshot](screenshots/sidebar-sharing-desktop.png). The disposable shared preview was removed after inspection. No production deployment, responsive viewport review, physical-device or named MCP-host UI verification was performed for this change.

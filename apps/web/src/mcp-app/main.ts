@@ -1684,6 +1684,13 @@ function renderCatalog() {
     );
     open.className = "wuff-button list";
     open.style.borderLeft = `5px solid ${listPalette[list.color].accent}`;
+    if (list.shared) {
+      const shared = element("span", "Shared");
+      shared.className = "status-tag";
+      shared.style.marginLeft = "8px";
+      open.append(shared);
+      open.title = "Shared list";
+    }
     row.append(open);
     for (const [dir, label] of [
       [-1, "up"],

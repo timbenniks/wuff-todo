@@ -8,7 +8,7 @@ import {
 
 import { wuffCopy, wuffError } from "@/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
+import { Archive, ListTodo, LogOut, Plus, Trash2, Users } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
@@ -243,6 +243,7 @@ export function ListApp({
               id: current.id,
               title: current.title,
               ownerId: current.ownerId,
+              shared: current.shared,
               version: current.version,
               color: current.color,
               archived: current.archived,
@@ -267,6 +268,7 @@ export function ListApp({
         id: request.id,
         title: request.title,
         ownerId: userId,
+        shared: false,
         version: 0,
         color: "blue" as const,
         mode: "simple" as const,
@@ -304,6 +306,7 @@ export function ListApp({
           id: created.id,
           title: created.title,
           ownerId: created.ownerId,
+          shared: created.shared,
           version: created.version,
           color: created.color,
           archived: created.archived,
@@ -619,6 +622,15 @@ export function ListApp({
                           style={{ color: listPalette[s.color].accent }}
                         />
                         <span className="truncate">{s.title}</span>
+                        {s.shared && (
+                          <span
+                            className="ml-auto inline-flex shrink-0 text-muted-foreground"
+                            title="Shared list"
+                          >
+                            <Users size={16} aria-hidden="true" />
+                            <span className="sr-only">Shared list</span>
+                          </span>
+                        )}
                         {s.id === pendingCreate?.id && (
                           <span className="text-xs text-muted-foreground">
                             {pendingCreate.status === "saving"

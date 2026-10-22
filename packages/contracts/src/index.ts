@@ -257,6 +257,7 @@ export type TodoList = {
   assignees: { id: string; name: string }[];
   title: string;
   ownerId: string;
+  shared: boolean;
   version: number;
   color: ListColor;
   description: string;
@@ -272,7 +273,7 @@ export type TodoList = {
 export type TaskDetail = { list: TodoList; task: Task };
 export type ListSummary = Pick<
   TodoList,
-  "id" | "title" | "ownerId" | "version" | "color" | "archived"
+  "id" | "title" | "ownerId" | "shared" | "version" | "color" | "archived"
 >;
 export const scopes = [
   "lists:read",

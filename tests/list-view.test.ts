@@ -32,6 +32,7 @@ const list = (tasks: Task[]): TodoList => ({
   title: "Work",
   mode: "work",
   ownerId: "owner",
+  shared: false,
   version: 1,
   description: "",
   archived: false,
