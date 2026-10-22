@@ -598,3 +598,164 @@ test("Tauri bearer live capabilities pin the actor and stream authorized changes
     await revoke(writer.refresh_token, tauriClientId);
   }
 });
+
+test("native feature adapters preserve identity, Work context and private image permissions", async () => {
+  const identity = {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  };
+  const cookie = await loginFixture(users[0]);
+  const owner = await grant(cookie, undefined, identity),
+    reader = await grant(cookie, "lists:read", identity);
+  const outsider = await grant(
+    await loginFixture(users[1]),
+    "lists:read",
+    identity,
+  );
+  let list: TodoList | undefined;
+  const bytes = await readFile("apps/web/public/mascot/waffles-icon.webp");
+  const imageRequest = (
+    token: string,
+    params: URLSearchParams,
+    method = "GET",
+    data?: Buffer,
+  ) =>
+    fetch(origin + "/api/mobile/images?" + params, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "image/webp",
+        "X-Wuff-User": users[0].id,
+      },
+      body: data ? new Uint8Array(data) : undefined,
+    });
+  try {
+    assert.equal(
+      (
+        await fetch(resource, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${owner.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "listLists", userId: users[1].id }),
+        })
+      ).status,
+      409,
+    );
+    list = await (
+      await mobile(owner.access_token, "createList", {
+        title: "Native feature proof",
+        mode: "work",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    list = await (
+      await mobile(owner.access_token, "createTask", {
+        listId: list!.id,
+        version: list!.version,
+        title: "Image and Work context",
+        status: "in_progress",
+        priority: "high",
+        references: [
+          { url: "https://github.com/timbenniks/wuff-todo/issues/10" },
+        ],
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    const task = list!.tasks[0];
+    assert.equal(task.priority, "high");
+    assert.equal(task.references.length, 1);
+    assert.equal(
+      (await mobile(owner.access_token, "githubTask", task.id)).status,
+      200,
+    );
+    assert.equal(
+      (await mobile(owner.access_token, "agentTask", task.id)).status,
+      200,
+    );
+    assert.equal(
+      (await mobile(outsider.access_token, "githubTask", task.id)).status,
+      404,
+    );
+    assert.equal(
+      (await mobile(outsider.access_token, "agentTask", task.id)).status,
+      404,
+    );
+    const params = new URLSearchParams({
+      listId: list!.id,
+      taskId: task.id,
+      version: String(list!.version),
+      operationId: crypto.randomUUID(),
+    });
+    assert.equal(
+      (await imageRequest(reader.access_token, params, "POST", bytes)).status,
+      403,
+    );
+    const uploaded = await imageRequest(
+      owner.access_token,
+      params,
+      "POST",
+      bytes,
+    );
+    assert.equal(uploaded.status, 200);
+    const { image } = await uploaded.json();
+    assert.equal(
+      (
+        await (
+          await imageRequest(owner.access_token, params, "POST", bytes)
+        ).json()
+      ).image.id,
+      image.id,
+    );
+    const query = new URLSearchParams({ id: image.id });
+    assert.equal(
+      (await fetch(origin + "/api/mobile/images?" + query)).status,
+      401,
+    );
+    const foreign = await fetch(origin + "/api/mobile/images?" + query, {
+      headers: { Authorization: `Bearer ${outsider.access_token}` },
+    });
+    assert.equal(foreign.status, 404);
+    const response = await imageRequest(owner.access_token, query);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control")!, /no-store/);
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+    list = await (
+      await mobile(owner.access_token, "updateTask", {
+        listId: list!.id,
+        taskId: task.id,
+        version: list!.version,
+        content: `**Native notes**\n\n![Waffles](/api/v1/attachments/${image.id})`,
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    assert.equal(list!.tasks[0].images!.length, 1);
+    assert.equal(list!.tasks[0].priority, "high");
+    assert.equal(list!.tasks[0].references.length, 1);
+    list = await (
+      await mobile(owner.access_token, "updateTask", {
+        listId: list!.id,
+        taskId: task.id,
+        version: list!.version,
+        content: "**Native notes**",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    assert.equal(list!.tasks[0].images!.length, 0);
+  } finally {
+    if (list) {
+      const latest = await (
+        await mobile(owner.access_token, "getList", list.id)
+      ).json();
+      await mobile(owner.access_token, "deleteList", {
+        listId: list.id,
+        version: latest.version,
+        operationId: crypto.randomUUID(),
+      });
+    }
+    for (const token of [owner, reader, outsider])
+      await revoke(token.refresh_token, tauriClientId);
+  }
+});

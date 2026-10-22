@@ -1,13 +1,18 @@
 {
   "identifier": "local-backend",
   "description": "Explicit development build only, isolated localhost backend.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     {
       "identifier": "opener:allow-open-url",
       "allow": [
         {
           "url": "http://localhost:3000/oauth/authorize*"
+        },
+        {
+          "url": "http://localhost:3000/*"
         }
       ]
     },
@@ -25,6 +30,9 @@
         },
         {
           "url": "http://localhost:3000/oauth/revoke"
+        },
+        {
+          "url": "http://localhost:3000/api/mobile/images*"
         }
       ]
     }

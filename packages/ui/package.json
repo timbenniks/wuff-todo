@@ -7,7 +7,44 @@
     "./utils": "./src/utils.ts",
     "./design-system.css": "./src/design-system.css",
     "./theme.css": "./src/theme.css",
-    "./live-types": "./src/live-types.ts"
+    "./live-types": "./src/live-types.ts",
+    "./features/*": "./src/features/*",
+    "./features/app/lists/inline-name": "./src/features/app/lists/inline-name.tsx",
+    "./features/app/lists/task-notes": "./src/features/app/lists/task-notes.tsx",
+    "./features/app/lists/task-row": "./src/features/app/lists/task-row.tsx",
+    "./features/app/lists/task-metadata": "./src/features/app/lists/task-metadata.tsx",
+    "./features/app/lists/list-view-controls": "./src/features/app/lists/list-view-controls.tsx",
+    "./features/app/lists/task-detail-drawer": "./src/features/app/lists/task-detail-drawer.tsx",
+    "./features/app/lists/task-note-editor": "./src/features/app/lists/task-note-editor.tsx",
+    "./features/app/lists/task-actions": "./src/features/app/lists/task-actions.tsx",
+    "./features/app/lists/task-groups": "./src/features/app/lists/task-groups.tsx",
+    "./features/app/lists/task-due-date": "./src/features/app/lists/task-due-date.tsx",
+    "./features/app/lists/list-app": "./src/features/app/lists/list-app.tsx",
+    "./features/app/lists/sharing": "./src/features/app/lists/sharing.tsx",
+    "./features/app/lists/list-settings": "./src/features/app/lists/list-settings.tsx",
+    "./features/app/tasks/[id]/work-metadata": "./src/features/app/tasks/[id]/work-metadata.tsx",
+    "./features/app/tasks/[id]/github-task": "./src/features/app/tasks/[id]/github-task.tsx",
+    "./features/app/tasks/[id]/task-detail-content": "./src/features/app/tasks/[id]/task-detail-content.tsx",
+    "./features/app/tasks/[id]/agent-task": "./src/features/app/tasks/[id]/agent-task.tsx",
+    "./features/components/corgi": "./src/features/components/corgi.tsx",
+    "./features/components/list-theme": "./src/features/components/list-theme.tsx",
+    "./features/components/sortable": "./src/features/components/sortable.tsx",
+    "./features/components/task-markdown": "./src/features/components/task-markdown.tsx",
+    "./features/lib/copy": "./src/features/lib/copy.ts",
+    "./features/lib/due-date": "./src/features/lib/due-date.ts",
+    "./features/lib/list-cache": "./src/features/lib/list-cache.ts",
+    "./features/lib/list-colors": "./src/features/lib/list-colors.ts",
+    "./features/lib/list-theme": "./src/features/lib/list-theme.ts",
+    "./features/lib/preserved-note": "./src/features/lib/preserved-note.ts",
+    "./features/lib/reorder": "./src/features/lib/reorder.ts",
+    "./features/lib/task-image-node": "./src/features/lib/task-image-node.ts",
+    "./features/lib/task-markdown": "./src/features/lib/task-markdown.ts",
+    "./features/lib/task-metadata": "./src/features/lib/task-metadata.ts",
+    "./features/lib/use-calendar-day": "./src/features/lib/use-calendar-day.ts",
+    "./features/api": "./src/features/api.ts",
+    "./features/actor-api": "./src/features/actor-api.tsx",
+    "./features/runtime": "./src/features/runtime.ts",
+    "./features/live-updates": "./src/features/live-updates.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
@@ -20,13 +57,28 @@
     "lucide-react": "^1.57.0",
     "tailwind-merge": "^3.7.0",
     "@neon/realtime": "0.1.0",
-    "@neon/realtime-react": "0.1.0"
+    "@neon/realtime-react": "0.1.0",
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2",
+    "@tiptap/core": "3.32.0",
+    "@tiptap/extension-list": "3.32.0",
+    "@tiptap/extension-table": "3.32.0",
+    "@tiptap/markdown": "3.32.0",
+    "@tiptap/react": "3.32.0",
+    "@tiptap/starter-kit": "3.32.0",
+    "markdown-it": "15.0.3",
+    "@wuff/client": "workspace:*",
+    "@wuff/design": "workspace:*",
+    "react-dom": "^19.3.1"
   },
   "peerDependencies": {
     "react": "^19.3.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/markdown-it": "^14.2.0",
+    "@types/react-dom": "^19.3.0"
   }
 }

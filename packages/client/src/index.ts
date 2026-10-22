@@ -197,7 +197,7 @@ export class NativeClient {
     }
     return (await this.refresh).accessToken;
   }
-  async call<T>(action: string, input?: unknown): Promise<T> {
+  async call<T>(action: string, input?: unknown, userId?: string): Promise<T> {
     const generation = this.generation;
     const token = await this.accessToken();
     const response = await this.request("/api/mobile", {
@@ -206,7 +206,7 @@ export class NativeClient {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action, input }),
+      body: JSON.stringify({ action, input, userId }),
     });
     if (generation !== this.generation)
       throw new ClientError("Account changed.", 401);
@@ -214,7 +214,8 @@ export class NativeClient {
     if (generation !== this.generation)
       throw new ClientError("Account changed.", 401);
     if (!response.ok) {
-      if (response.status === 401) await this.clear();
+      if (response.status === 401 || data.error?.code === "account_changed")
+        await this.clear();
       throw new ClientError(
         data.error?.message ?? "Couldn’t complete this change.",
         response.status,
@@ -222,6 +223,25 @@ export class NativeClient {
       );
     }
     return data as T;
+  }
+  async image(
+    params: URLSearchParams,
+    init: RequestInit = {},
+    userId?: string,
+  ) {
+    const generation = this.generation;
+    const token = await this.accessToken();
+    const headers = new Headers(init.headers);
+    headers.set("Authorization", `Bearer ${token}`);
+    if (userId) headers.set("X-Wuff-User", userId);
+    const response = await this.request("/api/mobile/images?" + params, {
+      ...init,
+      headers,
+    });
+    if (generation !== this.generation)
+      throw new ClientError("Account changed.", 401);
+    if (response.status === 401) await this.clear();
+    return response;
   }
   lists() {
     return this.call<ListSummary[]>("listLists");
