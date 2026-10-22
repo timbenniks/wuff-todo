@@ -1,0 +1,141 @@
+name: Native test builds
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/native-builds.yml'
+      - 'apps/native/**'
+      - 'packages/ui/**'
+      - 'packages/client/**'
+      - 'packages/contracts/**'
+      - 'pnpm-lock.yaml'
+permissions:
+  contents: read
+concurrency:
+  group: native-builds-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            bundle: app
+            artifact: macos-debug
+            path: apps/native/src-tauri/target/debug/bundle/macos/*.app
+          - os: windows-latest
+            bundle: nsis
+            artifact: windows-debug
+            path: apps/native/src-tauri/target/debug/bundle/nsis/*.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wuff/native tauri build --debug --bundles ${{ matrix.bundle }} --config src-tauri/tauri.ci.conf.json
+      - if: runner.os == 'macOS'
+        run: ditto -c -k --sequesterRsrc --keepParent "apps/native/src-tauri/target/debug/bundle/macos/Wuff Todo.app" wuff-macos-debug.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}-${{ github.sha }}
+          path: ${{ runner.os == 'macOS' && 'wuff-macos-debug.zip' || matrix.path }}
+          if-no-files-found: error
+          retention-days: 14
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;28.0.13004108'
+          echo "NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @wuff/native tauri android init --ci --skip-targets-install
+      # This plugin mutates generated manifests in its build script. Regenerate
+      # after init even when Cargo artifacts were restored from a previous run.
+      - run: cargo clean --manifest-path apps/native/src-tauri/Cargo.toml -p tauri-plugin-deep-link
+      - run: pnpm --filter @wuff/native tauri android build --debug --target aarch64 --apk --ci
+      - name: Verify APK callback registration
+        run: |
+          apk_path=$(find apps/native/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$apk_path"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$apk_path" AndroidManifest.xml > /tmp/wuff-manifest.txt
+          grep -F 'com.timbenniks.wufftodo.tauri' /tmp/wuff-manifest.txt
+          grep -F 'android.intent.action.VIEW' /tmp/wuff-manifest.txt
+          grep -F '/callback' /tmp/wuff-manifest.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-${{ github.sha }}
+          path: apps/native/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native/src-tauri
+          prefix-key: v1-xcode-26-3
+      - run: pnpm install --frozen-lockfile
+      - run: sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
+      - run: pnpm --filter @wuff/native tauri ios init --ci --skip-targets-install
+      - run: cargo clean --manifest-path apps/native/src-tauri/Cargo.toml -p tauri-plugin-deep-link
+      - run: pnpm --filter @wuff/native tauri ios build --debug --target aarch64-sim --no-sign --archive-only --ci
+      - name: Package simulator build
+        run: |
+          app_path=$(find apps/native/src-tauri/gen/apple -type d -name '*.app' -print -quit)
+          test -n "$app_path"
+          python3 - "$app_path/Info.plist" <<'PYTHON'
+          import plistlib, sys
+          with open(sys.argv[1], 'rb') as f:
+              info = plistlib.load(f)
+          schemes = [scheme for entry in info.get('CFBundleURLTypes', []) for scheme in entry.get('CFBundleURLSchemes', [])]
+          assert 'com.timbenniks.wufftodo.tauri' in schemes, 'Missing login callback scheme'
+          assert 'iPhoneSimulator' in info.get('CFBundleSupportedPlatforms', []), 'Wrong platform artifact'
+          PYTHON
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" wuff-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-${{ github.sha }}
+          path: wuff-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14

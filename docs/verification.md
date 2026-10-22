@@ -1,6 +1,12 @@
 # Implementation verification
 
-Updated: October 20, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 22, 2026. Older sections retain their milestone-specific evidence and test counts.
+
+## Tauri shared workspace — October 22, 2026
+
+PRs #12–15 passed remote web/Expo regression and macOS/Windows compile checks before merge. Locally, all 74 unit tests and all 28 development integration cases passed. Packaged macOS authentication, live connection and core editing/image checks are recorded in [auth](tauri-auth.md), [live transport](tauri-live.md) and [shared features](tauri-features.md). The same native-created private image loaded in the website reader/editor; 320/390px document widths had no horizontal overflow. Native test fixtures were removed and the synthetic native session signed out. Production Vercel status for core merge `862e278` is successful; unauthenticated native image access returns 401. This is deployment/boundary evidence, not an authenticated production-device test.
+
+See [platform matrix](tauri-platforms.md) for build artifacts, browser handoffs and outstanding installed-device/signing gates.
 
 ## Pre-mobile hardening — October 18, 2026
 
