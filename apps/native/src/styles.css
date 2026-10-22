@@ -1,3 +1,8 @@
+@import "tailwindcss";
+@import "@wuff/ui/design-system.css";
+@import "@wuff/ui/theme.css";
+@source "../../../packages/ui/src";
+
 @font-face {
   font-family: "DM Sans";
   src: url("../../web/src/fonts/dm-sans.ttf") format("truetype");
@@ -37,36 +42,21 @@ main {
   color: var(--wuff-primary);
 }
 h1 {
+  font-weight: 700;
+  margin: 0.67em 0;
   font-size: clamp(1.8rem, 5vw, 2.5rem);
   line-height: 1.15;
   letter-spacing: -0.035em;
   text-wrap: balance;
 }
 p {
+  margin: 1em 0;
   line-height: 1.6;
   color: var(--wuff-muted);
 }
 .preview {
   margin-top: 36px;
   font-size: 0.875rem;
-}
-button {
-  font: inherit;
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid var(--wuff-primary);
-  border-radius: 12px;
-  background: var(--wuff-primary);
-  color: white;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-button:focus-visible {
-  outline: 3px solid currentColor;
-  outline-offset: 3px;
 }
 .lists {
   list-style: none;

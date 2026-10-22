@@ -1,3 +1,4 @@
+import { Button } from "@wuff/ui/button";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createRoot } from "react-dom/client";
 import { isTauri } from "@tauri-apps/api/core";
@@ -118,17 +119,24 @@ function App() {
             </ul>
             {!lists.length && <p>Your pack has no lists yet.</p>}
             <p>List editing is coming in the next development milestone.</p>
-            <button disabled={busy} onClick={() => void load()}>
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() => void load()}
+            >
               Refresh
-            </button>{" "}
-            <button onClick={() => void logout()}>Sign out</button>
+            </Button>{" "}
+            <Button variant="primary" onClick={() => void logout()}>
+              Sign out
+            </Button>
           </>
         ) : waiting ? (
           <>
             <p role="status">
               Finish signing in in your browser, then return to Wuff.
             </p>
-            <button
+            <Button
+              variant="primary"
               onClick={() => {
                 void signOut()
                   .then(() => setWaiting(false))
@@ -136,14 +144,18 @@ function App() {
               }}
             >
               Cancel sign-in
-            </button>
+            </Button>
           </>
         ) : (
           <>
             <p>One home for your lists and shared adventures.</p>
-            <button disabled={busy} onClick={() => void login()}>
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() => void login()}
+            >
               Sign in with your browser
-            </button>
+            </Button>
             <p className="preview">
               Invite-only · Your session is saved in this device’s credential
               store.
