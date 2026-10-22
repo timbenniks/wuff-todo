@@ -1,7 +1,13 @@
 import { installNativeSocket } from "./native-socket";
 import { Workspace, loadWorkspace, type WorkspaceData } from "./workspace";
 import { Button } from "@wuff/ui/button";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { createRoot } from "react-dom/client";
 import { isTauri } from "@tauri-apps/api/core";
 import { listThemeVariables } from "@wuff/design";
@@ -15,12 +21,19 @@ function App() {
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState("");
   const generation = useRef(0);
-  const report = (error: unknown) =>
-    setError(
-      error instanceof Error
-        ? error.message
-        : "Could not complete this action. Please try again.",
-    );
+  const report = useCallback(
+    (error: unknown) =>
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not complete this action. Please try again.",
+      ),
+    [],
+  );
+  const upgradeGithub = useCallback(async () => {
+    setError("");
+    await signIn(true);
+  }, []);
   async function load() {
     const current = ++generation.current;
     setBusy(true);
@@ -89,7 +102,7 @@ function App() {
       report(error);
     }
   }
-  async function logout() {
+  const logout = useCallback(async () => {
     setWaiting(false);
     setError("");
     setBusy(true);
@@ -100,7 +113,7 @@ function App() {
     } finally {
       setBusy(false);
     }
-  }
+  }, [report]);
   if (lists)
     return (
       <Workspace
@@ -108,6 +121,8 @@ function App() {
         data={lists}
         onSignOut={logout}
         onError={report}
+        onGithubConsent={upgradeGithub}
+        sessionError={error}
       />
     );
   return (

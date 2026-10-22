@@ -672,6 +672,7 @@ export function ListApp({
             {runtime.githubConsent && (
               <Button
                 className="my-2"
+                disabled={busy}
                 onClick={() =>
                   void runtime.githubConsent!().catch((error) =>
                     setError(error.message),

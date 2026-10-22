@@ -9,7 +9,7 @@ import type {
 } from "@wuff/contracts";
 import type { LiveLists } from "@wuff/ui/live-types";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { client, signIn } from "./session";
+import { client } from "./session";
 import { featureApi } from "./feature-api";
 export type WorkspaceData = {
   userId: string;
@@ -49,10 +49,14 @@ export function Workspace({
   data,
   onSignOut,
   onError,
+  onGithubConsent,
+  sessionError,
 }: {
   data: WorkspaceData;
   onSignOut: () => Promise<void>;
   onError: (error: unknown) => void;
+  onGithubConsent: () => Promise<void>;
+  sessionError: string;
 }) {
   const [pool] = useState(
     () =>
@@ -77,7 +81,7 @@ export function Workspace({
       native: true,
       githubConsent: data.scopes.includes("github:manage")
         ? undefined
-        : () => signIn(true),
+        : onGithubConsent,
       request: async (path, init) => {
         const url = new URL(path, client.origin);
         if (
@@ -92,7 +96,7 @@ export function Workspace({
         void openUrl(url);
       },
     }),
-    [data.userId, pool, onSignOut, onError],
+    [data.userId, data.scopes, pool, onSignOut, onError, onGithubConsent],
   );
   function openLink(event: MouseEvent) {
     const anchor = (event.target as Element).closest("a");
@@ -107,6 +111,14 @@ export function Workspace({
   return (
     <RuntimeContext.Provider value={runtime}>
       <div onClick={openLink} className="native-workspace">
+        {sessionError && (
+          <p
+            role="alert"
+            className="m-4 p-4 rounded-xl bg-danger/10 text-danger"
+          >
+            {sessionError}
+          </p>
+        )}
         <ListApp {...data} name="Your pack" />
       </div>
     </RuntimeContext.Provider>

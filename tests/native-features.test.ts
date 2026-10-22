@@ -167,3 +167,91 @@ test("native reminder controls use bearer operations and preserve personal revis
   );
   assert.equal(calls.length, 6);
 });
+
+test("GitHub consent survives old live 401 responses without triggering session reset", async () => {
+  const { NativeClient } = await import("../packages/client/src/index");
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  }
+  const live = deferred<Response>(),
+    liveStarted = deferred<void>();
+  const token = deferred<Response>(),
+    tokenStarted = deferred<void>();
+  let saved = {
+    accessToken: "basic",
+    refreshToken: "basic-refresh",
+    expiresAt: Date.now() + 900000,
+  };
+  let signouts = 0;
+  const client = new NativeClient(
+    "https://wuff.example",
+    {
+      read: async () => saved,
+      write: async (value) => {
+        saved = value;
+      },
+      clear: async () => {
+        throw new Error("A stale live request must not clear the session");
+      },
+    },
+    async (url, init) => {
+      if (String(url).endsWith("/oauth/token")) {
+        tokenStarted.resolve();
+        return token.promise;
+      }
+      if (String(url).endsWith("/oauth/revoke")) return new Response(null);
+      const action = JSON.parse(String(init?.body)).action;
+      if (action === "getLive") {
+        liveStarted.resolve();
+        return live.promise;
+      }
+      assert.equal(
+        (init?.headers as Record<string, string>).Authorization,
+        "Bearer upgraded",
+      );
+      return Response.json([]);
+    },
+  );
+  client.onSignedOut = () => {
+    signouts++;
+  };
+  await client.restore();
+  const api = featureApi(client, "actor");
+  const read = assert.rejects(
+    api("/api/v1/live", "POST", { userId: "actor" }),
+    (error: unknown) => {
+      assert.ok(
+        !(error instanceof ApiError),
+        "Superseded requests must not be classified as terminal authentication errors",
+      );
+      assert.equal((error as ClientError).code, "request_superseded");
+      return true;
+    },
+  );
+  await liveStarted.promise;
+  const upgrade = client.exchange("consent-code", "verifier");
+  await tokenStarted.promise;
+  await assert.rejects(
+    api("/api/v1/lists"),
+    (e: ClientError) => e.code === "request_superseded",
+  );
+  live.resolve(
+    Response.json({ error: { code: "unauthorized" } }, { status: 401 }),
+  );
+  await read;
+  token.resolve(
+    Response.json({
+      access_token: "upgraded",
+      refresh_token: "upgraded-refresh",
+      expires_in: 900,
+    }),
+  );
+  await upgrade;
+  await api("/api/v1/lists");
+  assert.equal(signouts, 0);
+  assert.equal(saved.refreshToken, "upgraded-refresh");
+});
