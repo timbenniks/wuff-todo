@@ -1,20 +1,40 @@
 name: Native test builds
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   pull_request:
     paths:
-      - '.github/workflows/native-builds.yml'
-      - 'apps/native/**'
-      - 'packages/ui/**'
-      - 'packages/client/**'
-      - 'packages/contracts/**'
-      - 'pnpm-lock.yaml'
+      - ".github/workflows/native-builds.yml"
+      - "scripts/native_release.py"
+      - "tests/test_native_release.py"
+      - "apps/native/**"
+      - "packages/ui/**"
+      - "packages/client/**"
+      - "packages/contracts/**"
+      - "pnpm-lock.yaml"
 permissions:
   contents: read
 concurrency:
   group: native-builds-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m unittest discover -s tests -p test_native_release.py -v
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm build:mobile
   desktop:
     strategy:
       fail-fast: false
@@ -139,3 +159,25 @@ jobs:
           path: wuff-ios-simulator.zip
           if-no-files-found: error
           retention-days: 14
+
+  publish:
+    # Never grant a PR build write permissions or publish a branch build.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [release-check, desktop, android, ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*-${{ github.sha }}"
+          path: native-artifacts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Publish complete native test prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 scripts/native_release.py --publish

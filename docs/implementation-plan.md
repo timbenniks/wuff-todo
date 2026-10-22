@@ -147,3 +147,7 @@ Auth and MCP claims require live integration evidence. A successful build alone 
 ## Tauri cross-platform client — October 22, 2026
 
 Workspace PR #11, sign-in PR #12 and shared-controls PR #13 are merged. macOS/Windows CI passes for the auth/shared UI slice; packaged macOS warm/cold callbacks, restart and Keychain restoration are verified. See [auth](tauri-auth.md), [shared UI](shared-ui.md) and [live transport](tauri-live.md). Live transport PR #14 is also merged. Core workspace PR #15 is merged. Core editing, bounded cache, notes/private images and Work context now share browser-compatible features with Tauri; see [shared workspace evidence](tauri-features.md). Installed Windows/iOS/Android and signed distribution remain release gates.
+
+## Native download releases — October 22, 2026
+
+WUFF-82 adds a private GitHub prerelease after each main-branch push/merge and a manual main-branch run for grouped releases. All four platform builds and application checks must pass before the complete draft is published. See [native releases](native-releases.md) for source/version provenance, downloads, retry behavior and verification. Signed installers and physical-device acceptance remain WUFF-78/79 gates.
