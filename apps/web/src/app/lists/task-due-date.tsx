@@ -106,6 +106,7 @@ export function TaskDueDate({
     <form
       noValidate
       aria-label={`Due date for ${task.title}`}
+      data-unsaved={draft.value !== (task.dueDate ?? "") || undefined}
       className="rounded-xl border border-border bg-surface p-3 sm:p-4 grid gap-3"
       onSubmit={(e) => {
         e.preventDefault();

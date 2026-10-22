@@ -33,6 +33,7 @@ export function InlineName({
   compact = false,
   focusFallback,
   readHref,
+  onOpen,
 }: {
   value: string;
   label: string;
@@ -49,6 +50,7 @@ export function InlineName({
   compact?: boolean;
   focusFallback?: RefObject<HTMLButtonElement | null>;
   readHref?: string;
+  onOpen?: React.MouseEventHandler<HTMLAnchorElement>;
   renderActions?: (props: {
     edit: () => void;
     editing: boolean;
@@ -126,11 +128,12 @@ export function InlineName({
         {readHref ? (
           <a
             href={readHref}
+            onClick={onOpen}
             className="block truncate py-3 -my-3 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
             title={`Open task: ${value}`}
             aria-label={`Open task: ${value}`}
           >
-            {value}
+            <span className="inline-name-value">{value}</span>
           </a>
         ) : (
           value
@@ -145,6 +148,7 @@ export function InlineName({
           <form
             noValidate
             className={`inline-name-form grid gap-2 py-1 ${compact ? "inline-name-compact" : ""}`}
+            data-unsaved={draft !== value || additionalDirty || undefined}
             aria-label={`Edit ${label.toLowerCase()}`}
             onSubmit={async (e) => {
               e.preventDefault();

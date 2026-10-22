@@ -147,7 +147,15 @@ export function AgentTask({
   }
   if (list.mode !== "work") return null;
   return (
-    <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 grid gap-3 min-w-0">
+    <section
+      className="rounded-xl border border-border bg-surface p-4 sm:p-5 grid gap-3 min-w-0"
+      data-task-busy={busy || !!pending.current || undefined}
+      data-unsaved={
+        !!message ||
+        (!!providerRunId && current?.status === "uncertain") ||
+        undefined
+      }
+    >
       <h2 className="text-lg font-bold">Coding companion</h2>
       <p className="text-sm text-muted-foreground">
         Plan a ticket with Cursor, then ask it to build. Runs use your Cursor
