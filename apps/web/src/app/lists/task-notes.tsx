@@ -1,6 +1,6 @@
 "use client";
 import { wuffCopy, wuffError } from "@/lib/copy";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
@@ -39,6 +39,7 @@ export function TaskNotes({
   drafts: Map<string, NoteDraft>;
   onClose: () => void;
 }) {
+  const instanceId = useId();
   const retained = drafts.get(task.id);
   const [draft, setDraft] = useState(retained?.draft ?? task.content),
     [original] = useState(retained?.original ?? task.content),
@@ -156,7 +157,9 @@ export function TaskNotes({
   }
   return (
     <div
-      id={`notes-${task.id}`}
+      id={`notes-${task.id}-${instanceId}`}
+      data-unsaved={draft !== task.content || undefined}
+      data-task-busy={uploading || saving || undefined}
       className="task-notes w-full min-w-0 mt-1 rounded-xl border border-border bg-surface overflow-hidden"
       onKeyDown={(e) => {
         if (e.nativeEvent.isComposing) return;

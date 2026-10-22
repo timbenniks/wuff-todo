@@ -891,6 +891,19 @@ export function ListApp({
                   userId={userId}
                   busy={busy}
                   change={change}
+                  error={error}
+                  refresh={() => reload(list.id)}
+                  retry={
+                    retryWrite
+                      ? () =>
+                          change(
+                            retryWrite.path,
+                            retryWrite.method,
+                            retryWrite.body,
+                            true,
+                          )
+                      : undefined
+                  }
                 />
               </>
             )}

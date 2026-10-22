@@ -146,9 +146,17 @@ function WorkForm({
   return (
     <form
       className="grid gap-4"
+      data-unsaved={
+        draft.status !== task.status ||
+        draft.priority !== task.priority ||
+        draft.assigneeId !== task.assigneeId ||
+        JSON.stringify(draft.references) !== JSON.stringify(task.references) ||
+        undefined
+      }
       onKeyDown={(e) => {
         if (e.key === "Escape" && !busy) {
           e.preventDefault();
+          e.stopPropagation();
           close();
         }
       }}

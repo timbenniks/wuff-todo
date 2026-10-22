@@ -1,16 +1,6 @@
 "use client";
-import { NativeSelect } from "@/components/ui/native-select";
-
 import {
-  InputGroup,
-  InputGroupInput,
-  InputGroupAddon,
-  InputGroupButton,
-} from "@/components/ui/input-group";
-
-import {
-  useEffect,
-  useLayoutEffect,
+  useId,
   useRef,
   useState,
   type CSSProperties,
@@ -21,19 +11,28 @@ import {
   Check,
   FileText,
   ListTree,
-  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
+  ExternalLink,
 } from "lucide-react";
-import { githubSyncLabel, type Task, type TodoList } from "@wuff/contracts";
-import { StatusTag } from "@/components/ui/status-tag";
+import type { Task, TodoList } from "@wuff/contracts";
+import { NativeSelect } from "@/components/ui/native-select";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import { InlineName } from "./inline-name";
 import { TaskNotes, type NoteDraft } from "./task-notes";
 import type { ListChange } from "./list-settings";
-import { TaskDueDate, DueDateBadge, type DueDateDraft } from "./task-due-date";
+import { TaskDueDate, type DueDateDraft } from "./task-due-date";
 import { SortableList, SortableItem } from "@/components/sortable";
+import { TaskActions } from "./task-actions";
+import { TaskMetadata } from "./task-metadata";
+
 export function TaskRow({
   task,
   userId,
@@ -50,6 +49,7 @@ export function TaskRow({
   detailed = false,
   matchedChildren,
   disableChildDrag = false,
+  onOpenTask,
 }: {
   task: Task;
   userId: string;
@@ -66,86 +66,53 @@ export function TaskRow({
   detailed?: boolean;
   matchedChildren?: string[];
   disableChildDrag?: boolean;
+  onOpenTask?: (id: string) => void;
 }) {
-  const children = list.tasks.filter((t) => t.parentTaskId === task.id);
+  const children = list.tasks.filter((child) => child.parentTaskId === task.id);
   const [expanded, setExpanded] = useState(
     () =>
       subtaskDrafts.has(task.id) ||
       children.some((child) => drafts.has(child.id) || dueDrafts.has(child.id)),
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreTrigger = useRef<HTMLButtonElement>(null);
-  const actionRegion = useRef<HTMLDivElement>(null);
-  const actionPanel = useRef<HTMLDivElement>(null);
-  const [menuLayout, setMenuLayout] = useState({ up: false, height: 420 });
-  useLayoutEffect(() => {
-    if (!moreOpen) return;
-    function place() {
-      const trigger = moreTrigger.current,
-        panel = actionPanel.current;
-      if (!trigger || !panel || window.innerWidth >= 640) return;
-      const rect = trigger.getBoundingClientRect();
-      const below = window.innerHeight - rect.bottom - 12,
-        above = rect.top - 12;
-      const up = below < Math.min(panel.scrollHeight, 360) && above > below;
-      const height = Math.max(80, up ? above : below);
-      setMenuLayout((current) =>
-        current.up === up && current.height === height
-          ? current
-          : { up, height },
-      );
-    }
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-    };
-  }, [moreOpen]);
-  function restoreActionFocus(target: HTMLButtonElement | null) {
-    requestAnimationFrame(() => {
-      if (target?.getClientRects().length) target.focus();
-      else moreTrigger.current?.focus();
-    });
-  }
-  useEffect(() => {
-    if (!moreOpen) return;
-    function outside(event: Event) {
-      if (
-        event.target instanceof Node &&
-        !actionRegion.current?.contains(event.target)
-      )
-        setMoreOpen(false);
-    }
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("click", outside);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("click", outside);
-    };
-  }, [moreOpen]);
-  const subtasksOpen = expanded || subtaskDrafts.has(task.id);
-  const [dateOpen, setDateOpen] = useState(dueDrafts.has(task.id)),
-    dateTrigger = useRef<HTMLButtonElement>(null);
+  const [dateOpen, setDateOpen] = useState(dueDrafts.has(task.id));
+  const [notesOpen, setNotesOpen] = useState(drafts.has(task.id));
   const [draftSection, setDraftSection] = useState(task.sectionId);
-  const [notesOpen, setNotesOpen] = useState(drafts.has(task.id)),
-    notesTrigger = useRef<HTMLButtonElement>(null);
-  const disabled = busy || list.archived,
-    body = { listId: list.id, version: list.version, taskId: task.id };
+  const moreTrigger = useRef<HTMLButtonElement>(null);
+  const subtasksOpen = expanded || subtaskDrafts.has(task.id);
+  const disabled = busy || list.archived;
+  const body = { listId: list.id, version: list.version, taskId: task.id };
+  const restoreFocus = () =>
+    requestAnimationFrame(() => moreTrigger.current?.focus());
+  const openDetails = onOpenTask ? () => onOpenTask(task.id) : undefined;
+  const detailsClick: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
+    if (
+      openDetails &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      event.button === 0
+    ) {
+      event.preventDefault();
+      openDetails();
+    }
+  };
   return (
     <li
       ref={rowRef}
       style={style}
-      className="task-row group flex flex-wrap items-start gap-x-2 gap-y-1 py-2"
+      className="task-row"
       data-task-id={task.id}
+      data-density={detailed ? "comfortable" : "compact"}
+      data-completed={task.completed}
     >
+      <div className="task-drag-slot">{dragHandle}</div>
       <button
         type="button"
+        className="task-complete"
         aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`}
         disabled={disabled}
-        className="task-complete h-11 w-11 shrink-0 rounded-full flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
         onClick={() =>
           change("/api/v1/tasks", "PATCH", {
             ...body,
@@ -154,9 +121,9 @@ export function TaskRow({
         }
       >
         <span
-          className={`h-6 w-6 shrink-0 rounded-full border-2 flex items-center justify-center ${task.completed ? "bg-primary border-primary text-white" : "border-control hover:bg-accent"}`}
+          className={`task-checkbox ${task.completed ? "task-checkbox-done" : ""}`}
         >
-          {task.completed && <Check size={15} />}
+          {task.completed && <Check size={15} aria-hidden="true" />}
         </span>
       </button>
       <InlineName
@@ -165,6 +132,7 @@ export function TaskRow({
         focusFallback={moreTrigger}
         value={task.title}
         readHref={task.path}
+        onOpen={detailsClick}
         label="Task name"
         editLabel={`Edit ${task.title}`}
         completed={task.completed}
@@ -174,29 +142,28 @@ export function TaskRow({
           change("/api/v1/tasks", "PATCH", {
             ...body,
             title,
-            ...(list.sections.length > 0 &&
-            !task.completed &&
-            !task.parentTaskId
+            ...(list.sections.length && !task.completed && !task.parentTaskId
               ? { sectionId: draftSection }
               : {}),
           })
         }
         additionalDirty={draftSection !== task.sectionId}
         additionalFields={
-          list.sections.length > 0 && !task.completed && !task.parentTaskId ? (
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          list.sections.length && !task.completed && !task.parentTaskId ? (
+            <label className="grid gap-1 text-xs text-muted-foreground">
               Section
               <NativeSelect
-                className="text-sm max-w-full"
                 aria-label={`Section for ${task.title}`}
                 value={draftSection ?? ""}
                 disabled={disabled}
-                onChange={(e) => setDraftSection(e.target.value || null)}
+                onChange={(event) =>
+                  setDraftSection(event.target.value || null)
+                }
               >
                 <option value="">No section</option>
-                {list.sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title}
+                {list.sections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.title}
                   </option>
                 ))}
               </NativeSelect>
@@ -204,141 +171,111 @@ export function TaskRow({
           ) : undefined
         }
         renderActions={({ edit, editing, trigger }) => (
-          <div
-            ref={actionRegion}
-            className="flex shrink-0 items-center task-actions"
-            data-editing={editing}
-            data-expanded={moreOpen}
-            onPointerDownCapture={(event) => {
-              if ((event.target as HTMLElement).closest(".drag-handle"))
-                setMoreOpen(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && moreOpen) {
-                e.preventDefault();
-                setMoreOpen(false);
-                moreTrigger.current?.focus();
-              }
-            }}
+          <TaskActions
+            title={task.title}
+            disabled={busy || editing}
+            trigger={moreTrigger}
           >
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              ref={moreTrigger}
-              className="task-more"
-              aria-label={`More actions for ${task.title}`}
-              aria-expanded={moreOpen}
-              aria-controls={`task-more-${task.id}`}
-              disabled={busy || editing}
-              onClick={() => setMoreOpen((open) => !open)}
-            >
-              <MoreHorizontal size={18} />
-            </Button>
-            <div
-              ref={actionPanel}
-              id={`task-more-${task.id}`}
-              className="task-action-panel"
-              data-side={menuLayout.up ? "up" : "down"}
-              style={
-                {
-                  "--task-menu-height": `${menuLayout.height}px`,
-                } as CSSProperties
-              }
-            >
-              <p className="task-menu-title">{task.title}</p>
-              <a
-                href={task.path}
-                className="task-open-details text-sm text-primary underline min-h-11 inline-flex items-center px-3"
-              >
-                Open task details
-              </a>
-              {!list.archived && (
-                <Button
-                  ref={trigger}
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="task-edit h-11 w-11 text-muted-foreground hover:text-primary"
-                  title="Edit task"
-                  aria-label={`Edit ${task.title}`}
-                  disabled={busy || editing}
-                  onClick={() => {
-                    setDraftSection(task.sectionId);
-                    setMoreOpen(false);
-                    edit();
+            {(close) => (
+              <>
+                <a
+                  href={task.path}
+                  onClick={(event) => {
+                    close();
+                    detailsClick(event);
                   }}
                 >
-                  <Pencil size={16} />
-                  <span className="task-action-label">Edit</span>
-                </Button>
-              )}
-              {!task.parentTaskId && children.length > 0 && (
+                  <ExternalLink size={16} aria-hidden="true" />
+                  Open task details
+                </a>
+                {!list.archived && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    ref={trigger}
+                    disabled={busy}
+                    onClick={() => {
+                      close();
+                      setDraftSection(task.sectionId);
+                      edit();
+                    }}
+                  >
+                    <Pencil size={16} aria-hidden="true" />
+                    Rename task
+                  </Button>
+                )}
                 <Button
                   type="button"
-                  size="sm"
                   variant="ghost"
-                  className={`task-subtasks ${children.length ? "" : "task-secondary"} h-11 px-2 gap-1 ${children.length ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                  aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
-                  title="Little steps, big tail wags · Subtasks"
-                  aria-expanded={subtasksOpen}
-                  aria-controls={
-                    subtasksOpen ? `subtasks-${task.id}` : undefined
-                  }
-                  disabled={busy || editing}
+                  disabled={busy || (list.archived && !task.content)}
                   onClick={() => {
-                    setExpanded(!subtasksOpen);
-                    setMoreOpen(false);
+                    close();
+                    setNotesOpen(!notesOpen);
                   }}
                 >
-                  <ListTree size={16} />
-                  <span className="task-action-label">Subtasks</span>
-                  {children.length > 0 && (
-                    <span className="text-xs tabular-nums">
-                      {children.filter((t) => t.completed).length}/
-                      {children.length}
-                    </span>
-                  )}
+                  <FileText size={16} aria-hidden="true" />
+                  {task.content ? "Edit notes" : "Add notes"}
                 </Button>
-              )}
-              <Button
-                ref={notesTrigger}
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={`task-notes-action h-11 w-11 ${notesOpen ? "bg-accent text-primary" : task.content ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                title={notesOpen ? "Hide notes" : "Notes"}
-                aria-label={`${notesOpen ? "Hide" : task.content ? "Edit" : "Add"} notes for ${task.title}`}
-                aria-expanded={notesOpen}
-                aria-controls={notesOpen ? `notes-${task.id}` : undefined}
-                disabled={busy || editing || (list.archived && !task.content)}
-                onClick={() => {
-                  setNotesOpen((v) => !v);
-                  setMoreOpen(false);
-                }}
-              >
-                <FileText size={16} />
-                <span className="task-action-label">Notes</span>
-              </Button>
-              <div className="task-secondary-actions">
-                {list.sections.length > 0 &&
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={disabled}
+                  onClick={() => {
+                    close();
+                    if (!dateOpen && !dueDrafts.has(task.id))
+                      dueDrafts.set(task.id, {
+                        value: task.dueDate ?? "",
+                        base: task.dueDate,
+                      });
+                    setDateOpen(!dateOpen);
+                  }}
+                >
+                  <CalendarDays size={16} aria-hidden="true" />
+                  {task.dueDate ? "Change due date" : "Set due date"}
+                </Button>
+                {!task.parentTaskId && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={busy || (list.archived && !children.length)}
+                    onClick={() => {
+                      close();
+                      setExpanded(!subtasksOpen);
+                    }}
+                  >
+                    <ListTree size={16} aria-hidden="true" />
+                    {children.length ? "Manage subtasks" : "Add subtask"}
+                  </Button>
+                )}
+                {list.mode === "work" && (
+                  <a
+                    href={task.path}
+                    onClick={(event) => {
+                      close();
+                      detailsClick(event);
+                    }}
+                  >
+                    Status, priority &amp; assignment
+                  </a>
+                )}
+                {!!list.sections.length &&
                   !task.parentTaskId &&
                   !task.completed &&
                   !list.archived && (
-                    <label className="task-menu-section sm:hidden">
+                    <label className="task-menu-section">
                       Move to section
                       <NativeSelect
                         aria-label={`Move ${task.title} to section`}
                         value={task.sectionId ?? ""}
                         disabled={disabled}
-                        onChange={async (e) => {
+                        onChange={async (event) => {
                           if (
                             await change("/api/v1/tasks", "PATCH", {
                               ...body,
-                              sectionId: e.target.value || null,
+                              sectionId: event.target.value || null,
                             })
                           )
-                            setMoreOpen(false);
+                            close();
                         }}
                       >
                         <option value="">No section</option>
@@ -350,160 +287,49 @@ export function TaskRow({
                       </NativeSelect>
                     </label>
                   )}
-                {!task.parentTaskId &&
-                  !list.archived &&
-                  children.length === 0 && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className={`task-subtasks ${children.length ? "" : "task-secondary"} h-11 px-2 gap-1 ${children.length ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                      aria-label={`${children.length ? "Subtasks" : "Add subtasks"} for ${task.title}${children.length ? `: ${children.filter((t) => t.completed).length} of ${children.length} done` : ""}`}
-                      title="Little steps, big tail wags · Subtasks"
-                      aria-expanded={subtasksOpen}
-                      aria-controls={
-                        subtasksOpen ? `subtasks-${task.id}` : undefined
-                      }
-                      disabled={busy || editing}
-                      onClick={() => {
-                        setExpanded(!subtasksOpen);
-                        setMoreOpen(false);
-                      }}
-                    >
-                      <ListTree size={16} />
-                      <span className="task-action-label">Subtasks</span>
-                    </Button>
-                  )}
-                <Button
-                  ref={dateTrigger}
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className={`task-date task-secondary h-11 w-11 ${dateOpen ? "bg-accent text-primary" : task.dueDate ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                  title="Due date"
-                  aria-label={`${dateOpen ? "Hide" : task.dueDate ? "Change" : "Set"} due date for ${task.title}`}
-                  aria-expanded={dateOpen}
-                  aria-controls={dateOpen ? `due-${task.id}` : undefined}
-                  disabled={
-                    busy ||
-                    editing ||
-                    (list.archived && !task.dueDate && !dueDrafts.has(task.id))
-                  }
-                  onClick={() => {
-                    if (!dateOpen && !dueDrafts.has(task.id))
-                      dueDrafts.set(task.id, {
-                        value: task.dueDate ?? "",
-                        base: task.dueDate ?? null,
-                      });
-                    setDateOpen(!dateOpen);
-                    setMoreOpen(false);
-                  }}
-                >
-                  <CalendarDays size={16} />
-                  <span className="task-action-label">Date</span>
-                </Button>
-              </div>
-            </div>
-            {!list.archived && (
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="task-delete task-secondary h-11 w-11 text-muted-foreground hover:text-red-700"
-                title="Delete task"
-                aria-label={`Delete ${task.title}`}
-                disabled={busy || editing}
-                onClick={() => {
-                  setMoreOpen(false);
-                  setConfirmDelete(true);
-                }}
-              >
-                <Trash2 size={16} />
-                <span className="task-action-label">Delete</span>
-              </Button>
+                {!list.archived && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="task-delete"
+                    disabled={busy}
+                    onClick={() => {
+                      close();
+                      setConfirmDelete(true);
+                    }}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Delete task
+                  </Button>
+                )}
+              </>
             )}
-            {dragHandle}
-          </div>
+          </TaskActions>
         )}
       />
-      {(task.dueDate || task.content || children.length > 0 || task.github) && (
-        <div className="task-summary col-span-full basis-full min-w-0 flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
-          <DueDateBadge task={task} today={today} />
-          {task.content && (
-            <button
-              type="button"
-              className="task-summary-action inline-flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
-              aria-label={`Read notes for ${task.title}`}
-              onClick={() => {
-                setNotesOpen(true);
-                setMoreOpen(false);
-              }}
-            >
-              <FileText size={13} aria-hidden="true" /> Notes
-            </button>
-          )}
-          {children.length > 0 && (
-            <button
-              type="button"
-              className="task-summary-action inline-flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
-              aria-expanded={subtasksOpen}
-              aria-controls={`subtasks-${task.id}`}
-              aria-label={`Subtasks for ${task.title}: ${children.filter((t) => t.completed).length} of ${children.length} done`}
-              onClick={() => setExpanded(!subtasksOpen)}
-            >
-              <ListTree size={13} aria-hidden="true" />
-              {children.filter((t) => t.completed).length}/{children.length}
-            </button>
-          )}
-          {task.github && (
-            <span className="task-github-summary inline-flex items-center gap-1.5">
-              {task.github.url && (
-                <a
-                  href={task.github.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="task-summary-action inline-flex items-center hover:underline"
-                  aria-label={`GitHub issue ${task.github.issueNumber} for ${task.title}`}
-                >
-                  GitHub #{task.github.issueNumber}
-                </a>
-              )}
-              {task.github.url && <span aria-hidden="true">·</span>}
-              <a
-                href={`${task.path}#github`}
-                className={`task-summary-action inline-flex items-center hover:underline ${["Needs attention", "Disconnected"].includes(githubSyncLabel(task.github)) ? "text-destructive" : ""}`}
-                aria-label={`GitHub sync: ${githubSyncLabel(task.github)}. Open sync controls for ${task.title}`}
-              >
-                {task.github.url ? "" : "GitHub · "}
-                {githubSyncLabel(task.github)}
-              </a>
-            </span>
-          )}
-        </div>
-      )}
-      {detailed && (
-        <p className="task-metadata col-span-full min-w-0 basis-full text-xs text-muted-foreground break-words">
-          {task.key} · <StatusTag status={task.status} /> ·{" "}
-          {task.priority === "none"
-            ? "No priority"
-            : `${task.priority} priority`}
-          {task.assigneeId
-            ? ` · ${list.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}`
-            : ""}
-          {task.references.length ? ` · ${task.references.length} links` : ""}
-        </p>
-      )}
+      <TaskMetadata
+        task={task}
+        list={list}
+        today={today}
+        comfortable={detailed}
+        onDetails={openDetails}
+        onNotes={() => setNotesOpen(true)}
+        onSubtasks={() => setExpanded(!subtasksOpen)}
+      />
       {!!matchedChildren?.length && (
-        <p className="task-metadata col-span-full min-w-0 basis-full text-xs text-primary">
-          Shown because {matchedChildren.length} subtasks match your filters.
-          Open subtasks to see the context.
+        <p className="task-metadata text-xs text-muted-foreground">
+          {matchedChildren.length} matching subtasks ·{" "}
+          <button
+            type="button"
+            className="underline min-h-11"
+            onClick={() => setExpanded(true)}
+          >
+            Show context
+          </button>
         </p>
       )}
       {dateOpen && (
-        <div
-          id={`due-${task.id}`}
-          className="task-panel basis-full min-w-0 pl-8 sm:pl-9"
-        >
+        <div className="task-panel">
           <TaskDueDate
             task={task}
             list={list}
@@ -512,24 +338,20 @@ export function TaskRow({
             drafts={dueDrafts}
             onClose={() => {
               setDateOpen(false);
-              restoreActionFocus(dateTrigger.current);
+              restoreFocus();
             }}
           />
         </div>
       )}
       {confirmDelete && !list.archived && (
-        <div
-          className="task-panel basis-full min-w-0 pl-8 grid gap-2"
-          role="alert"
-        >
+        <div className="task-panel grid gap-2" role="alert">
           <p className="text-sm text-muted-foreground">
-            Paws before deleting: this removes “{task.title}”
+            Delete “{task.title}”
             {children.length ? ` and all ${children.length} subtasks` : ""} for
-            everyone. This cannot be undone.
+            everyone? This cannot be undone.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
-              size="sm"
               variant="destructive"
               disabled={busy}
               onClick={() => change("/api/v1/tasks", "DELETE", body)}
@@ -537,10 +359,12 @@ export function TaskRow({
               {children.length ? "Delete task and subtasks" : "Delete task"}
             </Button>
             <Button
-              size="sm"
               variant="ghost"
               disabled={busy}
-              onClick={() => setConfirmDelete(false)}
+              onClick={() => {
+                setConfirmDelete(false);
+                restoreFocus();
+              }}
             >
               Cancel
             </Button>
@@ -548,10 +372,7 @@ export function TaskRow({
         </div>
       )}
       {!task.parentTaskId && subtasksOpen && (
-        <div
-          id={`subtasks-${task.id}`}
-          className="task-subtask-panel basis-full min-w-0 pl-4 sm:pl-8"
-        >
+        <div id={`subtasks-${task.id}`} className="task-subtask-panel">
           <Subtasks
             parent={task}
             items={children}
@@ -564,11 +385,13 @@ export function TaskRow({
             dueDrafts={dueDrafts}
             today={today}
             disableDrag={disableChildDrag}
+            detailed={detailed}
+            onOpenTask={onOpenTask}
           />
         </div>
       )}
       {notesOpen && (
-        <div className="task-panel basis-full min-w-0 pl-8 sm:pl-9">
+        <div className="task-panel">
           <TaskNotes
             userId={userId}
             task={task}
@@ -578,7 +401,7 @@ export function TaskRow({
             drafts={drafts}
             onClose={() => {
               setNotesOpen(false);
-              restoreActionFocus(notesTrigger.current);
+              restoreFocus();
             }}
           />
         </div>
@@ -586,7 +409,6 @@ export function TaskRow({
     </li>
   );
 }
-
 export function Subtasks({
   parent,
   items,
@@ -600,6 +422,8 @@ export function Subtasks({
   today,
   focusNewTask = true,
   disableDrag = false,
+  detailed = false,
+  onOpenTask,
 }: {
   parent: Task;
   items: Task[];
@@ -613,8 +437,11 @@ export function Subtasks({
   today: string | null;
   focusNewTask?: boolean;
   disableDrag?: boolean;
+  detailed?: boolean;
+  onOpenTask?: (id: string) => void;
 }) {
   const [title, setTitle] = useState(subtaskDrafts.get(parent.id) ?? "");
+  const inputId = useId();
   const disabled = busy || list.archived;
   const input = useRef<HTMLInputElement>(null);
   const body = {
@@ -671,6 +498,7 @@ export function Subtasks({
       {!list.archived && (
         <form
           className="task-add grid gap-1 mt-3"
+          data-unsaved={!!title || undefined}
           onSubmit={async (e) => {
             e.preventDefault();
             const sent = title;
@@ -683,15 +511,12 @@ export function Subtasks({
             }
           }}
         >
-          <label
-            className="text-xs text-muted-foreground"
-            htmlFor={`new-child-${parent.id}`}
-          >
+          <label className="text-xs text-muted-foreground" htmlFor={inputId}>
             New subtask
           </label>
           <InputGroup>
             <InputGroupInput
-              id={`new-child-${parent.id}`}
+              id={inputId}
               ref={input}
               autoFocus={focusNewTask && items.length === 0}
               value={title}

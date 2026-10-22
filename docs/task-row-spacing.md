@@ -2,6 +2,8 @@
 
 Updated: October 22, 2026
 
+The subsequent [task-list UX refactor](task-list-ux.md) supersedes this presentation with density controls, one overflow action and contextual task details. The evidence below records the earlier spacing-only revision.
+
 The website task row now uses a shared grid for completion, title and direct actions. Notes, dates, subtask progress and GitHub context start at the title's left edge. Expanded desktop editors use that same column; phone editors keep the full available width. Compact desktop rows use 4px vertical padding and 24px metadata targets, while phone metadata actions retain 44px targets.
 
 GitHub context reads `GitHub #6 · Synced`, with separate issue and sync-control links. The issue and state stay together when metadata wraps. Links underline on hover and retain keyboard focus outlines; attention/disconnected states retain their danger color. Detailed metadata and child-match explanations follow the same desktop alignment and use the full row on phones.

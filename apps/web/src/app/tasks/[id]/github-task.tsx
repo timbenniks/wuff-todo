@@ -100,6 +100,8 @@ export function GithubTask({
   return (
     <section
       id="github"
+      data-task-busy={busy || !!pending.current || undefined}
+      data-unsaved={(!!number && !link) || undefined}
       className="rounded-xl border border-border bg-surface p-4 sm:p-5 grid gap-3 min-w-0 scroll-mt-4"
     >
       <h2 className="text-lg font-bold">GitHub issue</h2>

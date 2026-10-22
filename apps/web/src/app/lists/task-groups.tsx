@@ -25,18 +25,26 @@ import { mergeVisibleOrder } from "@/lib/reorder";
 import { useCalendarDay } from "@/lib/use-calendar-day";
 import type { DueDateDraft } from "./task-due-date";
 import { InlineName } from "./inline-name";
+import { TaskDetailDrawer } from "./task-detail-drawer";
 
 export function TaskGroups({
   list,
   userId,
   busy,
   change,
+  error = "",
+  retry,
+  refresh,
 }: {
   list: TodoList;
   userId: string;
   busy: boolean;
   change: ListChange;
+  error?: string;
+  retry?: () => Promise<boolean>;
+  refresh: () => Promise<void>;
 }) {
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const today = useCalendarDay();
   const dueDrafts = useRef(new Map<string, DueDateDraft>());
   const noteDrafts = useRef(new Map<string, NoteDraft>()),
@@ -122,6 +130,7 @@ export function TaskGroups({
                   detailed={view.layout === "detailed"}
                   matchedChildren={childMatches[task.id]}
                   disableChildDrag={!manual}
+                  onOpenTask={setOpenTaskId}
                   dragHandle={
                     !list.archived && manual && !task.completed
                       ? handle
@@ -196,6 +205,19 @@ export function TaskGroups({
   }
   return (
     <>
+      {openTaskId && (
+        <TaskDetailDrawer
+          taskId={openTaskId}
+          list={list}
+          userId={userId}
+          busy={busy}
+          change={change}
+          error={error}
+          retry={retry}
+          refresh={refresh}
+          navigate={setOpenTaskId}
+        />
+      )}
       {list.archived && (
         <p
           role="status"

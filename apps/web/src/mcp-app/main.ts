@@ -15,6 +15,7 @@ import {
   taskPriorities,
   taskReferencesSchema,
 } from "@wuff/contracts";
+import { taskMetadata } from "../lib/task-metadata";
 import { wuffCopy, wuffError } from "../lib/copy";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
@@ -206,6 +207,14 @@ function inlineName(
           .then((data) => {
             show(data);
             status.textContent = wuffCopy.saved;
+            if (args.taskId) {
+              root
+                .querySelector<HTMLButtonElement>(
+                  `[data-task-id="${CSS.escape(String(args.taskId))}"] .task-title`,
+                )
+                ?.focus();
+              return;
+            }
             Array.from(root.querySelectorAll<HTMLElement>(".inline-name"))
               .find((el) => el.dataset.nameKey === nameKey)
               ?.querySelector<HTMLButtonElement>(".name-button")
@@ -524,7 +533,14 @@ type DateDraft = {
   error?: string;
 };
 const dateDrafts = new Map<string, DateDraft>();
+const cueRenderers = new Map<string, () => void>();
+let cueDay = calendarDay();
 function refreshDueBadges() {
+  const nextDay = calendarDay();
+  if (cueDay !== nextDay) {
+    cueDay = nextDay;
+    for (const render of cueRenderers.values()) render();
+  }
   for (const badge of root.querySelectorAll<HTMLElement>("[data-due-date]")) {
     const display = dueDatePresentation(
       badge.dataset.dueDate!,
@@ -883,43 +899,61 @@ function renderTask(
     row = element("div");
   wrapper.className = "task-item";
   wrapper.dataset.taskId = task.id;
+  const view = current!.personalView?.view ?? defaultListView();
+  wrapper.dataset.density =
+    view.layout === "detailed" ? "comfortable" : "compact";
+  wrapper.dataset.completed = String(task.completed);
+  const actions = element("details"),
+    actionPanel = element("div");
+  actions.className = "task-actions";
+  const actionTrigger = element("summary", "⋯");
+  actionTrigger.setAttribute("aria-label", `More actions for ${task.title}`);
+  actionTrigger.title = "Task actions";
+  actionPanel.className = "task-action-menu";
+  actions.append(actionTrigger, actionPanel);
+  actions.onkeydown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      actions.open = false;
+      actionTrigger.focus();
+    }
+  };
   row.className = "task";
-  const check = element("input");
-  check.type = "checkbox";
-  check.checked = task.completed;
+  const check = element("button");
+  check.type = "button";
+  check.className = "task-check";
+  check.setAttribute("role", "checkbox");
+  check.setAttribute("aria-checked", String(task.completed));
+  const circle = element("span", task.completed ? "✓" : "");
+  circle.setAttribute("aria-hidden", "true");
+  check.append(circle);
   check.disabled = current!.archived;
   check.setAttribute(
     "aria-label",
     `${task.completed ? "Reopen" : "Complete"} ${task.title}`,
   );
-  check.onchange = () => {
+  check.onclick = () => {
     check.disabled = true;
-    void mutation("update_task", { taskId: task.id, completed: check.checked });
+    void mutation("update_task", {
+      taskId: task.id,
+      completed: !task.completed,
+    });
   };
-  row.append(
-    check,
-    (() => {
-      const name = element("div");
-      name.className = "inline-name";
-      name.append(
-        inlineName(
-          task.title,
-          "Task name",
-          "update_task",
-          { taskId: task.id },
-          { editable: !current!.archived, completed: task.completed },
-        ),
-      );
-      if (task.dueDate) {
-        const badge = element("time");
-        badge.dateTime = task.dueDate;
-        badge.dataset.dueDate = task.dueDate;
-        badge.dataset.completed = String(task.completed);
-        name.append(badge);
-      }
-      return name;
-    })(),
+  const title = button(task.title, () => {
+    secondary.open = !secondary.open;
+  });
+  title.className = "task-title";
+  title.replaceChildren(element("span", task.title));
+  title.setAttribute("aria-label", `Open task: ${task.title}`);
+  const nameEditor = inlineName(
+    task.title,
+    "Task name",
+    "update_task",
+    { taskId: task.id },
+    { editable: !current!.archived, completed: task.completed },
   );
+  row.append(check, title, actions);
   if (!task.parentTaskId && current!.sections.length) {
     const select = element("select");
     select.setAttribute("aria-label", `Section for ${task.title}`);
@@ -935,11 +969,14 @@ function renderTask(
         taskId: task.id,
         sectionId: select.value || null,
       });
-    row.append(select);
+    const label = element("label", "Move to section");
+    label.append(select);
+    actionPanel.append(label);
   }
   const children = current!.tasks.filter((t) => t.parentTaskId === task.id);
   if (!current!.archived) {
-    const remove = button("Delete", () => {
+    const remove = button("Delete task", () => {
+      actions.open = false;
       const warning = element("div");
       warning.setAttribute("role", "alert");
       warning.append(
@@ -951,62 +988,84 @@ function renderTask(
           children.length ? "Delete task and subtasks" : "Delete task",
           () => void mutation("delete_task", { taskId: task.id }),
         ),
-        button("Cancel", () => warning.remove()),
+        button("Cancel", () => {
+          warning.remove();
+          actionTrigger.focus();
+        }),
       );
       wrapper.querySelector("[data-delete-confirmation]")?.remove();
       warning.dataset.deleteConfirmation = "true";
       wrapper.append(warning);
+      warning.querySelector<HTMLButtonElement>("button")?.focus();
     });
     remove.setAttribute("aria-label", `Delete ${task.title}`);
     remove.title = "Delete task";
-    row.append(remove);
+    actionPanel.append(remove);
   }
-  const taskLink = element("a", task.key);
-  taskLink.className = "task-key";
-  taskLink.href = new URL(task.path, webOrigin).href;
-  taskLink.target = "_blank";
-  taskLink.rel = "noopener noreferrer";
-  taskLink.setAttribute("aria-label", `Open ${task.key} task page`);
-  wrapper.append(row, taskLink);
-  if (task.github) {
-    const sync = element(
-      "a",
-      `${task.github.issueNumber ? `#${task.github.issueNumber} · ` : ""}${githubSyncLabel(task.github)}`,
+  wrapper.append(row);
+  const cues = element("div");
+  cues.className = "task-cues";
+  const renderCues = () => {
+    const budget = taskMetadata(
+      task,
+      current!,
+      calendarDay(),
+      view.layout === "detailed",
     );
-    sync.className = "task-sync-summary";
-    sync.href = new URL(`${task.path}#github`, webOrigin).href;
-    sync.target = "_blank";
-    sync.rel = "noopener noreferrer";
-    sync.setAttribute(
-      "aria-label",
-      `GitHub sync: ${githubSyncLabel(task.github)}. Open sync controls for ${task.title}`,
-    );
-    wrapper.append(sync);
-  }
-  const view = current!.personalView?.view ?? defaultListView();
-  if (view.layout === "detailed" || current!.mode === "work") {
-    const tag = element("span", statusLabels[task.status]);
-    tag.className = "status-tag";
-    tag.dataset.tone = {
-      todo: "neutral",
-      in_progress: "active",
-      in_review: "review",
-      blocked: "danger",
-      done: "success",
-    }[task.status];
-    wrapper.append(tag);
-  }
-  if (view.layout === "detailed") {
-    wrapper.append(
-      element(
-        "p",
-        `${task.priority} priority${task.assigneeId ? ` · ${current!.assignees.find((a) => a.id === task.assigneeId)?.name ?? "Assigned"}` : ""}${task.references.length ? ` · ${task.references.length} links` : ""}`,
-      ),
-    );
-  }
+    cues.replaceChildren();
+    for (const cue of budget.visible) {
+      let item: HTMLElement;
+      if (cue.kind === "due") {
+        const badge = element("time", cue.label);
+        badge.dateTime = task.dueDate!;
+        badge.dataset.dueDate = task.dueDate!;
+        badge.dataset.completed = String(task.completed);
+        item = badge;
+      } else if (cue.kind === "github") {
+        const link = element("a", cue.label);
+        link.href = task.github!.url!;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        item = link;
+      } else if (["notes", "progress", "attention"].includes(cue.kind)) {
+        item = button(cue.label, () => {
+          openDetails(
+            cue.kind === "notes"
+              ? notesPanel
+              : cue.kind === "attention"
+                ? githubPanel
+                : subtaskPanel,
+          );
+        });
+        item.setAttribute(
+          "aria-label",
+          `${cue.kind === "attention" ? "GitHub sync: " : ""}${cue.label} for ${task.title}`,
+        );
+      } else item = element("span", cue.label);
+      item.classList.add("task-cue");
+      if (cue.urgent && cue.kind !== "due")
+        item.classList.add("task-cue-attention");
+      cues.append(item);
+    }
+    if (budget.hidden.length) {
+      const more = button(`+${budget.hidden.length} more`, () => openDetails());
+      more.className = "task-cue";
+      more.title = budget.hidden.map((cue) => cue.label).join(" · ");
+      more.setAttribute(
+        "aria-label",
+        `${budget.hidden.length} more details for ${task.title}`,
+      );
+      cues.append(more);
+    }
+    cues.hidden = !cues.childElementCount;
+  };
+  cueRenderers.set(task.id, renderCues);
+  wrapper.append(cues);
   const secondary = element("details"),
     detailsBody = element("div");
   secondary.className = "task-details";
+  secondary.id = `task-details-${task.id}`;
+  title.setAttribute("aria-controls", secondary.id);
   secondary.setAttribute("aria-label", `Details for ${task.title}`);
   detailsBody.className = "task-details-body";
   const retained = (t: Task) =>
@@ -1016,25 +1075,79 @@ function renderTask(
     subtaskDrafts.has(t.id);
   secondary.open =
     !!taskExpanded.get(task.id) || retained(task) || children.some(retained);
-  secondary.ontoggle = () => taskExpanded.set(task.id, secondary.open);
-  secondary.append(
-    element(
-      "summary",
-      [
-        "Task details",
-        task.content ? "Notes" : "",
-        children.length
-          ? `${children.filter((t) => t.completed).length}/${children.length} subtasks`
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    ),
-    detailsBody,
+  title.setAttribute("aria-expanded", String(secondary.open));
+  secondary.ontoggle = () => {
+    taskExpanded.set(task.id, secondary.open);
+    title.setAttribute("aria-expanded", String(secondary.open));
+  };
+  const detailSummary = element("summary", "Task details");
+  secondary.append(detailSummary, detailsBody);
+  const renamePanel = element("details");
+  renamePanel.append(element("summary", "Rename task"), nameEditor);
+  const notesPanel = taskNotes(task),
+    datePanel = taskDueDate(task);
+  const workPanel = current!.mode === "work" ? workDetails(task) : undefined;
+  const githubPanel =
+    current!.mode === "work"
+      ? githubDetails(task, (link) => {
+          task.github = link;
+          renderCues();
+          refreshDueBadges();
+        })
+      : undefined;
+  let subtaskPanel: HTMLDetailsElement | undefined;
+  if (!current!.archived) detailsBody.append(renamePanel);
+  detailsBody.append(notesPanel, datePanel);
+  if (workPanel) detailsBody.append(workPanel);
+  if (githubPanel) detailsBody.append(githubPanel);
+  function openDetails(target?: HTMLDetailsElement) {
+    actions.open = false;
+    secondary.open = true;
+    taskExpanded.set(task.id, true);
+    title.setAttribute("aria-expanded", "true");
+    if (target) target.open = true;
+    requestAnimationFrame(() =>
+      (target?.querySelector<HTMLElement>("summary") ?? title).focus(),
+    );
+  }
+  const quick = (
+    label: string,
+    target?: HTMLDetailsElement,
+    edit?: boolean,
+  ) => {
+    const action = button(label, () => {
+      openDetails(target);
+      if (edit) target?.querySelector<HTMLButtonElement>("button")?.click();
+      if (edit)
+        requestAnimationFrame(() =>
+          target
+            ?.querySelector<HTMLElement>('textarea,input:not([type="file"])')
+            ?.focus(),
+        );
+    });
+    actionPanel.prepend(action);
+  };
+  const fullPage = element("a", "Open full task page");
+  fullPage.href = new URL(task.path, webOrigin).href;
+  fullPage.target = "_blank";
+  fullPage.rel = "noreferrer";
+  actionPanel.prepend(fullPage);
+  if (workPanel) quick("Status, priority & assignment", workPanel);
+  quick(
+    current!.archived
+      ? "Due date"
+      : task.dueDate
+        ? "Change due date"
+        : "Set due date",
+    datePanel,
   );
-  if (current!.mode === "work")
-    detailsBody.append(workDetails(task), githubDetails(task));
-  detailsBody.append(taskDueDate(task), taskNotes(task));
+  quick(
+    task.content || current!.archived ? "Notes" : "Add notes",
+    notesPanel,
+    !task.content && !current!.archived,
+  );
+  if (!current!.archived) quick("Rename task", renamePanel, true);
+  renderCues();
   wrapper.append(secondary);
   queueMicrotask(refreshDueBadges);
   if (task.parentTaskId) {
@@ -1130,7 +1243,8 @@ function renderTask(
           move(from, from + (e.key === "ArrowUp" ? -1 : 1));
         }
       };
-      row.append(handle);
+      handle.classList.add("task-reorder");
+      row.prepend(handle);
     }
     return wrapper;
   }
@@ -1140,12 +1254,14 @@ function renderTask(
         "summary",
         `Little steps · ${children.filter((t) => t.completed).length} of ${children.length} done`,
       );
+    subtaskPanel = panel;
+    quick(children.length ? "Manage subtasks" : "Add subtask", panel);
     panel.setAttribute("aria-label", `Subtasks for ${task.title}`);
     panel.style.cssText =
       "border-left:2px solid var(--wuff-border);padding-left:14px;margin:8px 0 16px 16px";
     panel.open =
       subtaskExpanded.get(task.id) ??
-      (children.length > 0 || subtaskDrafts.has(task.id));
+      (subtaskDrafts.has(task.id) || children.some(retained));
     panel.ontoggle = () => subtaskExpanded.set(task.id, panel.open);
     panel.append(summary);
     for (const child of children) panel.append(renderTask(child, groups));
@@ -1214,6 +1330,74 @@ function viewControls(list: TodoList) {
     form = element("form"),
     summary = element("summary", "Your view");
   form.className = "settings";
+  panel.className = "list-view-controls";
+  const toolbar = element("div"),
+    density = element("div");
+  toolbar.className = "view-toolbar";
+  density.className = "task-density";
+  density.setAttribute("role", "group");
+  density.setAttribute("aria-label", "Task density");
+  let densityRequest: Record<string, unknown> | undefined;
+  const densityRetry = button("Retry density change", () => void saveDensity());
+  densityRetry.hidden = true;
+  const lockDensity = () =>
+    density.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+      button.disabled = true;
+    });
+  const saveDensity = async () => {
+    lockDensity();
+    status.textContent = wuffCopy.saving;
+    form
+      .querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLButtonElement
+      >("input,select,button")
+      .forEach((control) => {
+        control.disabled = true;
+      });
+    densityRetry.hidden = true;
+    try {
+      show(await request("update_list_view", densityRequest!));
+      status.textContent = wuffCopy.saved;
+    } catch (error) {
+      status.textContent = wuffError((error as Error).message);
+      if (error instanceof ToolError && error.code !== "internal_error") {
+        densityRequest = undefined;
+        form
+          .querySelectorAll<
+            HTMLInputElement | HTMLSelectElement | HTMLButtonElement
+          >("input,select,button")
+          .forEach((control) => {
+            control.disabled = false;
+          });
+        density
+          .querySelectorAll<HTMLButtonElement>("button")
+          .forEach((button) => {
+            button.disabled = false;
+          });
+      } else densityRetry.hidden = false;
+    }
+  };
+  for (const [layout, label] of [
+    ["compact", "Compact"],
+    ["detailed", "Comfortable"],
+  ] as const) {
+    const control = button(label, () => {
+      if (layout === saved.view.layout) return;
+      densityRequest = {
+        listId: list.id,
+        viewVersion: saved.version,
+        view: { ...saved.view, layout },
+        operationId: crypto.randomUUID(),
+      };
+      void saveDensity();
+    });
+    control.dataset.variant = "ghost";
+    control.setAttribute("aria-pressed", String(layout === saved.view.layout));
+    density.append(control);
+  }
+  form.addEventListener("input", lockDensity);
+  form.addEventListener("change", lockDensity);
+  toolbar.append(density, panel, densityRetry);
   panel.append(
     summary,
     element("p", "Only changes how you see this list."),
@@ -1338,9 +1522,17 @@ function viewControls(list: TodoList) {
   select("Sort by", draft.sortBy, options(viewSorts), (v) => {
     draft.sortBy = v as ListView["sortBy"];
   });
-  select("Layout", draft.layout, options(["compact", "detailed"]), (v) => {
-    draft.layout = v as ListView["layout"];
-  });
+  select(
+    "Density",
+    draft.layout,
+    [
+      ["compact", "Compact"],
+      ["detailed", "Comfortable"],
+    ],
+    (v) => {
+      draft.layout = v as ListView["layout"];
+    },
+  );
   for (const section of [{ id: null, title: "No section" }, ...list.sections])
     select(
       `Sort ${section.title}`,
@@ -1377,6 +1569,7 @@ function viewControls(list: TodoList) {
         if (control !== save) control.disabled = disabled;
       });
   wireForm(form, save, () => {
+    lockDensity();
     lockControls(true);
     pending ??= {
       listId: list.id,
@@ -1407,7 +1600,7 @@ function viewControls(list: TodoList) {
         save.disabled = false;
       });
   });
-  return panel;
+  return toolbar;
 }
 
 function show(value: unknown) {
@@ -1435,6 +1628,7 @@ function show(value: unknown) {
   imageReads.clear();
   imageEpoch++;
   root.replaceChildren();
+  cueRenderers.clear();
   if (data.lists) {
     catalog = data.lists;
     current = undefined;
@@ -1691,12 +1885,18 @@ function renderCatalog() {
       open.append(shared);
       open.title = "Shared list";
     }
-    row.append(open);
+    const actions = element("details"),
+      menu = element("div"),
+      trigger = element("summary", "⋯");
+    actions.className = "catalog-actions";
+    trigger.setAttribute("aria-label", `More actions for list ${list.title}`);
+    actions.append(trigger, menu);
+    row.append(open, actions);
     for (const [dir, label] of [
       [-1, "up"],
       [1, "down"],
     ] as const) {
-      row.append(
+      menu.append(
         button(
           `Move ${list.title} ${label}`,
           () => void reorder(list.id, visible[i + dir].id),
@@ -1749,7 +1949,7 @@ window.setInterval(refreshDueBadges, 30_000);
 window.addEventListener("focus", refreshDueBadges);
 document.addEventListener("visibilitychange", refreshDueBadges);
 
-function githubDetails(task: Task) {
+function githubDetails(task: Task, onLink?: (link: Task["github"]) => void) {
   const details = element("details"),
     summary = element("summary", "GitHub issue"),
     body = element("div");
@@ -1764,16 +1964,16 @@ function githubDetails(task: Task) {
         github: { link: any };
       };
       const link = data.github.link;
-      const rowSummary = details
-        .closest(".task-item")
-        ?.querySelector<HTMLAnchorElement>(".task-sync-summary");
-      if (rowSummary && link) {
-        rowSummary.textContent = `${link.issueNumber ? `#${link.issueNumber} · ` : ""}${githubSyncLabel(link)}`;
-        rowSummary.setAttribute(
-          "aria-label",
-          `GitHub sync: ${githubSyncLabel(link)}. Open sync controls for ${task.title}`,
-        );
-      }
+      onLink?.(
+        link
+          ? {
+              issueNumber: link.issueNumber,
+              url: link.url,
+              state: link.state,
+              active: link.active,
+            }
+          : null,
+      );
       if (link && ["pending", "creating"].includes(link.state) && polls++ < 12)
         setTimeout(() => {
           if (details.isConnected && details.open) void load();
