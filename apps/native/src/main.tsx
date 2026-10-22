@@ -1,3 +1,5 @@
+import { installNativeSocket } from "./native-socket";
+import { NativeLive } from "./live";
 import { Button } from "@wuff/ui/button";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createRoot } from "react-dom/client";
@@ -112,6 +114,7 @@ function App() {
           </p>
         ) : lists ? (
           <>
+            <NativeLive refresh={load} />
             <ul className="lists">
               {lists.map((list) => (
                 <li key={list.id}>{list.title}</li>
@@ -166,6 +169,7 @@ function App() {
     </main>
   );
 }
+installNativeSocket();
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing application root");
 createRoot(root).render(<App />);

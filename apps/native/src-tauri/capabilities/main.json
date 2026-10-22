@@ -34,6 +34,9 @@
     "keyring:allow-get-password",
     "keyring:allow-set-password",
     "keyring:allow-delete-password",
-    "keyring:allow-has-password"
+    "keyring:allow-has-password",
+    "allow-live-open",
+    "allow-live-send",
+    "allow-live-close"
   ]
 }
