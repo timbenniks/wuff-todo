@@ -429,21 +429,35 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
         title: "Automatic native issue",
         operationId: crypto.randomUUID(),
       };
-      assert.equal(
-        (await mobile(basic.access_token, "createTask", input)).status,
-        403,
-      );
-      const created = await mobile(enabled.access_token, "createTask", input);
+      const local = await mobile(basic.access_token, "createTask", input);
+      assert.equal(local.status, 200);
+      list = await local.json();
+      const localTask = list!.tasks.find((t) => t.title === input.title)!;
+      assert.equal(localTask.github, null);
+      // Consenting later does not turn a retry into a new external export.
+      const retried = await mobile(enabled.access_token, "createTask", input);
+      assert.equal(retried.status, 200);
+      list = await retried.json();
+      assert.equal(list!.tasks.length, 1);
+      assert.equal(list!.tasks[0].id, localTask.id);
+      assert.equal(list!.tasks[0].github, null);
+      const created = await mobile(enabled.access_token, "createTask", {
+        ...input,
+        version: list!.version,
+        title: "Consented automatic issue",
+        operationId: crypto.randomUUID(),
+      });
       assert.equal(created.status, 200);
       list = await created.json();
+      const linkedTask = list!.tasks.find((t) => t.id !== localTask.id)!;
       assert.ok(
-        list!.tasks[0].github,
+        linkedTask.github,
         "Native snapshots include the authorized issue summary",
       );
       const edit = await mobile(enabled.access_token, "updateTask", {
         listId: list!.id,
         version: list!.version,
-        taskId: list!.tasks[0].id,
+        taskId: linkedTask.id,
         title: "Consented linked edit",
         operationId: crypto.randomUUID(),
       });
@@ -454,7 +468,7 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
           await mobile(basic.access_token, "updateTask", {
             listId: list!.id,
             version: list!.version,
-            taskId: list!.tasks[0].id,
+            taskId: linkedTask.id,
             completed: true,
             operationId: crypto.randomUUID(),
           })
