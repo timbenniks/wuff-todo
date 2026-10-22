@@ -379,13 +379,32 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
     assert.equal((await githubTask(a, uncertain.id)).link?.issueNumber, 2);
     list = await getList(a, list.id);
     const beforeAutomatic = list.tasks.length;
-    await assert.rejects(
-      createTask(
-        { ...a, scopes: ["lists:read", "tasks:write"] },
-        { ...write(list), title: "Missing GitHub consent" },
-      ),
-      { code: "github_permission_required" },
-    );
+    const localInput = {
+      ...write(list),
+      title: "No GitHub permission",
+      content: "<b>Local-only notes</b>",
+    };
+    const localActor = {
+      ...a,
+      scopes: ["lists:read", "tasks:write"] as const,
+    };
+    await Promise.all([
+      createTask(localActor, localInput),
+      createTask(localActor, localInput),
+    ]);
+    list = await getList(a, list.id);
+    const localOnly = list.tasks.find((t) => t.title === localInput.title)!;
+    assert.equal(list.tasks.length, beforeAutomatic + 1);
+    assert.equal((await githubTask(a, localOnly.id)).link, null);
+    await processGithubJobs();
+    assert.equal(created, 2, "No GitHub write without explicit permission");
+    // A later authorized read/edit never backfills an issue for a local task.
+    list = await updateTask(a, {
+      ...write(list),
+      taskId: localOnly.id,
+      title: "Still local",
+    });
+    assert.equal((await githubTask(a, localOnly.id)).link, null);
     await assert.rejects(
       createTask(a, {
         ...write(list),
@@ -394,7 +413,7 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
       }),
       { code: "github_unsupported_content" },
     );
-    assert.equal((await getList(a, list.id)).tasks.length, beforeAutomatic);
+    assert.equal((await getList(a, list.id)).tasks.length, beforeAutomatic + 1);
     const automatic = {
       ...write(list),
       title: "Automatic issue",
@@ -403,7 +422,7 @@ test("GitHub ownership, durable sync, duplicate deliveries, conflicts and revoca
     await Promise.all([createTask(a, automatic), createTask(a, automatic)]);
     list = await getList(a, list.id);
     const autoTask = list.tasks.find((t) => t.title === "Automatic issue")!;
-    assert.equal(list.tasks.length, beforeAutomatic + 1);
+    assert.equal(list.tasks.length, beforeAutomatic + 2);
     assert.equal((await githubTask(a, autoTask.id)).link?.state, "pending");
     loseCreateResponse = true;
     await processGithubJobs();
