@@ -114,6 +114,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/native/src-tauri
+          prefix-key: v1-xcode-26-3
       - run: pnpm install --frozen-lockfile
       - run: sudo xcode-select --switch /Applications/Xcode_26.3.app/Contents/Developer
       - run: pnpm --filter @wuff/native tauri ios init --ci --skip-targets-install
