@@ -2,6 +2,12 @@
 
 Updated: October 23, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## List settings and archive placement — October 23, 2026
+
+The shared web/Tauri sidebar now contains lists and their collapse/reorder controls, with Archive browsing in the footer beside account Settings. Personal nesting is inside the selected list’s **Settings → Your sidebar → Parent list / Move list**. Owner-only Archive list / Restore list actions remain inside list settings. Location saves stay in the dialog and preserve unsaved owner metadata drafts.
+
+Workspace/root TypeScript, optimized web/MCP build and native frontend build passed. The updated `scripts/verify-list-nesting-ui.ts` passed against the optimized isolated-development application: settings-scoped nesting, collapse/reload/sibling ordering, exact-payload retry after a committed response was lost, unchanged owner drafts, archive/restore browsing and editor visibility without owner controls. At 320/390/1280px, Archive followed the list navigation and neither sidebar nor settings overflowed. Updated screenshots are `docs/screenshots/list-nesting-{320,390,1280}.png` and `list-nesting-move-{320,390,1280}.png`. No schema, domain permission or MCP contract change was needed. Production placement verification follows the release.
+
 ## Personal list nesting — October 23, 2026
 
 [WUFF-85's contract and release boundary](personal-list-nesting.md) implements one-level personal sidebar nesting across web/shared Tauri features, HTTP/native adapters and MCP/MCP Apps. Parent lists keep their own tasks; task/subtask structure, list membership and shared revisions are unchanged.

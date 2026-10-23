@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { scopes } from "@wuff/contracts";
-import { database } from "@wuff/db";
+import { database, members } from "@wuff/db";
 import {
   createList,
   createTask,
@@ -19,7 +19,9 @@ const require = createRequire(
   new URL("../apps/web/package.json", import.meta.url),
 );
 const { chromium, expect } = require("@playwright/test");
-const [user] = JSON.parse(await readFile(".vercel/dev-users.json", "utf8"));
+const [user, editor] = JSON.parse(
+  await readFile(".vercel/dev-users.json", "utf8"),
+);
 const actor = { id: user.id, scopes },
   op = () => crypto.randomUUID();
 const original = await getListOrder(actor);
@@ -67,15 +69,34 @@ try {
   await expect(
     page.getByRole("heading", { name: "Repot plants", exact: true }),
   ).toBeVisible();
-  const dialog = page.getByRole("dialog", { name: "Move list", exact: true });
+  const dialog = page.getByRole("dialog", {
+    name: "List settings",
+    exact: true,
+  });
+  async function openLocation(id: string) {
+    await page.goto(origin + `/lists?listId=${id}`);
+    await page
+      .getByRole("button", { name: "List settings", exact: true })
+      .click();
+    await expect(
+      dialog.getByRole("heading", { name: "Your sidebar", exact: true }),
+    ).toBeVisible();
+  }
   async function move(id: string, parentId: string) {
-    await page.getByRole("button", { name: "Move list", exact: true }).click();
-    await dialog.getByLabel("List", { exact: true }).selectOption(id);
+    await openLocation(id);
     await dialog
       .getByLabel("Parent list", { exact: true })
       .selectOption(parentId);
     await dialog
-      .getByRole("button", { name: "Save location", exact: true })
+      .getByRole("button", { name: "Move list", exact: true })
+      .click();
+    await expect(
+      dialog
+        .getByRole("status")
+        .filter({ hasText: "Your sidebar location is saved." }),
+    ).toBeVisible();
+    await dialog
+      .getByRole("button", { name: "Close list settings", exact: true })
       .click();
     await expect(dialog).not.toBeVisible();
   }
@@ -118,12 +139,13 @@ try {
     ),
     [sibling.id, child.id],
   );
-  await page.getByRole("button", { name: "Move list", exact: true }).click();
-  await dialog.getByLabel("List", { exact: true }).selectOption(parent.id);
+  await openLocation(parent.id);
   await expect(
     dialog.getByLabel("Parent list", { exact: true }),
   ).toBeDisabled();
-  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Close list settings", exact: true })
+    .click();
   // A committed mutation with a lost HTTP response must retry its exact payload.
   let first = true;
   const bodies: string[] = [];
@@ -136,17 +158,22 @@ try {
       await route.abort("failed");
     } else await route.continue();
   });
-  await page.getByRole("button", { name: "Move list", exact: true }).click();
-  await dialog.getByLabel("List", { exact: true }).selectOption(child.id);
+  await openLocation(child.id);
   await dialog.getByLabel("Parent list", { exact: true }).selectOption("");
-  await dialog
-    .getByRole("button", { name: "Save location", exact: true })
-    .click();
+  await dialog.getByRole("button", { name: "Move list", exact: true }).click();
   await expect(
     dialog.getByRole("button", { name: "Retry sidebar change", exact: true }),
   ).toBeVisible();
   await dialog
     .getByRole("button", { name: "Retry sidebar change", exact: true })
+    .click();
+  await expect(
+    dialog
+      .getByRole("status")
+      .filter({ hasText: "Your sidebar location is saved." }),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Close list settings", exact: true })
     .click();
   await expect(dialog).not.toBeVisible();
   assert.equal(bodies.length, 2);
@@ -199,11 +226,25 @@ try {
       true,
       `sidebar fits ${width}px`,
     );
+    await expect(
+      page
+        .getByRole("complementary")
+        .getByRole("button", { name: "Move list", exact: true }),
+    ).toHaveCount(0);
+    const listBottom = await page
+      .getByRole("navigation", { name: "Lists", exact: true })
+      .evaluate((el: Element) => el.getBoundingClientRect().bottom);
+    const archiveTop = await page
+      .getByRole("button", { name: /^Archive \(/ })
+      .evaluate((el: Element) => el.getBoundingClientRect().top);
+    assert.ok(archiveTop >= listBottom, "Archive navigation follows the lists");
     await page.screenshot({
       path: `docs/screenshots/list-nesting-${width}.png`,
       fullPage: true,
     });
-    await page.getByRole("button", { name: "Move list", exact: true }).click();
+    await page
+      .getByRole("button", { name: "List settings", exact: true })
+      .click();
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -215,11 +256,77 @@ try {
       path: `docs/screenshots/list-nesting-move-${width}.png`,
       fullPage: true,
     });
-    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await dialog
+      .getByRole("button", { name: "Close list settings", exact: true })
+      .click();
   }
+  // Changing the personal location must not discard an unsaved owner metadata draft.
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await openLocation(child.id);
+  await dialog.getByLabel(/^Description/).fill("Unsaved list detail");
+  await dialog.getByLabel("Parent list", { exact: true }).selectOption("");
+  await dialog.getByRole("button", { name: "Move list", exact: true }).click();
+  await expect(
+    dialog
+      .getByRole("status")
+      .filter({ hasText: "Your sidebar location is saved." }),
+  ).toBeVisible();
+  await expect(dialog.getByLabel(/^Description/)).toHaveValue(
+    "Unsaved list detail",
+  );
+  await dialog
+    .getByRole("button", { name: "Close list settings", exact: true })
+    .click();
+  assert.equal((await getList(actor, child.id)).description, "");
+  // Archive/restore remain actions on the current list; browsing archive is a footer utility.
+  await openLocation(other.id);
+  await dialog
+    .getByRole("button", { name: "Archive list", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Back to lists", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "List settings", exact: true })
+    .click();
+  await dialog
+    .getByRole("button", { name: "Restore list", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole("button", { name: /^Archive \(/ })).toBeVisible();
+  await database()
+    .db.insert(members)
+    .values({ listId: child.id, userId: editor.id });
+  const editorContext = await browser.newContext();
+  const editorLogin = await editorContext.request.post(
+    origin + "/api/auth/sign-in/email",
+    {
+      headers: { Origin: origin },
+      data: { email: editor.email, password: editor.password },
+    },
+  );
+  assert.equal(editorLogin.status(), 200);
+  const editorPage = await editorContext.newPage();
+  await editorPage.goto(origin + `/lists?listId=${child.id}`);
+  await editorPage
+    .getByRole("button", { name: "List settings", exact: true })
+    .click();
+  const editorDialog = editorPage.getByRole("dialog", {
+    name: "List settings",
+    exact: true,
+  });
+  await expect(
+    editorDialog.getByLabel("Parent list", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    editorDialog.getByRole("button", { name: "Archive list", exact: true }),
+  ).toHaveCount(0);
+  await expect(editorDialog.getByLabel(/^Description/)).toHaveCount(0);
+  await editorContext.close();
   assert.deepEqual(errors, []);
   console.log(
-    "Passed: personal nesting, collapse, sibling ordering, reload, exact-payload uncertain-write retry, own-task views and 320/390/1280px layout.",
+    "Passed: list-settings nesting, sidebar footer archive, collapse, sibling ordering, reload, exact-payload retry, editor permissions and 320/390/1280px layout.",
   );
   await context.close();
 } catch (error) {

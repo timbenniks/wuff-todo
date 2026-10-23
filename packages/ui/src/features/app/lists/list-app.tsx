@@ -607,33 +607,12 @@ export function ListApp({
               </InputGroup>
             </form>
           )}
-          <div className="flex items-center gap-2 mb-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const next = !showArchive;
-                setShowArchive(next);
-                chooseList(
-                  summaries.find((s) => s.archived === next)?.id ?? "",
-                );
-              }}
-            >
-              <Archive size={15} />
-              {showArchive
-                ? "Back to lists"
-                : `Archive (${summaries.filter((s) => s.archived).length})`}
-            </Button>
-          </div>
           <SidebarLists
             lists={summaries}
             archived={showArchive}
             selectedId={selectedId}
             disabled={busy || !!pendingCreate || !!sidebarRetry}
-            error={error}
-            busy={busy}
             pending={pendingCreate}
-            retry={sidebarRetry ? () => saveSidebar(null) : undefined}
             choose={(id) => {
               chooseList(id);
               if (navigationOpen) {
@@ -645,19 +624,6 @@ export function ListApp({
               if (!cache.get(id)) void reload(id).catch(() => {});
             }}
             reorder={moveList}
-            move={(id, parentId) =>
-              saveSidebar((order) => ({
-                nesting: [
-                  ...(order.nesting ?? []).filter(
-                    (entry) => entry.listId !== id,
-                  ),
-                  ...(parentId ? [{ listId: id, parentListId: parentId }] : []),
-                ],
-                collapsedListIds: (order.collapsedListIds ?? []).filter(
-                  (value) => value !== parentId,
-                ),
-              }))
-            }
             toggle={(id, collapsed) =>
               saveSidebar((order) => ({
                 collapsedListIds: !collapsed
@@ -693,13 +659,33 @@ export function ListApp({
               No lists taking a paws yet.
             </p>
           )}
-          <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
-            <a
-              href={runtime.webOrigin + "/settings"}
-              className="block px-3 py-2 text-primary hover:underline"
-            >
-              Settings
-            </a>
+          <div className="mt-6 md:mt-auto pt-4 md:pt-8 text-sm flex flex-wrap md:block items-center justify-between gap-1">
+            <div className="flex flex-wrap md:grid items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  const next = !showArchive;
+                  setShowArchive(next);
+                  chooseList(
+                    summaries.find((s) => s.archived === next)?.id ?? "",
+                  );
+                }}
+              >
+                <Archive size={15} />
+                {showArchive
+                  ? "Back to lists"
+                  : `Archive (${summaries.filter((s) => s.archived).length})`}
+              </Button>
+
+              <a
+                href={runtime.webOrigin + "/settings"}
+                className="flex min-h-11 items-center px-3 py-2 text-primary hover:underline"
+              >
+                Settings
+              </a>
+            </div>
             {runtime.githubConsent && (
               <Button
                 className="my-2"
@@ -865,6 +851,26 @@ export function ListApp({
                     userId={userId}
                     busy={busy}
                     change={change}
+                    sidebar={{
+                      lists: summaries,
+                      disabled: busy || !!pendingCreate || !!sidebarRetry,
+                      error,
+                      retry: sidebarRetry ? () => saveSidebar(null) : undefined,
+                      move: (id, parentId) =>
+                        saveSidebar((order) => ({
+                          nesting: [
+                            ...(order.nesting ?? []).filter(
+                              (entry) => entry.listId !== id,
+                            ),
+                            ...(parentId
+                              ? [{ listId: id, parentListId: parentId }]
+                              : []),
+                          ],
+                          collapsedListIds: (
+                            order.collapsedListIds ?? []
+                          ).filter((value) => value !== parentId),
+                        })),
+                    }}
                     retry={
                       retryWrite
                         ? () =>

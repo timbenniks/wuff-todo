@@ -5,7 +5,12 @@ import { NativeSelect } from "../../../native-select";
 
 import { useRef, useState } from "react";
 import { Archive, ArchiveRestore, Check, Settings2, X } from "lucide-react";
-import { listColors, type ListColor, type TodoList } from "@wuff/contracts";
+import {
+  listColors,
+  type ListColor,
+  type TodoList,
+  type ListSummary,
+} from "@wuff/contracts";
 import { Button } from "../../../button";
 import { listPalette } from "../../lib/list-colors";
 
@@ -14,18 +19,134 @@ export type ListChange = (
   method: string,
   body: Record<string, unknown>,
 ) => Promise<boolean>;
+type SidebarLocation = {
+  lists: ListSummary[];
+  disabled: boolean;
+  error: string;
+  move: (id: string, parentId: string | null) => Promise<boolean>;
+  retry?: () => Promise<boolean>;
+};
+
+function ListLocation({
+  list,
+  busy,
+  lists,
+  disabled,
+  error,
+  move,
+  retry,
+}: SidebarLocation & { list: TodoList; busy: boolean }) {
+  const [parentId, setParentId] = useState(
+    lists.find((item) => item.id === list.id)?.parentListId ?? "",
+  );
+  const [failed, setFailed] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const hasChildren = lists.some((item) => item.parentListId === list.id);
+  const candidates = lists.filter(
+    (item) =>
+      item.id !== list.id &&
+      !item.parentListId &&
+      (item.archived === list.archived || item.id === parentId),
+  );
+  return (
+    <section
+      className="rounded-xl border border-border bg-accent p-4 mb-6"
+      aria-labelledby={`sidebar-location-${list.id}`}
+    >
+      <h3 id={`sidebar-location-${list.id}`} className="text-sm font-bold mb-2">
+        Your sidebar
+      </h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        Move this list under another list, or keep it at top level. Only your
+        sidebar changes; tasks, subtasks and sharing stay with the list.
+      </p>
+      <form
+        className="grid gap-3"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (disabled) return;
+          setFailed(false);
+          setSaved(false);
+          const ok = await move(list.id, parentId || null);
+          setSaved(ok);
+          setFailed(!ok);
+        }}
+      >
+        <label
+          htmlFor={`sidebar-parent-${list.id}`}
+          className="text-sm font-semibold"
+        >
+          Parent list
+        </label>
+        <NativeSelect
+          id={`sidebar-parent-${list.id}`}
+          value={parentId}
+          disabled={disabled || hasChildren}
+          onChange={(e) => {
+            setParentId(e.target.value);
+            setSaved(false);
+          }}
+        >
+          <option value="">Top level</option>
+          {candidates.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.title}
+              {item.archived && " (archived)"}
+            </option>
+          ))}
+        </NativeSelect>
+        {hasChildren && (
+          <p className="text-sm text-muted-foreground">
+            This list has child lists. Move those first to keep one level of
+            nesting.
+          </p>
+        )}
+        {(failed || retry) && (
+          <p role="alert" className="text-sm text-red-800">
+            {error || "Your move wasn’t saved. Try again."}
+          </p>
+        )}
+        {retry && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              const ok = await retry();
+              setSaved(ok);
+              setFailed(!ok);
+            }}
+          >
+            Retry sidebar change
+          </Button>
+        )}
+        {saved && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Your sidebar location is saved.
+          </p>
+        )}
+        <Button variant="outline" disabled={disabled || hasChildren}>
+          {busy ? "Moving…" : "Move list"}
+        </Button>
+      </form>
+    </section>
+  );
+}
+
 export function ListSettings({
   list,
   userId,
   busy,
   change,
   retry,
+  sidebar,
 }: {
   list: TodoList;
   userId: string;
   busy: boolean;
   change: ListChange;
   retry?: () => Promise<boolean>;
+  sidebar?: SidebarLocation;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState({
@@ -35,7 +156,9 @@ export function ListSettings({
     version: list.version,
   });
   const [failed, setFailed] = useState(false);
+  const [opened, setOpened] = useState(0);
   function load() {
+    setOpened((count) => count + 1);
     setDraft({
       description: list.description,
       color: list.color,
@@ -72,7 +195,7 @@ export function ListSettings({
               List settings
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              List details and your personal reminders.
+              List details and your personal preferences.
             </p>
           </div>
           <Button
@@ -85,6 +208,14 @@ export function ListSettings({
             <X size={18} />
           </Button>
         </div>
+        {sidebar && (
+          <ListLocation
+            key={`${list.id}:${opened}`}
+            list={list}
+            busy={busy}
+            {...sidebar}
+          />
+        )}
         {list.ownerId === userId && (
           <>
             <form

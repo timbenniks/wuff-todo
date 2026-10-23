@@ -35,7 +35,7 @@
     "components": [
       {
         "name": "ListSettings",
-        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n})"
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n  sidebar,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n})"
       }
     ]
   },
@@ -69,7 +69,7 @@
     "components": [
       {
         "name": "SidebarLists",
-        "signature": "export function SidebarLists({\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  move,\n  toggle,\n  error,\n  busy,\n  retry,\n  pending,\n}: {\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  move: (id: string, parentId: string | null) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  busy: boolean;\n  retry?: () => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n  error: string;\n})"
+        "signature": "export function SidebarLists({\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
       }
     ]
   },
