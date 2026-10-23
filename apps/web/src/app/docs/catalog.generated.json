@@ -1,0 +1,358 @@
+[
+  {
+    "source": "packages/ui/src/button.tsx",
+    "module": "@wuff/ui/button",
+    "components": [
+      {
+        "name": "Button",
+        "signature": "export function Button({\n  className,\n  variant,\n  size,\n  asChild = false,\n  ...props\n}: React.ComponentProps<\"button\"> &\n  VariantProps<typeof buttonVariants> & { asChild?: boolean })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/inline-name.tsx",
+    "module": "@wuff/ui/features/app/lists/inline-name.tsx",
+    "components": [
+      {
+        "name": "InlineName",
+        "signature": "export function InlineName({\n  value,\n  label,\n  editLabel,\n  editable = true,\n  disabled = false,\n  heading,\n  completed = false,\n  onSave,\n  renderActions,\n  additionalFields,\n  afterName,\n  additionalDirty = false,\n  className = \"\",\n  compact = false,\n  focusFallback,\n  readHref,\n  onOpen,\n}: {\n  value: string;\n  label: string;\n  editLabel: string;\n  editable?: boolean;\n  disabled?: boolean;\n  heading?: \"h1\" | \"h2\";\n  completed?: boolean;\n  onSave: (name: string) => Promise<boolean>;\n  additionalFields?: ReactNode;\n  afterName?: ReactNode;\n  additionalDirty?: boolean;\n  className?: string;\n  compact?: boolean;\n  focusFallback?: RefObject<HTMLButtonElement | null>;\n  readHref?: string;\n  onOpen?: React.MouseEventHandler<HTMLAnchorElement>;\n  renderActions?: (props: {\n    edit: () => void;\n    editing: boolean;\n    trigger: RefObject<HTMLButtonElement | null>;\n  }) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/list-app.tsx",
+    "module": "@wuff/ui/features/app/lists/list-app.tsx",
+    "components": [
+      {
+        "name": "ListApp",
+        "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/list-settings.tsx",
+    "module": "@wuff/ui/features/app/lists/list-settings.tsx",
+    "components": [
+      {
+        "name": "ListSettings",
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/list-view-controls.tsx",
+    "module": "@wuff/ui/features/app/lists/list-view-controls.tsx",
+    "components": [
+      {
+        "name": "ListViewControls",
+        "signature": "export function ListViewControls({\n  list,\n  busy,\n  change,\n}: {\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/sharing.tsx",
+    "module": "@wuff/ui/features/app/lists/sharing.tsx",
+    "components": [
+      {
+        "name": "InvitationInbox",
+        "signature": "export function InvitationInbox({\n  initial,\n  onJoined,\n}: {\n  initial: IncomingInvitation[];\n  onJoined: (id: string) => Promise<void>;\n})"
+      },
+      {
+        "name": "SharingDialog",
+        "signature": "export function SharingDialog({\n  list,\n  userId,\n  disabled,\n  onChanged,\n}: {\n  list: TodoList;\n  userId: string;\n  disabled: boolean;\n  onChanged: (id: string, left?: boolean) => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-actions.tsx",
+    "module": "@wuff/ui/features/app/lists/task-actions.tsx",
+    "components": [
+      {
+        "name": "TaskActions",
+        "signature": "export function TaskActions({\n  title,\n  disabled,\n  trigger,\n  children,\n}: {\n  title: string;\n  disabled: boolean;\n  trigger: RefObject<HTMLButtonElement | null>;\n  children: (close: () => void) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-detail-drawer.tsx",
+    "module": "@wuff/ui/features/app/lists/task-detail-drawer.tsx",
+    "components": [
+      {
+        "name": "TaskDetailDrawer",
+        "signature": "export function TaskDetailDrawer({\n  taskId,\n  list,\n  userId,\n  busy,\n  error,\n  retry,\n  change,\n  refresh,\n  navigate,\n}: {\n  taskId: string;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  error: string;\n  retry?: () => Promise<boolean>;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  navigate: (taskId: string | null) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-due-date.tsx",
+    "module": "@wuff/ui/features/app/lists/task-due-date.tsx",
+    "components": [
+      {
+        "name": "DueDateBadge",
+        "signature": "export function DueDateBadge({\n  task,\n  today,\n}: {\n  task: Task;\n  today: string | null;\n})"
+      },
+      {
+        "name": "TaskDueDate",
+        "signature": "export function TaskDueDate({\n  task,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, DueDateDraft>;\n  onClose: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-groups.tsx",
+    "module": "@wuff/ui/features/app/lists/task-groups.tsx",
+    "components": [
+      {
+        "name": "TaskGroups",
+        "signature": "export function TaskGroups({\n  list,\n  userId,\n  busy,\n  change,\n  error = \"\",\n  retry,\n  refresh,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  error?: string;\n  retry?: () => Promise<boolean>;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-metadata.tsx",
+    "module": "@wuff/ui/features/app/lists/task-metadata.tsx",
+    "components": [
+      {
+        "name": "TaskMetadata",
+        "signature": "export function TaskMetadata({\n  task,\n  list,\n  today,\n  comfortable,\n  onNotes,\n  onSubtasks,\n  onDetails,\n}: {\n  task: Task;\n  list: TodoList;\n  today: string | null;\n  comfortable: boolean;\n  onNotes: () => void;\n  onSubtasks: () => void;\n  onDetails?: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-note-editor.tsx",
+    "module": "@wuff/ui/features/app/lists/task-note-editor.tsx",
+    "components": [
+      {
+        "name": "TaskNoteEditor",
+        "signature": "export default function TaskNoteEditor({\n  value,\n  onChange,\n  disabled,\n  onUpload,\n}: {\n  value: string;\n  onChange: (content: string) => void;\n  disabled: boolean;\n  onUpload: (file: File) => Promise<string>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-notes.tsx",
+    "module": "@wuff/ui/features/app/lists/task-notes.tsx",
+    "components": [
+      {
+        "name": "TaskNotes",
+        "signature": "export function TaskNotes({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  onClose: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-row.tsx",
+    "module": "@wuff/ui/features/app/lists/task-row.tsx",
+    "components": [
+      {
+        "name": "TaskRow",
+        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n}: {\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+      },
+      {
+        "name": "Subtasks",
+        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n  detailed = false,\n  onOpenTask,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/tasks/[id]/agent-task.tsx",
+    "module": "@wuff/ui/features/app/tasks/[id]/agent-task.tsx",
+    "components": [
+      {
+        "name": "AgentTask",
+        "signature": "export function AgentTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/tasks/[id]/github-task.tsx",
+    "module": "@wuff/ui/features/app/tasks/[id]/github-task.tsx",
+    "components": [
+      {
+        "name": "GithubTask",
+        "signature": "export function GithubTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/tasks/[id]/task-detail-content.tsx",
+    "module": "@wuff/ui/features/app/tasks/[id]/task-detail-content.tsx",
+    "components": [
+      {
+        "name": "TaskDetailContent",
+        "signature": "export function TaskDetailContent({\n  task,\n  list,\n  userId,\n  busy,\n  change,\n  refresh,\n  onNotice,\n  onError,\n  onOpenTask,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  onNotice: (message: string) => void;\n  onError: (message: string) => void;\n  onOpenTask?: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/tasks/[id]/work-metadata.tsx",
+    "module": "@wuff/ui/features/app/tasks/[id]/work-metadata.tsx",
+    "components": [
+      {
+        "name": "WorkMetadata",
+        "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/corgi.tsx",
+    "module": "@wuff/ui/features/components/corgi.tsx",
+    "components": [
+      {
+        "name": "Corgi",
+        "signature": "export function Corgi({ size = 64 }: { size?: number })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/list-theme.tsx",
+    "module": "@wuff/ui/features/components/list-theme.tsx",
+    "components": [
+      {
+        "name": "ListTheme",
+        "signature": "export function ListTheme({ color }: { color: ListColor })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/reminders/list-reminders.tsx",
+    "module": "@wuff/ui/features/components/reminders/list-reminders.tsx",
+    "components": [
+      {
+        "name": "ListReminders",
+        "signature": "export function ListReminders({\n  listId,\n  userId,\n}: {\n  listId: string;\n  userId: string;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/reminders/task-reminder.tsx",
+    "module": "@wuff/ui/features/components/reminders/task-reminder.tsx",
+    "components": [
+      {
+        "name": "TaskReminder",
+        "signature": "export function TaskReminder({\n  listId,\n  taskId,\n  userId,\n  inactive,\n  onClose,\n}: {\n  listId: string;\n  taskId: string;\n  userId: string;\n  inactive: boolean;\n  onClose?: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/sortable.tsx",
+    "module": "@wuff/ui/features/components/sortable.tsx",
+    "components": [
+      {
+        "name": "SortableList",
+        "signature": "export function SortableList<T extends { id: string; title: string }>({\n  items,\n  disabled,\n  onReorder,\n  children,\n}: {\n  items: T[];\n  disabled: boolean;\n  onReorder: (ids: string[], before: string[]) => Promise<unknown>;\n  children: ReactNode | ((items: T[]) => ReactNode);\n})"
+      },
+      {
+        "name": "SortableItem",
+        "signature": "export function SortableItem({\n  id,\n  title,\n  disabled,\n  entireRow = false,\n  children,\n}: {\n  id: string;\n  title: string;\n  disabled: boolean;\n  entireRow?: boolean;\n  children: (props: {\n    ref: (node: HTMLElement | null) => void;\n    style: CSSProperties;\n    handle: ReactNode;\n    rowProps?: HTMLAttributes<HTMLElement> & {\n      \"data-sort-id\"?: string;\n      \"data-row-draggable\"?: boolean;\n    };\n    moveControl?: ReactNode;\n  }) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/task-image-view.tsx",
+    "module": "@wuff/ui/features/components/task-image-view.tsx",
+    "components": [
+      {
+        "name": "TaskImageView",
+        "signature": "export function TaskImageView({ node }: NodeViewProps)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/components/task-markdown.tsx",
+    "module": "@wuff/ui/features/components/task-markdown.tsx",
+    "components": [
+      {
+        "name": "TaskMarkdown",
+        "signature": "export function TaskMarkdown({ content }: { content: string })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/live-updates.tsx",
+    "module": "@wuff/ui/features/live-updates.tsx",
+    "components": [
+      {
+        "name": "LiveUpdates",
+        "signature": "export function LiveUpdates(props: {\n  config: LiveLists | null;\n  userId: string;\n  onChange: () => void;\n  onStatus: (status: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/input-group.tsx",
+    "module": "@wuff/ui/input-group",
+    "components": [
+      {
+        "name": "InputGroup",
+        "signature": "function InputGroup({ className, ...props }: React.ComponentProps<\"div\">)"
+      },
+      {
+        "name": "InputGroupAddon",
+        "signature": "function InputGroupAddon({\n  className,\n  align = \"inline-start\",\n  ...props\n}: React.ComponentProps<\"div\"> & VariantProps<typeof inputGroupAddonVariants>)"
+      },
+      {
+        "name": "InputGroupButton",
+        "signature": "function InputGroupButton({\n  className,\n  type = \"button\",\n  variant = \"ghost\",\n  size = \"xs\",\n  ...props\n}: Omit<React.ComponentProps<typeof Button>, \"size\"> &\n  VariantProps<typeof inputGroupButtonVariants>)"
+      },
+      {
+        "name": "InputGroupText",
+        "signature": "function InputGroupText({ className, ...props }: React.ComponentProps<\"span\">)"
+      },
+      {
+        "name": "InputGroupInput",
+        "signature": "function InputGroupInput({\n  className,\n  ...props\n}: React.ComponentProps<\"input\">)"
+      },
+      {
+        "name": "InputGroupTextarea",
+        "signature": "function InputGroupTextarea({\n  className,\n  ...props\n}: React.ComponentProps<\"textarea\">)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/input.tsx",
+    "module": "@wuff/ui/input",
+    "components": [
+      {
+        "name": "Input",
+        "signature": "function Input({ className, type, ...props }: React.ComponentProps<\"input\">)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/live-updates.tsx",
+    "module": "@wuff/ui/live-updates",
+    "components": [
+      {
+        "name": "LiveUpdates",
+        "signature": "export function LiveUpdates(props: Props)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/native-select.tsx",
+    "module": "@wuff/ui/native-select",
+    "components": [
+      {
+        "name": "NativeSelect",
+        "signature": "export function NativeSelect({\n  className,\n  ...props\n}: React.ComponentProps<\"select\">)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/status-tag.tsx",
+    "module": "@wuff/ui/status-tag",
+    "components": [
+      {
+        "name": "StatusTag",
+        "signature": "export function StatusTag({ status }: { status: Task[\"status\"] })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/textarea.tsx",
+    "module": "@wuff/ui/textarea",
+    "components": [
+      {
+        "name": "Textarea",
+        "signature": "export function Textarea({\n  className,\n  ...props\n}: React.ComponentProps<\"textarea\">)"
+      }
+    ]
+  }
+]

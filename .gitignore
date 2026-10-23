@@ -24,3 +24,6 @@ apps/native/src-tauri/gen/
 
 # Python release tooling
 __pycache__/
+
+# Generated public prototype downloads (rebuilt from allowlisted client sources)
+apps/web/public/prototype-kit/

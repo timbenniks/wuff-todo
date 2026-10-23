@@ -2,11 +2,13 @@
 
 Status: web/MCP and GitHub synchronization released; online-only Tauri cross-platform client foundation started
 
-Updated: October 22, 2026
+Updated: October 23, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
+
+- **Contributor prototyping (October 23):** hosted `/docs` guide, real component examples, generated source kit, agent-readable reference and portable skill support a non-coder using ChatGPT Work without a local checkout. See [design guide and verification](prototype-guide.md). Actual use in her Work workspace remains a separate check.
 
 - **Personal reminders and Settings (October 22):** selected scheduled jobs rather than minute polling, personal account/list/task UX, and all server delivery adapters together. The core implementation is built locally alongside Tauri, with development-only migrations and provider-mocked verification. See [reminder plan and release gates](reminders.md); provider setup and installed native delivery remain explicit gates.
 

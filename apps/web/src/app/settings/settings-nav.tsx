@@ -3,10 +3,11 @@ import { usePathname } from "next/navigation";
 export function SettingsNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Settings" className="flex gap-2 sm:flex-col">
+    <nav aria-label="Settings" className="flex flex-wrap gap-2 sm:flex-col">
       {[
         ["/settings/reminders", "Reminders"],
         ["/settings/connections", "Connections"],
+        ["/docs", "Design & prototype guide"],
       ].map(([href, label]) => (
         <a
           key={href}

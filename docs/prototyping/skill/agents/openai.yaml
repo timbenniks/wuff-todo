@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wuff feature partner"
+  short_description: "Prototype Wuff ideas with its real design system"
+  default_prompt: "Use $wuff-prototype to explore my Wuff feature idea and create a prototype and specification."

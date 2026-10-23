@@ -194,3 +194,11 @@ Production release source `026037b` is Ready on Vercel deployment `dpl_DNcK6bWwm
 ## Personal reminders and Settings — October 22
 
 See [reminder verification](reminders.md#verification--october-22) for local UI, development migration, permission/concurrency/lifecycle tests, provider-mocked transports and remaining real-delivery gates. No production release or signed native delivery is claimed.
+
+## Hosted design and prototype guide — October 23
+
+[Guide architecture and evidence](prototype-guide.md) records the public static pages,
+actual component inventory and source-kit fidelity, skill validation, isolated
+standalone build and 320/390/1280px browser checks. No application-data or permission
+change is introduced. ChatGPT Work cloud execution and physical-device/screen-reader
+validation remain separate from these local checks.
