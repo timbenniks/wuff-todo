@@ -8,7 +8,7 @@ import {
 
 import { wuffCopy, wuffError } from "../../lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
+import { Archive, House, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../button";
 import { Corgi } from "../../components/corgi";
@@ -26,6 +26,7 @@ import { ListTheme } from "../../components/list-theme";
 import { listThemeVariables } from "../../lib/list-theme";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
+import { HomeDashboard } from "./home-dashboard";
 import { SidebarLists } from "./sidebar-lists";
 import { mergeVisibleOrder } from "../../lib/reorder";
 import { InlineName } from "./inline-name";
@@ -57,6 +58,7 @@ export function ListApp({
   initialInvitations: IncomingInvitation[];
   liveConfig: LiveLists | null;
 }) {
+  const startupHome = useRef(!initialList);
   const api = useActorApi();
   const runtime = useRuntime();
   const [liveStatus, setLiveStatus] = useState("connecting");
@@ -145,13 +147,19 @@ export function ListApp({
     [cache, readError, api],
   );
   function chooseList(id: string, navigate = true) {
+    startupHome.current = false;
+    if (!id) setShowArchive(false);
     if (navigate) {
       const url = new URL(window.location.href);
-      if ((url.searchParams.get("listId") ?? "") !== id) {
-        if (id) url.searchParams.set("listId", id);
-        else url.searchParams.delete("listId");
-        window.history.pushState(null, "", url.pathname + url.search);
+      if (id) {
+        url.searchParams.set("listId", id);
+        url.searchParams.delete("home");
+      } else {
+        url.searchParams.delete("listId");
+        url.searchParams.set("home", "1");
       }
+      if (url.href !== window.location.href)
+        window.history.pushState(null, "", url.pathname + url.search);
     }
     selected.current = id;
     setSelectedId(id);
@@ -161,6 +169,16 @@ export function ListApp({
     setError("");
     setReadFailure("");
   }
+  useEffect(() => {
+    if (
+      selectedId &&
+      summaries.some((item) => item.id === selectedId) &&
+      !selectedId.startsWith("pending-")
+    )
+      try {
+        localStorage.setItem(`wuff:last-list:${userId}`, selectedId);
+      } catch {}
+  }, [selectedId, userId]);
   useEffect(() => {
     const skipRead = skipSelectionRead.current === selectedId;
     skipSelectionRead.current = "";
@@ -495,10 +513,7 @@ export function ListApp({
         "listId",
       );
       const id = summariesRef.current.find((s) => s.id === requested)?.id;
-      chooseList(
-        id ?? summariesRef.current.find((s) => !s.archived)?.id ?? "",
-        false,
-      );
+      chooseList(id ?? "", false);
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
@@ -511,7 +526,7 @@ export function ListApp({
     >
       <ListTheme color={list?.color ?? "blue"} />
       <a className="skip-link" href="#list-content">
-        Skip to tasks
+        Skip to content
       </a>
       {(liveConfig || runtime.native) && (
         <LiveUpdates
@@ -553,6 +568,20 @@ export function ListApp({
             }
           }}
         >
+          <Button
+            type="button"
+            variant="ghost"
+            className="justify-start mb-5"
+            aria-current={!selectedId && !showArchive ? "page" : undefined}
+            onClick={() => {
+              chooseList("");
+              setShowArchive(false);
+              setNavigationOpen(false);
+            }}
+          >
+            <House size={18} />
+            Home
+          </Button>
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
               {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
@@ -782,7 +811,24 @@ export function ListApp({
             {wuffCopy.fetchingList}
           </p>
         )}
-        {!selectedId && (
+        {!selectedId && !showArchive && (
+          <HomeDashboard
+            userId={userId}
+            revision={summaries
+              .map(
+                (item) =>
+                  `${item.id}:${item.version}:${item.favorite}:${item.archived}`,
+              )
+              .join("|")}
+            initialEntry={startupHome.current}
+            chooseList={(id) => chooseList(id)}
+            createList={() => {
+              setCreating(true);
+              setNavigationOpen(true);
+            }}
+          />
+        )}
+        {!selectedId && showArchive && (
           <div className="py-12">
             <Corgi size={88} />
             <h1 className="text-4xl font-bold mt-7 mb-3">

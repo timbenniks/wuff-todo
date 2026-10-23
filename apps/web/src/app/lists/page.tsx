@@ -23,10 +23,7 @@ export default async function ListsPage({
     ]);
     let initialList: TodoList | null = null;
     const requested = (await searchParams).listId;
-    const first =
-      initialLists.find((l) => l.id === requested) ??
-      initialLists.find((l) => !l.archived) ??
-      initialLists[0];
+    const first = initialLists.find((l) => l.id === requested);
     if (first) {
       try {
         initialList = await getList(actor, first.id);

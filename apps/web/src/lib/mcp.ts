@@ -9,6 +9,8 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  dashboardQuerySchema,
+  updateDashboardSchema,
   updateReminderPreferencesSchema,
   updateListReminderSchema,
   listReminderSchema,
@@ -353,6 +355,48 @@ export function createMcpServer(actor: Actor) {
     },
     async ({ task }) =>
       result(async () => ({ ...(await domain.getTask(actor, task)) })),
+  );
+  registerAppTool(
+    server,
+    "show_dashboard",
+    {
+      title: "Show Wuff Home",
+      description:
+        "Open your personal Home: overdue and due-today tasks, the next seven calendar days, favorites and personal section/start-page settings. Supply today in your local calendar (YYYY-MM-DD); completed tasks and archived/inaccessible lists are excluded. Subtasks have their own dates. limit controls each preview, maximum 100.",
+      inputSchema: dashboardQuerySchema.shape,
+      annotations: read,
+      _meta: { ui: { resourceUri: uri } },
+    },
+    async (input) =>
+      result(async () => ({
+        dashboard: await domain.getDashboard(actor, input),
+      })),
+  );
+  server.registerTool(
+    "get_dashboard",
+    {
+      description:
+        "Read your authorized Home overview and independently versioned personal settings. Supply today as your local calendar date. Includes overdue/due-today, next seven days, favorites and exact totals. limit defaults to 5, maximum 100 per task section.",
+      inputSchema: dashboardQuerySchema.shape,
+      annotations: read,
+    },
+    async (input) =>
+      result(async () => ({
+        dashboard: await domain.getDashboard(actor, input),
+      })),
+  );
+  server.registerTool(
+    "update_dashboard",
+    {
+      description:
+        "Save your personal Home settings. Read get_dashboard first. Supply its preferences.version and a fresh operationId. settings.sections must include today/upcoming/favorites once in preferred order; hidden is a subset, and startPage is home or last_list (last list is remembered per device). Settings never change shared list/task data. Retry uncertain outcomes with the identical payload and operationId.",
+      inputSchema: updateDashboardSchema.shape,
+      annotations: write,
+    },
+    async (input) =>
+      result(async () => ({
+        dashboardPreferences: await domain.updateDashboard(actor, input),
+      })),
   );
   server.registerTool(
     "get_list_order",

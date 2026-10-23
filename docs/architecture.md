@@ -200,3 +200,7 @@ See [reminders](reminders.md) for personal revisions, delayed jobs, provider ada
 ## Personal list favorites
 
 [WUFF-86](personal-list-favorites.md) adds an optional favorite list-ID set to the existing personal sidebar preference and revision. Current catalog authorization filters favorites; ordering, nesting and favorites serialize on the account row. Omitted favorite fields preserve state for older clients. No shared list/task or membership changes are involved.
+
+## Personal Home dashboard
+
+[WUFF-87](home-dashboard.md) adds an authorized repeatable-read cross-list projection of dated open tasks/subtasks and favorites. Calendar boundaries come from an explicit local date, never the server timezone. Bounded previews include exact totals. Independent account-owned dashboard preferences have their own version, account lock and mutation receipts; settings cannot change list membership, sidebar revisions or shared content. HTTP/native/MCP adapters use the same domain operations. A device-local account-specific last-list ID is reauthorized on startup; explicit list/task/Home URLs take precedence.

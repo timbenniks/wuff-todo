@@ -6,6 +6,7 @@ import {
   eq,
   exists,
   gt,
+  lte,
   isNull,
   isNotNull,
   inArray,
@@ -22,6 +23,7 @@ import {
   users,
   sections,
   listPreferences,
+  dashboardPreferences,
   listViews,
   attachments,
   githubBindings,
@@ -31,6 +33,13 @@ import {
 } from "@wuff/db";
 import {
   accessibleListNesting,
+  defaultDashboardSettings,
+  dashboardSettingsSchema,
+  dashboardQuerySchema,
+  updateDashboardSchema,
+  dashboardThrough,
+  type Dashboard,
+  type DashboardPreferences,
   defaultListView,
   listViewSchema,
   updateListViewSchema,
@@ -543,6 +552,148 @@ export async function updateListView(actor: Actor, data: unknown) {
   );
   return getList(actor, input.listId);
 }
+async function dashboardPreference(
+  tx: Tx | Db,
+  actor: Actor,
+): Promise<DashboardPreferences> {
+  const [row] = await tx
+    .select()
+    .from(dashboardPreferences)
+    .where(eq(dashboardPreferences.userId, actor.id));
+  return {
+    version: row?.version ?? 0,
+    settings: dashboardSettingsSchema.parse(
+      row?.settings ?? defaultDashboardSettings,
+    ),
+  };
+}
+export async function getDashboardPreferences(actor: Actor) {
+  requireScope(actor, "lists:read");
+  await admission(database().db, actor);
+  return dashboardPreference(database().db, actor);
+}
+export async function updateDashboard(actor: Actor, data: unknown) {
+  requireScope(actor, "lists:manage");
+  const input = updateDashboardSchema.parse(data);
+  await mutate(
+    actor,
+    { ...input, kind: "update_dashboard" } as typeof input,
+    async (tx) => {
+      await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, actor.id))
+        .for("update");
+      const current = await dashboardPreference(tx, actor);
+      if (current.version !== input.version)
+        fail(
+          "conflict",
+          "Your Home settings changed. Reload them before saving again.",
+          409,
+        );
+      await tx
+        .insert(dashboardPreferences)
+        .values({
+          userId: actor.id,
+          version: input.version + 1,
+          settings: input.settings,
+        })
+        .onConflictDoUpdate({
+          target: dashboardPreferences.userId,
+          set: { version: input.version + 1, settings: input.settings },
+        });
+      return { id: actor.id };
+    },
+  );
+  return getDashboardPreferences(actor);
+}
+export async function getDashboard(
+  actor: Actor,
+  data: unknown,
+): Promise<Dashboard> {
+  requireScope(actor, "lists:read");
+  const input = dashboardQuerySchema.parse(data),
+    through = dashboardThrough(input.today);
+  return database().db.transaction(
+    async (tx) => {
+      const user = await admission(tx, actor);
+      const catalog = await orderedCatalog(tx, actor);
+      const active = catalog.lists.filter((list) => !list.archived),
+        ids = active.map((list) => list.id);
+      async function preview(upcoming: boolean) {
+        if (!ids.length) return { items: [], total: 0 };
+        const rows = await tx
+          .select({
+            id: tasks.id,
+            title: tasks.title,
+            dueDate: tasks.dueDate,
+            parentTaskId: tasks.parentTaskId,
+            total: sql<number>`count(*) over()::int`,
+            listId: tasks.listId,
+          })
+          .from(tasks)
+          .where(
+            and(
+              inArray(tasks.listId, ids),
+              eq(tasks.completed, false),
+              upcoming
+                ? and(
+                    gt(tasks.dueDate, input.today),
+                    lte(tasks.dueDate, through),
+                  )
+                : lte(tasks.dueDate, input.today),
+            ),
+          )
+          .orderBy(
+            asc(tasks.dueDate),
+            asc(tasks.listId),
+            asc(tasks.position),
+            asc(tasks.id),
+          )
+          .limit(input.limit);
+        const parents = rows.flatMap((row) =>
+          row.parentTaskId ? [row.parentTaskId] : [],
+        );
+        const parentRows = parents.length
+          ? await tx
+              .select({ id: tasks.id, title: tasks.title })
+              .from(tasks)
+              .where(
+                and(inArray(tasks.id, parents), inArray(tasks.listId, ids)),
+              )
+          : [];
+        return {
+          total: rows[0]?.total ?? 0,
+          items: rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            path: taskPath(row.id),
+            dueDate: row.dueDate!,
+            parentTaskId: row.parentTaskId,
+            parentTitle:
+              parentRows.find((p) => p.id === row.parentTaskId)?.title ?? null,
+            list: active.find((list) => list.id === row.listId)!,
+          })),
+        };
+      }
+      const today = await preview(false),
+        upcoming = await preview(true);
+      return {
+        name: user.name,
+        today: input.today,
+        through,
+        preferences: await dashboardPreference(tx, actor),
+        todayTasks: today.items,
+        todayTotal: today.total,
+        upcomingTasks: upcoming.items,
+        upcomingTotal: upcoming.total,
+        favorites: active.filter((list) => list.favorite),
+      };
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+}
+
 export async function getTask(actor: Actor, lookup: string) {
   requireScope(actor, "lists:read");
   const identifier = taskLookupSchema.parse(lookup);

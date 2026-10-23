@@ -2,6 +2,16 @@
 
 Updated: October 23, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Personal Home dashboard — October 23, 2026
+
+[WUFF-87](home-dashboard.md) adds a configurable personal Home: welcome/Waffles, Today, seven-day Coming up and Favorites. Settings control section order/visibility, reset and Home/last-list entry. Task previews preserve list/shared/parent context. Direct task/list links, authorization and shared revisions remain independent.
+
+- 89 unit tests passed, including local calendar/leap/DST/year-limit windows and validated section settings. Workspace/root TypeScript, optimized web/MCP build and native frontend build passed; native output retains its existing bundle-size advisory. After the embedded form-handler correction, the MCP bundle and root/web TypeScript checks also passed.
+- Two new isolated-development domain integration cases passed: authorized bounded previews and exact totals, independent subtasks beneath a completed parent, no notes exposure, personal favorites, archive/restore/revocation, unchanged list snapshots/sidebar versions, preference isolation, validation, first-write concurrency, stale versions and idempotent retries. An authenticated adapter case passed HTTP/MCP/native preference persistence and read-only/origin/account/audience/invalid-date boundaries.
+- `scripts/verify-home-dashboard-ui.ts` passed against the optimized website. It covered task-page navigation, shared labels, hide/reorder/save/reload/reset/all-hidden, last-list entry and explicit Home, Back/Forward, archived last-list fallback, unchanged other-account preferences, exact-payload retry after a committed response was lost, retained drafts on conflict and explicit reload recovery, failed-read clearing/Retry, and long task names. At 320/390/1280px neither the document nor Customize dialog overflowed; no page errors were captured. Screenshots: `home-dashboard-{320,390,1280}.png` and `home-dashboard-customize-{320,390,1280}.png`.
+- A real local MCP Apps SDK host passed Home data, hide/reorder/save/reload/reset, opening existing task content, returning Home, and 390/1280px layouts without page errors. Its form uses Wuff's sandbox-compatible explicit click/Enter handler; native form submission is blocked by this test host. Screenshots: `home-dashboard-mcp-{390,1280}.png`. This is local SDK-host evidence, not a named production ChatGPT/Codex or physical-device certification.
+- Additive migration `0017_tiresome_dreadnoughts.sql` applied on isolated development through the existing direct connection, preserving pre-existing user/list/task/member and checked sidebar field fingerprints. Development lists and SDK grants were cleaned up; synthetic dashboard/sidebar preferences were restored. Production release evidence follows after migration/deployment and authenticated smoke.
+
 ## Personal list favorites — October 23, 2026
 
 [WUFF-86](personal-list-favorites.md) adds personal shortcuts above the regular list tree, with add/remove in list settings, unchanged hierarchy/tasks/sharing and editor support. Archived favorites are hidden until restored; current access filters revoked/deleted lists.

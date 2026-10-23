@@ -4,6 +4,10 @@ import {
   formatDueDate,
 } from "../lib/due-date";
 import {
+  defaultDashboardSettings,
+  type Dashboard,
+  type DashboardSettings,
+  type DashboardSection,
   sidebarGroups,
   defaultListView,
   githubSyncLabel,
@@ -1785,6 +1789,7 @@ function viewControls(list: TodoList) {
 function show(value: unknown) {
   if (!value || typeof value !== "object") return;
   const data = value as {
+    dashboard?: Dashboard;
     list?: TodoList;
     lists?: ListSummary[];
     viewerId?: string;
@@ -1792,8 +1797,9 @@ function show(value: unknown) {
   };
   // A host may forward an error or a tool result for another view. Keep the
   // current notes/drafts on screen instead of clearing them.
-  if (!data.list && !data.lists) return;
+  if (!data.list && !data.lists && !data.dashboard) return;
   if (data.viewerId && viewerId && data.viewerId !== viewerId) {
+    pendingHome = null;
     noteDrafts.clear();
     subtaskDrafts.clear();
     dateDrafts.clear();
@@ -1808,6 +1814,12 @@ function show(value: unknown) {
   imageEpoch++;
   root.replaceChildren();
   cueRenderers.clear();
+  if (data.dashboard) {
+    current = undefined;
+    applyListTheme("blue", document.documentElement);
+    renderDashboard(data.dashboard);
+    return;
+  }
   if (data.lists) {
     catalog = data.lists;
     current = undefined;
@@ -1825,7 +1837,10 @@ function show(value: unknown) {
     if (!current.tasks.some((t) => t.id === id)) subtaskDrafts.delete(id);
   for (const id of dateDrafts.keys())
     if (!current.tasks.some((t) => t.id === id)) dateDrafts.delete(id);
-  root.append(button("← Your lists", () => void call("show_lists", {})));
+  root.append(
+    button("Home", () => void call("show_dashboard", { today: calendarDay() })),
+    button("← Your lists", () => void call("show_lists", {})),
+  );
   const header = element("div");
   header.className = "list-header";
 
@@ -2038,11 +2053,239 @@ function show(value: unknown) {
     root.append(form);
   }
 }
+let pendingHome: {
+  version: number;
+  settings: DashboardSettings;
+  operationId: string;
+} | null = null;
+function renderDashboard(data: Dashboard) {
+  root.replaceChildren(
+    element("h1", "Wuff do I need to know?"),
+    element("p", `Welcome back, ${data.name}.`),
+    button("Your lists", () => void call("show_lists", {})),
+  );
+  const labels = {
+    today: "Today",
+    upcoming: "Coming up",
+    favorites: "Favorites",
+  };
+  for (const section of data.preferences.settings.sections.filter(
+    (id) => !data.preferences.settings.hidden.includes(id),
+  )) {
+    const card = element("section"),
+      heading = element("h2", labels[section]);
+    card.className = "list-header";
+    card.append(heading);
+    if (section === "favorites") {
+      for (const list of data.favorites)
+        card.append(
+          button(
+            `${list.title}${list.shared ? " · Shared" : ""}`,
+            () => void call("show_list", { listId: list.id }),
+          ),
+        );
+      if (!data.favorites.length)
+        card.append(
+          element("p", "Add your regular lists to Favorites in list settings."),
+        );
+    } else {
+      const tasks = section === "today" ? data.todayTasks : data.upcomingTasks,
+        total = section === "today" ? data.todayTotal : data.upcomingTotal;
+      card.append(
+        element(
+          "p",
+          section === "today"
+            ? "Due today and anything still overdue."
+            : `Tomorrow through ${formatDueDate(data.through)}.`,
+        ),
+      );
+      for (const task of tasks) {
+        const open = button(task.title, () => {
+          taskExpanded.set(task.id, true);
+          void call("get_task", { task: task.id });
+        });
+        open.className = "wuff-button list";
+        card.append(
+          open,
+          element(
+            "p",
+            `${task.list.title}${task.parentTitle ? ` · ${task.parentTitle}` : ""}${task.list.shared ? " · Shared" : ""} · ${task.dueDate < data.today ? "Overdue · " : ""}${formatDueDate(task.dueDate)}`,
+          ),
+        );
+      }
+      if (!tasks.length)
+        card.append(
+          element(
+            "p",
+            section === "today"
+              ? "Nothing due today. A little breathing room for your pack."
+              : "No tasks dated for the next seven days.",
+          ),
+        );
+      if (total > tasks.length)
+        card.append(
+          button(
+            `Show more ${labels[section].toLowerCase()} tasks`,
+            () =>
+              void call("show_dashboard", {
+                today: data.today,
+                limit: Math.min(100, tasks.length + 10),
+              }),
+            tasks.length >= 100,
+          ),
+        );
+    }
+    root.append(card);
+  }
+  if (data.preferences.settings.hidden.length === 3)
+    root.append(
+      element(
+        "p",
+        "A quiet corner for your pack. Customize Home to bring a section back.",
+      ),
+    );
+  const details = element("details"),
+    summary = element("summary", "Customize Home"),
+    form = element("form"),
+    fields = element("fieldset");
+  details.className = "home-customize";
+  details.open = !!pendingHome;
+  details.append(summary, form);
+  form.append(fields);
+  let draft: DashboardSettings = structuredClone(data.preferences.settings),
+    saving = false;
+  function controls() {
+    fields.replaceChildren(element("legend", "Your Home sections"));
+    for (const [i, id] of draft.sections.entries()) {
+      const row = element("div"),
+        label = element("label", labels[id]),
+        check = element("input");
+      row.className = "home-section-choice";
+      check.type = "checkbox";
+      check.checked = !draft.hidden.includes(id);
+      check.addEventListener("change", () => {
+        draft.hidden = check.checked
+          ? draft.hidden.filter((s) => s !== id)
+          : [...draft.hidden, id];
+      });
+      label.prepend(check);
+      row.append(label);
+      for (const delta of [-1, 1]) {
+        row.append(
+          button(
+            `Move ${labels[id]} ${delta < 0 ? "up" : "down"}`,
+            () => {
+              const sections = [...draft.sections];
+              [sections[i], sections[i + delta]] = [
+                sections[i + delta],
+                sections[i],
+              ];
+              draft = { ...draft, sections };
+              controls();
+            },
+            i + delta < 0 || i + delta >= 3,
+          ),
+        );
+      }
+      fields.append(row);
+    }
+    const label = element("label", "When I open Wuff"),
+      start = element("select");
+    for (const [value, text] of [
+      ["home", "Show Home"],
+      ["last_list", "Open my last list on this device"],
+    ]) {
+      const option = element("option", text);
+      option.value = value;
+      start.append(option);
+    }
+    start.value = draft.startPage;
+    start.addEventListener("change", () => {
+      draft.startPage = start.value as DashboardSettings["startPage"];
+    });
+    label.append(start);
+    fields.append(
+      label,
+      button("Reset to default", () => {
+        draft = structuredClone(defaultDashboardSettings);
+        controls();
+      }),
+    );
+    fields.disabled = !!pendingHome;
+  }
+  controls();
+  const save = element(
+    "button",
+    pendingHome ? "Retry same request" : "Save Home settings",
+  );
+  save.type = "submit";
+  const cancel = button(
+    "Cancel",
+    () => {
+      draft = structuredClone(data.preferences.settings);
+      controls();
+      details.open = false;
+    },
+    !!pendingHome,
+  );
+  form.append(save, cancel);
+  wireForm(form, save, async () => {
+    if (saving) return;
+    saving = true;
+    fields.disabled = true;
+    save.disabled = true;
+    cancel.disabled = true;
+    const input = pendingHome ?? {
+      version: data.preferences.version,
+      settings: draft,
+      operationId: crypto.randomUUID(),
+    };
+    try {
+      await request("update_dashboard", input);
+      pendingHome = null;
+      show(
+        await request("get_dashboard", {
+          today: data.today,
+          limit: Math.max(data.todayTasks.length, data.upcomingTasks.length, 5),
+        }),
+      );
+      status.textContent = "Your Home settings are saved.";
+    } catch (e) {
+      pendingHome =
+        e instanceof ToolError && e.code !== "internal_error" ? null : input;
+      status.textContent = (e as Error).message;
+      if (e instanceof ToolError && e.code === "conflict")
+        status.append(
+          button(
+            "Reload saved settings",
+            () => void call("get_dashboard", { today: data.today }),
+          ),
+        );
+      fields.disabled = !!pendingHome;
+      save.textContent = pendingHome
+        ? "Retry same request"
+        : "Save Home settings";
+    } finally {
+      saving = false;
+      save.disabled = false;
+      cancel.disabled = !!pendingHome;
+    }
+  });
+  root.append(
+    details,
+    button(
+      "Refresh Home",
+      () => void call("show_dashboard", { today: calendarDay() }),
+    ),
+  );
+}
+
 function renderCatalog() {
   root.replaceChildren(
     element("h1", archive ? wuffCopy.archiveHeading : wuffCopy.listsHeading),
   );
   root.append(
+    button("Home", () => void call("show_dashboard", { today: calendarDay() })),
     button(archive ? "Back to lists" : "Archive", () => {
       archive = !archive;
       renderCatalog();

@@ -30,13 +30,7 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       .call<LiveLists>("getLive", { userId: session.userId })
       .catch(() => null),
   ]);
-  const first = initialLists.find((list) => !list.archived) ?? initialLists[0];
-  const initialList = first
-    ? await client.list(first.id).catch((error) => {
-        if (error.status === 404) return null;
-        throw error;
-      })
-    : null;
+  const initialList = null;
   return {
     ...session,
     initialLists,

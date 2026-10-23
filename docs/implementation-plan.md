@@ -8,6 +8,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Personal Home (WUFF-87, October 23):** configurable welcome/Today/Coming up/Favorites is implemented across shared web/Tauri and MCP. Local domain/adapters/browser/SDK checks passed; production release is in progress. See [feature contract](home-dashboard.md).
+
 - **Personal list favorites (WUFF-86, October 23):** released on the website/MCP and marked done after authenticated production save/reload/shortcut/remove and live Codex reads passed. Personal shortcuts preserve existing nesting and shared content; migration 0016 and disposable smoke preserved pre-existing data. Native frontend checks passed, while downloadable artifacts remain blocked by GitHub runner billing limits. See [favorites contract](personal-list-favorites.md).
 
 - **Personal list nesting (WUFF-85, October 23):** one-level account-specific sidebar hierarchy is implemented across shared web/Tauri features and MCP and released on the website/MCP. Authenticated production save/reload/collapse and live Codex reads passed; WUFF-85 is done. Native artifact publication remains blocked by GitHub runner billing limits. Parent and child lists retain independent tasks/subtasks and sharing. See [contract, migration and release boundaries](personal-list-nesting.md).

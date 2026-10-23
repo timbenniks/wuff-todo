@@ -622,3 +622,68 @@ export type AgentTaskState = {
 };
 
 export * from "./reminders";
+
+export const dashboardSections = ["today", "upcoming", "favorites"] as const;
+export type DashboardSection = (typeof dashboardSections)[number];
+export const defaultDashboardSettings = {
+  sections: [...dashboardSections],
+  hidden: [] as DashboardSection[],
+  startPage: "home" as "home" | "last_list",
+};
+export const dashboardSettingsSchema = z
+  .object({
+    sections: z
+      .array(z.enum(dashboardSections))
+      .length(3)
+      .refine((v) => new Set(v).size === 3, "Include each section once"),
+    hidden: z
+      .array(z.enum(dashboardSections))
+      .max(3)
+      .refine((v) => new Set(v).size === v.length, "Choose each section once"),
+    startPage: z.enum(["home", "last_list"]),
+  })
+  .strict();
+export type DashboardSettings = z.infer<typeof dashboardSettingsSchema>;
+export type DashboardPreferences = {
+  version: number;
+  settings: DashboardSettings;
+};
+export const dashboardQuerySchema = z
+  .object({
+    today: dueDateSchema,
+    limit: z.number().int().min(1).max(100).default(5),
+  })
+  .strict();
+export const updateDashboardSchema = operationSchema.extend({
+  version: versionSchema,
+  settings: dashboardSettingsSchema,
+});
+export type DashboardTask = {
+  id: string;
+  title: string;
+  path: string;
+  dueDate: string;
+  parentTaskId: string | null;
+  parentTitle: string | null;
+  list: ListSummary;
+};
+export type Dashboard = {
+  name: string;
+  today: string;
+  through: string;
+  preferences: DashboardPreferences;
+  todayTasks: DashboardTask[];
+  upcomingTasks: DashboardTask[];
+  todayTotal: number;
+  upcomingTotal: number;
+  favorites: ListSummary[];
+};
+export function dashboardThrough(today: string) {
+  dueDateSchema.parse(today);
+  const time = new Date(`${today}T12:00:00Z`).getTime();
+  return new Date(
+    Math.min(time + 7 * 86400000, new Date("9999-12-31T12:00:00Z").getTime()),
+  )
+    .toISOString()
+    .slice(0, 10);
+}

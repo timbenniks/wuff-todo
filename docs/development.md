@@ -232,3 +232,7 @@ Apply additive Drizzle migration `0015_swift_randall_flagg.sql` through the exis
 ## Personal list favorites — October 23
 
 Apply additive migration `0016_icy_umar.sql` through the existing direct connection on isolated development before production; preserve all original data and old sidebar fields. See [favorites contract](personal-list-favorites.md). With the optimized local app running, run `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/list-favorites.integration.test.ts tests/list-nesting.integration.test.ts tests/list-features.integration.test.ts`, then separately `node --env-file=.env.local --import tsx scripts/verify-list-favorites-ui.ts`. These synthetic fixtures must never target production.
+
+## Personal Home dashboard — October 23
+
+Additive migration `0017_tiresome_dreadnoughts.sql` creates app-owned `wuff_dashboard_preferences`; apply through the existing direct runner to isolated development before production application deployment. Preserve existing app data and sidebar preferences. See [feature contract](home-dashboard.md). Run `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts` against the optimized local app, then separately `node --env-file=.env.local --import tsx scripts/verify-home-dashboard-ui.ts`. Development fixtures must not target production. Local MCP SDK-host checks are separate from named production AI hosts.

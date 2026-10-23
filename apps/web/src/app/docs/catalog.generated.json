@@ -10,6 +10,16 @@
     ]
   },
   {
+    "source": "packages/ui/src/features/app/lists/home-dashboard.tsx",
+    "module": "@wuff/ui/features/app/lists/home-dashboard.tsx",
+    "components": [
+      {
+        "name": "HomeDashboard",
+        "signature": "export function HomeDashboard({\n  userId,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n}: {\n  userId: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/features/app/lists/inline-name.tsx",
     "module": "@wuff/ui/features/app/lists/inline-name.tsx",
     "components": [

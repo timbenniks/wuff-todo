@@ -129,7 +129,21 @@ export function featureApi(
           : method === "PUT"
             ? "reorderLists"
             : undefined;
-    else if (kind === "live" && method === "POST") action = "getLive";
+    else if (kind === "dashboard") {
+      action =
+        method === "GET"
+          ? "getDashboard"
+          : method === "PUT"
+            ? "updateDashboard"
+            : undefined;
+      if (method === "GET")
+        input = {
+          today: url.searchParams.get("today"),
+          ...(url.searchParams.has("limit")
+            ? { limit: Number(url.searchParams.get("limit")) }
+            : {}),
+        };
+    } else if (kind === "live" && method === "POST") action = "getLive";
     else if (kind === "github" && method === "GET") {
       action = url.searchParams.has("pullRequests")
         ? "githubPullRequests"

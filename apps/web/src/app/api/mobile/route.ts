@@ -10,6 +10,8 @@ import {
   setTaskReminder,
   registerReminderDevice,
   removeReminderDevice,
+  getDashboard,
+  updateDashboard,
   listLists,
   getList,
   createList,
@@ -55,6 +57,8 @@ import { sealLiveLists } from "@/lib/live-server";
 // A bearer-only native adapter: cookies and Origin headers never grant access.
 // All permissions, versions, receipts and validation stay in domain services.
 const operations = {
+  getDashboard,
+  updateDashboard,
   resolveReminderLocalTime,
   getListReminders,
   getTaskReminder,
