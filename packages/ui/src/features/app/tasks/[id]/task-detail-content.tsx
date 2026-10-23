@@ -152,8 +152,8 @@ export function TaskDetailContent({
           />
         </div>
       )}
-      <div className="grid gap-4">
-        <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
+      <div className="task-detail-panels grid gap-4">
+        <section className="task-detail-notes rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold">Notes</h2>
             {!notesOpen && !list.archived && (
@@ -189,89 +189,91 @@ export function TaskDetailContent({
             </p>
           )}
         </section>
-        <WorkMetadata task={task} list={list} busy={busy} change={change} />
-        {!task.parentTaskId && (
-          <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
-            <h2 className="text-lg font-bold mb-4">Subtasks</h2>
-            <Subtasks
-              focusNewTask={false}
-              detailed
-              onOpenTask={onOpenTask}
-              parent={task}
-              items={list.tasks.filter((t) => t.parentTaskId === task.id)}
-              list={list}
-              userId={userId}
-              busy={busy}
-              change={change}
-              drafts={notes.current}
-              subtaskDrafts={children.current}
-              dueDrafts={dates.current}
-              today={today}
-            />
-          </section>
-        )}
-        {list.mode === "work" && (
-          <>
-            <details
-              className="task-integration"
-              onToggle={(event) => {
-                if (event.currentTarget.open) setGithubVisited(true);
+        <div className="task-detail-context min-w-0">
+          <WorkMetadata task={task} list={list} busy={busy} change={change} />
+          {!task.parentTaskId && (
+            <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
+              <h2 className="text-lg font-bold mb-4">Subtasks</h2>
+              <Subtasks
+                focusNewTask={false}
+                detailed
+                onOpenTask={onOpenTask}
+                parent={task}
+                items={list.tasks.filter((t) => t.parentTaskId === task.id)}
+                list={list}
+                userId={userId}
+                busy={busy}
+                change={change}
+                drafts={notes.current}
+                subtaskDrafts={children.current}
+                dueDrafts={dates.current}
+                today={today}
+              />
+            </section>
+          )}
+          {list.mode === "work" && (
+            <>
+              <details
+                className="task-integration"
+                onToggle={(event) => {
+                  if (event.currentTarget.open) setGithubVisited(true);
+                }}
+              >
+                <summary>
+                  GitHub
+                  {task.github?.issueNumber
+                    ? ` · #${task.github.issueNumber}`
+                    : ""}
+                </summary>
+                {githubVisited && (
+                  <GithubTask
+                    task={task}
+                    list={list}
+                    userId={userId}
+                    refresh={refresh}
+                  />
+                )}
+              </details>
+              <details
+                className="task-integration"
+                onToggle={(event) => {
+                  if (event.currentTarget.open) setAgentVisited(true);
+                }}
+              >
+                <summary>Coding companion</summary>
+                {agentVisited && (
+                  <AgentTask
+                    task={task}
+                    list={list}
+                    userId={userId}
+                    refresh={refresh}
+                  />
+                )}
+              </details>
+            </>
+          )}
+          {task.parentTaskId && (
+            <a
+              href={`${runtime.webOrigin}/tasks/${task.parentTaskId}`}
+              onClick={(event) => {
+                if (
+                  onOpenTask &&
+                  !event.metaKey &&
+                  !event.ctrlKey &&
+                  !event.shiftKey &&
+                  !event.altKey &&
+                  event.button === 0
+                ) {
+                  event.preventDefault();
+                  onOpenTask(task.parentTaskId!);
+                }
               }}
+              className="text-sm text-primary underline"
             >
-              <summary>
-                GitHub
-                {task.github?.issueNumber
-                  ? ` · #${task.github.issueNumber}`
-                  : ""}
-              </summary>
-              {githubVisited && (
-                <GithubTask
-                  task={task}
-                  list={list}
-                  userId={userId}
-                  refresh={refresh}
-                />
-              )}
-            </details>
-            <details
-              className="task-integration"
-              onToggle={(event) => {
-                if (event.currentTarget.open) setAgentVisited(true);
-              }}
-            >
-              <summary>Coding companion</summary>
-              {agentVisited && (
-                <AgentTask
-                  task={task}
-                  list={list}
-                  userId={userId}
-                  refresh={refresh}
-                />
-              )}
-            </details>
-          </>
-        )}
-        {task.parentTaskId && (
-          <a
-            href={`${runtime.webOrigin}/tasks/${task.parentTaskId}`}
-            onClick={(event) => {
-              if (
-                onOpenTask &&
-                !event.metaKey &&
-                !event.ctrlKey &&
-                !event.shiftKey &&
-                !event.altKey &&
-                event.button === 0
-              ) {
-                event.preventDefault();
-                onOpenTask(task.parentTaskId!);
-              }
-            }}
-            className="text-sm text-primary underline"
-          >
-            Open parent task
-          </a>
-        )}
+              Open parent task
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

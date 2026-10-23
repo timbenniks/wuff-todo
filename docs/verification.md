@@ -246,3 +246,9 @@ actual component inventory and source-kit fidelity, skill validation, isolated
 standalone build and 320/390/1280px browser checks. No application-data or permission
 change is introduced. ChatGPT Work cloud execution and physical-device/screen-reader
 validation remain separate from these local checks.
+
+## Desktop workspace — October 24, 2026
+
+See [layout decisions and browser harness](desktop-workspace.md). Home uses a fluid 1/2/3-column grid, desktop lists fill the canvas beside fixed-width navigation, and task/settings pages use wider layouts. The shared Tauri frontend receives the same styles.
+
+Local TypeScript, optimized web/MCP/prototype build and native frontend build passed. `scripts/verify-desktop-workspace.ts` exercises the actual optimized website with development-only synthetic fixtures: 320/390/768/1024/1280/1440/1920px canvas/card/overflow measurements, 1440×500 independent main/navigation scrolling and pinned account footer, 800px drawer, unsaved draft retention on phone resize, and task/settings columns. It also retains Home navigation/customization/reload/reset/all-hidden/history/startup, exact retry, conflict draft recovery, failed-read recovery and account-isolation checks. Fixture data and synthetic personal preferences are restored afterward. Hidden status announcements are positioned within the scroll canvas so they cannot extend document scrolling below it. Production release evidence follows after deployment; these checks do not prove installed native behavior or screen-reader use.

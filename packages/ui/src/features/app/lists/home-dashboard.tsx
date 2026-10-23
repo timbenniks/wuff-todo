@@ -237,161 +237,173 @@ export function HomeDashboard({
         </p>
       ) : (
         <>
-          {data.preferences.settings.sections
-            .filter(
-              (section) => !data.preferences.settings.hidden.includes(section),
-            )
-            .map((section) => (
-              <section
-                key={section}
-                aria-labelledby={`home-${section}`}
-                className="mb-6 rounded-2xl border border-border bg-surface overflow-hidden"
-              >
-                <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-                  <span className="text-primary">
-                    {section === "favorites" ? (
-                      <Star size={19} />
-                    ) : (
-                      <CalendarDays size={19} />
-                    )}
-                  </span>
-                  <h2 id={`home-${section}`} className="text-lg font-bold">
-                    {labels[section]}
-                  </h2>
-                  {section !== "favorites" && (
-                    <span className="ml-auto text-sm text-muted-foreground">
-                      {section === "today"
-                        ? data.todayTotal
-                        : data.upcomingTotal}
+          <div className="home-cards">
+            {data.preferences.settings.sections
+              .filter(
+                (section) =>
+                  !data.preferences.settings.hidden.includes(section),
+              )
+              .map((section) => (
+                <section
+                  key={section}
+                  aria-labelledby={`home-${section}`}
+                  className="home-card rounded-2xl border border-border bg-surface overflow-hidden"
+                >
+                  <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+                    <span className="text-primary">
+                      {section === "favorites" ? (
+                        <Star size={19} />
+                      ) : (
+                        <CalendarDays size={19} />
+                      )}
                     </span>
-                  )}
-                </div>
-                {section === "favorites" ? (
-                  <div className="p-3">
-                    {data.favorites.length ? (
-                      data.favorites.map((list) => (
-                        <button
-                          type="button"
-                          key={list.id}
-                          onClick={() => chooseList(list.id)}
-                          className="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 hover:bg-accent text-left"
-                        >
-                          <Star
-                            size={17}
-                            className="shrink-0"
-                            style={{ color: listPalette[list.color].accent }}
-                          />
-                          <span className="break-words min-w-0 font-semibold">
-                            {list.title}
-                          </span>
-                          {list.shared && (
-                            <span
-                              className="ml-auto shrink-0"
-                              title="Shared list"
-                            >
-                              <Users size={16} />
-                              <span className="sr-only">Shared list</span>
-                            </span>
-                          )}
-                          <ArrowRight size={16} className="ml-auto shrink-0" />
-                        </button>
-                      ))
-                    ) : (
-                      <p className="p-3 text-sm text-muted-foreground">
-                        Add your regular lists to Favorites in list settings.
-                        They’ll be waiting here.
-                      </p>
+                    <h2 id={`home-${section}`} className="text-lg font-bold">
+                      {labels[section]}
+                    </h2>
+                    {section !== "favorites" && (
+                      <span className="ml-auto text-sm text-muted-foreground">
+                        {section === "today"
+                          ? data.todayTotal
+                          : data.upcomingTotal}
+                      </span>
                     )}
                   </div>
-                ) : (
-                  <>
-                    <p className="px-5 pt-3 text-xs text-muted-foreground">
-                      {section === "today"
-                        ? "Due today and anything still overdue."
-                        : `Tomorrow through ${formatDueDate(data.through)}.`}
-                    </p>
-                    <div className="p-2">
-                      {(section === "today"
-                        ? data.todayTasks
-                        : data.upcomingTasks
-                      ).map((task) => (
-                        <button
-                          type="button"
-                          key={task.id}
-                          onClick={() => runtime.navigate(task.path)}
-                          className="flex w-full items-start gap-3 rounded-xl p-3 text-left hover:bg-accent min-h-11"
-                        >
-                          <span
-                            className="mt-1 h-3 w-3 rounded-full shrink-0"
-                            style={{
-                              background: listPalette[task.list.color].accent,
-                            }}
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-semibold break-words">
-                              {task.title}
-                            </span>
-                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                              <span className="break-words">
-                                {task.list.title}
-                                {task.parentTitle
-                                  ? ` · ${task.parentTitle}`
-                                  : ""}
-                              </span>
-                              {task.list.shared && (
-                                <span className="inline-flex items-center gap-1">
-                                  <Users size={12} />
-                                  Shared
-                                </span>
-                              )}
-                              <span
-                                className={
-                                  task.dueDate < data.today
-                                    ? "font-semibold text-red-800"
-                                    : ""
-                                }
-                              >
-                                {task.dueDate < data.today ? "Overdue · " : ""}
-                                {formatDueDate(task.dueDate)}
-                              </span>
-                            </span>
-                          </span>
-                          <ArrowRight size={16} className="mt-1 shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                    {!(
-                      section === "today" ? data.todayTasks : data.upcomingTasks
-                    ).length && (
-                      <p className="px-5 pb-5 text-sm text-muted-foreground">
-                        {section === "today"
-                          ? "Nothing due today. A little breathing room for your pack."
-                          : "No tasks dated for the next seven days. Add a due date to see one here."}
-                      </p>
-                    )}
-                    {(section === "today"
-                      ? data.todayTotal
-                      : data.upcomingTotal) > limit && (
-                      <div className="px-5 pb-4">
-                        {limit < 100 ? (
-                          <Button
-                            variant="ghost"
-                            onClick={() => setLimit(Math.min(100, limit + 10))}
+                  {section === "favorites" ? (
+                    <div className="p-3">
+                      {data.favorites.length ? (
+                        data.favorites.map((list) => (
+                          <button
+                            type="button"
+                            key={list.id}
+                            onClick={() => chooseList(list.id)}
+                            className="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 hover:bg-accent text-left"
                           >
-                            Show more {labels[section].toLowerCase()} tasks
-                          </Button>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            Showing the first 100 tasks. Open your lists to see
-                            the rest.
-                          </p>
-                        )}
+                            <Star
+                              size={17}
+                              className="shrink-0"
+                              style={{ color: listPalette[list.color].accent }}
+                            />
+                            <span className="break-words min-w-0 font-semibold">
+                              {list.title}
+                            </span>
+                            {list.shared && (
+                              <span
+                                className="ml-auto shrink-0"
+                                title="Shared list"
+                              >
+                                <Users size={16} />
+                                <span className="sr-only">Shared list</span>
+                              </span>
+                            )}
+                            <ArrowRight
+                              size={16}
+                              className="ml-auto shrink-0"
+                            />
+                          </button>
+                        ))
+                      ) : (
+                        <p className="p-3 text-sm text-muted-foreground">
+                          Add your regular lists to Favorites in list settings.
+                          They’ll be waiting here.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <p className="px-5 pt-3 text-xs text-muted-foreground">
+                        {section === "today"
+                          ? "Due today and anything still overdue."
+                          : `Tomorrow through ${formatDueDate(data.through)}.`}
+                      </p>
+                      <div className="p-2">
+                        {(section === "today"
+                          ? data.todayTasks
+                          : data.upcomingTasks
+                        ).map((task) => (
+                          <button
+                            type="button"
+                            key={task.id}
+                            onClick={() => runtime.navigate(task.path)}
+                            className="flex w-full items-start gap-3 rounded-xl p-3 text-left hover:bg-accent min-h-11"
+                          >
+                            <span
+                              className="mt-1 h-3 w-3 rounded-full shrink-0"
+                              style={{
+                                background: listPalette[task.list.color].accent,
+                              }}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-semibold break-words">
+                                {task.title}
+                              </span>
+                              <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                <span className="break-words">
+                                  {task.list.title}
+                                  {task.parentTitle
+                                    ? ` · ${task.parentTitle}`
+                                    : ""}
+                                </span>
+                                {task.list.shared && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Users size={12} />
+                                    Shared
+                                  </span>
+                                )}
+                                <span
+                                  className={
+                                    task.dueDate < data.today
+                                      ? "font-semibold text-red-800"
+                                      : ""
+                                  }
+                                >
+                                  {task.dueDate < data.today
+                                    ? "Overdue · "
+                                    : ""}
+                                  {formatDueDate(task.dueDate)}
+                                </span>
+                              </span>
+                            </span>
+                            <ArrowRight size={16} className="mt-1 shrink-0" />
+                          </button>
+                        ))}
                       </div>
-                    )}
-                  </>
-                )}
-              </section>
-            ))}
+                      {!(
+                        section === "today"
+                          ? data.todayTasks
+                          : data.upcomingTasks
+                      ).length && (
+                        <p className="px-5 pb-5 text-sm text-muted-foreground">
+                          {section === "today"
+                            ? "Nothing due today. A little breathing room for your pack."
+                            : "No tasks dated for the next seven days. Add a due date to see one here."}
+                        </p>
+                      )}
+                      {(section === "today"
+                        ? data.todayTotal
+                        : data.upcomingTotal) > limit && (
+                        <div className="px-5 pb-4">
+                          {limit < 100 ? (
+                            <Button
+                              variant="ghost"
+                              onClick={() =>
+                                setLimit(Math.min(100, limit + 10))
+                              }
+                            >
+                              Show more {labels[section].toLowerCase()} tasks
+                            </Button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Showing the first 100 tasks. Open your lists to
+                              see the rest.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </section>
+              ))}
+          </div>
           {data.preferences.settings.hidden.length === 3 && (
             <div className="rounded-2xl border border-border p-6">
               <h2 className="text-xl font-bold">

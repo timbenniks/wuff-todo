@@ -15,7 +15,7 @@ export default async function SettingsLayout({
     redirect("/sign-in");
   }
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <main className="settings-workspace mx-auto px-4 py-8 sm:px-6">
       <a href="/lists" className="text-sm text-primary hover:underline">
         ← Back to your lists
       </a>
@@ -26,7 +26,7 @@ export default async function SettingsLayout({
           A little help, on your terms.
         </p>
       </header>
-      <div className="grid gap-8 sm:grid-cols-[11rem_minmax(0,1fr)]">
+      <div className="settings-columns grid gap-8 sm:grid-cols-[11rem_minmax(0,1fr)]">
         <SettingsNav />
         <div className="min-w-0">
           <ActorApiProvider userId={actor.id}>{children}</ActorApiProvider>

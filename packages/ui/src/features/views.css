@@ -356,7 +356,8 @@ button.task-cue:hover {
   z-index: 5;
   box-shadow: 0 4px 16px #17202a12;
 }
-.task-detail-content > .grid > section {
+.task-detail-content > .grid > section,
+.task-detail-context > section {
   border: 0;
   border-top: 1px solid var(--wuff-border);
   border-radius: 0;
@@ -515,5 +516,98 @@ button:focus-visible {
   *::after {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* A desktop workspace: use the available canvas, with independent navigation. */
+.workspace-shell {
+  min-height: 100dvh;
+}
+.workspace-main {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  padding: 20px 16px;
+}
+.workspace-list-nav,
+.workspace-sidebar {
+  min-width: 0;
+}
+.workspace-footer {
+  flex-shrink: 0;
+}
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
+  align-items: start;
+}
+.home-card {
+  min-width: 0;
+}
+.task-page,
+.settings-workspace {
+  width: 100%;
+  max-width: 1440px;
+}
+.task-detail-content {
+  container: task-content / inline-size;
+}
+@container task-content (min-width:960px) {
+  .task-detail-content > .task-detail-panels {
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+}
+@media (min-width: 768px) {
+  .workspace-shell {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .workspace-sidebar {
+    min-height: 0;
+    height: 100%;
+  }
+  .workspace-sidebar > div:first-child,
+  #pack-navigation > button,
+  #pack-navigation > .flex {
+    flex-shrink: 0;
+  }
+  .workspace-list-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .workspace-main {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding: 28px;
+    container: workspace / inline-size;
+  }
+  .settings-columns > nav {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+  }
+}
+@container workspace (min-width:1000px) {
+  .list-view-fields {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1440px) {
+  .workspace-main {
+    padding: 32px 36px;
+  }
+  .task-drawer {
+    width: min(800px, 55vw);
   }
 }

@@ -521,7 +521,7 @@ export function ListApp({
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
   return (
     <div
-      className="min-h-dvh md:grid md:grid-cols-[260px_1fr] bg-background text-foreground"
+      className="workspace-shell bg-background text-foreground"
       style={listThemeVariables(list?.color ?? "blue")}
     >
       <ListTheme color={list?.color ?? "blue"} />
@@ -539,7 +539,7 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="bg-sidebar border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 md:min-h-dvh flex flex-col">
+      <aside className="workspace-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 flex flex-col">
         <div className="flex gap-3 items-center md:mb-8">
           <Corgi size={48} />
           <span className="wordmark text-xl font-bold">Wuff Todo</span>
@@ -560,7 +560,7 @@ export function ListApp({
         </div>
         <div
           id="pack-navigation"
-          className={`${navigationOpen ? "flex" : "hidden"} md:flex flex-1 flex-col pt-4 md:pt-0`}
+          className={`${navigationOpen ? "flex" : "hidden"} md:flex flex-1 min-h-0 flex-col pt-4 md:pt-0`}
           onKeyDown={(e) => {
             if (e.key === "Escape" && navigationOpen) {
               setNavigationOpen(false);
@@ -596,100 +596,104 @@ export function ListApp({
               <Plus size={18} />
             </Button>
           </div>
-          {creating && (
-            <form
-              className="mb-4 grid gap-2"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                await create(
-                  String(new FormData(e.currentTarget).get("title")),
-                );
+          <div className="workspace-list-nav">
+            {creating && (
+              <form
+                className="mb-4 grid gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await create(
+                    String(new FormData(e.currentTarget).get("title")),
+                  );
+                }}
+              >
+                <label
+                  htmlFor="new-list-name"
+                  className="text-xs text-muted-foreground"
+                >
+                  List name
+                </label>
+                <InputGroup>
+                  <InputGroupInput
+                    id="new-list-name"
+                    name="title"
+                    aria-label="List name"
+                    placeholder={wuffCopy.listPlaceholder}
+                    maxLength={300}
+                    required
+                    autoFocus
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      type="submit"
+                      size="sm"
+                      variant="primary"
+                      disabled={busy}
+                      aria-label="Create list"
+                      title="Create list"
+                    >
+                      <Plus size={18} aria-hidden="true" /> Create
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              </form>
+            )}
+            <SidebarLists
+              lists={summaries}
+              archived={showArchive}
+              selectedId={selectedId}
+              disabled={busy || !!pendingCreate || !!sidebarRetry}
+              pending={pendingCreate}
+              choose={(id) => {
+                chooseList(id);
+                if (navigationOpen) {
+                  setNavigationOpen(false);
+                  requestAnimationFrame(() =>
+                    navigationTrigger.current?.focus(),
+                  );
+                }
               }}
-            >
-              <label
-                htmlFor="new-list-name"
-                className="text-xs text-muted-foreground"
-              >
-                List name
-              </label>
-              <InputGroup>
-                <InputGroupInput
-                  id="new-list-name"
-                  name="title"
-                  aria-label="List name"
-                  placeholder={wuffCopy.listPlaceholder}
-                  maxLength={300}
-                  required
-                  autoFocus
-                />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton
-                    type="submit"
-                    size="sm"
-                    variant="primary"
-                    disabled={busy}
-                    aria-label="Create list"
-                    title="Create list"
-                  >
-                    <Plus size={18} aria-hidden="true" /> Create
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
-            </form>
-          )}
-          <SidebarLists
-            lists={summaries}
-            archived={showArchive}
-            selectedId={selectedId}
-            disabled={busy || !!pendingCreate || !!sidebarRetry}
-            pending={pendingCreate}
-            choose={(id) => {
-              chooseList(id);
-              if (navigationOpen) {
-                setNavigationOpen(false);
-                requestAnimationFrame(() => navigationTrigger.current?.focus());
-              }
-            }}
-            preload={(id) => {
-              if (!cache.get(id)) void reload(id).catch(() => {});
-            }}
-            reorder={moveList}
-            toggle={(id, collapsed) =>
-              saveSidebar((order) => ({
-                collapsedListIds: !collapsed
-                  ? (order.collapsedListIds ?? []).filter(
-                      (value) => value !== id,
-                    )
-                  : [
-                      ...(order.collapsedListIds ?? []).filter(
+              preload={(id) => {
+                if (!cache.get(id)) void reload(id).catch(() => {});
+              }}
+              reorder={moveList}
+              toggle={(id, collapsed) =>
+                saveSidebar((order) => ({
+                  collapsedListIds: !collapsed
+                    ? (order.collapsedListIds ?? []).filter(
                         (value) => value !== id,
-                      ),
-                      id,
-                    ],
-              }))
-            }
-          />
-          {sidebarRetry && (
-            <div role="alert" className="grid gap-2 py-3 text-sm">
-              <p>
-                The sidebar change wasn’t confirmed. Retry the same request to
-                check it.
+                      )
+                    : [
+                        ...(order.collapsedListIds ?? []).filter(
+                          (value) => value !== id,
+                        ),
+                        id,
+                      ],
+                }))
+              }
+            />
+            {sidebarRetry && (
+              <div role="alert" className="grid gap-2 py-3 text-sm">
+                <p>
+                  The sidebar change wasn’t confirmed. Retry the same request to
+                  check it.
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => saveSidebar(null)}
+                >
+                  Retry sidebar change
+                </Button>
+              </div>
+            )}
+            {showArchive && visibleLists.length === 0 && (
+              <p className="text-sm text-muted-foreground px-3 py-4">
+                No lists taking a paws yet.
               </p>
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => saveSidebar(null)}
-              >
-                Retry sidebar change
-              </Button>
-            </div>
-          )}
-          {showArchive && visibleLists.length === 0 && (
-            <p className="text-sm text-muted-foreground px-3 py-4">
-              No lists taking a paws yet.
-            </p>
-          )}
-          <div className="mt-6 md:mt-auto pt-4 md:pt-8 text-sm flex flex-wrap md:block items-center justify-between gap-1">
+            )}
+          </div>
+          <div className="workspace-footer mt-6 md:mt-auto pt-4 md:pt-8 text-sm flex flex-wrap md:block items-center justify-between gap-1">
             <div className="flex flex-wrap md:grid items-center gap-1">
               <Button
                 variant="ghost"
@@ -749,7 +753,7 @@ export function ListApp({
       <main
         id="list-content"
         tabIndex={-1}
-        className="list-content px-4 py-5 md:px-8 md:py-8 max-w-4xl w-full mx-auto min-w-0"
+        className="list-content workspace-main"
       >
         {(liveConfig || runtime.native) && (
           <p role="status" className="text-xs text-muted-foreground mb-4">

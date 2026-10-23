@@ -132,7 +132,7 @@ export function ListViewControls({
               onChange={(e) => edit({ search: e.target.value })}
             />
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="list-view-fields grid grid-cols-1 sm:grid-cols-2 gap-3">
             {select(
               "Section filter",
               draft.sections[0] ?? (draft.sections.length ? "none" : "all"),

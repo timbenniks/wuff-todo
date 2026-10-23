@@ -137,7 +137,7 @@ export function TaskDetailApp({
     );
   return (
     <main
-      className="task-detail max-w-4xl min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8"
+      className="task-detail task-page min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8"
       style={listThemeVariables(list.color)}
     >
       <ListTheme color={list.color} />
