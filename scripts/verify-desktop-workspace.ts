@@ -258,6 +258,9 @@ try {
     exact: true,
   });
   await expect(drawer).toBeVisible();
+  await expect(
+    drawer.getByRole("button", { name: "Edit task notes", exact: true }),
+  ).toBeVisible();
   assert.ok((await drawer.boundingBox()).width >= 790);
   await page.screenshot({
     path: "docs/screenshots/desktop-task-drawer.png",

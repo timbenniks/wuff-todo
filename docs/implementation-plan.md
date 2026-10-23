@@ -8,7 +8,7 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
-- **Desktop workspace (October 24):** fluid Home card rows, wider list/task/settings canvas and independently scrolling desktop navigation are implemented. See [layout decisions and verification](desktop-workspace.md).
+- **Desktop workspace (October 24):** fluid Home card rows, wider list/task/settings canvas and independently scrolling desktop navigation are released. Local 320–1920px browser checks and authenticated production geometry checks passed. See [layout decisions and verification](desktop-workspace.md).
 
 - **Personal Home (WUFF-87, October 23):** configurable welcome/Today/Coming up/Favorites is released on the website/MCP and marked done after authenticated production overview/layout/reload/startup/reset checks and fixture cleanup passed. Shared Tauri frontend and local domain/adapters/browser/SDK checks passed; native downloads remain blocked by GitHub runner billing limits. See [feature contract](home-dashboard.md).
 
