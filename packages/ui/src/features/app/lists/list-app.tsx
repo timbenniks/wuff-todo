@@ -820,7 +820,7 @@ export function ListApp({
               <div className="list-management flex flex-wrap items-center gap-2">
                 {!isPending && (
                   <SharingDialog
-                    key={list.id}
+                    key={`sharing:${list.id}`}
                     list={list}
                     userId={userId}
                     disabled={busy}
@@ -829,7 +829,7 @@ export function ListApp({
                 )}
                 {!isPending && (
                   <ListSettings
-                    key={list.id}
+                    key={`settings:${list.id}`}
                     list={list}
                     userId={userId}
                     busy={busy}

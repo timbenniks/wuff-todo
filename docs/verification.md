@@ -2,6 +2,12 @@
 
 Updated: October 22, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Accumulating list actions — October 23, 2026
+
+The shared web/Tauri list header gave sibling SharingDialog and ListSettings components the same list-ID key. Switching between cached lists left orphaned sharing triggers in the DOM. Keys now include the control name and list ID, preserving dialog reset on list changes while keeping sibling identities unique.
+
+A local headless Chrome harness rendered the actual ListApp with three synthetic in-memory list snapshots (two owned and one shared). Across 24 sidebar switches, the original keys produced 26 direct action buttons and 25 duplicate-key warnings. With distinct keys, every selection retained exactly one Share/People trigger, one Settings trigger and an owner-only Delete trigger, with no browser errors or console errors. Workspace/root `pnpm typecheck` and optimized web/MCP `pnpm build` passed after restoring missing workspace dependency links with a frozen-lockfile install. This is local component/browser evidence; production and installed native clients were not exercised or deployed.
+
 ## Tauri shared workspace — October 22, 2026
 
 PRs #12–15 passed remote web/Expo regression and macOS/Windows compile checks before merge. Locally, all 74 unit tests and all 28 development integration cases passed. Packaged macOS authentication, live connection and core editing/image checks are recorded in [auth](tauri-auth.md), [live transport](tauri-live.md) and [shared features](tauri-features.md). The same native-created private image loaded in the website reader/editor; 320/390px document widths had no horizontal overflow. Native test fixtures were removed and the synthetic native session signed out. Production Vercel status for core merge `862e278` is successful; unauthenticated native image access returns 401. This is deployment/boundary evidence, not an authenticated production-device test.
