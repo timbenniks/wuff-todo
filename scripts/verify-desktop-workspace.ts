@@ -220,6 +220,34 @@ try {
       path: `docs/screenshots/desktop-home-${width}.png`,
       fullPage: true,
     });
+    if (width < 768) {
+      const toggle = page.getByRole("button", {
+        name: "Choose a list",
+        exact: true,
+      });
+      await toggle.click();
+      await expect(
+        page.getByRole("navigation", { name: "Lists", exact: true }),
+      ).toBeVisible();
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      assert.ok(
+        await page
+          .locator(".sidebar-list-row > button")
+          .first()
+          .evaluate(
+            (el: HTMLElement) => el.getBoundingClientRect().height >= 44,
+          ),
+      );
+      await page.screenshot({
+        path: `docs/screenshots/sidebar-mobile-${width}.png`,
+        fullPage: true,
+      });
+      await toggle.click();
+    }
     await customize();
     assert.ok(
       await dialog.evaluate(
