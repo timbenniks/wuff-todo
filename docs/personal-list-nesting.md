@@ -1,6 +1,6 @@
 # Personal list nesting — WUFF-85
 
-Selected October 23, 2026. Implementation is local until the production migration and application release are completed.
+Selected and released on the website/MCP October 23, 2026. Installed native distribution remains a separate platform gate.
 
 ## Behavior
 
@@ -33,6 +33,8 @@ List catalog summaries add viewer-specific `parentListId` and `sidebarCollapsed`
 
 ## Release and verification
 
-The migration was applied only to the existing isolated development branch using its direct connection. Before/after fingerprints confirmed all existing list/task/membership rows and original sidebar preference values were preserved. Production migration, deployment and installed-device verification are separate release steps.
+The migration passed on the existing isolated development branch, then production through its Vercel-managed direct connection. Before/after fingerprints preserved existing user/list/task/member rows and original sidebar preference values. Source `ba160b1` is deployed through Vercel CLI as `dpl_9ouUyX4AmeHu7XLdhRkg1ybV696E`, Ready on the canonical production URL in `fra1`. Authenticated Chrome saved nesting, retained it across reload and collapsed/expanded the group; the live Codex MCP connection read the same hierarchy. Independent rereads preserved task/subtask snapshots. Disposable lists were removed and pre-existing production data fingerprints matched before WUFF-85 was marked done.
+
+GitHub Actions could not start because account billing/spending limits blocked runners (runs `40020000501` and `40019999828`); local checks and the Vercel build passed. Updated downloadable native artifacts and installed-device checks are not certified by this web/MCP release.
 
 All 87 unit tests, five focused integration cases, TypeScript, web/MCP and native frontend builds passed. Responsive web flows and the real local MCP Apps SDK host passed; see [verification commands, screenshots and limits](verification.md#personal-list-nesting--october-23-2026).
