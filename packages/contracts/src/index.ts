@@ -309,7 +309,9 @@ export function accessibleListNesting(ids: string[], nesting: ListNesting[]) {
   );
 }
 export function sidebarGroups(lists: ListSummary[], archived: boolean) {
-  const visible = lists.filter((list) => list.archived === archived);
+  const visible = lists.filter(
+    (list) => list.archived === archived && (archived || !list.favorite),
+  );
   const visibleIds = new Set(visible.map((list) => list.id));
   const parent = (list: ListSummary) =>
     list.parentListId && visibleIds.has(list.parentListId)

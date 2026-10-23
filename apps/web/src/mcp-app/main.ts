@@ -2292,34 +2292,38 @@ function renderCatalog() {
     }),
   );
   const favorites = catalog.filter((list) => list.favorite && !list.archived);
+  let favoriteSection: HTMLElement | null = null;
   if (!archive && favorites.length) {
-    const section = element("nav");
-    section.setAttribute("aria-label", "Favorite lists");
-    section.append(element("h2", "Favorites"));
-    for (const list of favorites) {
-      const shortcut = button(
-        `☆ ${list.title}${list.shared ? " · Shared" : ""}`,
-        () => void call("show_list", { listId: list.id }),
-      );
-      shortcut.className = "wuff-button list";
-      shortcut.style.borderLeft = `5px solid ${listPalette[list.color].accent}`;
-      section.append(shortcut);
-    }
-    root.append(section, element("h2", "All lists"));
+    favoriteSection = element("nav");
+    favoriteSection.setAttribute("aria-label", "Favorite lists");
+    favoriteSection.append(element("h2", "Favorites"));
+    root.append(favoriteSection);
   }
   const visible = catalog.filter((l) => l.archived === archive);
   const groups = sidebarGroups(catalog, archive);
-  const rows = groups.flatMap(({ list, children }) => [
-    { list, siblings: groups.map((group) => group.list), depth: 0, children },
-    ...(!list.sidebarCollapsed
-      ? children.map((child) => ({
-          list: child,
-          siblings: children,
-          depth: 1,
+  if (favoriteSection && groups.length)
+    root.append(element("h2", "Other lists"));
+  const rows = [
+    ...(!archive
+      ? favorites.map((list) => ({
+          list,
+          siblings: favorites,
+          depth: 0,
           children: [] as ListSummary[],
         }))
       : []),
-  ]);
+    ...groups.flatMap(({ list, children }) => [
+      { list, siblings: groups.map((group) => group.list), depth: 0, children },
+      ...(!list.sidebarCollapsed
+        ? children.map((child) => ({
+            list: child,
+            siblings: children,
+            depth: 1,
+            children: [] as ListSummary[],
+          }))
+        : []),
+    ]),
+  ];
   for (const { list, siblings, depth, children } of rows) {
     const i = siblings.findIndex((item) => item.id === list.id);
     const row = element("div");
@@ -2444,7 +2448,7 @@ function renderCatalog() {
         "Only your sidebar changes. Tasks, subtasks and sharing stay with each list.",
       ),
     );
-    root.append(row);
+    (list.favorite && favoriteSection ? favoriteSection : root).append(row);
   }
   if (!visible.length)
     root.append(

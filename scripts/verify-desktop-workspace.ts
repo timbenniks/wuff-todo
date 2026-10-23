@@ -262,7 +262,7 @@ try {
   }
   await page.setViewportSize({ width: 1440, height: 500 });
   await page
-    .getByRole("navigation", { name: "Lists", exact: true })
+    .getByRole("navigation", { name: "Favorite lists", exact: true })
     .getByRole("button", { name: "Plant care", exact: true })
     .click();
   await expect(

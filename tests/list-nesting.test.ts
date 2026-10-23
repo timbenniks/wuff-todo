@@ -78,3 +78,36 @@ test("older reorder payloads omit hierarchy rather than clearing it", () => {
   assert.equal(value.nesting, undefined);
   assert.equal(value.collapsedListIds, undefined);
 });
+
+test("active favorites appear only in Favorites while remaining children stay reachable", () => {
+  const lists = [entry("parent"), entry("child", "parent"), entry("other")];
+  lists[1].favorite = true;
+  assert.deepEqual(
+    sidebarGroups(lists, false).map((g) => [
+      g.list.id,
+      g.children.map((c) => c.id),
+    ]),
+    [
+      ["parent", []],
+      ["other", []],
+    ],
+  );
+  lists[0].favorite = true;
+  lists[1].favorite = false;
+  assert.deepEqual(
+    sidebarGroups(lists, false).map((g) => g.list.id),
+    ["child", "other"],
+  );
+  assert.equal(lists[1].parentListId, "parent");
+  lists[0].favorite = false;
+  assert.deepEqual(
+    sidebarGroups(lists, false)[0].children.map((c) => c.id),
+    ["child"],
+  );
+  lists[0].favorite = true;
+  lists[0].archived = true;
+  assert.deepEqual(
+    sidebarGroups(lists, true).map((g) => g.list.id),
+    ["parent"],
+  );
+});

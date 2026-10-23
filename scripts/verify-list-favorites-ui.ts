@@ -101,6 +101,13 @@ try {
       exact: true,
     }),
   ).toBeVisible();
+  const tree = page.getByRole("navigation", { name: "Lists", exact: true });
+  await expect(
+    tree.getByRole("button", { name: "Repot plants Shared list", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('.workspace-sidebar [aria-current="page"]'),
+  ).toHaveCount(1);
   await page.reload();
   await expect(favorites).toBeVisible();
   assert.deepEqual((await getListOrder(actor)).nesting, [
@@ -206,6 +213,31 @@ try {
   });
   await page.reload();
   await expect(favorites).toBeVisible();
+  // Favoriting a parent keeps its unstarred children reachable, without changing nesting.
+  await reorderLists(actor, {
+    ...(await getListOrder(actor)),
+    favoriteListIds: [parent.id],
+    operationId: op(),
+  });
+  await page.reload();
+  await expect(
+    favorites.getByRole("button", { name: "Plant to-dos", exact: true }),
+  ).toBeVisible();
+  await expect(
+    tree.getByRole("button", { name: "Plant to-dos", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    tree.getByRole("button", { name: "Repot plants Shared list", exact: true }),
+  ).toBeVisible();
+  assert.deepEqual((await getListOrder(actor)).nesting, [
+    { listId: child.id, parentListId: parent.id },
+  ]);
+  await reorderLists(actor, {
+    ...(await getListOrder(actor)),
+    favoriteListIds: [child.id],
+    operationId: op(),
+  });
+  await page.reload();
   // An editor can favorite without gaining owner management permissions.
   const editorContext = await browser.newContext();
   const editorLogin = await editorContext.request.post(
