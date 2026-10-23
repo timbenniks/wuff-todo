@@ -44,3 +44,17 @@ was observed in the actual connection URL supplied by the user.
   integration cases passed across those two runs.
 - These checks do not certify completion of the user's connection inside ChatGPT.
   A fresh connection attempt in that host remains the final interactive check.
+
+## Production release
+
+Application source `933ea482e7f4d9fe3b7918c42d459da20cbee771` was pushed to main
+and deployed through Vercel CLI. Deployment `dpl_GfQckre5CBmn1JJTJC73BgWNtErY`
+is Ready, aliased to `https://wuff-todo.vercel.app`, with function region `fra1`.
+Anonymous production requests using the registered ChatGPT client and callback,
+fresh synthetic state and PKCE, and both omitted/explicit scopes returned 307 to
+sign-in. The omitted-scope request previously returned the invalid-connection
+page. Anonymous MCP and list API access remain 401. No production grant, list,
+task, account or database schema was changed during the smoke check.
+
+The GitHub Verify and native-build workflows were still running at this checkpoint;
+local checks and the successful Vercel build are the verified evidence above.
