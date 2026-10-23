@@ -346,7 +346,8 @@ export class AppError extends Error {
 }
 
 export const viewSorts = ["manual", "priority", "due", "updated"] as const;
-export const listViewSchema = z
+export const viewColumns = ["status", "priority", "assignee", "due"] as const;
+export const listViewSettingsSchema = z
   .object({
     search: z.string().trim().max(300).default(""),
     sections: z.array(idSchema.nullable()).max(51).default([]),
@@ -372,16 +373,139 @@ export const listViewSchema = z
       .default([]),
     layout: z.enum(["compact", "detailed"]).default("compact"),
     collapsed: z.array(z.string().max(80)).max(200).default([]),
+    columns: z
+      .array(z.enum(viewColumns))
+      .max(4)
+      .refine(
+        (columns) => new Set(columns).size === columns.length,
+        "Columns must be unique",
+      )
+      .default([...viewColumns]),
+    rowStyle: z.enum(["list", "columns"]).default("columns"),
   })
   .strict();
+export const viewPresetSchema = z
+  .object({
+    id: idSchema,
+    name: z.string().trim().min(1).max(60),
+    settings: listViewSettingsSchema,
+  })
+  .strict();
+const extendedListViewSchema = listViewSettingsSchema.extend({
+  presets: z.array(viewPresetSchema).max(20).default([]),
+  activePresetId: z
+    .union([idSchema, z.enum(["default", "open", "due", "mine", "blocked"])])
+    .nullable()
+    .default(null),
+});
+export const listViewSchema = extendedListViewSchema.superRefine(
+  (view, ctx) => {
+    if (
+      new Set(view.presets.map((p) => p.id)).size !== view.presets.length ||
+      new Set(view.presets.map((p) => p.name.toLowerCase())).size !==
+        view.presets.length
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Preset names and IDs must be unique",
+        path: ["presets"],
+      });
+    if (
+      view.activePresetId &&
+      !["default", "open", "due", "mine", "blocked"].includes(
+        view.activePresetId,
+      ) &&
+      !view.presets.some((p) => p.id === view.activePresetId)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "The selected preset no longer exists",
+        path: ["activePresetId"],
+      });
+    if (new Set(view.columns).size !== view.columns.length)
+      ctx.addIssue({
+        code: "custom",
+        message: "Columns must be unique",
+        path: ["columns"],
+      });
+  },
+);
+export type ViewSettings = z.infer<typeof listViewSettingsSchema>;
+export type ViewPreset = z.infer<typeof viewPresetSchema>;
 export type ListView = z.infer<typeof listViewSchema>;
 export type PersonalListView = { version: number; view: ListView };
 export const defaultListView = (): ListView => listViewSchema.parse({});
+export function viewSettings(view: ListView): ViewSettings {
+  const { presets: _presets, activePresetId: _active, ...settings } = view;
+  return settings;
+}
+export function starterViews(userId: string, work: boolean) {
+  const base = viewSettings(defaultListView());
+  return [
+    { id: "default", name: "Default", settings: base },
+    {
+      id: "open",
+      name: "Open tasks",
+      settings: { ...base, completed: "hide" as const },
+    },
+    {
+      id: "due",
+      name: "By due date",
+      settings: {
+        ...base,
+        completed: "hide" as const,
+        sortBy: "due" as const,
+        groupBy: "date" as const,
+      },
+    },
+    ...(work
+      ? [
+          {
+            id: "mine",
+            name: "My open tasks",
+            settings: {
+              ...base,
+              completed: "hide" as const,
+              assignees: [userId],
+            },
+          },
+          {
+            id: "blocked",
+            name: "Blocked",
+            settings: {
+              ...base,
+              statuses: ["blocked" as const],
+              completed: "hide" as const,
+            },
+          },
+        ]
+      : []),
+  ];
+}
+
 export const updateListViewSchema = z
   .object({
     listId: idSchema,
     viewVersion: versionSchema,
-    view: listViewSchema,
+    view: extendedListViewSchema
+      .omit({
+        presets: true,
+        activePresetId: true,
+        columns: true,
+        rowStyle: true,
+      })
+      .extend({
+        presets: z.array(viewPresetSchema).max(20).optional(),
+        activePresetId: z
+          .union([
+            idSchema,
+            z.enum(["default", "open", "due", "mine", "blocked"]),
+          ])
+          .nullable()
+          .optional(),
+        columns: z.array(z.enum(viewColumns)).max(4).optional(),
+        rowStyle: z.enum(["list", "columns"]).optional(),
+      }),
   })
   .extend(operationSchema.shape);
 export const queryListViewSchema = z.object({
@@ -416,9 +540,9 @@ export function projectListView(
         t,
       ]);
   const matches = (t: Task, sectionId: string | null) => {
-    const search = view.search.toLocaleLowerCase();
+    const search = view.search.toLowerCase();
     return (
-      (!search || `${t.title} ${t.key}`.toLocaleLowerCase().includes(search)) &&
+      (!search || `${t.title} ${t.key}`.toLowerCase().includes(search)) &&
       (!view.sections.length || view.sections.includes(sectionId)) &&
       (!view.statuses.length || view.statuses.includes(t.status)) &&
       (!view.priorities.length || view.priorities.includes(t.priority)) &&

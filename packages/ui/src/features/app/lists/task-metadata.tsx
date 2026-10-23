@@ -20,6 +20,8 @@ export function TaskMetadata({
   onNotes,
   onSubtasks,
   onDetails,
+  excludeKinds = [],
+  className = "",
 }: {
   task: Task;
   list: TodoList;
@@ -28,8 +30,15 @@ export function TaskMetadata({
   onNotes: () => void;
   onSubtasks: () => void;
   onDetails?: () => void;
+  excludeKinds?: string[];
+  className?: string;
 }) {
-  const { visible, hidden } = taskMetadata(task, list, today, comfortable);
+  const cues = taskMetadata(task, list, today, comfortable);
+  const filtered = [...cues.visible, ...cues.hidden].filter(
+    (c) => !excludeKinds.includes(c.kind),
+  );
+  const visible = filtered.slice(0, 3),
+    hidden = filtered.slice(3);
   if (!visible.length) return null;
   const icons = {
     notes: FileText,
@@ -41,7 +50,10 @@ export function TaskMetadata({
     attention: AlertCircle,
   };
   return (
-    <div className="task-summary" aria-label={`Details for ${task.title}`}>
+    <div
+      className={`task-summary ${className}`}
+      aria-label={`Details for ${task.title}`}
+    >
       {visible.map((cue) => {
         if (cue.kind === "due")
           return <DueDateBadge key={cue.kind} task={task} today={today} />;

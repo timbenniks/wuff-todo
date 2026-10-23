@@ -2,7 +2,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { database, members } from "@wuff/db";
-import { scopes, defaultListView } from "@wuff/contracts";
+import { scopes, defaultListView, viewSettings } from "@wuff/contracts";
 import {
   createList,
   createTask,
@@ -104,5 +104,84 @@ test("views isolate members, preserve task revisions/order and serialize writes/
     );
   } finally {
     await deleteList(a, { ...write(await getList(a, l.id)) });
+  }
+});
+
+test("named presets remain personal, preserve legacy writes, and share conflict/retry protection", async () => {
+  let l = await createList(a, {
+    title: "Synthetic saved presets",
+    operationId: crypto.randomUUID(),
+  });
+  try {
+    await database().db.insert(members).values({ listId: l.id, userId: b.id });
+    const id = crypto.randomUUID(),
+      settings = {
+        ...viewSettings(defaultListView()),
+        completed: "hide" as const,
+        columns: ["status", "due"] as ("status" | "due")[],
+      };
+    const request = {
+      listId: l.id,
+      viewVersion: 0,
+      operationId: crypto.randomUUID(),
+      view: {
+        ...defaultListView(),
+        ...settings,
+        presets: [{ id, name: "My focus", settings }],
+        activePresetId: id,
+      },
+    };
+    let saved = await updateListView(a, request);
+    assert.equal(saved.version, l.version);
+    assert.deepEqual((await getList(b, l.id)).personalView.view.presets, []);
+    assert.equal((await updateListView(a, request)).personalView.version, 1);
+    await assert.rejects(
+      updateListView(a, { ...request, operationId: crypto.randomUUID() }),
+      { code: "conflict" },
+    );
+    saved = await updateListView(a, {
+      listId: l.id,
+      viewVersion: 1,
+      operationId: crypto.randomUUID(),
+      view: { search: "legacy" },
+    });
+    assert.equal(saved.personalView.view.presets[0].name, "My focus");
+    assert.equal(saved.personalView.view.activePresetId, id);
+    assert.deepEqual(saved.personalView.view.columns, ["status", "due"]);
+    await assert.rejects(
+      updateListView(
+        { ...b, scopes: ["lists:read"] },
+        { ...request, operationId: crypto.randomUUID() },
+      ),
+      { code: "forbidden" },
+    );
+    const races = await Promise.allSettled(
+      ["Left", "Right"].map((name) =>
+        updateListView(a, {
+          ...request,
+          viewVersion: 2,
+          operationId: crypto.randomUUID(),
+          view: {
+            ...saved.personalView.view,
+            presets: [{ id, name, settings }],
+          },
+        }),
+      ),
+    );
+    assert.equal(races.filter((r) => r.status === "fulfilled").length, 1);
+    saved = await getList(a, l.id);
+    assert.equal(saved.personalView.view.presets.length, 1);
+    const removed = await updateListView(a, {
+      listId: l.id,
+      viewVersion: saved.personalView.version,
+      operationId: crypto.randomUUID(),
+      view: { ...saved.personalView.view, presets: [], activePresetId: null },
+    });
+    assert.deepEqual(removed.personalView.view.presets, []);
+    assert.deepEqual(removed.tasks, l.tasks);
+    assert.equal(removed.version, l.version);
+  } finally {
+    const current = await getList(a, l.id);
+    await deleteList(a, write(current));
   }
 });

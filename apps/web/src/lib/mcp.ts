@@ -435,7 +435,7 @@ export function createMcpServer(actor: Actor) {
     "update_list_view",
     {
       description:
-        "Replace only your personal filters, grouping, sorting, section sort overrides, layout and collapsed groups. Read list.personalView first; send its version as viewVersion and a fresh operationId. Does not change shared tasks or ordering. Requires lists:manage. Empty view resets defaults; arrays of filters use OR within each field and AND across fields.",
+        "Save your personal filters, grouping, sorting, section sort overrides, density, Work column visibility/row style, named presets and selected preset. Up to 20 uniquely named presets per account/list. Omitted presets, activePresetId, columns and rowStyle preserve saved values for older clients; explicitly send []/null to clear presets/selection. Read list.personalView first; send its version as viewVersion and a fresh operationId. Does not change shared tasks or ordering. Requires lists:manage. Empty view resets defaults; arrays of filters use OR within each field and AND across fields.",
       inputSchema: updateListViewSchema,
       annotations: write,
     },

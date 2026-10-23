@@ -18,7 +18,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import type { Task, TodoList } from "@wuff/contracts";
+import { defaultListView, type Task, type TodoList } from "@wuff/contracts";
 import { NativeSelect } from "../../../native-select";
 import {
   InputGroup,
@@ -35,6 +35,7 @@ import { SortableList, SortableItem } from "../../components/sortable";
 import { TaskActions } from "./task-actions";
 import { TaskReminder } from "../../components/reminders/task-reminder";
 import { TaskMetadata } from "./task-metadata";
+import { TaskColumns, type WorkCellDraft } from "./task-columns";
 
 export function TaskRow({
   task,
@@ -54,7 +55,9 @@ export function TaskRow({
   matchedChildren,
   disableChildDrag = false,
   onOpenTask,
+  workDrafts,
 }: {
+  workDrafts?: Map<string, WorkCellDraft>;
   task: Task;
   userId: string;
   list: TodoList;
@@ -349,6 +352,58 @@ export function TaskRow({
           </TaskActions>
         )}
       />
+      <div className="task-quick-actions">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Quick ${task.content ? "edit" : "add"} notes for ${task.title}`}
+          title={task.content ? "Edit notes" : "Add notes"}
+          disabled={busy || (list.archived && !task.content)}
+          onClick={() => setNotesOpen(true)}
+        >
+          <FileText size={16} />
+        </Button>
+        {!task.parentTaskId && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Quick subtasks for ${task.title}`}
+            title="Subtasks"
+            disabled={busy || (list.archived && !children.length)}
+            onClick={() => setExpanded(!subtasksOpen)}
+          >
+            <ListTree size={16} />
+          </Button>
+        )}
+      </div>
+      <TaskColumns
+        drafts={workDrafts}
+        task={task}
+        list={list}
+        busy={busy}
+        change={change}
+        today={today}
+      />
+      {list.mode === "work" &&
+        (list.personalView?.view ?? defaultListView()).rowStyle ===
+          "columns" && (
+          <TaskMetadata
+            task={task}
+            list={list}
+            today={today}
+            comfortable
+            className="task-summary-columns"
+            excludeKinds={[
+              ...(list.personalView?.view ?? defaultListView()).columns,
+              ...(!detailed ? ["key", "references"] : []),
+            ]}
+            onDetails={openDetails}
+            onNotes={() => setNotesOpen(true)}
+            onSubtasks={() => setExpanded(!subtasksOpen)}
+          />
+        )}
       <TaskMetadata
         task={task}
         list={list}
@@ -428,6 +483,7 @@ export function TaskRow({
       {!task.parentTaskId && subtasksOpen && (
         <div id={`subtasks-${task.id}`} className="task-subtask-panel">
           <Subtasks
+            workDrafts={workDrafts}
             parent={task}
             items={children}
             list={list}
@@ -473,6 +529,7 @@ export function Subtasks({
   drafts,
   subtaskDrafts,
   dueDrafts,
+  workDrafts,
   today,
   focusNewTask = true,
   disableDrag = false,
@@ -488,6 +545,7 @@ export function Subtasks({
   drafts: Map<string, NoteDraft>;
   subtaskDrafts: Map<string, string>;
   dueDrafts: Map<string, DueDateDraft>;
+  workDrafts?: Map<string, WorkCellDraft>;
   today: string | null;
   focusNewTask?: boolean;
   disableDrag?: boolean;
@@ -531,6 +589,7 @@ export function Subtasks({
               >
                 {({ ref, style, rowProps, moveControl }) => (
                   <TaskRow
+                    workDrafts={workDrafts}
                     task={task}
                     list={list}
                     userId={userId}

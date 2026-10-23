@@ -236,3 +236,7 @@ Apply additive migration `0016_icy_umar.sql` through the existing direct connect
 ## Personal Home dashboard — October 23
 
 Additive migration `0017_tiresome_dreadnoughts.sql` creates app-owned `wuff_dashboard_preferences`; apply through the existing direct runner to isolated development before production application deployment. Preserve existing app data and sidebar preferences. See [feature contract](home-dashboard.md). Run `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts` against the optimized local app, then separately `node --env-file=.env.local --import tsx scripts/verify-home-dashboard-ui.ts`. Development fixtures must not target production. Local MCP SDK-host checks are separate from named production AI hosts.
+
+## List workspace and named presets — October 24
+
+The existing personal-view JSON stores the additive preset/display fields; no SQL migration is required. Read [the contract](list-workspace.md). Use `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/list-view.integration.test.ts`, then the optimized local website and `node --env-file=.env.local --import tsx scripts/verify-list-workspace-ui.ts` separately. Both are development-only and clean up their synthetic fixtures. Preserve extension fields on legacy writes and maintain the independent personal view revision. Native frontend builds do not publish updated installed clients.

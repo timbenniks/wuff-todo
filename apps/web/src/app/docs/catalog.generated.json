@@ -55,7 +55,7 @@
     "components": [
       {
         "name": "ListViewControls",
-        "signature": "export function ListViewControls({\n  list,\n  busy,\n  change,\n}: {\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n})"
+        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n})"
       }
     ]
   },
@@ -90,6 +90,16 @@
       {
         "name": "TaskActions",
         "signature": "export function TaskActions({\n  title,\n  disabled,\n  trigger,\n  children,\n}: {\n  title: string;\n  disabled: boolean;\n  trigger: RefObject<HTMLButtonElement | null>;\n  children: (close: () => void) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-columns.tsx",
+    "module": "@wuff/ui/features/app/lists/task-columns.tsx",
+    "components": [
+      {
+        "name": "TaskColumns",
+        "signature": "export function TaskColumns(props: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  today: string | null;\n  drafts?: Map<string, WorkCellDraft>;\n})"
       }
     ]
   },
@@ -133,7 +143,7 @@
     "components": [
       {
         "name": "TaskMetadata",
-        "signature": "export function TaskMetadata({\n  task,\n  list,\n  today,\n  comfortable,\n  onNotes,\n  onSubtasks,\n  onDetails,\n}: {\n  task: Task;\n  list: TodoList;\n  today: string | null;\n  comfortable: boolean;\n  onNotes: () => void;\n  onSubtasks: () => void;\n  onDetails?: () => void;\n})"
+        "signature": "export function TaskMetadata({\n  task,\n  list,\n  today,\n  comfortable,\n  onNotes,\n  onSubtasks,\n  onDetails,\n  excludeKinds = [],\n  className = \"\",\n}: {\n  task: Task;\n  list: TodoList;\n  today: string | null;\n  comfortable: boolean;\n  onNotes: () => void;\n  onSubtasks: () => void;\n  onDetails?: () => void;\n  excludeKinds?: string[];\n  className?: string;\n})"
       }
     ]
   },
@@ -163,11 +173,21 @@
     "components": [
       {
         "name": "TaskRow",
-        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n}: {\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
       },
       {
         "name": "Subtasks",
-        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n  detailed = false,\n  onOpenTask,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n  detailed = false,\n  onOpenTask,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/view-popover.tsx",
+    "module": "@wuff/ui/features/app/lists/view-popover.tsx",
+    "components": [
+      {
+        "name": "ViewPopover",
+        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n})"
       }
     ]
   },

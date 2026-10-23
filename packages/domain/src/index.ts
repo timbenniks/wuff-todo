@@ -535,17 +535,28 @@ export async function updateListView(actor: Actor, data: unknown) {
         );
       if ((current?.version ?? 0) !== input.viewVersion)
         fail("conflict", "Your view changed. Refresh it and try again.", 409);
+      const previous = listViewSchema.parse(current?.view ?? {});
+      const view = listViewSchema.parse({
+        ...input.view,
+        presets: input.view.presets ?? previous.presets,
+        activePresetId:
+          input.view.activePresetId === undefined
+            ? previous.activePresetId
+            : input.view.activePresetId,
+        columns: input.view.columns ?? previous.columns,
+        rowStyle: input.view.rowStyle ?? previous.rowStyle,
+      });
       await tx
         .insert(listViews)
         .values({
           userId: actor.id,
           listId: input.listId,
           version: input.viewVersion + 1,
-          view: input.view,
+          view,
         })
         .onConflictDoUpdate({
           target: [listViews.userId, listViews.listId],
-          set: { version: input.viewVersion + 1, view: input.view },
+          set: { version: input.viewVersion + 1, view },
         });
       return { id: input.listId };
     },

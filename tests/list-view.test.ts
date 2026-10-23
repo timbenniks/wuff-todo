@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   defaultListView,
+  starterViews,
+  viewSettings,
+  updateListViewSchema,
   listViewSchema,
   projectListView,
   type Task,
@@ -161,4 +164,65 @@ test("view contracts reject unbounded or unknown options", () => {
     false,
   );
   assert.equal(listViewSchema.safeParse({ ownerId: "other" }).success, false);
+});
+
+test("personal presets validate unique bounded names, selected IDs and display settings", () => {
+  const id = crypto.randomUUID();
+  const view = listViewSchema.parse({
+    presets: [
+      {
+        id,
+        name: "  Focus  ",
+        settings: { completed: "hide", columns: ["status", "due"] },
+      },
+    ],
+    activePresetId: id,
+  });
+  assert.equal(view.presets[0].name, "Focus");
+  assert.deepEqual(view.presets[0].settings.columns, ["status", "due"]);
+  assert.equal(viewSettings(view).rowStyle, "columns");
+  assert.equal("presets" in viewSettings(view), false);
+  assert.throws(() =>
+    listViewSchema.parse({
+      ...view,
+      presets: [
+        ...view.presets,
+        { ...view.presets[0], id: crypto.randomUUID(), name: "focus" },
+      ],
+    }),
+  );
+  assert.throws(() =>
+    listViewSchema.parse({ ...view, activePresetId: crypto.randomUUID() }),
+  );
+  assert.throws(() =>
+    listViewSchema.parse({ ...view, columns: ["status", "status"] }),
+  );
+  assert.throws(() =>
+    listViewSchema.parse({
+      ...view,
+      presets: [
+        {
+          ...view.presets[0],
+          settings: { ...view.presets[0].settings, columns: ["due", "due"] },
+        },
+      ],
+    }),
+  );
+  const old = updateListViewSchema.parse({
+    listId: crypto.randomUUID(),
+    viewVersion: 0,
+    operationId: crypto.randomUUID(),
+    view: { sortBy: "due" },
+  });
+  assert.equal(old.view.presets, undefined);
+  assert.equal(old.view.columns, undefined);
+  assert.equal(old.view.activePresetId, undefined);
+  const starts = starterViews("me", true);
+  assert.deepEqual(starts.find((p) => p.id === "mine")!.settings.assignees, [
+    "me",
+  ]);
+  assert.equal(
+    starterViews("me", false).some((p) => p.id === "blocked"),
+    false,
+  );
 });

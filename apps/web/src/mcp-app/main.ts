@@ -10,6 +10,10 @@ import {
   type DashboardSection,
   sidebarGroups,
   defaultListView,
+  starterViews,
+  viewSettings,
+  listViewSchema,
+  viewColumns,
   githubSyncLabel,
   projectListView,
   statusLabels,
@@ -38,6 +42,11 @@ let current: TodoList | undefined,
   catalog: ListSummary[] = [],
   archive = false;
 const root = document.querySelector<HTMLElement>("#app")!;
+const viewEditorCleanups = new Set<() => void>();
+function clearViewEditors() {
+  for (const cleanup of viewEditorCleanups) cleanup();
+  viewEditorCleanups.clear();
+}
 const status = document.querySelector<HTMLElement>("#status")!;
 class ToolError extends Error {
   constructor(
@@ -110,7 +119,7 @@ function wireForm(
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
   >("input:not([type=hidden]),textarea,select")) {
     const name = control.getAttribute("aria-label");
-    if (!name || control.labels?.length) continue;
+    if (!name || control.labels?.length || control.closest("label")) continue;
     control.id ||= `wuff-field-${++fieldSequence}`;
     const label = element("label", name);
     label.htmlFor = control.id;
@@ -1508,165 +1517,184 @@ function renderTask(
 
 function viewControls(list: TodoList) {
   const saved = list.personalView ?? { version: 0, view: defaultListView() };
-  let draft = structuredClone(saved.view);
-  const panel = element("details"),
-    form = element("form"),
-    summary = element("summary", "Your view");
-  form.className = "settings";
-  panel.className = "list-view-controls";
-  const toolbar = element("div"),
-    density = element("div");
-  toolbar.className = "view-toolbar";
-  density.className = "task-density";
-  density.setAttribute("role", "group");
-  density.setAttribute("aria-label", "Task density");
-  let densityRequest: Record<string, unknown> | undefined;
-  const densityRetry = button("Retry density change", () => void saveDensity());
-  densityRetry.hidden = true;
-  const lockDensity = () =>
-    density.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
-      button.disabled = true;
-    });
-  const saveDensity = async () => {
-    lockDensity();
-    status.textContent = wuffCopy.saving;
-    form
-      .querySelectorAll<
-        HTMLInputElement | HTMLSelectElement | HTMLButtonElement
-      >("input,select,button")
-      .forEach((control) => {
-        control.disabled = true;
-      });
-    densityRetry.hidden = true;
-    try {
-      show(await request("update_list_view", densityRequest!));
-      status.textContent = wuffCopy.saved;
-    } catch (error) {
-      status.textContent = wuffError((error as Error).message);
-      if (error instanceof ToolError && error.code !== "internal_error") {
-        densityRequest = undefined;
-        form
-          .querySelectorAll<
-            HTMLInputElement | HTMLSelectElement | HTMLButtonElement
-          >("input,select,button")
-          .forEach((control) => {
-            control.disabled = false;
-          });
-        density
-          .querySelectorAll<HTMLButtonElement>("button")
-          .forEach((button) => {
-            button.disabled = false;
-          });
-      } else densityRetry.hidden = false;
+  let draft = structuredClone(saved.view),
+    pending: Record<string, unknown> | undefined;
+  const toolbar = element("form"),
+    line = element("div"),
+    info = element("p"),
+    notice = element("p"),
+    save = element("button", "Save view");
+  toolbar.className = "workspace-view-toolbar";
+  line.className = "view-toolbar-line";
+  notice.setAttribute("role", "alert");
+  info.setAttribute("role", "status");
+  const syncers: (() => void)[] = [];
+  const presets = element("select");
+  presets.setAttribute("aria-label", "Saved preset");
+  presets.className = "view-preset-picker";
+  const starter = starterViews(viewerId, list.mode === "work");
+  for (const p of [
+    { id: "current", name: "Personal view" },
+    ...starter,
+    ...draft.presets,
+  ]) {
+    const o = element("option", p.name);
+    o.value = p.id;
+    presets.append(o);
+  }
+  presets.value = draft.activePresetId ?? "current";
+  const changed = () => {
+    info.textContent = "Unsaved view changes · Only changes your view";
+    presets.disabled = true;
+    save.disabled = false;
+  };
+  presets.onchange = () => {
+    const p = [...starter, ...draft.presets].find(
+      (p) => p.id === presets.value,
+    );
+    if (p) {
+      draft = { ...draft, ...p.settings, activePresetId: p.id };
+      syncers.forEach((fn) => fn());
+      changed();
     }
   };
-  for (const [layout, label] of [
-    ["compact", "Compact"],
-    ["detailed", "Comfortable"],
-  ] as const) {
-    const control = button(label, () => {
-      if (layout === saved.view.layout) return;
-      densityRequest = {
-        listId: list.id,
-        viewVersion: saved.version,
-        view: { ...saved.view, layout },
-        operationId: crypto.randomUUID(),
-      };
-      void saveDensity();
+  const search = element("input");
+  search.type = "search";
+  search.placeholder = "Search tasks…";
+  search.setAttribute("aria-label", "Search title or key");
+  search.maxLength = 300;
+  search.value = draft.search;
+  search.oninput = () => {
+    draft.search = search.value;
+    changed();
+  };
+  syncers.push(() => (search.value = draft.search));
+  line.append(presets, search);
+  function popover(label: string) {
+    const trigger = button(label, () => {}),
+      panel = element("div");
+    panel.className = "view-popover";
+    panel.id = `view-panel-${++fieldSequence}`;
+    panel.setAttribute("popover", "auto");
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", label);
+    trigger.setAttribute("popovertarget", panel.id);
+    trigger.setAttribute("aria-expanded", "false");
+    let controller: AbortController | undefined;
+    let observer: ResizeObserver | undefined;
+    viewEditorCleanups.add(() => {
+      controller?.abort();
+      observer?.disconnect();
+      if (panel.matches(":popover-open")) panel.hidePopover();
     });
-    control.dataset.variant = "ghost";
-    control.setAttribute("aria-pressed", String(layout === saved.view.layout));
-    density.append(control);
+    panel.addEventListener("toggle", (e) => {
+      const open = (e as ToggleEvent).newState === "open";
+      trigger.setAttribute("aria-expanded", String(open));
+      controller?.abort();
+      observer?.disconnect();
+      if (open) {
+        const place = () => {
+          const r = trigger.getBoundingClientRect();
+          panel.style.maxHeight = `${Math.max(120, innerHeight - 24)}px`;
+          panel.style.left = `${Math.max(12, Math.min(r.left, innerWidth - panel.offsetWidth - 12))}px`;
+          panel.style.top = `${Math.max(12, Math.min(r.bottom + 6, innerHeight - panel.offsetHeight - 12))}px`;
+        };
+        place();
+        observer = new ResizeObserver(place);
+        observer.observe(panel);
+        panel.querySelector<HTMLElement>("input,select,button")?.focus();
+        controller = new AbortController();
+        window.addEventListener("resize", place, { signal: controller.signal });
+        window.addEventListener("scroll", place, {
+          capture: true,
+          signal: controller.signal,
+        });
+      }
+    });
+    line.append(trigger);
+    toolbar.append(panel);
+    return panel;
   }
-  form.addEventListener("input", lockDensity);
-  form.addEventListener("change", lockDensity);
-  toolbar.append(density, panel, densityRetry);
-  panel.append(
-    summary,
-    element("p", "Only changes how you see this list."),
-    form,
-  );
+  const filters = popover("Filter"),
+    sort = popover("Sort"),
+    group = popover("Group"),
+    display = popover("Display"),
+    manage = popover("Presets");
   function select(
+    target: HTMLElement,
     label: string,
-    value: string,
-    options: [string, string][],
-    update: (value: string) => void,
+    get: () => string,
+    values: [string, string][],
+    update: (v: string) => void,
   ) {
     const caption = element("label", label),
       input = element("select");
     input.setAttribute("aria-label", label);
-    for (const [value, title] of options) {
-      const option = element("option", title);
-      option.value = value;
-      input.append(option);
+    for (const [v, t] of values) {
+      const o = element("option", t);
+      o.value = v;
+      input.append(o);
     }
-    input.value = value;
-    input.onchange = () => update(input.value);
+    syncers.push(() => (input.value = get()));
+    input.value = get();
+    input.onchange = () => {
+      update(input.value);
+      changed();
+    };
     caption.append(input);
-    form.append(caption);
+    target.append(caption);
   }
   const options = (values: readonly string[]) =>
-    values.map((v) => [v, v] as [string, string]);
-  const search = element("input"),
-    label = element("label", "Search title or key");
-  search.setAttribute("aria-label", "Search title or key");
-  search.value = draft.search;
-  search.maxLength = 300;
-  search.oninput = () => {
-    draft.search = search.value;
-  };
-  label.append(search);
-  form.append(label);
+    values.map((v) => [v, v[0].toUpperCase() + v.slice(1)] as [string, string]);
   select(
+    filters,
     "Section filter",
-    draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
+    () => draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
     [
       ["all", "All sections"],
       ["none", "No section"],
       ...list.sections.map((s) => [s.id, s.title] as [string, string]),
     ],
-    (v) => {
-      draft.sections = v === "all" ? [] : [v === "none" ? null : v];
-    },
+    (v) => (draft.sections = v === "all" ? [] : [v === "none" ? null : v]),
   );
   if (list.mode === "work") {
     select(
+      filters,
       "Status filter",
-      draft.statuses[0] ?? "all",
+      () => draft.statuses[0] ?? "all",
       [
         ["all", "All statuses"],
         ...taskStatuses.map((s) => [s, statusLabels[s]] as [string, string]),
       ],
-      (v) => {
-        draft.statuses = v === "all" ? [] : [v as ListView["statuses"][number]];
-      },
+      (v) =>
+        (draft.statuses =
+          v === "all" ? [] : [v as ListView["statuses"][number]]),
     );
     select(
+      filters,
       "Priority filter",
-      draft.priorities[0] ?? "all",
+      () => draft.priorities[0] ?? "all",
       [["all", "All priorities"], ...options(taskPriorities)],
-      (v) => {
-        draft.priorities =
-          v === "all" ? [] : [v as ListView["priorities"][number]];
-      },
+      (v) =>
+        (draft.priorities =
+          v === "all" ? [] : [v as ListView["priorities"][number]]),
     );
-  }
-  if (list.assignees.length)
     select(
+      filters,
       "Assignee filter",
-      draft.assignees[0] ?? (draft.assignees.length ? "none" : "all"),
+      () => draft.assignees[0] ?? (draft.assignees.length ? "none" : "all"),
       [
         ["all", "Anyone"],
         ["none", "Unassigned"],
         ...list.assignees.map((a) => [a.id, a.name] as [string, string]),
       ],
-      (v) => {
-        draft.assignees = v === "all" ? [] : [v === "none" ? null : v];
-      },
+      (v) => (draft.assignees = v === "all" ? [] : [v === "none" ? null : v]),
     );
+  }
   select(
+    filters,
     "Due date filter",
-    draft.due,
+    () => draft.due,
     [
       ["all", "Any due date"],
       ["overdue", "Before today"],
@@ -1674,115 +1702,263 @@ function viewControls(list: TodoList) {
       ["upcoming", "After today"],
       ["no_date", "No due date"],
     ],
-    (v) => {
-      draft.due = v as ListView["due"];
-    },
+    (v) => (draft.due = v as ListView["due"]),
   );
   select(
+    filters,
     "Completed tasks",
-    draft.completed,
+    () => draft.completed,
     [
       ["all", "Include completed"],
       ["hide", "Hide completed"],
       ["only", "Only completed"],
     ],
-    (v) => {
-      draft.completed = v as ListView["completed"];
-    },
+    (v) => (draft.completed = v as ListView["completed"]),
   );
   select(
-    "Group by",
-    draft.groupBy,
+    sort,
+    "Sort by",
+    () => draft.sortBy,
     [
-      ["section", "Section"],
-      ["status", "Status"],
-      ["date", "Due date"],
+      ["manual", "Manual"],
+      ...(list.mode === "work"
+        ? [["priority", "Priority"] as [string, string]]
+        : []),
+      ["due", "Due date"],
+      ["updated", "Recently updated"],
     ],
-    (v) => {
-      draft.groupBy = v as ListView["groupBy"];
-    },
+    (v) => (draft.sortBy = v as ListView["sortBy"]),
   );
-  select("Sort by", draft.sortBy, options(viewSorts), (v) => {
-    draft.sortBy = v as ListView["sortBy"];
-  });
-  select(
-    "Density",
-    draft.layout,
-    [
-      ["compact", "Compact"],
-      ["detailed", "Comfortable"],
-    ],
-    (v) => {
-      draft.layout = v as ListView["layout"];
-    },
-  );
+  const advanced = element("details");
+  advanced.append(element("summary", "Sorting per section"));
+  sort.append(advanced);
   for (const section of [{ id: null, title: "No section" }, ...list.sections])
     select(
+      advanced,
       `Sort ${section.title}`,
-      draft.sectionSorts.find((s) => s.sectionId === section.id)?.sortBy ??
+      () =>
+        draft.sectionSorts.find((s) => s.sectionId === section.id)?.sortBy ??
         "inherit",
       [["inherit", "Use list sorting"], ...options(viewSorts)],
-      (v) => {
-        draft.sectionSorts = [
+      (v) =>
+        (draft.sectionSorts = [
           ...draft.sectionSorts.filter((s) => s.sectionId !== section.id),
           ...(v === "inherit"
             ? []
             : [{ sectionId: section.id, sortBy: v as ListView["sortBy"] }]),
-        ];
-      },
+        ]),
     );
-  const save = element("button", "Apply view"),
-    notice = element("p");
-  notice.setAttribute("role", "alert");
-  form.append(
-    save,
-    button("Reset to defaults", () => {
-      draft = defaultListView();
-      save.click();
-    }),
-    notice,
+  select(
+    group,
+    "Group by",
+    () => draft.groupBy,
+    [
+      ["section", "Section"],
+      ...(list.mode === "work"
+        ? [["status", "Status"] as [string, string]]
+        : []),
+      ["date", "Due date"],
+    ],
+    (v) => (draft.groupBy = v as ListView["groupBy"]),
   );
-  let pending: Record<string, unknown> | undefined;
-  const lockControls = (disabled: boolean) =>
-    form
+  select(
+    display,
+    "Row density",
+    () => draft.layout,
+    [
+      ["compact", "Compact"],
+      ["detailed", "Comfortable"],
+    ],
+    (v) => (draft.layout = v as ListView["layout"]),
+  );
+  if (list.mode === "work") {
+    select(
+      display,
+      "Row layout",
+      () => draft.rowStyle,
+      [
+        ["columns", "Columns"],
+        ["list", "Simple rows"],
+      ],
+      (v) => (draft.rowStyle = v as ListView["rowStyle"]),
+    );
+    for (const column of viewColumns) {
+      const caption = element(
+          "label",
+          column === "due"
+            ? "Due date column"
+            : `${column[0].toUpperCase() + column.slice(1)} column`,
+        ),
+        input = element("input");
+      input.type = "checkbox";
+      input.checked = draft.columns.includes(column);
+      input.onchange = () => {
+        draft.columns = viewColumns.filter((c) =>
+          c === column ? input.checked : draft.columns.includes(c),
+        );
+        changed();
+      };
+      syncers.push(() => (input.checked = draft.columns.includes(column)));
+      caption.prepend(input);
+      display.append(caption);
+    }
+  }
+  display.append(
+    button("Reset to defaults", () => {
+      draft = {
+        ...draft,
+        ...viewSettings(defaultListView()),
+        activePresetId: "default",
+      };
+      syncers.forEach((fn) => fn());
+      changed();
+    }),
+  );
+  const presetName = element("input");
+  presetName.setAttribute("aria-label", "Preset name");
+  presetName.placeholder = "Preset name";
+  presetName.maxLength = 60;
+  const nameLabel = element("label", "Preset name");
+  nameLabel.append(presetName);
+  manage.append(nameLabel);
+  const custom = () => draft.presets.find((p) => p.id === draft.activePresetId);
+  function named(rename: boolean) {
+    const name = presetName.value.trim();
+    if (!name) {
+      notice.textContent = "Enter a preset name.";
+      return;
+    }
+    const id = rename ? custom()?.id : crypto.randomUUID();
+    if (!id) return;
+    const next = {
+      ...draft,
+      presets: [
+        ...draft.presets.filter((p) => p.id !== id),
+        { id, name, settings: viewSettings(draft) },
+      ],
+      activePresetId: id,
+    };
+    const parsed = listViewSchema.safeParse(next);
+    if (!parsed.success) {
+      notice.textContent =
+        parsed.error.issues[0]?.message ?? "Check the preset name.";
+      return;
+    }
+    draft = parsed.data;
+    void persist();
+  }
+  manage.append(
+    button("Save as preset", () => named(false), draft.presets.length >= 20),
+    button("Rename selected preset", () => named(true), !custom()),
+  );
+  manage.append(
+    button(
+      "Delete selected preset",
+      () => {
+        const p = custom();
+        if (!p) return;
+        const confirmation = element("div");
+        confirmation.append(
+          element("p", `Delete “${p.name}”? Your tasks stay here.`),
+          button("Confirm delete preset", () => {
+            draft = {
+              ...draft,
+              presets: draft.presets.filter((item) => item.id !== p.id),
+              activePresetId: null,
+            };
+            void persist();
+          }),
+          button("Cancel", () => confirmation.remove()),
+        );
+        manage.append(confirmation);
+      },
+      !custom(),
+    ),
+  );
+  for (const panel of [filters, sort, group, display, manage])
+    panel.append(button("Done", () => panel.hidePopover()));
+  const lock = (disabled: boolean) => {
+    toolbar
       .querySelectorAll<
         HTMLInputElement | HTMLSelectElement | HTMLButtonElement
       >("input,select,button")
       .forEach((control) => {
-        if (control !== save) control.disabled = disabled;
+        if (control !== save && control.textContent !== "Done")
+          control.disabled = disabled;
       });
-  wireForm(form, save, () => {
-    lockDensity();
-    lockControls(true);
+  };
+  async function persist() {
+    const parsed = listViewSchema.safeParse(draft);
+    if (!parsed.success) {
+      notice.textContent =
+        parsed.error.issues[0]?.message ?? "Check your view.";
+      save.disabled = false;
+      return;
+    }
     pending ??= {
       listId: list.id,
       viewVersion: saved.version,
-      view: structuredClone(draft),
+      view: parsed.data,
       operationId: crypto.randomUUID(),
     };
-    void request("update_list_view", pending)
-      .then(show)
-      .catch((e) => {
-        notice.textContent = wuffError(e.message);
-        if (e instanceof ToolError && e.code !== "internal_error") {
-          lockControls(false);
-          pending = undefined;
-          notice.append(
-            button(
-              "Reload saved view",
-              () => void call("show_list", { listId: list.id }),
-            ),
-          );
-        }
-        if (pending) {
-          save.textContent = "Retry same request";
-          notice.append(
-            element("p", "Confirm this save before editing the view again."),
-          );
-        }
-        save.disabled = false;
-      });
+    lock(true);
+    save.disabled = true;
+    try {
+      show(await request("update_list_view", pending));
+      status.textContent = wuffCopy.saved;
+    } catch (e) {
+      notice.textContent = wuffError((e as Error).message);
+      if (e instanceof ToolError && e.code !== "internal_error") {
+        pending = undefined;
+        lock(false);
+        notice.append(
+          button(
+            "Reload saved view",
+            () => void call("show_list", { listId: list.id }),
+          ),
+        );
+      }
+      save.textContent = pending ? "Retry same request" : "Save view";
+      save.disabled = false;
+    }
+  }
+  toolbar.prepend(line);
+  toolbar.append(
+    info,
+    save,
+    button(
+      "Revert to saved view",
+      () => void call("show_list", { listId: list.id }),
+    ),
+    notice,
+  );
+  wireForm(toolbar, save, () => {
+    if (!pending && custom())
+      draft = {
+        ...draft,
+        presets: draft.presets.map((p) =>
+          p.id === custom()!.id ? { ...p, settings: viewSettings(draft) } : p,
+        ),
+      };
+    void persist();
   });
+  const keyHandler = toolbar.onkeydown;
+  toolbar.onkeydown = (e) => {
+    if (
+      e.target instanceof HTMLButtonElement ||
+      e.target instanceof HTMLSelectElement
+    )
+      return;
+    keyHandler?.call(toolbar, e);
+  };
+  presetName.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      named(false);
+    }
+  };
+  save.disabled = true;
   return toolbar;
 }
 
@@ -1812,6 +1988,7 @@ function show(value: unknown) {
   if (data.webOrigin) webOrigin = data.webOrigin;
   imageReads.clear();
   imageEpoch++;
+  clearViewEditors();
   root.replaceChildren();
   cueRenderers.clear();
   if (data.dashboard) {
@@ -2059,6 +2236,7 @@ let pendingHome: {
   operationId: string;
 } | null = null;
 function renderDashboard(data: Dashboard) {
+  clearViewEditors();
   root.replaceChildren(
     element("h1", "Wuff do I need to know?"),
     element("p", `Welcome back, ${data.name}.`),
@@ -2281,6 +2459,7 @@ function renderDashboard(data: Dashboard) {
 }
 
 function renderCatalog() {
+  clearViewEditors();
   root.replaceChildren(
     element("h1", archive ? wuffCopy.archiveHeading : wuffCopy.listsHeading),
   );

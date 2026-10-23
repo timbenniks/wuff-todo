@@ -7,18 +7,21 @@ import {
 } from "../../../input-group";
 
 import { wuffCopy } from "../../lib/copy";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   defaultListView,
   projectListView,
   type TodoList,
   type ViewGroup,
+  type ListView,
+  viewColumns,
 } from "@wuff/contracts";
 import { ListViewControls } from "./list-view-controls";
 import { Button } from "../../../button";
 import type { ListChange } from "./list-settings";
 import { type NoteDraft } from "./task-notes";
+import type { WorkCellDraft } from "./task-columns";
 import { TaskRow } from "./task-row";
 import { SortableList, SortableItem } from "../../components/sortable";
 import { mergeVisibleOrder } from "../../lib/reorder";
@@ -46,10 +49,14 @@ export function TaskGroups({
 }) {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const today = useCalendarDay();
+  const workDrafts = useRef(new Map<string, WorkCellDraft>());
   const dueDrafts = useRef(new Map<string, DueDateDraft>());
   const noteDrafts = useRef(new Map<string, NoteDraft>()),
     subtaskDrafts = useRef(new Map<string, string>());
   useEffect(() => {
+    for (const key of workDrafts.current.keys())
+      if (!list.tasks.some((t) => t.id === key.split(":")[0]))
+        workDrafts.current.delete(key);
     for (const id of noteDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id)) noteDrafts.current.delete(id);
     for (const id of subtaskDrafts.current.keys())
@@ -63,10 +70,21 @@ export function TaskGroups({
     disabled = busy || list.archived;
   const body = { listId: list.id, version: list.version };
   const path = `/api/v1/lists/${list.id}/sections`;
-  const view = list.personalView?.view ?? defaultListView();
+  const [preview, setPreview] = useState<ListView | null>(null);
+  const view = preview ?? list.personalView?.view ?? defaultListView();
+  const workColumns = list.mode === "work" && view.rowStyle === "columns";
+  const columns = viewColumns.filter((c) => view.columns.includes(c));
+  const widths = {
+    status: "130px",
+    priority: "100px",
+    assignee: "140px",
+    due: "140px",
+  };
+  const grid = `44px minmax(180px,1fr) ${columns.map((c) => widths[c]).join(" ")} 88px 44px`;
   const groups = projectListView(list, view, today ?? "0001-01-01");
   const active = list.tasks.filter((t) => !t.parentTaskId);
   const saveCollapsed = (id: string, open: boolean) => {
+    if (preview) return;
     const collapsed = open
       ? view.collapsed.filter((v) => v !== id)
       : [...new Set([...view.collapsed, id])].slice(-200);
@@ -118,11 +136,18 @@ export function TaskGroups({
               >
                 {({ ref, style, rowProps, moveControl }) => (
                   <TaskRow
+                    workDrafts={workDrafts.current}
                     userId={userId}
                     rowRef={ref}
                     style={style}
                     task={task}
-                    list={list}
+                    list={{
+                      ...list,
+                      personalView: {
+                        version: list.personalView?.version ?? 0,
+                        view,
+                      },
+                    }}
                     busy={busy}
                     change={change}
                     drafts={noteDrafts.current}
@@ -204,7 +229,10 @@ export function TaskGroups({
     );
   }
   return (
-    <>
+    <div
+      className={`workspace-task-list ${workColumns ? "work-columns" : ""}`}
+      style={{ "--work-grid": grid } as CSSProperties}
+    >
       {openTaskId && (
         <TaskDetailDrawer
           taskId={openTaskId}
@@ -229,14 +257,26 @@ export function TaskGroups({
             : "Its owner can restore it so you can make changes again."}
         </p>
       )}
-      <ListViewControls list={list} busy={busy} change={change} />
-      <p role="status" className="text-xs text-muted-foreground mb-3">
-        {groups.reduce((n, g) => n + g.tasks.length, 0)} of {active.length}{" "}
-        tasks shown ·{" "}
-        {view.sortBy === "manual"
-          ? "Manual order"
-          : "Sorted view · Dragging off"}
-      </p>
+      <ListViewControls
+        list={list}
+        userId={userId}
+        busy={busy}
+        change={change}
+        onPreview={setPreview}
+        shown={groups.reduce((n, g) => n + g.tasks.length, 0)}
+        total={active.length}
+      />
+      {workColumns && (
+        <div className="work-column-headings" aria-hidden="true">
+          <span className="work-task-heading">Task</span>
+          {columns.map((c) => (
+            <span key={c}>
+              {c === "due" ? "Due date" : c[0].toUpperCase() + c.slice(1)}
+            </span>
+          ))}
+          <span className="work-actions-heading">Actions</span>
+        </div>
+      )}
       {view.groupBy !== "section" ? (
         <>
           {groups
@@ -464,6 +504,6 @@ export function TaskGroups({
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }
