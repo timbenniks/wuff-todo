@@ -1,6 +1,6 @@
 # Personal list favorites — WUFF-86
 
-Selected October 23, 2026. Favorites are personal shortcuts to frequently used lists.
+Selected and released on the website/MCP October 23, 2026. Favorites are personal shortcuts to frequently used lists.
 
 ## Behavior and contract
 
@@ -14,4 +14,4 @@ Web and Tauri use the same sidebar/settings components and existing HTTP/native 
 
 ## Verification and release
 
-Development migration applied through the existing direct connection, with exact pre-existing users/lists/tasks/members and all old preference fields preserved. Focused domain coverage verifies account isolation, editor access, invalid favorites, unchanged task/subtask snapshots and shared versions, retry safety, concurrency, legacy preservation, archive/restore and access revocation/deletion. Browser and release evidence is recorded in `verification.md` when completed. Installed native distribution remains a separate check.
+Development migration applied through the existing direct connection, with exact pre-existing users/lists/tasks/members and all old preference fields preserved. Focused domain coverage verifies account isolation, editor access, invalid favorites, unchanged task/subtask snapshots and shared versions, retry safety, concurrency, legacy preservation, archive/restore and access revocation/deletion. Browser and authenticated production release evidence is recorded in `verification.md`; WUFF-86 is done. Installed native distribution remains a separate check.
