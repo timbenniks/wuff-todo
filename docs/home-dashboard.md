@@ -1,6 +1,6 @@
 # Personal Home — WUFF-87
 
-Selected October 23, 2026; implementation and local verification complete, production release in progress.
+Selected and released on the website/MCP October 23, 2026; WUFF-87 is done. Native frontend checks passed; updated distribution remains a separate gate.
 
 Home answers “Wuff do I need to know?” with a personal greeting/Waffles, Today (overdue and due today), Coming up (tomorrow through seven days ahead), and Favorites. Home is permanently available above the list pack and favorites. Root `/` continues to enter `/lists`; absence of an explicit list opens Home, with an account preference to restore the last active accessible list on this device. `?home=1` explicitly opens Home and bypasses last-list startup. Existing list/task links and browser Back/Forward retain their meaning.
 
