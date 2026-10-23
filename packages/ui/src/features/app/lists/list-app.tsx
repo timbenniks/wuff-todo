@@ -8,7 +8,7 @@ import {
 
 import { wuffCopy, wuffError } from "../../lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, ListTodo, LogOut, Plus, Trash2, Users } from "lucide-react";
+import { Archive, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../button";
 import { Corgi } from "../../components/corgi";
@@ -24,10 +24,9 @@ import type { LiveLists } from "@wuff/ui/live-types";
 import { LiveRefreshQueue } from "@wuff/client/live-refresh";
 import { ListTheme } from "../../components/list-theme";
 import { listThemeVariables } from "../../lib/list-theme";
-import { listPalette } from "../../lib/list-colors";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
-import { SortableList, SortableItem } from "../../components/sortable";
+import { SidebarLists } from "./sidebar-lists";
 import { mergeVisibleOrder } from "../../lib/reorder";
 import { InlineName } from "./inline-name";
 
@@ -404,39 +403,87 @@ export function ListApp({
     chooseList(id);
   }
   const isPending = list?.id === pendingCreate?.id;
-  async function moveList(next: string[], before: string[]) {
-    if (mutating.current) return false;
+  const [sidebarRetry, setSidebarRetry] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  function applyOrder(saved: ListOrder) {
+    const rank = new Map(saved.listIds.map((id, i) => [id, i]));
+    const parents = new Map(
+      (saved.nesting ?? []).map((entry) => [entry.listId, entry.parentListId]),
+    );
+    summaryEpoch.current++;
+    setSummaries((items) =>
+      items
+        .map((item) => ({
+          ...item,
+          parentListId: parents.get(item.id) ?? null,
+          sidebarCollapsed: (saved.collapsedListIds ?? []).includes(item.id),
+        }))
+        .sort(
+          (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
+        ),
+    );
+  }
+  async function saveSidebar(
+    change: ((order: ListOrder) => Record<string, unknown>) | null,
+  ) {
+    if (mutating.current || (sidebarRetry && change)) return false;
     mutating.current = true;
     setBusy(true);
     setError("");
     summaryEpoch.current++;
+    let request: Record<string, unknown> | undefined;
     try {
-      const order = await api<ListOrder>("/api/v1/list-order");
-      const ids = mergeVisibleOrder(order.listIds, before, next);
-      if (!ids)
-        throw new Error(
-          "Your pack of lists changed. Try moving the list again.",
-        );
-      const saved = await api<ListOrder>("/api/v1/list-order", "PUT", {
-        listIds: ids,
-        version: order.version,
-        operationId: crypto.randomUUID(),
-      });
-      const rank = new Map(saved.listIds.map((id, i) => [id, i]));
-      setSummaries((items) =>
-        [...items].sort(
-          (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
-        ),
-      );
+      if (!change && sidebarRetry) request = sidebarRetry;
+      else {
+        const order = await api<ListOrder>("/api/v1/list-order");
+        request = {
+          ...order,
+          ...change!(order),
+          operationId: crypto.randomUUID(),
+        };
+      }
+      const saved = await api<ListOrder>("/api/v1/list-order", "PUT", request);
+      setSidebarRetry(null);
+      applyOrder(saved);
       return true;
     } catch (e) {
       setError(wuffError((e as Error).message));
+      setSidebarRetry(
+        request && !(e instanceof ApiError && e.status < 500) ? request : null,
+      );
       return false;
     } finally {
       mutating.current = false;
       setBusy(false);
       void liveRefresh.current?.notify();
     }
+  }
+  async function moveList(next: string[], before: string[]) {
+    return saveSidebar((order) => {
+      const ids = mergeVisibleOrder(order.listIds, before, next);
+      const parents = new Map(
+        (order.nesting ?? []).map((entry) => [
+          entry.listId,
+          entry.parentListId,
+        ]),
+      );
+      // A concurrent reparent must not turn a sibling reorder into a different move.
+      if (
+        !ids ||
+        before.some(
+          (id) =>
+            (parents.get(id) ?? null) !==
+            (summariesRef.current.find((list) => list.id === id)
+              ?.parentListId ?? null),
+        )
+      )
+        throw new Error(
+          "Your pack of lists changed. Try moving the list again.",
+        );
+      return { listIds: ids };
+    });
   }
   useEffect(() => {
     if (list) setShowArchive(list.archived);
@@ -578,85 +625,69 @@ export function ListApp({
                 : `Archive (${summaries.filter((s) => s.archived).length})`}
             </Button>
           </div>
-          <SortableList
-            items={visibleLists}
-            disabled={busy || !!pendingCreate}
-            onReorder={moveList}
-          >
-            <nav
-              aria-label={showArchive ? "Archived lists" : "Lists"}
-              className="grid gap-1"
-            >
-              {visibleLists.map((s) => (
-                <SortableItem
-                  key={s.id}
-                  id={s.id}
-                  title={`list ${s.title}`}
-                  disabled={busy || !!pendingCreate}
-                >
-                  {({ ref, style, handle }) => (
-                    <div
-                      ref={ref}
-                      style={style}
-                      className="flex items-center min-w-0 gap-1"
-                    >
-                      <button
-                        onClick={() => {
-                          chooseList(s.id);
-                          if (navigationOpen) {
-                            setNavigationOpen(false);
-                            requestAnimationFrame(() =>
-                              navigationTrigger.current?.focus(),
-                            );
-                          }
-                        }}
-                        onPointerEnter={() => {
-                          if (!cache.get(s.id))
-                            void reload(s.id).catch(() => {});
-                        }}
-                        onFocus={() => {
-                          if (!cache.get(s.id))
-                            void reload(s.id).catch(() => {});
-                        }}
-                        aria-current={s.id === selectedId ? "page" : undefined}
-                        className={`flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl px-3 py-3 text-sm ${s.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-surface/60"}`}
-                        style={{
-                          background:
-                            s.id === selectedId
-                              ? listPalette[s.color].tint
-                              : undefined,
-                        }}
-                      >
-                        <ListTodo
-                          size={17}
-                          className="shrink-0"
-                          style={{ color: listPalette[s.color].accent }}
-                        />
-                        <span className="truncate">{s.title}</span>
-                        {s.shared && (
-                          <span
-                            className="ml-auto inline-flex shrink-0 text-muted-foreground"
-                            title="Shared list"
-                          >
-                            <Users size={16} aria-hidden="true" />
-                            <span className="sr-only">Shared list</span>
-                          </span>
-                        )}
-                        {s.id === pendingCreate?.id && (
-                          <span className="text-xs text-muted-foreground">
-                            {pendingCreate.status === "saving"
-                              ? wuffCopy.saving
-                              : "Retry"}
-                          </span>
-                        )}
-                      </button>
-                      {handle}
-                    </div>
-                  )}
-                </SortableItem>
-              ))}
-            </nav>
-          </SortableList>
+          <SidebarLists
+            lists={summaries}
+            archived={showArchive}
+            selectedId={selectedId}
+            disabled={busy || !!pendingCreate || !!sidebarRetry}
+            error={error}
+            busy={busy}
+            pending={pendingCreate}
+            retry={sidebarRetry ? () => saveSidebar(null) : undefined}
+            choose={(id) => {
+              chooseList(id);
+              if (navigationOpen) {
+                setNavigationOpen(false);
+                requestAnimationFrame(() => navigationTrigger.current?.focus());
+              }
+            }}
+            preload={(id) => {
+              if (!cache.get(id)) void reload(id).catch(() => {});
+            }}
+            reorder={moveList}
+            move={(id, parentId) =>
+              saveSidebar((order) => ({
+                nesting: [
+                  ...(order.nesting ?? []).filter(
+                    (entry) => entry.listId !== id,
+                  ),
+                  ...(parentId ? [{ listId: id, parentListId: parentId }] : []),
+                ],
+                collapsedListIds: (order.collapsedListIds ?? []).filter(
+                  (value) => value !== parentId,
+                ),
+              }))
+            }
+            toggle={(id, collapsed) =>
+              saveSidebar((order) => ({
+                collapsedListIds: !collapsed
+                  ? (order.collapsedListIds ?? []).filter(
+                      (value) => value !== id,
+                    )
+                  : [
+                      ...(order.collapsedListIds ?? []).filter(
+                        (value) => value !== id,
+                      ),
+                      id,
+                    ],
+              }))
+            }
+          />
+          {sidebarRetry && (
+            <div role="alert" className="grid gap-2 py-3 text-sm">
+              <p>
+                The sidebar change wasn’t confirmed. Retry the same request to
+                check it.
+              </p>
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => saveSidebar(null)}
+              >
+                Retry sidebar change
+              </Button>
+            </div>
+          )}
           {showArchive && visibleLists.length === 0 && (
             <p className="text-sm text-muted-foreground px-3 py-4">
               No lists taking a paws yet.

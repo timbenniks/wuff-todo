@@ -64,6 +64,16 @@
     ]
   },
   {
+    "source": "packages/ui/src/features/app/lists/sidebar-lists.tsx",
+    "module": "@wuff/ui/features/app/lists/sidebar-lists.tsx",
+    "components": [
+      {
+        "name": "SidebarLists",
+        "signature": "export function SidebarLists({\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  move,\n  toggle,\n  error,\n  busy,\n  retry,\n  pending,\n}: {\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  move: (id: string, parentId: string | null) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  busy: boolean;\n  retry?: () => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n  error: string;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/features/app/lists/task-actions.tsx",
     "module": "@wuff/ui/features/app/lists/task-actions.tsx",
     "components": [

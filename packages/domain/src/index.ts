@@ -30,6 +30,7 @@ import {
   reminderJobs,
 } from "@wuff/db";
 import {
+  accessibleListNesting,
   defaultListView,
   listViewSchema,
   updateListViewSchema,
@@ -356,10 +357,28 @@ async function orderedCatalog(tx: Tx | Db, actor: Actor) {
     .from(listPreferences)
     .where(eq(listPreferences.userId, actor.id));
   const rank = new Map((preference?.listIds ?? []).map((id, i) => [id, i]));
+  const nesting = accessibleListNesting(
+    rows.map((row) => row.id),
+    preference?.nesting ?? [],
+  );
+  const parents = new Map(
+    nesting.map((entry) => [entry.listId, entry.parentListId]),
+  );
+  const collapsedListIds = (preference?.collapsedListIds ?? []).filter((id) =>
+    rows.some((row) => row.id === id),
+  );
   return {
-    lists: rows.sort(
-      (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
-    ),
+    nesting,
+    collapsedListIds,
+    lists: rows
+      .map((row) => ({
+        ...row,
+        parentListId: parents.get(row.id) ?? null,
+        sidebarCollapsed: collapsedListIds.includes(row.id),
+      }))
+      .sort(
+        (a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity),
+      ),
     version: preference?.version ?? 0,
   };
 }
@@ -375,7 +394,12 @@ export async function getListOrder(actor: Actor) {
     async (tx) => {
       await admission(tx, actor);
       const value = await orderedCatalog(tx, actor);
-      return { version: value.version, listIds: value.lists.map((l) => l.id) };
+      return {
+        version: value.version,
+        listIds: value.lists.map((l) => l.id),
+        nesting: value.nesting,
+        collapsedListIds: value.collapsedListIds,
+      };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -410,16 +434,38 @@ export async function reorderLists(actor: Actor, data: unknown) {
           "Provide each accessible list exactly once, including archived lists.",
           400,
         );
+      const nesting = input.nesting ?? current.nesting;
+      const collapsedListIds =
+        input.collapsedListIds ?? current.collapsedListIds;
+      if (
+        new Set(nesting.map((entry) => entry.listId)).size !== nesting.length ||
+        accessibleListNesting(input.listIds, nesting).length !==
+          nesting.length ||
+        new Set(collapsedListIds).size !== collapsedListIds.length ||
+        collapsedListIds.some((id) => !input.listIds.includes(id))
+      )
+        fail(
+          "invalid_nesting",
+          "Choose accessible lists with one level of nesting. Move a parent's children first.",
+          400,
+        );
       await tx
         .insert(listPreferences)
         .values({
           userId: actor.id,
           listIds: input.listIds,
+          nesting,
+          collapsedListIds,
           version: current.version + 1,
         })
         .onConflictDoUpdate({
           target: listPreferences.userId,
-          set: { listIds: input.listIds, version: current.version + 1 },
+          set: {
+            listIds: input.listIds,
+            nesting,
+            collapsedListIds,
+            version: current.version + 1,
+          },
         });
       return { id: actor.id };
     },

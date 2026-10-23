@@ -50,6 +50,14 @@ export const listPreferences = pgTable("wuff_list_preferences", {
     .references(() => users.id, { onDelete: "cascade" }),
   version: integer("version").notNull().default(0),
   listIds: jsonb("list_ids").$type<string[]>().notNull().default([]),
+  nesting: jsonb("nesting")
+    .$type<import("@wuff/contracts").ListNesting[]>()
+    .notNull()
+    .default([]),
+  collapsedListIds: jsonb("collapsed_list_ids")
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 });
 export const listViews = pgTable(
   "wuff_list_views",

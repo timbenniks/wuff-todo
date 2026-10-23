@@ -1,6 +1,18 @@
 # Implementation verification
 
-Updated: October 22, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 23, 2026. Older sections retain their milestone-specific evidence and test counts.
+
+## Personal list nesting — October 23, 2026
+
+[WUFF-85's contract and release boundary](personal-list-nesting.md) implements one-level personal sidebar nesting across web/shared Tauri features, HTTP/native adapters and MCP/MCP Apps. Parent lists keep their own tasks; task/subtask structure, list membership and shared revisions are unchanged.
+
+- `pnpm typecheck`, `pnpm test` (87 passing tests), optimized web/MCP `pnpm build` and `pnpm build:native:web` passed. The native frontend retains its existing bundle-size advisory; no installed native build or device test was run for this feature.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/list-nesting.integration.test.ts tests/list-features.integration.test.ts` passed all five cases in one serial run (81.5 seconds). Coverage includes personal isolation, editor organization, unauthorized parent references, cycles/depth/duplicates, read-only scope denial, optimistic concurrency, idempotency, legacy payload preservation, archive/revocation/deletion promotion, exact task/subtask preservation, and the existing live order-version signal. Authenticated loopback web/MCP/native checks covered origin and account pinning, shared persistence, stale revisions and audience boundaries.
+- `node --env-file=.env.local --import tsx scripts/verify-list-nesting-ui.ts` passed against the optimized local website: move under a parent and back to top level, collapse/expand with a selected child, sibling position picker, parent-with-children restriction, reload persistence, parent-only task content, and an aborted response after a committed save. The retry sent the exact same body/operation ID and recovered. Measured 320/390/1280px sidebar/dialog layouts had no document overflow or captured page errors. Screenshots: `list-nesting-{320,390,1280}.png` and `list-nesting-move-{320,390,1280}.png` in `docs/screenshots/`.
+- The real local MCP Apps SDK host exercised nested catalog rendering, persisted collapse/expand, moving a child to top level and reparenting. Its narrow iframe had no overflow or page errors; screenshots are `docs/screenshots/list-nesting-mcp-{390,1280}.png`. This is local SDK-host evidence, not a named production ChatGPT/Codex-host certification.
+- Additive migration `0015_swift_randall_flagg.sql` was applied only to the existing isolated development branch using a direct connection. Original list/task/member rows and old preference values matched before/after migration fingerprints. Disposable fixture lists were deleted, the SDK-host grant revoked, and final list/task/member fingerprints matched the pre-migration data. Synthetic sidebar revisions advanced during testing; their visible preferences were restored.
+
+Production migration/deployment, production authenticated browser checks and installed-device verification remain release steps. No production list structure or sharing was changed.
 
 ## Accumulating list actions — October 23, 2026
 

@@ -8,6 +8,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Personal list nesting (WUFF-85, October 23):** one-level account-specific sidebar hierarchy is implemented and locally verified across shared web/Tauri features and MCP; production release remains pending. Parent and child lists retain independent tasks/subtasks and sharing. See [contract, migration and release boundaries](personal-list-nesting.md).
+
 - **Contributor prototyping (October 23):** hosted `/docs` guide, real component examples, generated source kit, agent-readable reference and portable skill support a non-coder using ChatGPT Work without a local checkout. See [design guide and verification](prototype-guide.md). Actual use in her Work workspace remains a separate check.
 
 - **Personal reminders and Settings (October 22):** selected scheduled jobs rather than minute polling, personal account/list/task UX, and all server delivery adapters together. The core implementation is built locally alongside Tauri, with development-only migrations and provider-mocked verification. See [reminder plan and release gates](reminders.md); provider setup and installed native delivery remain explicit gates.

@@ -624,3 +624,20 @@ summary {
 [hidden] {
   display: none !important;
 }
+
+.catalog-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.catalog-list > .list {
+  flex: 1;
+}
+.catalog-actions label {
+  min-width: 0;
+  max-width: 100%;
+}
+.catalog-actions select {
+  max-width: 100%;
+}

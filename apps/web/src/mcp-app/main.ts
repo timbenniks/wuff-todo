@@ -4,6 +4,7 @@ import {
   formatDueDate,
 } from "../lib/due-date";
 import {
+  sidebarGroups,
   defaultListView,
   githubSyncLabel,
   projectListView,
@@ -2048,9 +2049,43 @@ function renderCatalog() {
     }),
   );
   const visible = catalog.filter((l) => l.archived === archive);
-  for (const [i, list] of visible.entries()) {
+  const groups = sidebarGroups(catalog, archive);
+  const rows = groups.flatMap(({ list, children }) => [
+    { list, siblings: groups.map((group) => group.list), depth: 0, children },
+    ...(!list.sidebarCollapsed
+      ? children.map((child) => ({
+          list: child,
+          siblings: children,
+          depth: 1,
+          children: [] as ListSummary[],
+        }))
+      : []),
+  ]);
+  for (const { list, siblings, depth, children } of rows) {
+    const i = siblings.findIndex((item) => item.id === list.id);
     const row = element("div");
     row.className = "catalog-row";
+    const main = element("div");
+    main.className = "catalog-list";
+    row.append(main);
+    if (depth) row.style.marginLeft = "24px";
+    if (children.length) {
+      const collapse = button(
+        list.sidebarCollapsed ? "▸" : "▾",
+        () =>
+          void changeCatalogOrder((order) => ({
+            collapsedListIds: (order.collapsedListIds ?? []).includes(list.id)
+              ? (order.collapsedListIds ?? []).filter((id) => id !== list.id)
+              : [...(order.collapsedListIds ?? []), list.id],
+          })),
+      );
+      collapse.setAttribute(
+        "aria-label",
+        `${list.sidebarCollapsed ? "Expand" : "Collapse"} ${list.title}`,
+      );
+      collapse.setAttribute("aria-expanded", String(!list.sidebarCollapsed));
+      main.append(collapse);
+    }
     const open = button(
       list.title,
       () => void call("show_list", { listId: list.id }),
@@ -2070,7 +2105,8 @@ function renderCatalog() {
     actions.className = "catalog-actions";
     trigger.setAttribute("aria-label", `More actions for list ${list.title}`);
     actions.append(trigger, menu);
-    row.append(open, actions);
+    main.append(open);
+    row.append(actions);
     for (const [dir, label] of [
       [-1, "up"],
       [1, "down"],
@@ -2078,11 +2114,65 @@ function renderCatalog() {
       menu.append(
         button(
           `Move ${list.title} ${label}`,
-          () => void reorder(list.id, visible[i + dir].id),
-          i + dir < 0 || i + dir >= visible.length,
+          () => void reorder(list.id, siblings[i + dir].id),
+          i + dir < 0 || i + dir >= siblings.length,
         ),
       );
     }
+    const parentLabel = element("label", "Parent list (your sidebar)");
+    const parent = element("select");
+    parent.setAttribute("aria-label", `Parent list for ${list.title}`);
+    const top = element("option", "Top level");
+    top.value = "";
+    parent.append(top);
+    for (const candidate of catalog.filter(
+      (item) =>
+        item.id !== list.id &&
+        !item.parentListId &&
+        item.archived === list.archived,
+    )) {
+      const option = element("option", candidate.title);
+      option.value = candidate.id;
+      parent.append(option);
+    }
+    parent.value = list.parentListId ?? "";
+    const hasChildren = catalog.some((item) => item.parentListId === list.id);
+    parent.disabled = hasChildren;
+    parentLabel.append(parent);
+    menu.append(
+      parentLabel,
+      button(
+        "Save location",
+        () =>
+          void changeCatalogOrder((order) => ({
+            nesting: [
+              ...(order.nesting ?? []).filter(
+                (entry) => entry.listId !== list.id,
+              ),
+              ...(parent.value
+                ? [{ listId: list.id, parentListId: parent.value }]
+                : []),
+            ],
+            collapsedListIds: (order.collapsedListIds ?? []).filter(
+              (id) => id !== parent.value,
+            ),
+          })),
+        hasChildren,
+      ),
+    );
+    if (hasChildren)
+      menu.append(
+        element(
+          "p",
+          "Move this list’s children first to keep one level of nesting.",
+        ),
+      );
+    menu.append(
+      element(
+        "p",
+        "Only your sidebar changes. Tasks, subtasks and sharing stay with each list.",
+      ),
+    );
     root.append(row);
   }
   if (!visible.length)
@@ -2095,28 +2185,64 @@ function renderCatalog() {
       ),
     );
 }
-async function reorder(id: string, target: string) {
+let catalogOrderPending: Record<string, unknown> | null = null;
+let catalogOrderBusy = false;
+async function changeCatalogOrder(
+  change: ((order: ListOrder) => Record<string, unknown>) | null,
+) {
+  if (catalogOrderBusy || (catalogOrderPending && change)) return;
+  catalogOrderBusy = true;
   status.textContent = wuffCopy.saving;
   try {
-    const data = (await request("get_list_order", {})) as { order: ListOrder };
-    const ids = [...data.order.listIds],
+    if (change) {
+      const data = (await request("get_list_order", {})) as {
+        order: ListOrder;
+      };
+      catalogOrderPending = {
+        ...data.order,
+        ...change(data.order),
+        operationId: crypto.randomUUID(),
+      };
+    }
+    await request("reorder_lists", catalogOrderPending!);
+    catalogOrderPending = null;
+    show(await request("show_lists", {}));
+    status.textContent = "Paw-some, sidebar saved";
+  } catch (e) {
+    if (e instanceof ToolError && e.code !== "internal_error")
+      catalogOrderPending = null;
+    status.replaceChildren(element("span", wuffError((e as Error).message)));
+    if (catalogOrderPending)
+      status.append(
+        button("Retry sidebar change", () => void changeCatalogOrder(null)),
+      );
+  } finally {
+    catalogOrderBusy = false;
+  }
+}
+async function reorder(id: string, target: string) {
+  await changeCatalogOrder((order) => {
+    const ids = [...order.listIds],
       a = ids.indexOf(id),
       b = ids.indexOf(target);
-    if (a < 0 || b < 0)
+    const parents = new Map(
+      (order.nesting ?? []).map((entry) => [entry.listId, entry.parentListId]),
+    );
+    const effectiveParent = (id: string) => {
+      const parent = parents.get(id);
+      return catalog.some(
+        (list) => list.id === parent && list.archived === archive,
+      )
+        ? parent
+        : undefined;
+    };
+    if (a < 0 || b < 0 || effectiveParent(id) !== effectiveParent(target))
       throw new Error(
         "Your pack of lists changed. Reopen the list view and try again.",
       );
     [ids[a], ids[b]] = [ids[b], ids[a]];
-    await request("reorder_lists", {
-      listIds: ids,
-      version: data.order.version,
-      operationId: crypto.randomUUID(),
-    });
-    show(await request("show_lists", {}));
-    status.textContent = "Paw-some, order saved";
-  } catch (e) {
-    status.textContent = wuffError((e as Error).message);
-  }
+    return { listIds: ids };
+  });
 }
 app.ontoolresult = (result) => show(result.structuredContent);
 app.connect().catch(() => {

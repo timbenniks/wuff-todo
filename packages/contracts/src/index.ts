@@ -102,6 +102,11 @@ export const updateListSchema = listMutationSchema
 export const reorderListsSchema = operationSchema.extend({
   version: versionSchema,
   listIds: z.array(idSchema).max(10000),
+  nesting: z
+    .array(z.object({ listId: idSchema, parentListId: idSchema }))
+    .max(10000)
+    .optional(),
+  collapsedListIds: z.array(idSchema).max(10000).optional(),
 });
 export const createSectionSchema = listMutationSchema.extend({
   title: titleSchema,
@@ -249,7 +254,13 @@ export type Task = {
   github?: GithubTaskSummary | null;
 };
 export type ListSection = { id: string; title: string; position: number };
-export type ListOrder = { version: number; listIds: string[] };
+export type ListNesting = { listId: string; parentListId: string };
+export type ListOrder = {
+  version: number;
+  listIds: string[];
+  nesting?: ListNesting[];
+  collapsedListIds?: string[];
+};
 export type TodoList = {
   personalView?: PersonalListView;
   id: string;
@@ -274,7 +285,38 @@ export type TaskDetail = { list: TodoList; task: Task };
 export type ListSummary = Pick<
   TodoList,
   "id" | "title" | "ownerId" | "shared" | "version" | "color" | "archived"
->;
+> & { parentListId?: string | null; sidebarCollapsed?: boolean };
+
+// Drop inaccessible references before projecting personal navigation. Lists never
+// inherit membership, content, or ownership through this preference.
+export function accessibleListNesting(ids: string[], nesting: ListNesting[]) {
+  const known = new Set(ids);
+  const parents = new Map(
+    nesting.map((entry) => [entry.listId, entry.parentListId]),
+  );
+  return nesting.filter(
+    ({ listId, parentListId }) =>
+      known.has(listId) &&
+      known.has(parentListId) &&
+      listId !== parentListId &&
+      !parents.has(parentListId),
+  );
+}
+export function sidebarGroups(lists: ListSummary[], archived: boolean) {
+  const visible = lists.filter((list) => list.archived === archived);
+  const visibleIds = new Set(visible.map((list) => list.id));
+  const parent = (list: ListSummary) =>
+    list.parentListId && visibleIds.has(list.parentListId)
+      ? list.parentListId
+      : null;
+  return visible
+    .filter((list) => !parent(list))
+    .map((list) => ({
+      list,
+      children: visible.filter((child) => parent(child) === list.id),
+    }));
+}
+
 export const scopes = [
   "lists:read",
   "tasks:write",

@@ -185,6 +185,10 @@ Task snapshots include nullable `parentTaskId`. The same task services, routes a
 
 The task row gains nullable PostgreSQL `date` in Drizzle string mode, exposed as `dueDate: string | null`. Shared contracts validate actual `YYYY-MM-DD` dates (years 1–9999); omission preserves and explicit null clears. Existing task services, HTTP routes and MCP tools retain permissions, idempotency, list versioning and live invalidation. Parent/child dates are independent; dates do not change order or completion. Viewer-local calendar days drive Today/Tomorrow/overdue, while date strings and display never shift with time zones. See [due dates](due-dates.md) for drafts, clock refresh, migration and verification.
 
+## Personal list nesting
+
+[WUFF-85](personal-list-nesting.md) extends the account sidebar preference with one-level parent links and collapse state, using the same personal revision and account lock as ordering. Catalog output filters links by current access. List/task membership, snapshots and shared revisions stay independent; deleting a parent never cascades into child lists. Web/Tauri and MCP use the same domain contract.
+
 ## Personal list views
 
 Account/list preferences use the separate `wuff_list_views` table and revision, never the shared list/task version. Shared contracts provide one pure filter/group/sort projection for web, HTTP and MCP. Authorized snapshots carry only the actor's preferences; the sealed live query includes only that actor's view revision. View writes serialize with membership changes under the existing list lock and operation receipts. Browser caches merge task and view revisions independently. See [personal views](personal-views.md) for concurrency, child context, calendar and sorting rules.
