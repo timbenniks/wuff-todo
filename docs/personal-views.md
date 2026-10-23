@@ -1,6 +1,6 @@
 # Personal list views
 
-Updated: October 17, 2026
+Updated: October 24, 2026
 
 Each account has one active saved view and up to 20 personal named presets per accessible list. See [the October 24 list workspace](list-workspace.md) for the current toolbar, Work columns and preset behavior. A view contains title/key search, section/status/priority/assignee filters, due-date filters, completion visibility, grouping by section/status/due date, manual/priority/due/updated sorting, optional section sort overrides, compact/detailed layout and collapsed groups. The website exposes these through the compact list toolbar. Settings also work on archived lists; task writes remain prohibited there.
 

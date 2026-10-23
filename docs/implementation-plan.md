@@ -2,13 +2,13 @@
 
 Status: web/MCP and GitHub synchronization released; online-only Tauri cross-platform client foundation started
 
-Updated: October 23, 2026
+Updated: October 24, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
 
-- **List workspace (October 24):** compact toolbar and personal named presets for both list types, richer optional Work columns and inline metadata editing are implemented. Local unit/integration/browser/SDK checks and web/native frontend builds passed. See [contract and release evidence](list-workspace.md).
+- **List workspace (October 24):** compact toolbar and personal named presets for both list types, richer optional Work columns and inline metadata editing are released on the website/MCP. Local unit/integration/browser/SDK checks, web/native frontend builds and authenticated production Work/Basic layout checks passed. Native downloads remain blocked by runner billing. See [contract and release evidence](list-workspace.md).
 
 - **Desktop workspace (October 24):** fluid Home card rows, wider list/task/settings canvas and independently scrolling desktop navigation are released. Local 320–1920px browser checks and authenticated production geometry checks passed. See [layout decisions and verification](desktop-workspace.md).
 

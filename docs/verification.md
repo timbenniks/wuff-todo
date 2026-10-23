@@ -1,6 +1,6 @@
 # Implementation verification
 
-Updated: October 23, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
 ## Personal Home dashboard — October 23, 2026
 
@@ -286,3 +286,7 @@ Source `d6d4849` was committed/pushed and CLI deployment `dpl_DXjqkSXkHnKoT9Qpwg
 - A real local MCP Apps SDK host passed compact popovers, starter/custom preset creation/selection/rename/deletion, persisted column choices, 390/1280px document/popover bounds and lost-response retries with identical operation/payload. Synthetic lists and the SDK OAuth grant were cleaned up; prior synthetic sidebar preferences were restored. This is local SDK-host evidence, not named production ChatGPT/Codex-host certification.
 
 Production release evidence follows after deployment. No installed native, physical-device or screen-reader certification is implied by browser/build checks.
+
+Source `269244b` was committed/pushed. Vercel CLI deployment `dpl_9aba3Dqf82k14RX9f8qec74D371z` is Ready and aliased to the canonical production URL, with `fra1` runtime outputs. Authenticated production Chrome at 1710px verified the Work toolbar, five starter choices, preset-save entrypoint, Columns/Simple rows, density and four visibility controls. The Work grid measured 44/636/130/100/140/140/88/44px tracks; the old details panel was absent and no horizontal overflow occurred. Basic Pawvisions rendered zero Work headers and only section/date/completion filters, with a viewport-bounded popover. Live updates connected and no captured console errors occurred. The production smoke only navigated/read/opened controls: no task/content/server preference writes or production fixtures were required. Screenshots: [Work](screenshots/workspace-production-work.png), [Basic](screenshots/workspace-production-basic.png).
+
+GitHub Verify `40036292290` and Native test builds `40036292242` failed before any steps started; the check annotation confirms the account payment/spending limit. Local checks and Vercel build passed; new downloadable native packages and installed-device behavior remain separate. MCP clients need a catalog refresh for the expanded view schema.
