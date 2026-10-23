@@ -1,6 +1,14 @@
 import { after } from "next/server";
 import { AppError, idSchema, taskLookupSchema } from "@wuff/contracts";
 import {
+  getReminderSettings,
+  getListReminders,
+  getTaskReminder,
+  updateReminderSettings,
+  updateListReminders,
+  setTaskReminder,
+  registerReminderDevice,
+  removeReminderDevice,
   listLists,
   getList,
   createList,
@@ -36,6 +44,13 @@ import { z } from "zod";
 // A bearer-only native adapter: cookies and Origin headers never grant access.
 // All permissions, versions, receipts and validation stay in domain services.
 const operations = {
+  getListReminders,
+  getTaskReminder,
+  updateReminderSettings,
+  updateListReminders,
+  setTaskReminder,
+  registerReminderDevice,
+  removeReminderDevice,
   listLists,
   createList,
   updateList,
@@ -73,6 +88,8 @@ export async function POST(request: Request) {
     let result: unknown;
     if (action === "session")
       result = { userId: actor.id, scopes: actor.scopes };
+    else if (action === "getReminderSettings")
+      result = await getReminderSettings(actor);
     else if (action === "getList")
       result = await getList(actor, idSchema.parse(input));
     else if (action === "getTask")

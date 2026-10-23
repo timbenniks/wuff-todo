@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   CalendarDays,
+  Bell,
   Check,
   FileText,
   ListTree,
@@ -32,6 +33,7 @@ import type { ListChange } from "./list-settings";
 import { TaskDueDate, type DueDateDraft } from "./task-due-date";
 import { SortableList, SortableItem } from "@/components/sortable";
 import { TaskActions } from "./task-actions";
+import { TaskReminder } from "@/components/reminders/task-reminder";
 import { TaskMetadata } from "./task-metadata";
 
 export function TaskRow({
@@ -78,6 +80,7 @@ export function TaskRow({
       children.some((child) => drafts.has(child.id) || dueDrafts.has(child.id)),
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(dueDrafts.has(task.id));
   const [notesOpen, setNotesOpen] = useState(drafts.has(task.id));
   const [draftSection, setDraftSection] = useState(task.sectionId);
@@ -260,6 +263,18 @@ export function TaskRow({
                   <CalendarDays size={16} aria-hidden="true" />
                   {task.dueDate ? "Change due date" : "Set due date"}
                 </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    close();
+                    setReminderOpen(!reminderOpen);
+                  }}
+                >
+                  <Bell size={16} aria-hidden="true" />
+                  Remind me
+                </Button>
                 {!task.parentTaskId && (
                   <Button
                     type="button"
@@ -354,6 +369,18 @@ export function TaskRow({
             Show context
           </button>
         </p>
+      )}
+      {reminderOpen && (
+        <div className="task-panel">
+          <TaskReminder
+            key={`${task.id}:${task.completed}`}
+            listId={list.id}
+            taskId={task.id}
+            userId={userId}
+            inactive={task.completed || list.archived}
+            onClose={() => setReminderOpen(false)}
+          />
+        </div>
       )}
       {dateOpen && (
         <div className="task-panel">

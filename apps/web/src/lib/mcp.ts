@@ -9,6 +9,11 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  updateReminderPreferencesSchema,
+  updateListReminderSchema,
+  listReminderSchema,
+  taskReminderQuerySchema,
+  setTaskReminderSchema,
   githubBindingSchema,
   agentBindingSchema,
   agentEnvironmentSchema,
@@ -392,6 +397,78 @@ export function createMcpServer(actor: Actor) {
     },
     async (data) =>
       result(async () => ({ list: await domain.updateListView(actor, data) })),
+  );
+  server.registerTool(
+    "get_reminder_settings",
+    {
+      description:
+        "Read your personal reminder defaults and enabled device labels. Notification tokens and secrets are never returned. Enable devices in Wuff Settings.",
+      inputSchema: z.object({}),
+      annotations: read,
+    },
+    async () =>
+      result(async () => ({
+        settings: await domain.getReminderSettings(actor),
+      })),
+  );
+  server.registerTool(
+    "update_reminder_settings",
+    {
+      description:
+        "Replace only your reminder defaults: timezone, daily nudge, quiet hours and lock-screen privacy. Read the personal version first. Requires tasks:write. Does not change another member's preferences.",
+      inputSchema: updateReminderPreferencesSchema,
+      annotations: write,
+    },
+    async (data) =>
+      result(async () => ({
+        settings: await domain.updateReminderSettings(actor, data),
+      })),
+  );
+  server.registerTool(
+    "get_list_reminders",
+    {
+      description:
+        "Read only your daily-nudge inclusion and task reminders for an accessible list.",
+      inputSchema: listReminderSchema,
+      annotations: read,
+    },
+    async (data) =>
+      result(async () => ({ ...(await domain.getListReminders(actor, data)) })),
+  );
+  server.registerTool(
+    "update_list_reminders",
+    {
+      description:
+        "Include/exclude this list from your own daily nudge. Use the personal reminder version, not list.version. Requires tasks:write; editors can manage their own preference.",
+      inputSchema: updateListReminderSchema,
+      annotations: write,
+    },
+    async (data) =>
+      result(async () => ({
+        ...(await domain.updateListReminders(actor, data)),
+      })),
+  );
+  server.registerTool(
+    "get_task_reminder",
+    {
+      description:
+        "Read your reminder for a task. No other member's reminder is disclosed.",
+      inputSchema: taskReminderQuerySchema,
+      annotations: read,
+    },
+    async (data) =>
+      result(async () => ({ ...(await domain.getTaskReminder(actor, data)) })),
+  );
+  server.registerTool(
+    "set_task_reminder",
+    {
+      description:
+        "Set or snooze your personal task reminder using a future ISO instant with timezone offset, within one year. runAt=null cancels. Read reminder.version first (0 if absent); use operationId for safe retries. Quiet hours apply. Completion cancels reminders permanently; reopening does not restore them. Requires tasks:write. Device setup is in /settings/reminders.",
+      inputSchema: setTaskReminderSchema,
+      annotations: write,
+    },
+    async (data) =>
+      result(async () => ({ ...(await domain.setTaskReminder(actor, data)) })),
   );
   const operations = [
     [

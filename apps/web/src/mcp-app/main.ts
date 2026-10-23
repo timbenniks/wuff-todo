@@ -19,6 +19,7 @@ import { taskMetadata } from "../lib/task-metadata";
 import { wuffCopy, wuffError } from "../lib/copy";
 import { App } from "@modelcontextprotocol/ext-apps";
 import { renderTaskMarkdown } from "../lib/task-markdown";
+import type { PersonalReminder } from "@wuff/contracts";
 import type { Task } from "@wuff/contracts";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { taskImageLimit, taskImagePath, listColors } from "@wuff/contracts";
@@ -891,6 +892,181 @@ function workDetails(task: Task) {
   return panel;
 }
 
+function personalTaskReminder(task: Task) {
+  const panel = element("details"),
+    body = element("div");
+  panel.append(element("summary", "Remind me"), body);
+  body.className = "settings";
+  const listId = current!.id;
+  let loaded = false,
+    reminder: PersonalReminder | null = null,
+    pending: Record<string, unknown> | undefined;
+  const notice = element("p");
+  notice.setAttribute("role", "status");
+  const input = element("input");
+  input.type = "datetime-local";
+  input.setAttribute("aria-label", `Reminder time for ${task.title}`);
+  const save = button("Save my reminder", () => {
+    if (!input.value || !input.reportValidity()) return;
+    const instant = new Date(input.value);
+    if (!Number.isFinite(instant.getTime())) return;
+    void update(instant.toISOString());
+  });
+  const hour = button(
+    "In one hour",
+    () => void update(new Date(Date.now() + 3600000).toISOString()),
+  );
+  const remove = button("Remove my reminder", () => void update(null));
+  const setup = element("a", "Notification devices & daily nudge");
+  setup.href = new URL("/settings/reminders", webOrigin).href;
+  setup.target = "_blank";
+  setup.rel = "noreferrer";
+  function display() {
+    notice.textContent = reminder?.enabled
+      ? `Your reminder: ${new Date(reminder.runAt).toLocaleString()}${reminder.scheduling === "pending" ? " · scheduling pending" : ""}`
+      : "No active reminder.";
+    remove.hidden = !reminder?.enabled;
+  }
+  async function load() {
+    body.replaceChildren(element("p", "Loading your reminder…"));
+    try {
+      const result = (await request("get_task_reminder", {
+        listId,
+        taskId: task.id,
+      })) as { reminder: PersonalReminder | null };
+      reminder = result.reminder;
+      loaded = true;
+      body.replaceChildren(
+        element(
+          "p",
+          `Personal reminder · date and time in ${Intl.DateTimeFormat().resolvedOptions().timeZone}. Quiet hours apply.`,
+        ),
+        input,
+        save,
+        hour,
+        remove,
+        button("Load latest reminder", () => {
+          pending = undefined;
+          void load();
+        }),
+        setup,
+        notice,
+      );
+      input.disabled =
+        save.disabled =
+        hour.disabled =
+          task.completed || current!.archived;
+      display();
+    } catch (e) {
+      body.replaceChildren(
+        element("p", (e as Error).message),
+        button("Retry", () => void load()),
+      );
+    }
+  }
+  async function update(runAt: string | null) {
+    const next = {
+      listId,
+      taskId: task.id,
+      version: reminder?.version ?? 0,
+      runAt,
+    };
+    if (
+      !pending ||
+      JSON.stringify({ ...pending, operationId: undefined }) !==
+        JSON.stringify(next)
+    )
+      pending = { ...next, operationId: crypto.randomUUID() };
+    save.disabled = hour.disabled = remove.disabled = true;
+    try {
+      const result = (await request("set_task_reminder", pending)) as {
+        reminder: PersonalReminder;
+      };
+      reminder = result.reminder;
+      pending = undefined;
+      display();
+    } catch (e) {
+      notice.textContent = (e as Error).message;
+      if (e instanceof ToolError && e.code !== "internal_error")
+        pending = undefined;
+    } finally {
+      save.disabled = hour.disabled = task.completed || current!.archived;
+      remove.disabled = false;
+    }
+  }
+  panel.ontoggle = () => {
+    if (panel.open && !loaded) void load();
+  };
+  return panel;
+}
+function personalListReminder() {
+  const panel = element("details"),
+    body = element("div");
+  panel.append(element("summary", "Reminders for me"), body);
+  body.className = "settings";
+  const listId = current!.id;
+  let loaded = false,
+    version = 0,
+    pending: Record<string, unknown> | undefined;
+  const check = element("input");
+  check.type = "checkbox";
+  const label = element("label", "Include this list in my daily nudge");
+  label.prepend(check);
+  const notice = element("p");
+  notice.setAttribute("role", "status");
+  const save = button("Save my list reminders", () => {
+    const value = { listId, version, dailyIncluded: check.checked };
+    if (
+      !pending ||
+      JSON.stringify({ ...pending, operationId: undefined }) !==
+        JSON.stringify(value)
+    )
+      pending = { ...value, operationId: crypto.randomUUID() };
+    save.disabled = true;
+    void request("update_list_reminders", pending)
+      .then((data) => {
+        const result = data as { version: number; dailyIncluded: boolean };
+        version = result.version;
+        check.checked = result.dailyIncluded;
+        pending = undefined;
+        notice.textContent = "Your list preference is saved.";
+      })
+      .catch((e) => {
+        notice.textContent = e.message;
+        loaded = false;
+        if (e instanceof ToolError && e.code !== "internal_error")
+          pending = undefined;
+      })
+      .finally(() => {
+        save.disabled = false;
+      });
+  });
+  panel.ontoggle = () => {
+    if (!panel.open || loaded) return;
+    body.textContent = "Loading your preferences…";
+    void request("get_list_reminders", { listId })
+      .then((data) => {
+        const result = data as { version: number; dailyIncluded: boolean };
+        version = result.version;
+        check.checked = result.dailyIncluded;
+        loaded = true;
+        body.replaceChildren(
+          element(
+            "p",
+            "Just for you. Other members keep their own preferences.",
+          ),
+          label,
+          save,
+          notice,
+        );
+      })
+      .catch((e) => {
+        body.textContent = e.message;
+      });
+  };
+  return panel;
+}
+
 function renderTask(
   task: Task,
   groups: { id: string | null; title: string }[],
@@ -1085,7 +1261,8 @@ function renderTask(
   const renamePanel = element("details");
   renamePanel.append(element("summary", "Rename task"), nameEditor);
   const notesPanel = taskNotes(task),
-    datePanel = taskDueDate(task);
+    datePanel = taskDueDate(task),
+    reminderPanel = personalTaskReminder(task);
   const workPanel = current!.mode === "work" ? workDetails(task) : undefined;
   const githubPanel =
     current!.mode === "work"
@@ -1097,7 +1274,7 @@ function renderTask(
       : undefined;
   let subtaskPanel: HTMLDetailsElement | undefined;
   if (!current!.archived) detailsBody.append(renamePanel);
-  detailsBody.append(notesPanel, datePanel);
+  detailsBody.append(notesPanel, datePanel, reminderPanel);
   if (workPanel) detailsBody.append(workPanel);
   if (githubPanel) detailsBody.append(githubPanel);
   function openDetails(target?: HTMLDetailsElement) {
@@ -1132,6 +1309,7 @@ function renderTask(
   fullPage.target = "_blank";
   fullPage.rel = "noreferrer";
   actionPanel.prepend(fullPage);
+  quick("Remind me", reminderPanel);
   if (workPanel) quick("Status, priority & assignment", workPanel);
   quick(
     current!.archived
@@ -1720,6 +1898,7 @@ function show(value: unknown) {
     );
     root.append(settings);
   }
+  root.append(personalListReminder());
   root.append(viewControls(current));
   const view = current.personalView?.view ?? defaultListView();
   const sections = [

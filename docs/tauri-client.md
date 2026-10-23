@@ -65,7 +65,7 @@ All ten links were reread through Wuff MCP as synced. Update task status/spec no
 - `pnpm build:native:web`: native TypeScript and Vite production build passed. JavaScript output was about 221 kB / 69 kB gzip, excluding local font and image assets. This is the initial shell size, not a full-app performance claim.
 - `pnpm typecheck`: all workspaces and root checks passed, including existing web/mobile packages.
 - `pnpm test`: all 56 existing unit tests passed.
-- `git diff --check`: passed. WUFF-70 is in review; native runtime validation remains a separate gate.
+- `git diff --check`: passed. WUFF-70 is in review; source remains local and uncommitted.
 - Production frontend preview in system Chrome at 320px, 390px and 1100px: expected title/heading, no horizontal overflow or page errors. Desktop screenshot inspected. This does not test Tauri WebViews or physical touch.
 - `pnpm --filter @wuff/native tauri info`: configuration discovered; missing Rust/Cargo/full Xcode reported as above.
 - No native build, authentication flow, live transport, integration test, deployment, store submission or signed package has been validated for Tauri.

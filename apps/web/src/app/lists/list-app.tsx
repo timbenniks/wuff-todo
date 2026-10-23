@@ -25,6 +25,7 @@ import { LiveRefreshQueue } from "@/lib/live-refresh";
 import { ListTheme } from "@/components/list-theme";
 import { listThemeVariables } from "@/lib/list-theme";
 import { listPalette } from "@/lib/list-colors";
+import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
 import { SortableList, SortableItem } from "@/components/sortable";
@@ -653,10 +654,10 @@ export function ListApp({
           )}
           <div className="mt-3 md:mt-auto pt-2 md:pt-8 text-sm flex md:block items-center justify-between">
             <a
-              href="/connections"
+              href="/settings"
               className="block px-3 py-2 text-primary hover:underline"
             >
-              Connected AI clients
+              Settings
             </a>
             <div className="flex items-center justify-between px-3 md:pt-3 md:border-t border-border md:mt-3">
               <span className="hidden md:inline truncate">{name}</span>
@@ -666,6 +667,7 @@ export function ListApp({
                 size="icon"
                 onClick={async () => {
                   cache.clear();
+                  await disableBrowserOnSignOut();
                   await authClient.signOut();
                   window.location.assign("/sign-in");
                 }}
@@ -804,25 +806,28 @@ export function ListApp({
                     onChanged={sharingChanged}
                   />
                 )}
+                {!isPending && (
+                  <ListSettings
+                    key={list.id}
+                    list={list}
+                    userId={userId}
+                    busy={busy}
+                    change={change}
+                    retry={
+                      retryWrite
+                        ? () =>
+                            change(
+                              retryWrite.path,
+                              retryWrite.method,
+                              retryWrite.body,
+                              true,
+                            )
+                        : undefined
+                    }
+                  />
+                )}
                 {list.ownerId === userId && !isPending && (
                   <div className="contents">
-                    <ListSettings
-                      key={list.id}
-                      list={list}
-                      busy={busy}
-                      change={change}
-                      retry={
-                        retryWrite
-                          ? () =>
-                              change(
-                                retryWrite.path,
-                                retryWrite.method,
-                                retryWrite.body,
-                                true,
-                              )
-                          : undefined
-                      }
-                    />
                     <Button
                       variant="danger"
                       className="list-delete"

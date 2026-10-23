@@ -1,4 +1,5 @@
 "use client";
+import { ListReminders } from "@/components/reminders/list-reminders";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 
@@ -15,11 +16,13 @@ export type ListChange = (
 ) => Promise<boolean>;
 export function ListSettings({
   list,
+  userId,
   busy,
   change,
   retry,
 }: {
   list: TodoList;
+  userId: string;
   busy: boolean;
   change: ListChange;
   retry?: () => Promise<boolean>;
@@ -69,7 +72,7 @@ export function ListSettings({
               List settings
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              A few de-tails, shared with everyone on this list.
+              List details and your personal reminders.
             </p>
           </div>
           <Button
@@ -82,157 +85,177 @@ export function ListSettings({
             <X size={18} />
           </Button>
         </div>
-        <form
-          className="grid gap-5"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setFailed(false);
-            const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
-              listId: list.id,
-              ...draft,
-            });
-            if (ok) dialog.current?.close();
-            else setFailed(true);
-          }}
-        >
-          <label className="grid gap-2 text-sm font-semibold">
-            List type
-            <NativeSelect
-              aria-label="List type"
-              value={draft.mode}
-              disabled={busy}
-              onChange={(e) =>
-                setDraft({ ...draft, mode: e.target.value as TodoList["mode"] })
-              }
-            >
-              <option value="simple">Simple</option>
-              <option value="work">Work</option>
-            </NativeSelect>
-            <span className="text-xs font-normal text-muted-foreground">
-              Work adds workflow, priority and links. Share the list to assign
-              tasks.
-            </span>
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            Description
-            <Textarea
-              rows={4}
-              maxLength={4000}
-              placeholder="What’s the plan for your pack?"
-              value={draft.description}
-              onChange={(e) =>
-                setDraft({ ...draft, description: e.target.value })
-              }
-            />
-            <span className="font-normal text-xs text-muted-foreground">
-              A few de-tails for your pack. Plain text, up to 4,000 characters.
-            </span>
-          </label>
-          <fieldset>
-            <legend className="text-sm font-semibold mb-3">List color</legend>
-            <p className="text-xs text-muted-foreground mb-3">
-              This color themes the app while you’re in this list, including
-              backgrounds, text and controls.
-            </p>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-              {listColors.map((color) => {
-                const p = listPalette[color];
-                return (
-                  <label
-                    key={color}
-                    className="relative cursor-pointer text-center text-xs grid justify-items-center gap-2 rounded-xl p-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
-                    style={{
-                      background: draft.color === color ? p.tint : undefined,
-                    }}
-                  >
-                    <input
-                      className="sr-only"
-                      type="radio"
-                      name="color"
-                      value={color}
-                      checked={draft.color === color}
-                      onChange={() =>
-                        setDraft({ ...draft, color: color as ListColor })
-                      }
-                    />
-                    <span
-                      className="rounded-full w-8 h-8 flex items-center justify-center text-white"
-                      style={{ background: p.accent }}
-                    >
-                      {draft.color === color && <Check size={17} />}
-                    </span>
-                    {p.label}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-          {list.version !== draft.version && (
-            <div role="status" className="text-sm rounded-xl bg-amber-50 p-3">
-              <p>
-                New de-tails arrived while you were editing. Your draft is still
-                here.
-              </p>
-              <Button type="button" variant="ghost" size="sm" onClick={load}>
-                Load latest settings
-              </Button>
-            </div>
-          )}
-          {failed && (
-            <p role="alert" className="text-sm text-red-800">
-              Ruff patch! Settings weren’t saved. Check the list’s error message
-              or load its latest settings, then try again.
-            </p>
-          )}
-          {retry && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={async () => {
-                if (await retry()) dialog.current?.close();
+        {list.ownerId === userId && (
+          <>
+            <form
+              className="grid gap-5"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setFailed(false);
+                const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
+                  listId: list.id,
+                  ...draft,
+                });
+                if (ok) dialog.current?.close();
+                else setFailed(true);
               }}
             >
-              Retry same request
-            </Button>
-          )}
-          <Button
-            disabled={busy}
-            type="submit"
-            variant="primary"
-            aria-label={busy ? "Saving settings" : "Save settings"}
-            title="Save settings"
-          >
-            <Check size={18} aria-hidden="true" />{" "}
-            {busy ? "Saving…" : "Save changes"}
-          </Button>
-        </form>
-        <div className="border-t border-border mt-6 pt-5">
-          <p className="text-sm text-muted-foreground mb-3">
-            {list.archived
-              ? "Paws over? Restore this list so everyone can edit its tasks again."
-              : "Let this list take a paws for everyone. Its tasks and sharing are kept."}
-          </p>
-          <Button
-            variant="outline"
-            disabled={busy}
-            onClick={async () => {
-              const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
-                listId: list.id,
-                version: list.version,
-                archived: !list.archived,
-              });
-              if (ok) dialog.current?.close();
-            }}
-          >
-            {list.archived ? (
-              <ArchiveRestore size={16} />
-            ) : (
-              <Archive size={16} />
-            )}{" "}
-            {list.archived ? "Restore list" : "Archive list"}
-          </Button>
-        </div>
+              <label className="grid gap-2 text-sm font-semibold">
+                List type
+                <NativeSelect
+                  aria-label="List type"
+                  value={draft.mode}
+                  disabled={busy}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      mode: e.target.value as TodoList["mode"],
+                    })
+                  }
+                >
+                  <option value="simple">Simple</option>
+                  <option value="work">Work</option>
+                </NativeSelect>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Work adds workflow, priority and links. Share the list to
+                  assign tasks.
+                </span>
+              </label>
+              <label className="grid gap-2 text-sm font-semibold">
+                Description
+                <Textarea
+                  rows={4}
+                  maxLength={4000}
+                  placeholder="What’s the plan for your pack?"
+                  value={draft.description}
+                  onChange={(e) =>
+                    setDraft({ ...draft, description: e.target.value })
+                  }
+                />
+                <span className="font-normal text-xs text-muted-foreground">
+                  A few de-tails for your pack. Plain text, up to 4,000
+                  characters.
+                </span>
+              </label>
+              <fieldset>
+                <legend className="text-sm font-semibold mb-3">
+                  List color
+                </legend>
+                <p className="text-xs text-muted-foreground mb-3">
+                  This color themes the app while you’re in this list, including
+                  backgrounds, text and controls.
+                </p>
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                  {listColors.map((color) => {
+                    const p = listPalette[color];
+                    return (
+                      <label
+                        key={color}
+                        className="relative cursor-pointer text-center text-xs grid justify-items-center gap-2 rounded-xl p-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
+                        style={{
+                          background:
+                            draft.color === color ? p.tint : undefined,
+                        }}
+                      >
+                        <input
+                          className="sr-only"
+                          type="radio"
+                          name="color"
+                          value={color}
+                          checked={draft.color === color}
+                          onChange={() =>
+                            setDraft({ ...draft, color: color as ListColor })
+                          }
+                        />
+                        <span
+                          className="rounded-full w-8 h-8 flex items-center justify-center text-white"
+                          style={{ background: p.accent }}
+                        >
+                          {draft.color === color && <Check size={17} />}
+                        </span>
+                        {p.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              {list.version !== draft.version && (
+                <div
+                  role="status"
+                  className="text-sm rounded-xl bg-amber-50 p-3"
+                >
+                  <p>
+                    New de-tails arrived while you were editing. Your draft is
+                    still here.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={load}
+                  >
+                    Load latest settings
+                  </Button>
+                </div>
+              )}
+              {failed && (
+                <p role="alert" className="text-sm text-red-800">
+                  Ruff patch! Settings weren’t saved. Check the list’s error
+                  message or load its latest settings, then try again.
+                </p>
+              )}
+              {retry && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (await retry()) dialog.current?.close();
+                  }}
+                >
+                  Retry same request
+                </Button>
+              )}
+              <Button
+                disabled={busy}
+                type="submit"
+                variant="primary"
+                aria-label={busy ? "Saving settings" : "Save settings"}
+                title="Save settings"
+              >
+                <Check size={18} aria-hidden="true" />{" "}
+                {busy ? "Saving…" : "Save changes"}
+              </Button>
+            </form>
+            <div className="border-t border-border mt-6 pt-5">
+              <p className="text-sm text-muted-foreground mb-3">
+                {list.archived
+                  ? "Paws over? Restore this list so everyone can edit its tasks again."
+                  : "Let this list take a paws for everyone. Its tasks and sharing are kept."}
+              </p>
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={async () => {
+                  const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
+                    listId: list.id,
+                    version: list.version,
+                    archived: !list.archived,
+                  });
+                  if (ok) dialog.current?.close();
+                }}
+              >
+                {list.archived ? (
+                  <ArchiveRestore size={16} />
+                ) : (
+                  <Archive size={16} />
+                )}{" "}
+                {list.archived ? "Restore list" : "Archive list"}
+              </Button>
+            </div>
+          </>
+        )}
+        <ListReminders key={list.id} listId={list.id} userId={userId} />
       </dialog>
     </>
   );

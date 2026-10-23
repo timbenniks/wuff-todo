@@ -9,14 +9,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
+    "@upstash/qstash": "^2.12.1",
     "@vercel/blob": "2.8.2",
     "@wuff/contracts": "workspace:*",
     "@wuff/db": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "markdown-it": "15.0.3",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/markdown-it": "14.2.0"
+    "@types/markdown-it": "14.2.0",
+    "@types/web-push": "^3.6.4"
   }
 }
