@@ -8,7 +8,15 @@ import {
 
 import { wuffCopy, wuffError } from "../../lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, House, ListTodo, LogOut, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  House,
+  ListTodo,
+  LogOut,
+  Plus,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../button";
 import { Corgi } from "../../components/corgi";
@@ -539,8 +547,8 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="workspace-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-5 py-4 md:py-6 flex flex-col">
-        <div className="flex gap-3 items-center md:mb-8">
+      <aside className="workspace-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
+        <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
           <Corgi size={48} />
           <span className="wordmark text-xl font-bold">Wuff Todo</span>
           <Button
@@ -571,7 +579,7 @@ export function ListApp({
           <Button
             type="button"
             variant="ghost"
-            className="justify-start mb-5"
+            className="sidebar-home justify-start mb-3"
             aria-current={!selectedId && !showArchive ? "page" : undefined}
             onClick={() => {
               chooseList("");
@@ -582,63 +590,69 @@ export function ListApp({
             <House size={18} />
             Home
           </Button>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-              {showArchive ? wuffCopy.archiveHeading : wuffCopy.listsHeading}
-            </span>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Create list"
-              disabled={busy || !!pendingCreate}
-              onClick={() => setCreating((v) => !v)}
-            >
-              <Plus size={18} />
-            </Button>
-          </div>
           <div className="workspace-list-nav">
-            {creating && (
-              <form
-                className="mb-4 grid gap-2"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await create(
-                    String(new FormData(e.currentTarget).get("title")),
-                  );
-                }}
-              >
-                <label
-                  htmlFor="new-list-name"
-                  className="text-xs text-muted-foreground"
-                >
-                  List name
-                </label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="new-list-name"
-                    name="title"
-                    aria-label="List name"
-                    placeholder={wuffCopy.listPlaceholder}
-                    maxLength={300}
-                    required
-                    autoFocus
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <InputGroupButton
-                      type="submit"
-                      size="sm"
-                      variant="primary"
-                      disabled={busy}
-                      aria-label="Create list"
-                      title="Create list"
-                    >
-                      <Plus size={18} aria-hidden="true" /> Create
-                    </InputGroupButton>
-                  </InputGroupAddon>
-                </InputGroup>
-              </form>
-            )}
             <SidebarLists
+              controls={
+                <>
+                  <div className="sidebar-section-heading">
+                    <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                      {showArchive
+                        ? wuffCopy.archiveHeading
+                        : wuffCopy.listsHeading}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Create list"
+                      disabled={busy || !!pendingCreate}
+                      onClick={() => setCreating((v) => !v)}
+                    >
+                      <Plus size={18} />
+                    </Button>
+                  </div>
+                  {creating && (
+                    <form
+                      className="mb-4 grid gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        await create(
+                          String(new FormData(e.currentTarget).get("title")),
+                        );
+                      }}
+                    >
+                      <label
+                        htmlFor="new-list-name"
+                        className="text-xs text-muted-foreground"
+                      >
+                        List name
+                      </label>
+                      <InputGroup>
+                        <InputGroupInput
+                          id="new-list-name"
+                          name="title"
+                          aria-label="List name"
+                          placeholder={wuffCopy.listPlaceholder}
+                          maxLength={300}
+                          required
+                          autoFocus
+                        />
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupButton
+                            type="submit"
+                            size="sm"
+                            variant="primary"
+                            disabled={busy}
+                            aria-label="Create list"
+                            title="Create list"
+                          >
+                            <Plus size={18} aria-hidden="true" /> Create
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      </InputGroup>
+                    </form>
+                  )}
+                </>
+              }
               lists={summaries}
               archived={showArchive}
               selectedId={selectedId}
@@ -693,8 +707,8 @@ export function ListApp({
               </p>
             )}
           </div>
-          <div className="workspace-footer mt-6 md:mt-auto pt-4 md:pt-8 text-sm flex flex-wrap md:block items-center justify-between gap-1">
-            <div className="flex flex-wrap md:grid items-center gap-1">
+          <div className="workspace-footer mt-4 md:mt-auto pt-3 text-sm flex flex-wrap md:block items-center justify-between gap-1">
+            <div className="sidebar-utilities flex flex-wrap md:grid items-center gap-0.5">
               <Button
                 variant="ghost"
                 size="sm"
@@ -715,8 +729,9 @@ export function ListApp({
 
               <a
                 href={runtime.webOrigin + "/settings"}
-                className="flex min-h-11 items-center px-3 py-2 text-primary hover:underline"
+                className="sidebar-settings flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 font-medium hover:bg-surface/60"
               >
+                <Settings2 size={17} aria-hidden="true" />
                 Settings
               </a>
             </div>
@@ -733,7 +748,7 @@ export function ListApp({
                 Enable GitHub changes
               </Button>
             )}
-            <div className="flex items-center justify-between px-3 md:pt-3 md:border-t border-border md:mt-3">
+            <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
               <span className="hidden md:inline truncate">{name}</span>
               <Button
                 aria-label="Sign out"

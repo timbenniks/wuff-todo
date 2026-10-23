@@ -13,3 +13,7 @@ The user asked for Home cards in rows and better use of the desktop canvas acros
 ## Verification and release
 
 Use `node --env-file=.env.local --import tsx scripts/verify-desktop-workspace.ts` with the optimized local website, separately from other synthetic auth/fixture runs. It measures card tracks/canvas/overflow at 320/390/768/1024/1280/1440/1920px and checks scrolling, footer visibility, drawer draft retention, task/settings layouts, and existing Home customization/retry/history recovery. Fixtures and personal synthetic preferences are restored afterward. Production deployment and authenticated geometry checks passed; exact evidence is recorded in [verification](verification.md#desktop-workspace--october-24-2026). Installed native devices and screen-reader behavior remain separate checks.
+
+## Sidebar spacing refinement — October 24
+
+Favorites now precede the list-pack heading so shortcuts and the complete tree have separate, adjacent labels. Brand-to-Home spacing is 20px, Home-to-scrollable groups 12px, and rows have 44px minimum targets with tighter vertical padding. Icons/text use a shared left rail; favorite sharing cues reserve the reorder-control column used by the tree. Labels truncate with full-title tooltips. Selection uses a tinted row and inset accent rather than a raised shadow. Archive and Settings share utility-row typography and icons; the account row sits beneath a compact divider. Desktop scrolling/pinned footer and phone collapse behavior remain intact.

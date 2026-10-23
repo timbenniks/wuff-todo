@@ -191,6 +191,29 @@ try {
       assert.equal(Math.round(layout.mainWidth), width - 260);
       assert.ok(layout.cardX - layout.mainX <= 40);
       assert.ok(layout.docHeight <= 1000);
+      const sidebar = await page.evaluate(() => {
+        const root = document.querySelector(".workspace-sidebar")!;
+        const favorite = root.querySelector(".sidebar-favorites")!;
+        const listRow = root.querySelector(".sidebar-list-row > button")!;
+        const home = root.querySelector(".sidebar-home")!;
+        return {
+          favoriteBottom: favorite.getBoundingClientRect().bottom,
+          headingTop: root
+            .querySelector(".sidebar-section-heading")!
+            .getBoundingClientRect().top,
+          rowHeight: listRow.getBoundingClientRect().height,
+          homeHeight: home.getBoundingClientRect().height,
+          favoriteIconX: favorite
+            .querySelector("nav button svg")!
+            .getBoundingClientRect().x,
+          listIconX: listRow.querySelector("svg")!.getBoundingClientRect().x,
+          homeIconX: home.querySelector("svg")!.getBoundingClientRect().x,
+        };
+      });
+      assert.ok(sidebar.headingTop >= sidebar.favoriteBottom);
+      assert.ok(sidebar.rowHeight >= 44 && sidebar.homeHeight >= 44);
+      assert.equal(sidebar.favoriteIconX, sidebar.listIconX);
+      assert.equal(sidebar.homeIconX, sidebar.listIconX);
     }
     await mkdir("docs/screenshots", { recursive: true });
     await page.screenshot({

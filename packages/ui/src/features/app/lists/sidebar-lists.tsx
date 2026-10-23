@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, ListTodo, Star, Users } from "lucide-react";
 import { sidebarGroups, type ListSummary } from "@wuff/contracts";
 import { Button } from "../../../button";
@@ -7,6 +7,7 @@ import { SortableItem, SortableList } from "../../components/sortable";
 import { listPalette } from "../../lib/list-colors";
 
 export function SidebarLists({
+  controls,
   lists,
   archived,
   selectedId,
@@ -17,6 +18,7 @@ export function SidebarLists({
   toggle,
   pending,
 }: {
+  controls?: ReactNode;
   lists: ListSummary[];
   archived: boolean;
   selectedId: string;
@@ -45,7 +47,7 @@ export function SidebarLists({
       >
         {({ ref, style, handle }) => (
           <div ref={ref} style={style} className="min-w-0">
-            <div className="flex min-w-0 items-center gap-0.5">
+            <div className="sidebar-list-row flex min-w-0 items-center gap-0.5">
               {children.length > 0 && (
                 <Button
                   type="button"
@@ -70,11 +72,12 @@ export function SidebarLists({
               )}
               <button
                 type="button"
+                title={list.title}
                 onClick={() => choose(list.id)}
                 onPointerEnter={() => preload(list.id)}
                 onFocus={() => preload(list.id)}
                 aria-current={list.id === selectedId ? "page" : undefined}
-                className={`flex flex-1 min-w-0 items-center gap-2 text-left rounded-xl px-2 py-3 text-sm ${list.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-surface/60"}`}
+                className={`flex flex-1 min-w-0 items-center gap-2 text-left rounded-lg min-h-11 px-3 py-2 text-sm ${list.id === selectedId ? "font-semibold" : "hover:bg-surface/60"}`}
                 style={{
                   background:
                     list.id === selectedId
@@ -134,10 +137,13 @@ export function SidebarLists({
   return (
     <>
       {!archived && lists.some((list) => list.favorite && !list.archived) && (
-        <section className="mb-5" aria-labelledby="favorite-lists-heading">
+        <section
+          className="sidebar-favorites mb-4"
+          aria-labelledby="favorite-lists-heading"
+        >
           <h3
             id="favorite-lists-heading"
-            className="text-xs font-bold text-muted-foreground mb-2"
+            className="sidebar-group-label text-xs font-semibold text-muted-foreground px-3 mb-1"
           >
             Favorites
           </h3>
@@ -148,11 +154,12 @@ export function SidebarLists({
                 <button
                   key={list.id}
                   type="button"
+                  title={list.title}
                   onClick={() => choose(list.id)}
                   onPointerEnter={() => preload(list.id)}
                   onFocus={() => preload(list.id)}
                   aria-current={list.id === selectedId ? "page" : undefined}
-                  className={`flex min-w-0 items-center gap-2 rounded-xl px-2 py-3 text-left text-sm ${list.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-surface/60"}`}
+                  className={`flex min-w-0 items-center gap-2 rounded-lg min-h-11 px-3 py-2 text-left text-sm ${list.id === selectedId ? "font-semibold" : "hover:bg-surface/60"}`}
                   style={{
                     background:
                       list.id === selectedId
@@ -181,6 +188,7 @@ export function SidebarLists({
           </nav>
         </section>
       )}
+      {controls}
       <nav aria-label={archived ? "Archived lists" : "Lists"}>
         <SortableList
           items={groups.map((group) => group.list)}

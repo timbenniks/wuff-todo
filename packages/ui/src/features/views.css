@@ -611,3 +611,46 @@ button:focus-visible {
     width: min(800px, 55vw);
   }
 }
+
+/* Shared icon/text rails keep shortcuts, lists and utilities easy to scan. */
+.sidebar-brand {
+  padding-inline: 4px;
+}
+.sidebar-home {
+  padding-inline: 11px;
+}
+.sidebar-home[aria-current="page"] {
+  background: var(--wuff-surface);
+}
+.sidebar-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding-left: 12px;
+  margin-bottom: 2px;
+}
+.sidebar-section-heading > span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.sidebar-list-row > button:first-of-type > svg:first-child,
+.sidebar-favorites nav > button > svg:first-child {
+  width: 18px;
+  height: 18px;
+}
+.sidebar-list-row > button[aria-current="page"],
+.sidebar-favorites button[aria-current="page"] {
+  box-shadow: inset 2px 0 var(--wuff-primary);
+}
+.sidebar-utilities > button {
+  padding-inline: 11px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.sidebar-account {
+  gap: 8px;
+}
+.sidebar-favorites nav > button {
+  padding-right: 58px;
+}

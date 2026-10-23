@@ -79,7 +79,7 @@
     "components": [
       {
         "name": "SidebarLists",
-        "signature": "export function SidebarLists({\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
+        "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
       }
     ]
   },
