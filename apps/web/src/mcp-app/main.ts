@@ -2048,6 +2048,22 @@ function renderCatalog() {
       renderCatalog();
     }),
   );
+  const favorites = catalog.filter((list) => list.favorite && !list.archived);
+  if (!archive && favorites.length) {
+    const section = element("nav");
+    section.setAttribute("aria-label", "Favorite lists");
+    section.append(element("h2", "Favorites"));
+    for (const list of favorites) {
+      const shortcut = button(
+        `☆ ${list.title}${list.shared ? " · Shared" : ""}`,
+        () => void call("show_list", { listId: list.id }),
+      );
+      shortcut.className = "wuff-button list";
+      shortcut.style.borderLeft = `5px solid ${listPalette[list.color].accent}`;
+      section.append(shortcut);
+    }
+    root.append(section, element("h2", "All lists"));
+  }
   const visible = catalog.filter((l) => l.archived === archive);
   const groups = sidebarGroups(catalog, archive);
   const rows = groups.flatMap(({ list, children }) => [
@@ -2107,6 +2123,20 @@ function renderCatalog() {
     actions.append(trigger, menu);
     main.append(open);
     row.append(actions);
+    menu.append(
+      button(
+        list.favorite ? "Remove from favorites" : "Add to favorites",
+        () =>
+          void changeCatalogOrder((order) => ({
+            favoriteListIds: [
+              ...(order.favoriteListIds ?? []).filter((id) => id !== list.id),
+              ...((order.favoriteListIds ?? []).includes(list.id)
+                ? []
+                : [list.id]),
+            ],
+          })),
+      ),
+    );
     for (const [dir, label] of [
       [-1, "up"],
       [1, "down"],

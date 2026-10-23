@@ -196,3 +196,7 @@ Account/list preferences use the separate `wuff_list_views` table and revision, 
 ## Personal reminder delivery — October 22
 
 See [reminders](reminders.md) for personal revisions, delayed jobs, provider adapters and privacy. Scheduled callbacks and a single daily recovery pass replace minute polling. The push-only web service worker is explicitly selected for notifications; it adds no fetch interception, offline list storage or offline writes. Native registration still requires signed installed-client proof.
+
+## Personal list favorites
+
+[WUFF-86](personal-list-favorites.md) adds an optional favorite list-ID set to the existing personal sidebar preference and revision. Current catalog authorization filters favorites; ordering, nesting and favorites serialize on the account row. Omitted favorite fields preserve state for older clients. No shared list/task or membership changes are involved.

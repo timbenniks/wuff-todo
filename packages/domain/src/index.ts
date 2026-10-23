@@ -367,13 +367,18 @@ async function orderedCatalog(tx: Tx | Db, actor: Actor) {
   const collapsedListIds = (preference?.collapsedListIds ?? []).filter((id) =>
     rows.some((row) => row.id === id),
   );
+  const favoriteListIds = (preference?.favoriteListIds ?? []).filter((id) =>
+    rows.some((row) => row.id === id),
+  );
   return {
     nesting,
+    favoriteListIds,
     collapsedListIds,
     lists: rows
       .map((row) => ({
         ...row,
         parentListId: parents.get(row.id) ?? null,
+        favorite: favoriteListIds.includes(row.id),
         sidebarCollapsed: collapsedListIds.includes(row.id),
       }))
       .sort(
@@ -399,6 +404,7 @@ export async function getListOrder(actor: Actor) {
         listIds: value.lists.map((l) => l.id),
         nesting: value.nesting,
         collapsedListIds: value.collapsedListIds,
+        favoriteListIds: value.favoriteListIds,
       };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
@@ -434,6 +440,16 @@ export async function reorderLists(actor: Actor, data: unknown) {
           "Provide each accessible list exactly once, including archived lists.",
           400,
         );
+      const favoriteListIds = input.favoriteListIds ?? current.favoriteListIds;
+      if (
+        new Set(favoriteListIds).size !== favoriteListIds.length ||
+        favoriteListIds.some((id) => !input.listIds.includes(id))
+      )
+        fail(
+          "invalid_favorites",
+          "Choose each accessible favorite list at most once.",
+          400,
+        );
       const nesting = input.nesting ?? current.nesting;
       const collapsedListIds =
         input.collapsedListIds ?? current.collapsedListIds;
@@ -456,6 +472,7 @@ export async function reorderLists(actor: Actor, data: unknown) {
           listIds: input.listIds,
           nesting,
           collapsedListIds,
+          favoriteListIds,
           version: current.version + 1,
         })
         .onConflictDoUpdate({
@@ -464,6 +481,7 @@ export async function reorderLists(actor: Actor, data: unknown) {
             listIds: input.listIds,
             nesting,
             collapsedListIds,
+            favoriteListIds,
             version: current.version + 1,
           },
         });

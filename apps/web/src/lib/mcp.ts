@@ -358,7 +358,7 @@ export function createMcpServer(actor: Actor) {
     "get_list_order",
     {
       description:
-        "Read your personal sidebar ordering, nesting [{listId,parentListId}], collapsedListIds and current revision, including archived lists. Hierarchy never changes sharing or task/subtask structure.",
+        "Read your personal sidebar ordering, nesting [{listId,parentListId}], collapsedListIds, favoriteListIds and current revision, including archived lists. Hierarchy never changes sharing or task/subtask structure.",
       inputSchema: {},
       annotations: read,
     },
@@ -369,7 +369,7 @@ export function createMcpServer(actor: Actor) {
     "reorder_lists",
     {
       description:
-        "Set your personal sidebar order and optional one-level nesting [{listId,parentListId}] and collapsedListIds. These arrays replace your preferences; omission preserves them. Read get_list_order first; include every accessible list ID once including archived lists, its order revision and a fresh operationId. No self-parenting, cycles, grandchildren or inaccessible parents. Nesting never shares lists or moves tasks/subtasks; parent screens show their own tasks.",
+        "Set your personal sidebar order and optional one-level nesting [{listId,parentListId}] and collapsedListIds, plus favoriteListIds for personal shortcuts (including child/shared lists). Favorites never change list location or sharing; archived favorites are hidden until restored. These arrays replace your preferences; omission preserves them. Read get_list_order first; include every accessible list ID once including archived lists, its order revision and a fresh operationId. No self-parenting, cycles, grandchildren or inaccessible parents. Nesting never shares lists or moves tasks/subtasks; parent screens show their own tasks.",
       inputSchema: reorderListsSchema,
       annotations: write,
     },

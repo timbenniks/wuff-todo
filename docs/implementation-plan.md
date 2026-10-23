@@ -8,6 +8,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Personal list favorites (WUFF-86, October 23):** implementation and local web/MCP/native API verification passed. Personal shortcuts preserve existing nesting and shared content; production migration 0016 preserved data. Application release and authenticated smoke are pending. See [favorites contract](personal-list-favorites.md).
+
 - **Personal list nesting (WUFF-85, October 23):** one-level account-specific sidebar hierarchy is implemented across shared web/Tauri features and MCP and released on the website/MCP. Authenticated production save/reload/collapse and live Codex reads passed; WUFF-85 is done. Native artifact publication remains blocked by GitHub runner billing limits. Parent and child lists retain independent tasks/subtasks and sharing. See [contract, migration and release boundaries](personal-list-nesting.md).
 
 - **Contributor prototyping (October 23):** hosted `/docs` guide, real component examples, generated source kit, agent-readable reference and portable skill support a non-coder using ChatGPT Work without a local checkout. See [design guide and verification](prototype-guide.md). Actual use in her Work workspace remains a separate check.

@@ -418,6 +418,7 @@ export function ListApp({
         .map((item) => ({
           ...item,
           parentListId: parents.get(item.id) ?? null,
+          favorite: (saved.favoriteListIds ?? []).includes(item.id),
           sidebarCollapsed: (saved.collapsedListIds ?? []).includes(item.id),
         }))
         .sort(
@@ -856,6 +857,15 @@ export function ListApp({
                       disabled: busy || !!pendingCreate || !!sidebarRetry,
                       error,
                       retry: sidebarRetry ? () => saveSidebar(null) : undefined,
+                      favorite: (id, enabled) =>
+                        saveSidebar((order) => ({
+                          favoriteListIds: [
+                            ...(order.favoriteListIds ?? []).filter(
+                              (value) => value !== id,
+                            ),
+                            ...(enabled ? [id] : []),
+                          ],
+                        })),
                       move: (id, parentId) =>
                         saveSidebar((order) => ({
                           nesting: [

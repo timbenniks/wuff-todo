@@ -4,7 +4,14 @@ import { Textarea } from "../../../textarea";
 import { NativeSelect } from "../../../native-select";
 
 import { useRef, useState } from "react";
-import { Archive, ArchiveRestore, Check, Settings2, X } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Check,
+  Settings2,
+  Star,
+  X,
+} from "lucide-react";
 import {
   listColors,
   type ListColor,
@@ -23,6 +30,7 @@ type SidebarLocation = {
   lists: ListSummary[];
   disabled: boolean;
   error: string;
+  favorite: (id: string, enabled: boolean) => Promise<boolean>;
   move: (id: string, parentId: string | null) => Promise<boolean>;
   retry?: () => Promise<boolean>;
 };
@@ -34,6 +42,7 @@ function ListLocation({
   disabled,
   error,
   move,
+  favorite,
   retry,
 }: SidebarLocation & { list: TodoList; busy: boolean }) {
   const [parentId, setParentId] = useState(
@@ -41,6 +50,9 @@ function ListLocation({
   );
   const [failed, setFailed] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [favoriteSaved, setFavoriteSaved] = useState(false);
+  const isFavorite =
+    lists.find((item) => item.id === list.id)?.favorite ?? false;
   const hasChildren = lists.some((item) => item.parentListId === list.id);
   const candidates = lists.filter(
     (item) =>
@@ -56,6 +68,35 @@ function ListLocation({
       <h3 id={`sidebar-location-${list.id}`} className="text-sm font-bold mb-2">
         Your sidebar
       </h3>
+      <Button
+        type="button"
+        variant="outline"
+        className="mb-2"
+        disabled={disabled}
+        aria-pressed={isFavorite}
+        onClick={async () => {
+          setFailed(false);
+          setSaved(false);
+          setFavoriteSaved(false);
+          const ok = await favorite(list.id, !isFavorite);
+          setFailed(!ok);
+          setFavoriteSaved(ok);
+        }}
+      >
+        <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
+        {isFavorite ? "Remove from favorites" : "Add to favorites"}
+      </Button>
+      <p className="text-sm text-muted-foreground mb-4">
+        Favorites give you quick access above your list pack. Only you see your
+        favorites.
+      </p>
+      {favoriteSaved && (
+        <p role="status" className="text-sm text-muted-foreground mb-4">
+          {isFavorite
+            ? "Added to your favorites."
+            : "Removed from your favorites."}
+        </p>
+      )}
       <p className="text-sm text-muted-foreground mb-4">
         Move this list under another list, or keep it at top level. Only your
         sidebar changes; tasks, subtasks and sharing stay with the list.
@@ -103,7 +144,7 @@ function ListLocation({
         )}
         {(failed || retry) && (
           <p role="alert" className="text-sm text-red-800">
-            {error || "Your move wasn’t saved. Try again."}
+            {error || "Your sidebar change wasn’t saved. Try again."}
           </p>
         )}
         {retry && (
@@ -114,6 +155,7 @@ function ListLocation({
             onClick={async () => {
               const ok = await retry();
               setSaved(ok);
+              setFavoriteSaved(false);
               setFailed(!ok);
             }}
           >
@@ -122,7 +164,7 @@ function ListLocation({
         )}
         {saved && (
           <p role="status" className="text-sm text-muted-foreground">
-            Your sidebar location is saved.
+            Your sidebar changes are saved.
           </p>
         )}
         <Button variant="outline" disabled={disabled || hasChildren}>

@@ -107,6 +107,7 @@ export const reorderListsSchema = operationSchema.extend({
     .max(10000)
     .optional(),
   collapsedListIds: z.array(idSchema).max(10000).optional(),
+  favoriteListIds: z.array(idSchema).max(10000).optional(),
 });
 export const createSectionSchema = listMutationSchema.extend({
   title: titleSchema,
@@ -260,6 +261,7 @@ export type ListOrder = {
   listIds: string[];
   nesting?: ListNesting[];
   collapsedListIds?: string[];
+  favoriteListIds?: string[];
 };
 export type TodoList = {
   personalView?: PersonalListView;
@@ -285,7 +287,11 @@ export type TaskDetail = { list: TodoList; task: Task };
 export type ListSummary = Pick<
   TodoList,
   "id" | "title" | "ownerId" | "shared" | "version" | "color" | "archived"
-> & { parentListId?: string | null; sidebarCollapsed?: boolean };
+> & {
+  parentListId?: string | null;
+  favorite?: boolean;
+  sidebarCollapsed?: boolean;
+};
 
 // Drop inaccessible references before projecting personal navigation. Lists never
 // inherit membership, content, or ownership through this preference.

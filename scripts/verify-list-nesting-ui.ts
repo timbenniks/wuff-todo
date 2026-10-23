@@ -93,7 +93,7 @@ try {
     await expect(
       dialog
         .getByRole("status")
-        .filter({ hasText: "Your sidebar location is saved." }),
+        .filter({ hasText: "Your sidebar changes are saved." }),
     ).toBeVisible();
     await dialog
       .getByRole("button", { name: "Close list settings", exact: true })
@@ -170,7 +170,7 @@ try {
   await expect(
     dialog
       .getByRole("status")
-      .filter({ hasText: "Your sidebar location is saved." }),
+      .filter({ hasText: "Your sidebar changes are saved." }),
   ).toBeVisible();
   await dialog
     .getByRole("button", { name: "Close list settings", exact: true })
@@ -269,7 +269,7 @@ try {
   await expect(
     dialog
       .getByRole("status")
-      .filter({ hasText: "Your sidebar location is saved." }),
+      .filter({ hasText: "Your sidebar changes are saved." }),
   ).toBeVisible();
   await expect(dialog.getByLabel(/^Description/)).toHaveValue(
     "Unsaved list detail",

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, ListTodo, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, ListTodo, Star, Users } from "lucide-react";
 import { sidebarGroups, type ListSummary } from "@wuff/contracts";
 import { Button } from "../../../button";
 import { SortableItem, SortableList } from "../../components/sortable";
@@ -133,6 +133,54 @@ export function SidebarLists({
   }
   return (
     <>
+      {!archived && lists.some((list) => list.favorite && !list.archived) && (
+        <section className="mb-5" aria-labelledby="favorite-lists-heading">
+          <h3
+            id="favorite-lists-heading"
+            className="text-xs font-bold text-muted-foreground mb-2"
+          >
+            Favorites
+          </h3>
+          <nav aria-label="Favorite lists" className="grid gap-1">
+            {lists
+              .filter((list) => list.favorite && !list.archived)
+              .map((list) => (
+                <button
+                  key={list.id}
+                  type="button"
+                  onClick={() => choose(list.id)}
+                  onPointerEnter={() => preload(list.id)}
+                  onFocus={() => preload(list.id)}
+                  aria-current={list.id === selectedId ? "page" : undefined}
+                  className={`flex min-w-0 items-center gap-2 rounded-xl px-2 py-3 text-left text-sm ${list.id === selectedId ? "shadow-sm font-semibold" : "hover:bg-surface/60"}`}
+                  style={{
+                    background:
+                      list.id === selectedId
+                        ? listPalette[list.color].tint
+                        : undefined,
+                  }}
+                >
+                  <Star
+                    size={17}
+                    className="shrink-0"
+                    style={{ color: listPalette[list.color].accent }}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{list.title}</span>
+                  {list.shared && (
+                    <span
+                      className="ml-auto inline-flex shrink-0 text-muted-foreground"
+                      title="Shared list"
+                    >
+                      <Users size={16} aria-hidden="true" />
+                      <span className="sr-only">Shared list</span>
+                    </span>
+                  )}
+                </button>
+              ))}
+          </nav>
+        </section>
+      )}
       <nav aria-label={archived ? "Archived lists" : "Lists"}>
         <SortableList
           items={groups.map((group) => group.list)}

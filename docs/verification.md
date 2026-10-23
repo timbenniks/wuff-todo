@@ -2,6 +2,18 @@
 
 Updated: October 23, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Personal list favorites — October 23, 2026
+
+[WUFF-86](personal-list-favorites.md) adds personal shortcuts above the regular list tree, with add/remove in list settings, unchanged hierarchy/tasks/sharing and editor support. Archived favorites are hidden until restored; current access filters revoked/deleted lists.
+
+- Workspace/root TypeScript, 87 unit tests, optimized web/MCP build and native frontend build passed. Native output retains its existing bundle-size advisory; installed native clients were not tested.
+- The new favorites domain integration case passed, plus all five existing list-feature/nesting cases in a separate serial run (61.2 seconds). Coverage includes isolation, editor access, duplicate/inaccessible references, legacy payload preservation, retries, concurrent writes against nesting/collapse, unchanged task/subtask snapshots and shared versions, archive/restore, revocation/deletion, live order invalidation, and authenticated HTTP/MCP/native field persistence and scope/origin/account/audience boundaries.
+- `scripts/verify-list-favorites-ui.ts` passed against the optimized isolated-development website: add/remove/reload, collapsed-child shortcuts, shared cues, personal isolation, unsaved owner draft preservation, identical-payload retry after a committed response was lost, archive/restore and editor controls. At 320/390/1280px no document/dialog overflow or captured page errors occurred. Screenshots: `list-favorites-{320,390,1280}.png` and `list-favorites-settings-{320,390,1280}.png`.
+- A real local MCP Apps SDK host passed favorite save/reload, collapsed-child shortcut navigation, removal and 390/1280px layouts without page errors. Screenshots: `list-favorites-mcp-{390,1280}.png`. This is local SDK-host evidence, not certification of every production AI host.
+- Additive migration `0016_icy_umar.sql` applied through existing direct connections on development then production. Exact before/after fingerprints preserved original users/lists/tasks/members and every old sidebar field (including nesting/collapse). Production preserved 2 users, 9 lists, 50 tasks, 2 memberships and 2 sidebar preferences. Disposable test lists and SDK grant cleanup are required before completion.
+
+Production application deployment and authenticated smoke are pending. GitHub runners were previously blocked by billing/spending limits; no remote CI success or updated native binary is claimed.
+
 ## List settings and archive placement — October 23, 2026
 
 The shared web/Tauri sidebar now contains lists and their collapse/reorder controls, with Archive browsing in the footer beside account Settings. Personal nesting is inside the selected list’s **Settings → Your sidebar → Parent list / Move list**. Owner-only Archive list / Restore list actions remain inside list settings. Location saves stay in the dialog and preserve unsaved owner metadata drafts.

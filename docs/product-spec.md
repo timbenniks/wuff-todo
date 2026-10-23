@@ -41,7 +41,7 @@ Users can create and view private lists, rename their own lists, share them, and
 
 **Implemented:** sidebar ordering is personal to each user. Reordering the sidebar does not change anyone else's sidebar.
 
-**Selected October 23:** [one-level personal list nesting](personal-list-nesting.md) organizes independent lists under a parent in each account's sidebar. Parent and child retain independent sharing and tasks/subtasks; opening a parent shows only its own tasks. Favorites and a home dashboard remain separate requests.
+**Selected October 23:** [one-level personal list nesting](personal-list-nesting.md) organizes independent lists under a parent in each account's sidebar. Parent and child retain independent sharing and tasks/subtasks; opening a parent shows only its own tasks. [Personal list favorites](personal-list-favorites.md) provide shortcuts above the tree; a home dashboard remains a separate request.
 
 **Implemented:** archive and restore lists, with archive controlled by the owner. Archived lists retain their content and membership, and tasks/sections are read-only until restored. Permanent deletion is a separate owner-only action with an explicit confirmation explaining that it affects all members.
 

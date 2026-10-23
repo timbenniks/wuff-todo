@@ -54,6 +54,10 @@ export const listPreferences = pgTable("wuff_list_preferences", {
     .$type<import("@wuff/contracts").ListNesting[]>()
     .notNull()
     .default([]),
+  favoriteListIds: jsonb("favorite_list_ids")
+    .$type<string[]>()
+    .notNull()
+    .default([]),
   collapsedListIds: jsonb("collapsed_list_ids")
     .$type<string[]>()
     .notNull()

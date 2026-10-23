@@ -311,6 +311,7 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     const input = {
       ...order,
       nesting: [{ listId: child.id, parentListId: parent.id }],
+      favoriteListIds: [child.id],
       operationId: op(),
     };
     let response = await fetch(origin + "/api/v1/list-order", {
@@ -321,6 +322,7 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     assert.equal(response.status, 200);
     order = await response.json();
     assert.deepEqual(order.nesting, input.nesting);
+    assert.deepEqual(order.favoriteListIds, [child.id]);
     assert.equal(
       (
         await fetch(origin + "/api/v1/list-order", {
@@ -352,9 +354,13 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     const token = await grant(false);
     let result = await mcp(token, "get_list_order", {});
     assert.deepEqual(result.structuredContent.order.nesting, input.nesting);
+    assert.deepEqual(result.structuredContent.order.favoriteListIds, [
+      child.id,
+    ]);
     result = await mcp(token, "reorder_lists", {
       ...order,
       collapsedListIds: [parent.id],
+      favoriteListIds: [parent.id, child.id],
       operationId: op(),
     });
     assert.ok(!result.isError);
@@ -362,14 +368,19 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     const nativeToken = await grant(true);
     response = await native(nativeToken, "getListOrder");
     assert.equal(response.status, 200);
-    assert.deepEqual((await response.json()).collapsedListIds, [parent.id]);
+    const nativeOrder = await response.json();
+    assert.deepEqual(nativeOrder.collapsedListIds, [parent.id]);
+    assert.deepEqual(nativeOrder.favoriteListIds, [parent.id, child.id]);
     response = await native(nativeToken, "reorderLists", {
       ...order,
       nesting: [],
+      favoriteListIds: [],
       operationId: op(),
     });
     assert.equal(response.status, 200);
-    assert.deepEqual((await response.json()).nesting, []);
+    const nativeSaved = await response.json();
+    assert.deepEqual(nativeSaved.nesting, []);
+    assert.deepEqual(nativeSaved.favoriteListIds, []);
     const readToken = await grant(false, "lists:read");
     const denied = await mcp(readToken, "reorder_lists", {
       ...(await getListOrder(a)),
