@@ -10,12 +10,11 @@ import {
   setTaskReminder,
   registerReminderDevice,
   removeReminderDevice,
-  localReminderInstant,
+  resolveReminderLocalTime,
   schedulePendingReminders,
 } from "@wuff/domain";
-import { AppError, reminderTimezoneSchema } from "@wuff/contracts";
+import { AppError } from "@wuff/contracts";
 import { after } from "next/server";
-import { z } from "zod";
 export async function GET(request: Request) {
   try {
     const actor = await webActor(),
@@ -39,17 +38,8 @@ export async function POST(request: Request) {
     sameOrigin(request);
     const actor = await webActor(),
       { action, input } = await jsonInput(request);
-    if (action === "localTime") {
-      const value = z
-        .object({
-          local: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
-          timezone: reminderTimezoneSchema,
-        })
-        .parse(input);
-      return privateJson({
-        runAt: localReminderInstant(value.local, value.timezone).toISOString(),
-      });
-    }
+    if (action === "localTime")
+      return privateJson(await resolveReminderLocalTime(actor, input));
     const actions = {
       disableBrowser: disableBrowserReminders,
       settings: updateReminderSettings,

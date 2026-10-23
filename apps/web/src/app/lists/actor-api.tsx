@@ -1,7 +1,10 @@
 "use client";
-import { createContext, useContext, useMemo } from "react";
+import { useMemo } from "react";
 import { api } from "@/lib/api";
-const ActorContext = createContext<string | undefined>(undefined);
+import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
+import { authClient } from "@/lib/auth/client";
+import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
+export { useActorApi } from "@wuff/ui/features/actor-api";
 export function ActorApiProvider({
   userId,
   children,
@@ -9,16 +12,28 @@ export function ActorApiProvider({
   userId: string;
   children: React.ReactNode;
 }) {
-  return (
-    <ActorContext.Provider value={userId}>{children}</ActorContext.Provider>
-  );
-}
-export function useActorApi() {
-  const userId = useContext(ActorContext);
-  return useMemo(
-    () =>
-      <T,>(path: string, method = "GET", body?: unknown) =>
-        api<T>(path, method, body, userId),
+  const runtime = useMemo<FeatureRuntime>(
+    () => ({
+      api: (path, method, body) => api(path, method, body, userId),
+      signOut: async () => {
+        await disableBrowserOnSignOut();
+        await authClient.signOut();
+        window.location.assign("/sign-in");
+      },
+      navigate: (url) => window.location.assign(url),
+      reset: () => window.location.replace("/lists"),
+      webOrigin: typeof window === "undefined" ? "" : window.location.origin,
+      request: (path, init) =>
+        fetch(path, {
+          ...init,
+          headers: { ...init?.headers, "X-Wuff-User": userId },
+        }),
+    }),
     [userId],
+  );
+  return (
+    <RuntimeContext.Provider value={runtime}>
+      {children}
+    </RuntimeContext.Provider>
   );
 }

@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./live-refresh": "./src/live-refresh.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

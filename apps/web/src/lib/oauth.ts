@@ -11,8 +11,7 @@ import {
 import { AppError, scopes } from "@wuff/contracts";
 import { appOrigin, mcpResource } from "./config";
 import {
-  nativeClientId,
-  nativeRedirectUri,
+  firstPartyRedirect,
   nativeAllowedScopes,
   validResourceClient,
 } from "./native-policy";
@@ -241,25 +240,35 @@ export async function authorizationDetails(params: URLSearchParams) {
   const resource = params.get("resource") ?? "";
   if (
     !validResourceClient(client.id, resource, appOrigin()) ||
-    (client.id === nativeClientId &&
-      params.get("redirect_uri") !== nativeRedirectUri)
+    (firstPartyRedirect(client.id) !== null &&
+      params.get("redirect_uri") !== firstPartyRedirect(client.id))
   )
     throw new AppError(
       "invalid_target",
       "This authorization is for a different resource.",
     );
-  const requested = (params.get("scope") ?? "").split(" ").filter(Boolean);
+  const requested = authorizationScopes(params.get("scope"), client.id);
+  return { client, requested, resource };
+}
+
+// OAuth permits an omitted scope. ChatGPT's connection setup uses this path;
+// consent must display the same bounded defaults that are saved in the grant.
+export function authorizationScopes(scope: string | null, clientId: string) {
+  const requested =
+    scope === null && firstPartyRedirect(clientId) === null
+      ? ["lists:read", "tasks:write", "lists:manage"]
+      : (scope ?? "").split(" ").filter(Boolean);
   if (
     !requested.includes("lists:read") ||
     requested.some(
       (s) =>
-        !(client.id === nativeClientId ? nativeAllowedScopes : scopes).some(
-          (allowed) => allowed === s,
-        ),
+        !(
+          firstPartyRedirect(clientId) !== null ? nativeAllowedScopes : scopes
+        ).some((allowed) => allowed === s),
     )
   )
     throw new AppError("invalid_scope", "Choose supported Wuff permissions.");
-  return { client, requested, resource };
+  return requested;
 }
 export function authorizationMetadata() {
   const origin = appOrigin();

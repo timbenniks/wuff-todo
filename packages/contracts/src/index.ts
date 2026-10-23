@@ -514,6 +514,9 @@ export type GithubPullRequest = {
 };
 
 // First-party native OAuth configuration, shared by client and authorization server.
+export const tauriClientId = "wuff-tauri-v1";
+export const tauriRedirectUri =
+  "com.timbenniks.wufftodo.tauri://oauth/callback";
 export const nativeClientId = "wuff-native-v1";
 export const nativeRedirectUri = "com.timbenniks.wufftodo://oauth/callback";
 export const nativeScopes = [

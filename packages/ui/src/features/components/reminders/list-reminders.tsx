@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { useActorApi } from "../../actor-api";
+import { Button } from "../../../button";
 import { useReminderRequest } from "./request";
 type Setting = { version: number; dailyIncluded: boolean };
 export function ListReminders({
@@ -11,6 +11,7 @@ export function ListReminders({
   listId: string;
   userId: string;
 }) {
+  const api = useActorApi();
   const [saved, setSaved] = useState<Setting | null>(null),
     [included, setIncluded] = useState(true),
     [error, setError] = useState(""),

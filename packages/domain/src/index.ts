@@ -811,7 +811,9 @@ export async function createTask(actor: Actor, data: unknown) {
           400,
         );
       const [binding] =
-        !input.parentTaskId && list.mode === "work"
+        !input.parentTaskId &&
+        list.mode === "work" &&
+        actor.scopes.includes("github:manage")
           ? await tx
               .select()
               .from(githubBindings)
@@ -824,12 +826,6 @@ export async function createTask(actor: Actor, data: unknown) {
               )
           : [];
       if (binding) {
-        if (!actor.scopes.includes("github:manage"))
-          fail(
-            "github_permission_required",
-            "This list automatically creates GitHub issues. Reconnect with GitHub permission before adding a task.",
-            403,
-          );
         githubSafeFields({
           title: input.title,
           body: input.content ?? "",

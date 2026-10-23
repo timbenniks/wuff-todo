@@ -1,3 +1,4 @@
+import { ActorApiProvider } from "../lists/actor-api";
 import { SettingsNav } from "./settings-nav";
 import { pageActor } from "@/lib/auth/server";
 import { redirect } from "next/navigation";
@@ -7,8 +8,9 @@ export default async function SettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  let actor;
   try {
-    await pageActor();
+    actor = await pageActor();
   } catch {
     redirect("/sign-in");
   }
@@ -26,7 +28,9 @@ export default async function SettingsLayout({
       </header>
       <div className="grid gap-8 sm:grid-cols-[11rem_minmax(0,1fr)]">
         <SettingsNav />
-        <div className="min-w-0">{children}</div>
+        <div className="min-w-0">
+          <ActorApiProvider userId={actor.id}>{children}</ActorApiProvider>
+        </div>
       </div>
     </main>
   );

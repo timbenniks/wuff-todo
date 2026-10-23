@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { PersonalReminder, ReminderSettings } from "@wuff/contracts";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useActorApi } from "../../actor-api";
+import { Button } from "../../../button";
+import { Input } from "../../../input";
 import { useReminderRequest } from "./request";
 export function TaskReminder({
   listId,
@@ -18,6 +18,7 @@ export function TaskReminder({
   inactive: boolean;
   onClose?: () => void;
 }) {
+  const api = useActorApi();
   const [loaded, setLoaded] = useState(false),
     [reminder, setReminder] = useState<PersonalReminder | null>(null),
     [settings, setSettings] = useState<ReminderSettings | null>(null),

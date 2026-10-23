@@ -1,4 +1,10 @@
 import { test } from "node:test";
+import {
+  createRealtimeClient,
+  waitForLive,
+  disconnectLiveConnections,
+} from "./helpers/live";
+import type { LiveLists } from "../apps/web/src/lib/live-types";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -7,7 +13,11 @@ import {
   nativeClientId,
   nativeRedirectUri,
 } from "../apps/web/src/lib/native-policy";
-import type { TodoList } from "@wuff/contracts";
+import {
+  tauriClientId,
+  tauriRedirectUri,
+  type TodoList,
+} from "@wuff/contracts";
 import { database } from "@wuff/db";
 const origin = "http://localhost:3000",
   resource = origin + "/api/mobile";
@@ -26,12 +36,17 @@ async function mobile(token: string, action: string, input?: unknown) {
 async function grant(
   cookie: string,
   scopes = "lists:read tasks:write lists:manage",
+  identity = {
+    clientId: nativeClientId,
+    redirectUri: nativeRedirectUri,
+    path: "/oauth/native",
+  },
 ) {
-  assert.equal((await fetch(origin + "/oauth/native")).status, 200);
+  assert.equal((await fetch(origin + identity.path)).status, 200);
   const verifier = randomBytes(32).toString("base64url");
   const query = new URLSearchParams({
-    client_id: nativeClientId,
-    redirect_uri: nativeRedirectUri,
+    client_id: identity.clientId,
+    redirect_uri: identity.redirectUri,
     response_type: "code",
     code_challenge_method: "S256",
     state: randomBytes(16).toString("hex"),
@@ -55,13 +70,13 @@ async function grant(
   );
   const redirect = new URL((await response.json()).redirect);
   assert.equal(redirect.origin, "null");
-  assert.equal(redirect.protocol, "com.timbenniks.wufftodo:");
+  assert.equal(redirect.protocol, new URL(identity.redirectUri).protocol);
   assert.equal(redirect.searchParams.get("iss"), origin);
   const exchange = {
     grant_type: "authorization_code",
-    client_id: nativeClientId,
+    client_id: identity.clientId,
     code: redirect.searchParams.get("code")!,
-    redirect_uri: nativeRedirectUri,
+    redirect_uri: identity.redirectUri,
     code_verifier: verifier,
     resource,
   };
@@ -116,12 +131,12 @@ async function grant(
     scope: string;
   };
 }
-async function revoke(refreshToken: string) {
+async function revoke(refreshToken: string, clientId = nativeClientId) {
   return fetch(origin + "/oauth/revoke", {
     method: "POST",
     headers: form,
     body: new URLSearchParams({
-      client_id: nativeClientId,
+      client_id: clientId,
       token: refreshToken,
     }),
   });
@@ -414,21 +429,35 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
         title: "Automatic native issue",
         operationId: crypto.randomUUID(),
       };
-      assert.equal(
-        (await mobile(basic.access_token, "createTask", input)).status,
-        403,
-      );
-      const created = await mobile(enabled.access_token, "createTask", input);
+      const local = await mobile(basic.access_token, "createTask", input);
+      assert.equal(local.status, 200);
+      list = await local.json();
+      const localTask = list!.tasks.find((t) => t.title === input.title)!;
+      assert.equal(localTask.github, null);
+      // Consenting later does not turn a retry into a new external export.
+      const retried = await mobile(enabled.access_token, "createTask", input);
+      assert.equal(retried.status, 200);
+      list = await retried.json();
+      assert.equal(list!.tasks.length, 1);
+      assert.equal(list!.tasks[0].id, localTask.id);
+      assert.equal(list!.tasks[0].github, null);
+      const created = await mobile(enabled.access_token, "createTask", {
+        ...input,
+        version: list!.version,
+        title: "Consented automatic issue",
+        operationId: crypto.randomUUID(),
+      });
       assert.equal(created.status, 200);
       list = await created.json();
+      const linkedTask = list!.tasks.find((t) => t.id !== localTask.id)!;
       assert.ok(
-        list!.tasks[0].github,
+        linkedTask.github,
         "Native snapshots include the authorized issue summary",
       );
       const edit = await mobile(enabled.access_token, "updateTask", {
         listId: list!.id,
         version: list!.version,
-        taskId: list!.tasks[0].id,
+        taskId: linkedTask.id,
         title: "Consented linked edit",
         operationId: crypto.randomUUID(),
       });
@@ -439,7 +468,7 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
           await mobile(basic.access_token, "updateTask", {
             listId: list!.id,
             version: list!.version,
-            taskId: list!.tasks[0].id,
+            taskId: linkedTask.id,
             completed: true,
             operationId: crypto.randomUUID(),
           })
@@ -469,5 +498,278 @@ test("native read-only grants cannot write; GitHub scope requires fresh explicit
     }
   } finally {
     await revoke(reader.refresh_token);
+  }
+});
+
+test("Tauri fixed identity uses native permissions, refresh and revocation", async () => {
+  const cookie = await loginFixture(users[0]);
+  const tokens = await grant(cookie, "lists:read", {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  });
+  let refresh = tokens.refresh_token;
+  try {
+    assert.equal((await mobile(tokens.access_token, "listLists")).status, 200);
+    assert.equal(
+      (
+        await mobile(tokens.access_token, "createList", {
+          title: "Denied Tauri fixture",
+          operationId: crypto.randomUUID(),
+        })
+      ).status,
+      403,
+    );
+    const result = await fetch(origin + "/oauth/token", {
+      method: "POST",
+      headers: form,
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refresh,
+        client_id: tauriClientId,
+        resource,
+      }),
+    });
+    assert.equal(result.status, 200);
+    const rotated = await result.json();
+    refresh = rotated.refresh_token;
+    assert.equal((await mobile(rotated.access_token, "listLists")).status, 200);
+    assert.equal((await revoke(refresh, tauriClientId)).status, 200);
+    assert.equal((await mobile(rotated.access_token, "listLists")).status, 401);
+  } finally {
+    await revoke(refresh, tauriClientId);
+  }
+});
+
+test("Tauri bearer live capabilities pin the actor and stream authorized changes", async () => {
+  const cookie = await loginFixture(users[0]);
+  const identity = {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  };
+  const reader = await grant(cookie, "lists:read", identity);
+  const writer = await grant(cookie, "lists:read lists:manage", identity);
+  let list: TodoList | undefined;
+  let live: ReturnType<typeof createRealtimeClient> | undefined;
+  try {
+    const session = await (await mobile(reader.access_token, "session")).json();
+    assert.equal(
+      (await mobile(reader.access_token, "getLive", { userId: users[1].id }))
+        .status,
+      409,
+    );
+    const response = await mobile(reader.access_token, "getLive", {
+      userId: session.userId,
+    });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control")!, /no-store/);
+    const config = (await response.json()) as LiveLists;
+    live = createRealtimeClient({ url: config.url, logLevel: "silent" });
+    const subscription = live.subscribe(config.query);
+    await waitForLive(subscription, () => true);
+    list = await (
+      await mobile(writer.access_token, "createList", {
+        title: "Tauri stream synthetic",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    await waitForLive(subscription, (rows) =>
+      rows.some((row) => row.id === list!.id),
+    );
+    assert.equal(
+      (
+        await mobile(writer.access_token, "deleteList", {
+          listId: list!.id,
+          version: list!.version,
+          operationId: crypto.randomUUID(),
+        })
+      ).status,
+      200,
+    );
+    await waitForLive(
+      subscription,
+      (rows) => !rows.some((row) => row.id === list!.id),
+    );
+    list = undefined;
+    await revoke(reader.refresh_token, tauriClientId);
+    assert.equal(
+      (await mobile(reader.access_token, "getLive", { userId: session.userId }))
+        .status,
+      401,
+    );
+    subscription.unsubscribe();
+  } finally {
+    live?.close();
+    disconnectLiveConnections();
+    if (list)
+      await mobile(writer.access_token, "deleteList", {
+        listId: list.id,
+        version: list.version,
+        operationId: crypto.randomUUID(),
+      });
+    await revoke(reader.refresh_token, tauriClientId);
+    await revoke(writer.refresh_token, tauriClientId);
+  }
+});
+
+test("native feature adapters preserve identity, Work context and private image permissions", async () => {
+  const identity = {
+    clientId: tauriClientId,
+    redirectUri: tauriRedirectUri,
+    path: "/oauth/tauri",
+  };
+  const cookie = await loginFixture(users[0]);
+  const owner = await grant(cookie, undefined, identity),
+    reader = await grant(cookie, "lists:read", identity);
+  const outsider = await grant(
+    await loginFixture(users[1]),
+    "lists:read",
+    identity,
+  );
+  let list: TodoList | undefined;
+  const bytes = await readFile("apps/web/public/mascot/waffles-icon.webp");
+  const imageRequest = (
+    token: string,
+    params: URLSearchParams,
+    method = "GET",
+    data?: Buffer,
+  ) =>
+    fetch(origin + "/api/mobile/images?" + params, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "image/webp",
+        "X-Wuff-User": users[0].id,
+      },
+      body: data ? new Uint8Array(data) : undefined,
+    });
+  try {
+    assert.equal(
+      (
+        await fetch(resource, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${owner.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "listLists", userId: users[1].id }),
+        })
+      ).status,
+      409,
+    );
+    list = await (
+      await mobile(owner.access_token, "createList", {
+        title: "Native feature proof",
+        mode: "work",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    list = await (
+      await mobile(owner.access_token, "createTask", {
+        listId: list!.id,
+        version: list!.version,
+        title: "Image and Work context",
+        status: "in_progress",
+        priority: "high",
+        references: [
+          { url: "https://github.com/timbenniks/wuff-todo/issues/10" },
+        ],
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    const task = list!.tasks[0];
+    assert.equal(task.priority, "high");
+    assert.equal(task.references.length, 1);
+    assert.equal(
+      (await mobile(owner.access_token, "githubTask", task.id)).status,
+      200,
+    );
+    assert.equal(
+      (await mobile(owner.access_token, "agentTask", task.id)).status,
+      200,
+    );
+    assert.equal(
+      (await mobile(outsider.access_token, "githubTask", task.id)).status,
+      404,
+    );
+    assert.equal(
+      (await mobile(outsider.access_token, "agentTask", task.id)).status,
+      404,
+    );
+    const params = new URLSearchParams({
+      listId: list!.id,
+      taskId: task.id,
+      version: String(list!.version),
+      operationId: crypto.randomUUID(),
+    });
+    assert.equal(
+      (await imageRequest(reader.access_token, params, "POST", bytes)).status,
+      403,
+    );
+    const uploaded = await imageRequest(
+      owner.access_token,
+      params,
+      "POST",
+      bytes,
+    );
+    assert.equal(uploaded.status, 200);
+    const { image } = await uploaded.json();
+    assert.equal(
+      (
+        await (
+          await imageRequest(owner.access_token, params, "POST", bytes)
+        ).json()
+      ).image.id,
+      image.id,
+    );
+    const query = new URLSearchParams({ id: image.id });
+    assert.equal(
+      (await fetch(origin + "/api/mobile/images?" + query)).status,
+      401,
+    );
+    const foreign = await fetch(origin + "/api/mobile/images?" + query, {
+      headers: { Authorization: `Bearer ${outsider.access_token}` },
+    });
+    assert.equal(foreign.status, 404);
+    const response = await imageRequest(owner.access_token, query);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control")!, /no-store/);
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+    list = await (
+      await mobile(owner.access_token, "updateTask", {
+        listId: list!.id,
+        taskId: task.id,
+        version: list!.version,
+        content: `**Native notes**\n\n![Waffles](/api/v1/attachments/${image.id})`,
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    assert.equal(list!.tasks[0].images!.length, 1);
+    assert.equal(list!.tasks[0].priority, "high");
+    assert.equal(list!.tasks[0].references.length, 1);
+    list = await (
+      await mobile(owner.access_token, "updateTask", {
+        listId: list!.id,
+        taskId: task.id,
+        version: list!.version,
+        content: "**Native notes**",
+        operationId: crypto.randomUUID(),
+      })
+    ).json();
+    assert.equal(list!.tasks[0].images!.length, 0);
+  } finally {
+    if (list) {
+      const latest = await (
+        await mobile(owner.access_token, "getList", list.id)
+      ).json();
+      await mobile(owner.access_token, "deleteList", {
+        listId: list.id,
+        version: latest.version,
+        operationId: crypto.randomUUID(),
+      });
+    }
+    for (const token of [owner, reader, outsider])
+      await revoke(token.refresh_token, tauriClientId);
   }
 });

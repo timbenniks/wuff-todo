@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, eq, or, sql, lte } from "drizzle-orm";
+import { and, eq, or, sql, lte, inArray } from "drizzle-orm";
 import { Client, Receiver } from "@upstash/qstash";
 import { z } from "zod";
 import {
@@ -20,6 +20,7 @@ import {
   type Actor,
   type ReminderSettings,
   type PersonalReminder,
+  reminderTimezoneSchema,
   reminderPreferencesSchema,
   updateReminderPreferencesSchema,
   updateListReminderSchema,
@@ -496,16 +497,20 @@ async function payloadFor(
   tx: Tx,
   job: typeof reminderJobs.$inferSelect,
   p: ReturnType<typeof reminderPreferencesSchema.parse>,
+  lockedListIds: string[],
 ): Promise<PushPayload | null> {
   const [user] = await tx
     .select()
     .from(users)
     .where(and(eq(users.id, job.userId), eq(users.enabled, true)))
     .for("share");
-  if (!user) return null;
-  const visible = or(
-    eq(lists.ownerId, job.userId),
-    sql`exists(select 1 from ${members} where ${members.listId}=${lists.id} and ${members.userId}=${job.userId})`,
+  if (!user || !lockedListIds.length) return null;
+  const visible = and(
+    inArray(lists.id, lockedListIds),
+    or(
+      eq(lists.ownerId, job.userId),
+      sql`exists(select 1 from ${members} where ${members.listId}=${lists.id} and ${members.userId}=${job.userId})`,
+    ),
   );
   if (job.taskId) {
     const [row] = await tx
@@ -529,13 +534,6 @@ async function payloadFor(
       tag: `wuff-${job.id}`,
     };
   }
-  // List locks protect membership/archive while handing a digest to providers.
-  await tx
-    .select({ id: lists.id })
-    .from(lists)
-    .where(and(visible, eq(lists.archived, false)))
-    .orderBy(lists.id)
-    .for("share");
   const rows = await tx
     .select({ id: tasks.id })
     .from(tasks)
@@ -578,14 +576,21 @@ export async function deliverReminder(
     .where(eq(reminderDevices.userId, initial.userId));
   for (const target of targets) {
     await db.transaction(async (tx) => {
-      if (initial.taskId)
-        await tx
-          .select({ id: lists.id })
-          .from(lists)
-          .where(
-            sql`${lists.id} = (select ${tasks.listId} from ${tasks} where ${tasks.id}=${initial.taskId})`,
-          )
-          .for("share");
+      // All callback paths take list locks before the personal actor/job locks,
+      // matching list preference saves and task completion/revocation.
+      const lockedLists = await tx
+        .select({ id: lists.id })
+        .from(lists)
+        .where(
+          initial.taskId
+            ? sql`${lists.id} = (select ${tasks.listId} from ${tasks} where ${tasks.id}=${initial.taskId})`
+            : or(
+                eq(lists.ownerId, initial.userId),
+                sql`exists(select 1 from ${members} where ${members.listId}=${lists.id} and ${members.userId}=${initial.userId})`,
+              ),
+        )
+        .orderBy(lists.id)
+        .for("share");
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`reminders:${initial.userId}`},0))`,
       );
@@ -605,7 +610,12 @@ export async function deliverReminder(
         needsScheduling = true;
         return;
       }
-      const payload = await payloadFor(tx, job, p);
+      const payload = await payloadFor(
+        tx,
+        job,
+        p,
+        lockedLists.map((l) => l.id),
+      );
       if (!payload || now.getTime() - job.runAt.getTime() > 86400000) return;
       const [device] = await tx
         .select()
@@ -723,4 +733,18 @@ export async function disableBrowserReminders(actor: Actor, data: unknown) {
       );
   });
   return { ok: true };
+}
+
+export async function resolveReminderLocalTime(actor: Actor, data: unknown) {
+  await admitted(database().db, actor);
+  const input = z
+    .object({
+      local: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+      timezone: reminderTimezoneSchema,
+    })
+    .parse(data);
+  const { localReminderInstant } = await import("./reminder-time");
+  return {
+    runAt: localReminderInstant(input.local, input.timezone).toISOString(),
+  };
 }

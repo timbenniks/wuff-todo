@@ -157,7 +157,10 @@ test("sign-out discards a response arriving during JSON parsing", async () => {
   await entered.promise;
   await client.clear();
   payload.resolve([{ title: "private synthetic data" }]);
-  await assert.rejects(request, (e: ClientError) => e.status === 401);
+  await assert.rejects(
+    request,
+    (e: ClientError) => e.code === "request_superseded",
+  );
   assert.equal(store.value, null);
 });
 test("sign-out during refresh cannot restore credentials and revokes the late token", async () => {
@@ -266,4 +269,67 @@ test("sign-out still revokes the server grant when secure storage deletion fails
   await assert.rejects(client.signOut(), /couldn’t remove saved sign-in/);
   assert.ok(revoked);
   await assert.rejects(client.lists(), (e: ClientError) => e.status === 401);
+});
+
+test("configured Tauri identity is used for exchange, refresh and revoke", async () => {
+  const { tauriClientId, tauriRedirectUri } = await import("@wuff/contracts");
+  const store = memory(null);
+  const grants: string[] = [];
+  const client = new NativeClient(
+    origin,
+    store,
+    async (url, init) => {
+      if (String(url).endsWith("/api/mobile")) return Response.json([]);
+      const params = new URLSearchParams(String(init?.body));
+      assert.equal(params.get("client_id"), tauriClientId);
+      if (String(url).endsWith("/oauth/revoke")) return new Response(null);
+      grants.push(params.get("grant_type")!);
+      if (params.get("grant_type") === "authorization_code")
+        assert.equal(params.get("redirect_uri"), tauriRedirectUri);
+      assert.equal(params.get("resource"), origin + "/api/mobile");
+      return Response.json({
+        access_token: "synthetic-access",
+        refresh_token: "synthetic-refresh",
+        expires_in: 1,
+      });
+    },
+    { clientId: tauriClientId, redirectUri: tauriRedirectUri },
+  );
+  await client.exchange("synthetic-code", "synthetic-verifier");
+  await client.lists();
+  await client.signOut();
+  assert.deepEqual(grants, ["authorization_code", "refresh_token"]);
+  assert.equal(store.value, null);
+});
+
+test("a rejected old refresh is nonterminal after interactive consent replaces its grant", async () => {
+  const store = memory({ ...fresh(), expiresAt: 0 });
+  const old = deferred<Response>(),
+    started = deferred<void>();
+  const client = new NativeClient(origin, store, async (url, init) => {
+    const params = new URLSearchParams(String(init?.body));
+    if (String(url).endsWith("/oauth/revoke")) return new Response(null);
+    if (params.get("grant_type") === "refresh_token") {
+      started.resolve();
+      return old.promise;
+    }
+    if (params.get("grant_type") === "authorization_code")
+      return Response.json({
+        access_token: "new",
+        refresh_token: "new-refresh",
+        expires_in: 900,
+      });
+    return Response.json([]);
+  });
+  await client.restore();
+  const read = assert.rejects(
+    client.lists(),
+    (e: ClientError) => e.code === "request_superseded" && e.status === 0,
+  );
+  await started.promise;
+  await client.exchange("code", "verifier");
+  old.resolve(Response.json({ error: "invalid_grant" }, { status: 400 }));
+  await read;
+  assert.equal(store.value?.refreshToken, "new-refresh");
+  await client.lists();
 });

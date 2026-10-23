@@ -75,7 +75,7 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     .join("; ");
   for (const [path, content] of [
     ["/lists", "Your list pack"],
-    ["/connections", "Connected AI clients"],
+    ["/settings/connections", "Connected AI clients"],
   ]) {
     const page = await fetch(`${origin}${path}`, {
       headers: { Cookie: uncachedCookie },
@@ -111,6 +111,104 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
       .status,
     401,
   );
+});
+
+test("ChatGPT omitted-scope consent persists bounded defaults through exchange and refresh", async () => {
+  const registration = await post(
+    "/oauth/register",
+    {
+      client_name: "Synthetic omitted-scope client",
+      redirect_uris: ["https://client.example/callback"],
+      token_endpoint_auth_method: "none",
+    },
+    "",
+  );
+  assert.equal(registration.status, 201);
+  const client = await registration.json();
+  const cookie = await login();
+  const verifier = randomBytes(32).toString("base64url");
+  const query = new URLSearchParams({
+    response_type: "code",
+    client_id: client.client_id,
+    redirect_uri: client.redirect_uris[0],
+    resource,
+    state: randomBytes(24).toString("hex"),
+    ui_locales: "en-US",
+    code_challenge: createHash("sha256").update(verifier).digest("base64url"),
+    code_challenge_method: "S256",
+  });
+  const consent = await fetch(`${origin}/oauth/authorize?${query}`, {
+    headers: { Cookie: cookie },
+  });
+  const html = await consent.text();
+  assert.equal(consent.status, 200);
+  for (const label of [
+    "Allow connection",
+    "Read your accessible lists and tasks",
+    "Add, edit, complete, delete, and reorder tasks",
+    "Create lists and manage lists you own",
+  ])
+    assert.ok(html.includes(label), label);
+  assert.ok(!html.includes("launch, message or stop paid coding agents"));
+  assert.ok(!html.includes("Connect GitHub repositories and create"));
+  async function exchange(body: Record<string, string>) {
+    const response = await fetch(`${origin}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: client.client_id,
+        resource,
+        ...body,
+      }),
+    });
+    const data = await response.json();
+    assert.equal(response.status, 200, data.error);
+    assert.equal(data.scope, "lists:read tasks:write lists:manage");
+    return data;
+  }
+  try {
+    for (const scope of ["", "lists:read unknown"]) {
+      const invalid = new URLSearchParams(query);
+      invalid.set("scope", scope);
+      const decision = await post(
+        "/oauth/authorize/decision",
+        { query: invalid.toString(), accept: true },
+        cookie,
+      );
+      assert.equal(decision.status, 400);
+    }
+    const decision = await post(
+      "/oauth/authorize/decision",
+      { query: query.toString(), accept: true },
+      cookie,
+    );
+    assert.equal(decision.status, 200);
+    const redirect = new URL((await decision.json()).redirect);
+    assert.equal(redirect.searchParams.get("state"), query.get("state"));
+    const token = await exchange({
+      grant_type: "authorization_code",
+      code: redirect.searchParams.get("code")!,
+      code_verifier: verifier,
+      redirect_uri: client.redirect_uris[0],
+    });
+    const lists = await rpc(token.access_token, "tools/call", {
+      name: "list_lists",
+      arguments: {},
+    });
+    assert.equal(lists.status, 200);
+    assert.ok(!lists.body.result.isError);
+    await exchange({
+      grant_type: "refresh_token",
+      refresh_token: token.refresh_token,
+    });
+  } finally {
+    const revoked = await fetch(`${origin}/api/v1/connections`, {
+      method: "DELETE",
+      headers: { ...jsonHeaders, Cookie: cookie },
+      body: JSON.stringify({ clientId: client.client_id }),
+    });
+    assert.equal(revoked.status, 200);
+  }
 });
 
 test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and revocation", async () => {

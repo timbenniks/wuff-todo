@@ -11,6 +11,8 @@ export {
   nativeAllowedScopes,
 } from "@wuff/contracts";
 
+export type NativeClientIdentity = { clientId: string; redirectUri: string };
+
 export type NativeTokens = {
   accessToken: string;
   refreshToken: string;
@@ -57,6 +59,14 @@ export class NativeClient {
   private tokens: NativeTokens | null = null;
   private refresh: Promise<NativeTokens> | null = null;
   private generation = 0;
+  private exchanging = false;
+  private superseded() {
+    return new ClientError(
+      "Sign-in changed while this request was running. Please try again.",
+      0,
+      "request_superseded",
+    );
+  }
   // Serial storage prevents a late refresh write from restoring signed-out data.
   private storageWork: Promise<void> = Promise.resolve();
   onSignedOut: () => void = () => {};
@@ -64,6 +74,10 @@ export class NativeClient {
     origin: string,
     private storage: TokenStorage,
     private fetcher = fetch,
+    private identity: NativeClientIdentity = {
+      clientId: nativeClientId,
+      redirectUri: nativeRedirectUri,
+    },
   ) {
     this.origin = serverOrigin(origin);
   }
@@ -106,12 +120,13 @@ export class NativeClient {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         ...params,
-        client_id: nativeClientId,
+        client_id: this.identity.clientId,
         resource: this.origin + "/api/mobile",
       }).toString(),
     });
     const data = await response.json();
     if (!response.ok) {
+      if (generation !== this.generation) throw this.superseded();
       if (data.error === "invalid_grant" && generation === this.generation)
         await this.clear();
       throw new ClientError(
@@ -134,7 +149,7 @@ export class NativeClient {
     };
     if (generation !== this.generation) {
       await this.revoke(tokens).catch(() => {});
-      throw new ClientError("Sign-in was cancelled.", 401);
+      throw this.superseded();
     }
     // A rotated refresh token must be stored before it is used by more requests.
     try {
@@ -144,33 +159,39 @@ export class NativeClient {
       await this.revoke(tokens).catch(() => {});
       if (generation === this.generation) await this.clear();
       throw new ClientError(
-        "Your phone couldn’t securely save sign-in. Please try again.",
+        "This device couldn’t securely save sign-in. Please try again.",
       );
     }
     if (generation !== this.generation) {
       await this.revoke(tokens).catch(() => {});
-      throw new ClientError("Sign-in was cancelled.", 401);
+      throw this.superseded();
     }
     this.tokens = tokens;
     return tokens;
   }
   async exchange(code: string, verifier: string) {
-    const previous = this.tokens;
-    // An interactive permission upgrade supersedes in-flight requests/refreshes.
-    // A late basic-grant refresh must not replace the newly consented grant.
-    this.generation++;
-    this.refresh = null;
-    const tokens = await this.tokenRequest(
-      {
-        grant_type: "authorization_code",
-        code,
-        code_verifier: verifier,
-        redirect_uri: nativeRedirectUri,
-      },
-      this.generation,
-    );
-    if (previous) await this.revoke(previous).catch(() => {});
-    return tokens;
+    if (this.exchanging) throw this.superseded();
+    this.exchanging = true;
+    try {
+      const previous = this.tokens;
+      // An interactive permission upgrade supersedes in-flight requests/refreshes.
+      // A late basic-grant refresh must not replace the newly consented grant.
+      this.generation++;
+      this.refresh = null;
+      const tokens = await this.tokenRequest(
+        {
+          grant_type: "authorization_code",
+          code,
+          code_verifier: verifier,
+          redirect_uri: this.identity.redirectUri,
+        },
+        this.generation,
+      );
+      if (previous) await this.revoke(previous).catch(() => {});
+      return tokens;
+    } finally {
+      this.exchanging = false;
+    }
   }
   private async accessToken() {
     if (!this.tokens)
@@ -191,24 +212,25 @@ export class NativeClient {
     }
     return (await this.refresh).accessToken;
   }
-  async call<T>(action: string, input?: unknown): Promise<T> {
+  async call<T>(action: string, input?: unknown, userId?: string): Promise<T> {
+    if (this.exchanging) throw this.superseded();
     const generation = this.generation;
     const token = await this.accessToken();
+    if (generation !== this.generation) throw this.superseded();
     const response = await this.request("/api/mobile", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action, input }),
+      body: JSON.stringify({ action, input, userId }),
     });
-    if (generation !== this.generation)
-      throw new ClientError("Account changed.", 401);
+    if (generation !== this.generation) throw this.superseded();
     const data = await response.json();
-    if (generation !== this.generation)
-      throw new ClientError("Account changed.", 401);
+    if (generation !== this.generation) throw this.superseded();
     if (!response.ok) {
-      if (response.status === 401) await this.clear();
+      if (response.status === 401 || data.error?.code === "account_changed")
+        await this.clear();
       throw new ClientError(
         data.error?.message ?? "Couldn’t complete this change.",
         response.status,
@@ -216,6 +238,26 @@ export class NativeClient {
       );
     }
     return data as T;
+  }
+  async image(
+    params: URLSearchParams,
+    init: RequestInit = {},
+    userId?: string,
+  ) {
+    if (this.exchanging) throw this.superseded();
+    const generation = this.generation;
+    const token = await this.accessToken();
+    if (generation !== this.generation) throw this.superseded();
+    const headers = new Headers(init.headers);
+    headers.set("Authorization", `Bearer ${token}`);
+    if (userId) headers.set("X-Wuff-User", userId);
+    const response = await this.request("/api/mobile/images?" + params, {
+      ...init,
+      headers,
+    });
+    if (generation !== this.generation) throw this.superseded();
+    if (response.status === 401) await this.clear();
+    return response;
   }
   lists() {
     return this.call<ListSummary[]>("listLists");
@@ -228,7 +270,7 @@ export class NativeClient {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: nativeClientId,
+        client_id: this.identity.clientId,
         token: tokens.refreshToken,
       }).toString(),
     });
@@ -252,11 +294,11 @@ export class NativeClient {
     }
     if (!localCleared)
       throw new ClientError(
-        "Your phone couldn’t remove saved sign-in. Revoke this connection on the website before using this phone again.",
+        "This device couldn’t remove saved sign-in. Revoke this connection on the website before using this device again.",
       );
     if (!remoteRevoked)
       throw new ClientError(
-        "Signed out on this phone. Revoke its connection on the website to finish disconnecting it.",
+        "Signed out on this device. Revoke its connection on the website to finish disconnecting it.",
       );
   }
   async clear() {

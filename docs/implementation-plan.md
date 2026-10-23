@@ -54,7 +54,7 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Current milestone: online-only Tauri 2 for macOS, Windows, iPhone and Android.** On October 22 the user requested a client-side React/shadcn application using the existing hosted APIs and live refresh, tracked through Wuff itself. See [Tauri client plan](tauri-client-plan.md) for phases and gates. WUFF-70 introduces the React/Vite workspace and Tauri shell; frontend checks pass, while native compilation awaits toolchain setup. WUFF-71/72 cover installed sign-in, secure storage, API access and a live subscription probe before full interface migration. The dedicated Wuff Todo Work list is bound to `timbenniks/wuff-todo`; [development and task map](tauri-client.md) record all ten tasks and evidence.
+**Current milestone: online-only Tauri 2 for macOS, Windows, iPhone and Android.** On October 22 the user requested a client-side React/shadcn application using the existing hosted APIs and live refresh, tracked through Wuff itself. See [Tauri client plan](tauri-client-plan.md) for phases and gates. WUFF-70 introduces the React/Vite workspace and Tauri shell; frontend checks pass. The sign-in foundation now compiles as a macOS app; [auth evidence](tauri-auth.md) records protocol tests and remaining installed-platform gates. WUFF-71/72 cover installed sign-in, secure storage, API access and a live subscription probe before full interface migration. The dedicated Wuff Todo Work list is bound to `timbenniks/wuff-todo`; [development and task map](tauri-client.md) record all ten tasks and evidence.
 
 The October 17 React Native/Expo slice remains available as a reference for authentication and client behavior. Its historical implementation and verification limits are recorded in [native mobile](native-mobile.md). Preserve it until the Tauri replacement passes its gates; its earlier milestone wording below is historical and does not override the new client plan.
 
@@ -143,3 +143,11 @@ Named shared list colors were delivered before mobile in the mature-list milesto
 Focus automated tests on permission isolation, invitation lifecycle, ordering, concurrency, and idempotency. Test the same core operations through API and MCP adapters. Use browser checks for the two-user workflow, keyboard controls, responsive layouts, and recoverable failures.
 
 Auth and MCP claims require live integration evidence. A successful build alone does not prove login, authorization, sharing, or production behavior. Record commands and outcomes when implementation begins.
+
+## Tauri cross-platform client — October 22, 2026
+
+Workspace PR #11, sign-in PR #12 and shared-controls PR #13 are merged. macOS/Windows CI passes for the auth/shared UI slice; packaged macOS warm/cold callbacks, restart and Keychain restoration are verified. See [auth](tauri-auth.md), [shared UI](shared-ui.md) and [live transport](tauri-live.md). Live transport PR #14 is also merged. Core workspace PR #15 is merged. Core editing, bounded cache, notes/private images and Work context now share browser-compatible features with Tauri; see [shared workspace evidence](tauri-features.md). Installed Windows/iOS/Android and signed distribution remain release gates.
+
+## Native download releases — October 22, 2026
+
+WUFF-82 adds a private GitHub prerelease after each main-branch push/merge and a manual main-branch run for grouped releases. All four platform builds and application checks must pass before the complete draft is published. See [native releases](native-releases.md) for source/version provenance, downloads, retry behavior and verification. Signed installers and physical-device acceptance remain WUFF-78/79 gates.

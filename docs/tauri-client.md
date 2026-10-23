@@ -4,7 +4,13 @@ Updated: October 22, 2026
 
 The client is tracked in the private **Wuff Todo** Work list, bound to `timbenniks/wuff-todo` with automatic GitHub issue creation. Specs live in WUFF-70 through WUFF-79; the sequencing and architecture are in [the client plan](tauri-client-plan.md).
 
-## Delivered foundation — WUFF-70
+## Current implementation
+
+PRs #11–15 are merged: system-browser authentication and native credentials, shared controls, native live transport, and the full shared list/task workspace with cache, notes/private images and Work context. See [feature evidence](tauri-features.md) and [platform/distribution matrix](tauri-platforms.md). Core checks include 74 unit tests and 28 isolated development integration tests. Packaged macOS flows are verified within those documents; remaining installed targets and signed releases are not yet certified.
+
+The following foundation section is historical WUFF-70 evidence and does not describe the current authentication/feature set.
+
+## Initial foundation — WUFF-70
 
 `apps/native` contains the React/Vite frontend and minimal Tauri 2 Rust shell. It uses the existing Waffles image, DM Sans font and `@wuff/design` palette. The frontend explicitly identifies itself as a development preview: login, API operations and live updates are follow-up tasks, not implemented behavior.
 
@@ -65,7 +71,7 @@ All ten links were reread through Wuff MCP as synced. Update task status/spec no
 - `pnpm build:native:web`: native TypeScript and Vite production build passed. JavaScript output was about 221 kB / 69 kB gzip, excluding local font and image assets. This is the initial shell size, not a full-app performance claim.
 - `pnpm typecheck`: all workspaces and root checks passed, including existing web/mobile packages.
 - `pnpm test`: all 56 existing unit tests passed.
-- `git diff --check`: passed. WUFF-70 is in review; source remains local and uncommitted.
+- `git diff --check`: passed. WUFF-70 is in review; native runtime validation remains a separate gate.
 - Production frontend preview in system Chrome at 320px, 390px and 1100px: expected title/heading, no horizontal overflow or page errors. Desktop screenshot inspected. This does not test Tauri WebViews or physical touch.
 - `pnpm --filter @wuff/native tauri info`: configuration discovered; missing Rust/Cargo/full Xcode reported as above.
 - No native build, authentication flow, live transport, integration test, deployment, store submission or signed package has been validated for Tauri.

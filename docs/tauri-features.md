@@ -1,0 +1,21 @@
+# Shared Tauri workspace
+
+WUFF-74/75/76/77 share the existing browser-compatible list/task feature sources in `@wuff/ui/features`. The website keeps compatibility exports. Shared components have no Next.js, auth-SDK, domain or database imports. React lazy/Suspense loads task details and the rich editor separately. Native production assets currently total about 743 KB main JavaScript, 529 KB editor and 24 KB task details before gzip; these assets are bundled locally, not downloaded on every API read.
+
+## Platform adapters
+
+`FeatureRuntime` supplies actor-bound API calls, sign-out, external navigation, private file requests and optional native image acquisition. Web keeps cookie/CSRF handling; Tauri maps only enumerated paths/methods to the existing bearer domain operations and pins the expected actor. Unknown routes fail closed. Native links open in the system browser; remote pages never replace bundled app content. Optional GitHub scope uses a new explicit browser consent. Agent conversation/run context is readable; agent launches, recovery, credentials and repository administration remain website handoffs. No paid execution gate changes.
+
+The shared screens retain list/archive/settings, sections, tasks/subtasks, dates, Work metadata, keyboard position controls, sharing/invitations and personal views. A shared mounted-account cache deduplicates reads, merges task and personal-view revisions independently and retains at most 20 recently accessed snapshots. No persistent task cache or offline write queue is added. Existing exact operation-id/payload retry and draft handling remain; native network errors preserve ambiguity rather than clearing retry state. Sign-out/account replacement unmounts the workspace, clears credentials and disposes image resources.
+
+## Notes and private images
+
+Formatted Markdown editing/serialization and the safe renderer are shared. `/api/mobile/images` uses native bearer authorization and existing bounded attachment services; cookies cannot authorize it. Upload retries reuse the image operation ID. Reads return private no-store WebP streams. Native rendering fetches with Authorization headers and uses temporary blob URLs, never tokens in URLs or public storage URLs. A pool deduplicates mounted images, caps at 16 images of 3 MiB each, and revokes URLs on release/account exit. Tiptap retains canonical attachment paths when serializing; blob URLs never enter saved Markdown.
+
+The current Tauri HTTP plugin overrides `Response.headers` after construction. Its `blob()` consequently loses the MIME type. Native image decoding validates the exposed headers and creates an explicitly typed Blob; a regression test models that exact behavior. CSP permits local blob images, not remote arbitrary image loads.
+
+## Verification — October 22, 2026
+
+All 74 unit tests, TypeScript, optimized web/MCP build, native frontend and packaged macOS build passed. The complete development integration suite passed all 28 tests. Focused development API test passed actor mismatch, Work context isolation, read-only upload denial, anonymous/private image reads, duplicate upload, formatted image notes, reference preservation and image removal. Additional MIME decoding test passed. Packaged macOS restored credentials and created a disposable list/task, saved bold notes, selected/uploaded a private image; the missing MIME preview issue was reproduced and fixed. The packaged app then displayed the private image, completed its parent task, created an independent open subtask and saved tomorrow’s due date. An independent development API reread confirmed the exact bold Markdown, one private attachment, completed parent, open child and parent-only date. See [installed image evidence](screenshots/tauri-notes-macos.png). The website loaded the same native-created task and private image in both read and editor views. At 320px and 390px the document width matched the viewport without horizontal overflow; keyboard Enter closed the drawer and restored focus. An initial integration attempt encountered managed-auth throttling with concurrent browser polling; the complete isolated rerun passed after closing the polling browser.
+
+Installed Windows/iOS/Android, physical keyboard/photo behavior and signed distribution are separate WUFF-78/79 gates. Browser viewport checks do not certify those platforms.
