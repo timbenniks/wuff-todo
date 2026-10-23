@@ -62,3 +62,22 @@ accessibility expectations, cloud prototyping and a self-contained task handoff.
 - This is browser/standalone evidence, not physical-device, screen-reader conformance
   or an actual ChatGPT Work cloud-builder run. Hosting/plugin availability and skill
   installation in her own workspace remain to be exercised there.
+
+## Production release
+
+Application source `a32e9ffff57e3f92ce218c6cace38a0018f8e854` was pushed to main
+and deployed through Vercel CLI as `dpl_BnKy6EY7dPFpHj92XFexQWQCScKk`. The deployment
+is Ready, owns the canonical production alias and reports function region `fra1`.
+Anonymous requests to all seven guide pages, raw Markdown, the skill, inventory and
+source downloads returned 200. The deployed manifest identifies that exact source
+commit and all 83 input hashes match the independently verified local kit. The actual
+downloaded production ZIP passed CRC and per-file SHA checks. A fresh 390px Chrome
+page rendered and exercised Sage palette/primary-action feedback without overflow
+or browser exceptions. Anonymous list API and MCP requests still return 401.
+
+GitHub Actions [Verify](https://github.com/timbenniks/wuff-todo/actions/runs/40006312902)
+and native jobs failed before starting any steps. Check annotations explicitly say
+recent account payments failed or the spending limit needs increasing. This is an
+account billing/spending-limit block; remote code checks did not run. Local checks,
+standalone/browser checks and Vercel's successful build are the verification evidence.
+No billing settings were changed.
