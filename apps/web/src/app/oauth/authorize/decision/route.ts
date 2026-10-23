@@ -25,7 +25,10 @@ export async function POST(request: Request) {
       new OAuth2Server.Request({
         method: "GET",
         headers: {},
-        query: Object.fromEntries(params),
+        query: {
+          ...Object.fromEntries(params),
+          scope: details.requested.join(" "),
+        },
       }),
       response,
       {

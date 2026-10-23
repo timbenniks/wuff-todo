@@ -247,18 +247,28 @@ export async function authorizationDetails(params: URLSearchParams) {
       "invalid_target",
       "This authorization is for a different resource.",
     );
-  const requested = (params.get("scope") ?? "").split(" ").filter(Boolean);
+  const requested = authorizationScopes(params.get("scope"), client.id);
+  return { client, requested, resource };
+}
+
+// OAuth permits an omitted scope. ChatGPT's connection setup uses this path;
+// consent must display the same bounded defaults that are saved in the grant.
+export function authorizationScopes(scope: string | null, clientId: string) {
+  const requested =
+    scope === null && firstPartyRedirect(clientId) === null
+      ? ["lists:read", "tasks:write", "lists:manage"]
+      : (scope ?? "").split(" ").filter(Boolean);
   if (
     !requested.includes("lists:read") ||
     requested.some(
       (s) =>
         !(
-          firstPartyRedirect(client.id) !== null ? nativeAllowedScopes : scopes
+          firstPartyRedirect(clientId) !== null ? nativeAllowedScopes : scopes
         ).some((allowed) => allowed === s),
     )
   )
     throw new AppError("invalid_scope", "Choose supported Wuff permissions.");
-  return { client, requested, resource };
+  return requested;
 }
 export function authorizationMetadata() {
   const origin = appOrigin();
