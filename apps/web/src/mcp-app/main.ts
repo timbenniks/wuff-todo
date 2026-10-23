@@ -2130,9 +2130,7 @@ function renderCatalog() {
           void changeCatalogOrder((order) => ({
             favoriteListIds: [
               ...(order.favoriteListIds ?? []).filter((id) => id !== list.id),
-              ...((order.favoriteListIds ?? []).includes(list.id)
-                ? []
-                : [list.id]),
+              ...(list.favorite ? [] : [list.id]),
             ],
           })),
       ),
