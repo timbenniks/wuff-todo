@@ -20,7 +20,11 @@ export default function DocsLayout({
         Skip to guide
       </a>
       <header className="docs-header">
-        <Link href="/docs" className="docs-brand">
+        <Link
+          href="/lists?home=1"
+          aria-label="Wuff Todo Home"
+          className="docs-brand"
+        >
           <Corgi size={44} />
           <span>
             Wuff Todo

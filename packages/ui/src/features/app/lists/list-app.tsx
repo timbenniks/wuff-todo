@@ -1,7 +1,13 @@
 "use client";
 import { containDialogFocus } from "../../components/dialog-focus";
 import { wuffCopy, wuffError } from "../../lib/copy";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Archive,
   ArrowLeft,
@@ -55,6 +61,7 @@ export function ListApp({
   initialList,
   initialInvitations,
   liveConfig,
+  workspace,
 }: {
   userId: string;
   name: string;
@@ -62,6 +69,7 @@ export function ListApp({
   initialList: TodoList | null;
   initialInvitations: IncomingInvitation[];
   liveConfig: LiveLists | null;
+  workspace?: { navigation: ReactNode; content: ReactNode };
 }) {
   const startupHome = useRef(!initialList);
   const api = useActorApi();
@@ -198,9 +206,15 @@ export function ListApp({
     [cache, readError, api],
   );
   function chooseList(id: string, navigate = true) {
+    if (workspace && !id.startsWith("pending-")) {
+      runtime.navigate(
+        `${runtime.webOrigin}/lists?${id ? `listId=${encodeURIComponent(id)}` : "home=1"}`,
+      );
+      return;
+    }
     startupHome.current = false;
     if (!id) setShowArchive(false);
-    if (navigate) {
+    if (navigate && !workspace) {
       const url = new URL(window.location.href);
       if (id) {
         url.searchParams.set("listId", id);
@@ -355,8 +369,10 @@ export function ListApp({
       cache.write(preview);
       setSummaries((items) => [...items, preview]);
       chooseList(request.id);
-      setCreating(false);
-      setNavigationOpen(false);
+      if (!workspace) {
+        setCreating(false);
+        setNavigationOpen(false);
+      }
       setShowArchive(false);
     }
     request = { ...request, status: "saving" };
@@ -565,6 +581,7 @@ export function ListApp({
     if (list) setShowArchive(list.archived);
   }, [list?.id, list?.archived]);
   useEffect(() => {
+    if (workspace) return;
     const restore = () => {
       const requested = new URL(window.location.href).searchParams.get(
         "listId",
@@ -574,7 +591,7 @@ export function ListApp({
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
-  }, [cache]);
+  }, [cache, workspace]);
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
   const navigationContent = (
     <>
@@ -582,7 +599,9 @@ export function ListApp({
         type="button"
         variant="ghost"
         className="sidebar-home justify-start mb-3"
-        aria-current={!selectedId && !showArchive ? "page" : undefined}
+        aria-current={
+          !workspace && !selectedId && !showArchive ? "page" : undefined
+        }
         onClick={() => {
           chooseList("");
           setShowArchive(false);
@@ -684,11 +703,13 @@ export function ListApp({
 
           <a
             href={runtime.webOrigin + "/settings"}
+            aria-current={workspace ? "page" : undefined}
             className="sidebar-settings flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 font-medium hover:bg-surface/60"
           >
             <Settings2 size={17} aria-hidden="true" />
             Settings
           </a>
+          {workspace?.navigation}
         </div>
         {runtime.githubConsent && (
           <Button
@@ -742,8 +763,28 @@ export function ListApp({
       )}
       <aside className="workspace-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
         <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
-          <Corgi size={48} />
-          <span className="wordmark text-xl font-bold">Wuff Todo</span>
+          <a
+            className="workspace-brand-link flex gap-2.5 items-center"
+            href={runtime.webOrigin + "/lists?home=1"}
+            aria-label="Wuff Todo Home"
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              event.preventDefault();
+              chooseList("");
+              setShowArchive(false);
+              setNavigationOpen(false);
+            }}
+          >
+            <Corgi size={48} />
+            <span className="wordmark text-xl font-bold">Wuff Todo</span>
+          </a>
           <Button
             ref={navigationTrigger}
             type="button"
@@ -811,15 +852,35 @@ export function ListApp({
                 Back to lists
               </Button>
             )}
-            <CreateListForm
-              draft={newListDraft}
-              onChange={setNewListDraft}
-              busy={busy}
-              create={create}
-              cancel={() =>
-                mobile ? setCreating(false) : navigationDialog.current?.close()
-              }
-            />
+            {workspace && pendingCreate ? (
+              <div
+                className="grid gap-3"
+                role={pendingCreate.status === "failed" ? "alert" : "status"}
+              >
+                <p>
+                  {pendingCreate.status === "failed"
+                    ? "We couldn’t confirm your list was saved. Retry the same request to check it."
+                    : "Tucking your list into the pack…"}
+                </p>
+                {pendingCreate.status === "failed" && (
+                  <Button disabled={busy} onClick={() => create()}>
+                    Retry saving list
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <CreateListForm
+                draft={newListDraft}
+                onChange={setNewListDraft}
+                busy={busy}
+                create={create}
+                cancel={() =>
+                  mobile
+                    ? setCreating(false)
+                    : navigationDialog.current?.close()
+                }
+              />
+            )}
           </div>
         ) : (
           mobile && (
@@ -854,272 +915,297 @@ export function ListApp({
               {wuffCopy.reconnectingLive}
             </p>
           )}
-        <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
-        {readFailure && (
-          <p role="status" className="text-sm text-muted-foreground mb-4">
-            {readFailure}
-          </p>
-        )}
-        {(selectedId || showArchive) && (error || retryWrite) && (
-          <div
-            role="alert"
-            className="rounded-xl bg-red-50 text-red-800 px-4 py-3 mb-6 text-sm"
-          >
-            {error || "Ruff patch! We couldn’t confirm your previous change."}
-            {retryWrite && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() =>
-                    change(
-                      retryWrite.path,
-                      retryWrite.method,
-                      retryWrite.body,
-                      true,
-                    )
-                  }
-                >
-                  Retry same request
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => {
-                    uncertainWrite.current = null;
-                    setRetryWrite(null);
-                    setError("");
-                    void liveRefresh.current?.notify();
-                  }}
-                >
-                  Keep current state
+        {workspace ? (
+          <>
+            {pendingCreate?.status === "failed" && !creating && (
+              <div role="alert" className="mb-4 grid gap-2 text-sm">
+                <p>We couldn’t confirm your list was saved.</p>
+                <Button disabled={busy} onClick={() => create()}>
+                  Retry saving list
                 </Button>
               </div>
             )}
-          </div>
-        )}
-        {loading && (
-          <p role="status" className="text-muted-foreground">
-            {wuffCopy.fetchingList}
-          </p>
-        )}
-        {!selectedId && !showArchive && (
-          <HomeDashboard
-            lists={summaries}
-            busy={busy}
-            change={change}
-            taskError={error}
-            retryTask={
-              retryWrite
-                ? () =>
-                    change(
-                      retryWrite.path,
-                      retryWrite.method,
-                      retryWrite.body,
-                      true,
-                    )
-                : undefined
-            }
-            userId={userId}
-            revision={summaries
-              .map(
-                (item) =>
-                  `${item.id}:${item.version}:${item.favorite}:${item.archived}`,
-              )
-              .join("|")}
-            initialEntry={startupHome.current}
-            chooseList={(id) => chooseList(id)}
-            createList={() => {
-              setCreating(true);
-              setNavigationOpen(true);
-            }}
-          />
-        )}
-        {!selectedId && showArchive && (
-          <div className="py-12">
-            <Corgi size={88} />
-            <h1 className="text-4xl font-bold mt-7 mb-3">
-              {showArchive
-                ? "No lists taking a paws."
-                : "Small paws. Big plans."}
-            </h1>
-            <p className="text-muted-foreground mb-7">
-              {showArchive
-                ? "Your lists can take a paws here until you need them again."
-                : "Groceries, weekend plans, anything your pack needs to remember."}
-            </p>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setCreating(true);
-                setNavigationOpen(true);
-              }}
-            >
-              <Plus size={18} />
-              Create your first list
-            </Button>
-          </div>
-        )}
-        {list && (
+            {workspace.content}
+          </>
+        ) : (
           <>
-            <header className="list-heading">
-              <h1 title={list.title}>{list.title}</h1>
-              <div className="list-management flex flex-wrap items-center gap-2">
-                {!isPending && (
-                  <ListSettings
-                    key={`settings:${list.id}`}
-                    list={list}
-                    userId={userId}
-                    busy={busy}
-                    change={change}
-                    people={(active, setBusy) => (
-                      <SharingDialog
-                        embedded
-                        onBusyChange={setBusy}
-                        active={active}
-                        list={list}
-                        userId={userId}
-                        disabled={busy}
-                        onChanged={sharingChanged}
-                      />
-                    )}
-                    actions={
-                      <>
-                        {list.ownerId === userId && !isPending && (
-                          <div className="contents">
-                            <Button
-                              variant="danger"
-                              className="list-delete"
-                              disabled={busy}
-                              aria-label="Delete list"
-                              onClick={async () => {
-                                if (
-                                  !window.confirm(
-                                    `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
-                                  )
-                                )
-                                  return;
-                                if (mutating.current) return;
-                                setBusy(true);
-                                mutating.current = true;
-                                summaryEpoch.current++;
-                                cache.supersede(list.id);
-                                try {
-                                  await api(
-                                    `/api/v1/lists/${list.id}`,
-                                    "DELETE",
-                                    {
-                                      version: list.version,
-                                      operationId: crypto.randomUUID(),
-                                    },
-                                  );
-                                  cache.forget(list.id);
-                                  const next = summariesRef.current.filter(
-                                    (item) => item.id !== list.id,
-                                  );
-                                  setSummaries(next);
-                                  if (selected.current === list.id)
-                                    chooseList(next[0]?.id ?? "");
-                                } catch (e) {
-                                  setError(wuffError((e as Error).message));
-                                } finally {
-                                  mutating.current = false;
-                                  setBusy(false);
-                                  void liveRefresh.current?.flush();
-                                }
-                              }}
-                            >
-                              <Trash2 size={17} aria-hidden="true" /> Delete
-                              list
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    }
-                    sidebar={{
-                      lists: summaries,
-                      disabled: busy || !!pendingCreate || !!sidebarRetry,
-                      error,
-                      retry: sidebarRetry ? () => saveSidebar(null) : undefined,
-                      favorite: (id, enabled) =>
-                        saveSidebar((order) => ({
-                          favoriteListIds: [
-                            ...(order.favoriteListIds ?? []).filter(
-                              (value) => value !== id,
-                            ),
-                            ...(enabled ? [id] : []),
-                          ],
-                        })),
-                      move: (id, parentId) =>
-                        saveSidebar((order) => ({
-                          nesting: [
-                            ...(order.nesting ?? []).filter(
-                              (entry) => entry.listId !== id,
-                            ),
-                            ...(parentId
-                              ? [{ listId: id, parentListId: parentId }]
-                              : []),
-                          ],
-                          collapsedListIds: (
-                            order.collapsedListIds ?? []
-                          ).filter((value) => value !== parentId),
-                        })),
-                    }}
-                    retry={
-                      retryWrite
-                        ? () =>
-                            change(
-                              retryWrite.path,
-                              retryWrite.method,
-                              retryWrite.body,
-                              true,
-                            )
-                        : undefined
-                    }
-                  />
-                )}
-              </div>
-            </header>
-            {isPending ? (
-              <div className="mt-6 text-sm text-muted-foreground">
-                {pendingCreate?.status === "saving" ? (
-                  <p role="status">Tucking your list into the pack…</p>
-                ) : (
-                  <div role="alert" className="grid gap-4 justify-items-start">
-                    <p>
-                      Ruff patch! We couldn’t confirm your list was saved. Retry
-                      to check and finish the same request.
-                    </p>
-                    <Button disabled={busy} onClick={() => create()}>
-                      Retry saving list
+            <InvitationInbox
+              initial={initialInvitations}
+              onJoined={joinedList}
+            />
+            {readFailure && (
+              <p role="status" className="text-sm text-muted-foreground mb-4">
+                {readFailure}
+              </p>
+            )}
+            {(selectedId || showArchive) && (error || retryWrite) && (
+              <div
+                role="alert"
+                className="rounded-xl bg-red-50 text-red-800 px-4 py-3 mb-6 text-sm"
+              >
+                {error ||
+                  "Ruff patch! We couldn’t confirm your previous change."}
+                {retryWrite && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        change(
+                          retryWrite.path,
+                          retryWrite.method,
+                          retryWrite.body,
+                          true,
+                        )
+                      }
+                    >
+                      Retry same request
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        uncertainWrite.current = null;
+                        setRetryWrite(null);
+                        setError("");
+                        void liveRefresh.current?.notify();
+                      }}
+                    >
+                      Keep current state
                     </Button>
                   </div>
                 )}
               </div>
-            ) : (
+            )}
+            {loading && (
+              <p role="status" className="text-muted-foreground">
+                {wuffCopy.fetchingList}
+              </p>
+            )}
+            {!selectedId && !showArchive && (
+              <HomeDashboard
+                lists={summaries}
+                busy={busy}
+                change={change}
+                taskError={error}
+                retryTask={
+                  retryWrite
+                    ? () =>
+                        change(
+                          retryWrite.path,
+                          retryWrite.method,
+                          retryWrite.body,
+                          true,
+                        )
+                    : undefined
+                }
+                userId={userId}
+                revision={summaries
+                  .map(
+                    (item) =>
+                      `${item.id}:${item.version}:${item.favorite}:${item.archived}`,
+                  )
+                  .join("|")}
+                initialEntry={startupHome.current}
+                chooseList={(id) => chooseList(id)}
+                createList={() => {
+                  setCreating(true);
+                  setNavigationOpen(true);
+                }}
+              />
+            )}
+            {!selectedId && showArchive && (
+              <div className="py-12">
+                <Corgi size={88} />
+                <h1 className="text-4xl font-bold mt-7 mb-3">
+                  {showArchive
+                    ? "No lists taking a paws."
+                    : "Small paws. Big plans."}
+                </h1>
+                <p className="text-muted-foreground mb-7">
+                  {showArchive
+                    ? "Your lists can take a paws here until you need them again."
+                    : "Groceries, weekend plans, anything your pack needs to remember."}
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setCreating(true);
+                    setNavigationOpen(true);
+                  }}
+                >
+                  <Plus size={18} />
+                  Create your first list
+                </Button>
+              </div>
+            )}
+            {list && (
               <>
-                <TaskGroups
-                  key={list.id}
-                  list={list}
-                  userId={userId}
-                  busy={busy}
-                  change={change}
-                  error={error}
-                  refresh={() => reload(list.id)}
-                  retry={
-                    retryWrite
-                      ? () =>
-                          change(
-                            retryWrite.path,
-                            retryWrite.method,
-                            retryWrite.body,
-                            true,
-                          )
-                      : undefined
-                  }
-                />
+                <header className="list-heading">
+                  <h1 title={list.title}>{list.title}</h1>
+                  <div className="list-management flex flex-wrap items-center gap-2">
+                    {!isPending && (
+                      <ListSettings
+                        key={`settings:${list.id}`}
+                        list={list}
+                        userId={userId}
+                        busy={busy}
+                        change={change}
+                        people={(active, setBusy) => (
+                          <SharingDialog
+                            embedded
+                            onBusyChange={setBusy}
+                            active={active}
+                            list={list}
+                            userId={userId}
+                            disabled={busy}
+                            onChanged={sharingChanged}
+                          />
+                        )}
+                        actions={
+                          <>
+                            {list.ownerId === userId && !isPending && (
+                              <div className="contents">
+                                <Button
+                                  variant="danger"
+                                  className="list-delete"
+                                  disabled={busy}
+                                  aria-label="Delete list"
+                                  onClick={async () => {
+                                    if (
+                                      !window.confirm(
+                                        `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+                                      )
+                                    )
+                                      return;
+                                    if (mutating.current) return;
+                                    setBusy(true);
+                                    mutating.current = true;
+                                    summaryEpoch.current++;
+                                    cache.supersede(list.id);
+                                    try {
+                                      await api(
+                                        `/api/v1/lists/${list.id}`,
+                                        "DELETE",
+                                        {
+                                          version: list.version,
+                                          operationId: crypto.randomUUID(),
+                                        },
+                                      );
+                                      cache.forget(list.id);
+                                      const next = summariesRef.current.filter(
+                                        (item) => item.id !== list.id,
+                                      );
+                                      setSummaries(next);
+                                      if (selected.current === list.id)
+                                        chooseList(next[0]?.id ?? "");
+                                    } catch (e) {
+                                      setError(wuffError((e as Error).message));
+                                    } finally {
+                                      mutating.current = false;
+                                      setBusy(false);
+                                      void liveRefresh.current?.flush();
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={17} aria-hidden="true" /> Delete
+                                  list
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        }
+                        sidebar={{
+                          lists: summaries,
+                          disabled: busy || !!pendingCreate || !!sidebarRetry,
+                          error,
+                          retry: sidebarRetry
+                            ? () => saveSidebar(null)
+                            : undefined,
+                          favorite: (id, enabled) =>
+                            saveSidebar((order) => ({
+                              favoriteListIds: [
+                                ...(order.favoriteListIds ?? []).filter(
+                                  (value) => value !== id,
+                                ),
+                                ...(enabled ? [id] : []),
+                              ],
+                            })),
+                          move: (id, parentId) =>
+                            saveSidebar((order) => ({
+                              nesting: [
+                                ...(order.nesting ?? []).filter(
+                                  (entry) => entry.listId !== id,
+                                ),
+                                ...(parentId
+                                  ? [{ listId: id, parentListId: parentId }]
+                                  : []),
+                              ],
+                              collapsedListIds: (
+                                order.collapsedListIds ?? []
+                              ).filter((value) => value !== parentId),
+                            })),
+                        }}
+                        retry={
+                          retryWrite
+                            ? () =>
+                                change(
+                                  retryWrite.path,
+                                  retryWrite.method,
+                                  retryWrite.body,
+                                  true,
+                                )
+                            : undefined
+                        }
+                      />
+                    )}
+                  </div>
+                </header>
+                {isPending ? (
+                  <div className="mt-6 text-sm text-muted-foreground">
+                    {pendingCreate?.status === "saving" ? (
+                      <p role="status">Tucking your list into the pack…</p>
+                    ) : (
+                      <div
+                        role="alert"
+                        className="grid gap-4 justify-items-start"
+                      >
+                        <p>
+                          Ruff patch! We couldn’t confirm your list was saved.
+                          Retry to check and finish the same request.
+                        </p>
+                        <Button disabled={busy} onClick={() => create()}>
+                          Retry saving list
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <TaskGroups
+                      key={list.id}
+                      list={list}
+                      userId={userId}
+                      busy={busy}
+                      change={change}
+                      error={error}
+                      refresh={() => reload(list.id)}
+                      retry={
+                        retryWrite
+                          ? () =>
+                              change(
+                                retryWrite.path,
+                                retryWrite.method,
+                                retryWrite.body,
+                                true,
+                              )
+                          : undefined
+                      }
+                    />
+                  </>
+                )}
               </>
             )}
           </>

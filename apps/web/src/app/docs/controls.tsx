@@ -14,7 +14,7 @@ const links = [
   ["prototyping", "Make a prototype"],
   ["handoff", "Hand it off"],
 ];
-export function DocsControls() {
+export function DocsControls({ basePath = "/docs" }: { basePath?: string }) {
   const router = useRouter();
   const path = usePathname(),
     [color, setColor] = useState<ListColor>("blue");
@@ -25,7 +25,7 @@ export function DocsControls() {
         Guide page
         <select value={path} onChange={(e) => router.push(e.target.value)}>
           {links.map(([slug, label]) => (
-            <option key={slug} value={`/docs${slug ? `/${slug}` : ""}`}>
+            <option key={slug} value={`${basePath}${slug ? `/${slug}` : ""}`}>
               {label}
             </option>
           ))}
@@ -35,16 +35,18 @@ export function DocsControls() {
         {links.map(([slug, label]) => (
           <Link
             key={slug}
-            href={`/docs${slug ? `/${slug}` : ""}`}
+            href={`${basePath}${slug ? `/${slug}` : ""}`}
             aria-current={
-              path === `/docs${slug ? `/${slug}` : ""}` ? "page" : undefined
+              path === `${basePath}${slug ? `/${slug}` : ""}`
+                ? "page"
+                : undefined
             }
           >
             {label}
           </Link>
         ))}
       </nav>
-      {path === "/docs/design" && (
+      {path === `${basePath}/design` && (
         <div className="docs-palette">
           <span id="palette-label">Try a list palette</span>
           <div role="group" aria-labelledby="palette-label">

@@ -440,7 +440,6 @@ checks do not certify physical-phone keyboards, screen readers, installed native
 packages or named embedded MCP hosts. The existing API/MCP domain contracts and
 permissions are unchanged. Phase 3 is actionable Home and completion flow.
 
-
 ## UX improvement Phase 3 — October 24, 2026
 
 Home now provides a compact Your day header, separate completion/title controls,
@@ -682,3 +681,46 @@ progress token for each call; the test compares the unchanged domain arguments
 and operation ID rather than unrelated transport metadata. Reviewed screenshots:
 [SDK host phone](screenshots/ux-phase-six-mcp-390.png) and
 [SDK host desktop](screenshots/ux-phase-six-mcp-1280.png).
+
+## Wishlist app workspace — October 24, 2026
+
+[WUFF-120–123 specification](app-workspace-shell.md): logo/wordmark Home link,
+aligned desktop title rail, and account Settings plus embedded Docs using the
+existing ListApp sidebar and mobile dialog. WUFF-80 was explicitly deferred; no
+reminder form, provider, scheduler, domain/API or MCP contract implementation changed.
+
+- Workspace/root TypeScript and all 91 unit tests passed. Optimized `pnpm build`
+  (prototype kit, MCP and web) and `pnpm build:native:web` passed. Existing docs
+  `@source` and native chunk-size advisories remain. This proves the native frontend
+  compiles; no native installer/device run was performed.
+- `node --env-file=.env.local --import tsx scripts/verify-app-workspace-shell.ts`
+  passed against the final optimized build. At 1280/1920px the list title and brand
+  center differ by at most 2px, the main starts at x260 and scrolling content leaves
+  the sidebar pinned. Keyboard and mouse logo activation select explicit Home;
+  browser Back restores the list. Settings/Docs active destinations, guide page
+  navigation/palette/reload, 320/390px document overflow and mobile Escape/focus
+  return passed. Screenshots: `docs/screenshots/app-shell-{list,docs,navigation}-*.png`.
+- Anonymous public guide, agent reference and prototype archive returned successfully;
+  anonymous `/settings/docs` redirected to sign-in. Public HTML contained no private
+  fixture IDs and authenticated settings omitted another synthetic account's private
+  list. Existing authorization services load the account sidebar.
+- A Settings list creation was committed, then its response was deliberately aborted.
+  Closing the dialog retained an available recovery action. Retrying sent the exact
+  same body/operation ID, produced exactly one list and opened its real list URL;
+  no pending ID entered browser history. Existing fixture tasks matched exactly.
+  Disposable lists were deleted by the harness; no production app data was used.
+- Existing `verify-list-workspace-ui.ts` passed Work/Basic layouts, toolbar and saved
+  views, metadata/conflict drafts, preferences, exact retries and phone layouts.
+  `verify-ux-phase-six.ts` passed public guide/auth recovery and date-editor regression
+  coverage on rerun. Its first run timed out awaiting the date editor's background
+  refresh; no date implementation was changed, and the rerun passed conflict recovery
+  and committed-response-loss retry. This intermittent wait remains a harness caveat.
+- Browser page errors were absent in the new app-shell harness. Initial harness-only
+  selector mistakes were corrected to match the existing guide labels before the
+  passing runs. The mobile logo selector was updated for its new link wrapper,
+  retaining the original 40px illustration and compact header geometry.
+
+Local implementation is ready for review and source push to main. Production
+runtime, installed native clients, physical touch, assistive technologies and
+participant usability remain separate verification. Existing public `/docs` URLs
+and downloads are preserved; authenticated embedded guide routes are `/settings/docs`.

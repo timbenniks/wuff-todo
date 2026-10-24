@@ -373,7 +373,7 @@ try {
     );
     if (width >= 1440)
       assert.ok(
-        (await page.locator(".settings-workspace").boundingBox()).width >= 1400,
+        (await page.locator(".workspace-main").boundingBox()).width >= 1400,
       );
     await page.screenshot({
       path: `docs/screenshots/desktop-settings-${width}.png`,

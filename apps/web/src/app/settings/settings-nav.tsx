@@ -3,17 +3,18 @@ import { usePathname } from "next/navigation";
 export function SettingsNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Settings" className="flex flex-wrap gap-2 sm:flex-col">
+    <nav aria-label="Settings" className="workspace-settings-nav">
       {[
         ["/settings/reminders", "Reminders"],
         ["/settings/connections", "Connections"],
-        ["/docs", "Design & prototype guide"],
+        ["/settings/docs", "Docs"],
       ].map(([href, label]) => (
         <a
           key={href}
           href={href}
-          aria-current={path === href ? "page" : undefined}
-          className={`rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-accent ${path === href ? "bg-accent text-primary" : ""}`}
+          aria-current={
+            path === href || path.startsWith(href + "/") ? "page" : undefined
+          }
         >
           {label}
         </a>

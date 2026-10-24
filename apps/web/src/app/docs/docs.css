@@ -368,14 +368,80 @@
   }
 }
 
-.docs-quick-start { margin-block:20px 28px; }
-.docs-quick-start h2 { margin-top:0; }
-.docs-quick-start details { margin-top:12px; }
-.docs-quick-start summary { cursor:pointer; min-height:44px; display:flex; align-items:center; }
-.docs-mobile-nav { display:none; }
-.docs-component-search { display:grid; gap:8px; font-size:14px; }
-.docs-component-search input,.docs-mobile-nav select { min-height:44px; border:1px solid var(--wuff-border); background:var(--wuff-surface); color:var(--wuff-foreground); border-radius:8px; padding:10px 12px; min-width:0; width:100%; font-size:16px; }
-.docs-component-jumps { display:flex; flex-wrap:wrap; gap:4px 16px; margin-block:16px; }
-.docs-component-jumps a { display:inline-flex; align-items:center; min-height:44px; font-size:14px; text-decoration:underline; overflow-wrap:anywhere; }
-.docs-source { scroll-margin-top:24px; }
-@media(max-width:767px) { .docs-nav {display:none;} .docs-mobile-nav {display:grid;gap:6px;margin-block:12px;font-size:13px;} .docs-header {padding-block:12px;} .docs-main {margin-top:24px;} }
+.docs-quick-start {
+  margin-block: 20px 28px;
+}
+.docs-quick-start h2 {
+  margin-top: 0;
+}
+.docs-quick-start details {
+  margin-top: 12px;
+}
+.docs-quick-start summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.docs-mobile-nav {
+  display: none;
+}
+.docs-component-search {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.docs-component-search input,
+.docs-mobile-nav select {
+  min-height: 44px;
+  border: 1px solid var(--wuff-border);
+  background: var(--wuff-surface);
+  color: var(--wuff-foreground);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 0;
+  width: 100%;
+  font-size: 16px;
+}
+.docs-component-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-block: 16px;
+}
+.docs-component-jumps a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.docs-source {
+  scroll-margin-top: 24px;
+}
+@media (max-width: 767px) {
+  .docs-nav {
+    display: none;
+  }
+  .docs-mobile-nav {
+    display: grid;
+    gap: 6px;
+    margin-block: 12px;
+    font-size: 13px;
+  }
+  .docs-header {
+    padding-block: 12px;
+  }
+  .docs-main {
+    margin-top: 24px;
+  }
+}
+
+.settings-guide .docs-main {
+  max-width: none;
+  margin: 28px 0 48px;
+}
+.settings-guide .docs-footer {
+  margin-top: 24px;
+}

@@ -7,7 +7,7 @@ const md = new MarkdownIt({ html: false, linkify: true });
 export function Article({ slug }: { slug: string }) {
   const page = pages.find((p) => p.slug === slug)!;
   return (
-    <main>
+    <div>
       <div className="docs-eyebrow">
         Wuff field guide · {slug === "overview" ? "Start here" : page.title}
       </div>
@@ -29,6 +29,6 @@ export function Article({ slug }: { slug: string }) {
           <ComponentCatalog />
         </>
       ) : null}
-    </main>
+    </div>
   );
 }

@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
+  aligned desktop list titles and account Settings/Docs in the existing app shell.
+  See [scope and acceptance](app-workspace-shell.md). Local browser/type/unit/build checks pass; production verification and installed
+  native/device checks remain separate. WUFF-80 (Reminders) is explicitly deferred.
+
 - **UX improvement programme (October 24):** the complete audit is translated into
   [a six-phase specification](ux-improvement-spec.md). Phase 1 is locally complete:
   stable task capture, readable phone titles and visible filter recovery. Production

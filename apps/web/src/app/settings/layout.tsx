@@ -1,6 +1,9 @@
 import { ActorApiProvider } from "../lists/actor-api";
+import { ListApp } from "../lists/list-app";
 import { SettingsNav } from "./settings-nav";
-import { pageActor } from "@/lib/auth/server";
+import { pageActor, webIdentity } from "@/lib/auth/server";
+import { listLists, listInvitations } from "@wuff/domain";
+import { sealLiveLists } from "@/lib/live-server";
 import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 export default async function SettingsLayout({
@@ -14,24 +17,35 @@ export default async function SettingsLayout({
   } catch {
     redirect("/sign-in");
   }
+  const [identity, initialLists, initialInvitations, liveConfig] =
+    await Promise.all([
+      webIdentity(),
+      listLists(actor),
+      listInvitations(actor),
+      sealLiveLists(actor),
+    ]);
   return (
-    <main className="settings-workspace mx-auto px-4 py-8 sm:px-6">
-      <a href="/lists" className="text-sm text-primary hover:underline">
-        ← Back to your lists
-      </a>
-      <header className="mt-8 mb-8">
-        <p className="text-sm text-muted-foreground mb-2">Your Wuff</p>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          A little help, on your terms.
-        </p>
-      </header>
-      <div className="settings-columns grid gap-8 sm:grid-cols-[11rem_minmax(0,1fr)]">
-        <SettingsNav />
-        <div className="min-w-0">
-          <ActorApiProvider userId={actor.id}>{children}</ActorApiProvider>
-        </div>
-      </div>
-    </main>
+    <ActorApiProvider userId={actor.id}>
+      <ListApp
+        key={actor.id}
+        userId={actor.id}
+        name={identity?.name ?? "Your account"}
+        initialLists={initialLists}
+        initialList={null}
+        initialInvitations={initialInvitations}
+        liveConfig={liveConfig}
+        workspace={{
+          navigation: <SettingsNav />,
+          content: (
+            <>
+              <header className="list-heading">
+                <h1 className="font-bold">Settings</h1>
+              </header>
+              <div className="settings-content">{children}</div>
+            </>
+          ),
+        }}
+      />
+    </ActorApiProvider>
   );
 }

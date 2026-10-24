@@ -55,7 +55,7 @@
     "components": [
       {
         "name": "ListApp",
-        "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n})"
+        "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n  workspace,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n  workspace?: { navigation: ReactNode; content: ReactNode };\n})"
       }
     ]
   },
