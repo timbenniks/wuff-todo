@@ -20,9 +20,24 @@ scope, preview, verification evidence and technical handoffs.
 
 `github-main-ruleset.json` is an activation payload, not evidence of active rules.
 It requires PRs, one owner approval, resolved review threads, fresh approvals after
-changes, squash merging and current-branch passing Verify jobs. It blocks branch
-deletion and force pushes. Required check names and GitHub Actions app ID 15368
+changes, squash merging and the current-branch passing Verify `check` job. It blocks
+branch deletion and force pushes. The check name and GitHub Actions app ID 15368
 were read from the repository's actual check runs.
+
+## Lightweight CI and local compilation
+
+Tim selected local platform compilation on October 24. Automatic Verify runs use
+one Ubuntu job for workspace/root TypeScript and unit tests, with a frozen pnpm
+install, a 15-minute timeout and cancellation of superseded runs. Web builds are
+handled by Vercel deployments; they are not part of this required GitHub check.
+Native compilation, mobile exports and installed-device checks are local release
+evidence, recorded by Tim before shipping affected clients.
+
+The multi-platform Native test builds workflow is manual-only (`workflow_dispatch`),
+retained as an optional fallback. No PR or main push starts it. Manually running it
+on main still builds all platforms and publishes a complete test prerelease after
+the jobs pass. It is not a required PR check. The prepared ruleset requires only
+`check`, so removed native jobs cannot leave PRs waiting for missing checks.
 
 Only Tim (GitHub user ID 121096) has a PR-only bypass. This preserves his ability
 to merge his own PRs, which he cannot approve himself; it also lets him override

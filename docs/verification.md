@@ -17,6 +17,15 @@ JSON parsing and diff whitespace checks cover these configuration/documentation
 changes. GitHub API acceptance of the payload and rejection of unauthorized
 contributor pushes/merges remain unverified until the plan block is resolved.
 
+CI simplification: automatic Verify now has one Ubuntu `check` job running
+`pnpm typecheck` and `pnpm test`, with a 15-minute limit and superseded-run
+cancellation. Both commands passed locally, including all 91 unit tests.
+Native test builds is manual-only and the prepared ruleset requires only `check`.
+Workflow YAML parsing and trigger/job inspection, JSON parsing, formatting and
+whitespace checks passed. This is local configuration evidence; remote Actions
+execution remains subject to the account billing block. No native compilation,
+manual workflow dispatch or release publication was performed for this change.
+
 ## Personal Home dashboard — October 23, 2026
 
 [WUFF-87](home-dashboard.md) adds a configurable personal Home: welcome/Waffles, Today, seven-day Coming up and Favorites. Settings control section order/visibility, reset and Home/last-list entry. Task previews preserve list/shared/parent context. Direct task/list links, authorization and shared revisions remain independent.

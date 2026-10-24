@@ -1,6 +1,10 @@
 # Tauri platform and distribution gates
 
-The private repository's **Native test builds** workflow creates unsigned macOS/Windows debug packages, an Android debug APK and an unsigned iOS simulator build. Actions artifacts expire after 14 days. Each successful main-branch build now also publishes the complete set as a private GitHub prerelease with durable download assets; see [native releases](native-releases.md). Downloads require authenticated repository access. No production credentials, signing certificates or release publication permissions are supplied to PR jobs. These are validation artifacts, not signed end-user releases. Generated mobile projects are ephemeral CI output; the checked-in Tauri configuration remains the source of truth.
+October 24 update: platform compilation is now local. The workflow below is
+retained as a manual-only fallback; PRs and main pushes do not start it.
+See [lightweight CI](contributor-github.md#lightweight-ci-and-local-compilation).
+
+The private repository's **Native test builds** workflow creates unsigned macOS/Windows debug packages, an Android debug APK and an unsigned iOS simulator build. Actions artifacts expire after 14 days. Each successful manually dispatched main-branch build also publishes the complete set as a private GitHub prerelease with durable download assets; see [native releases](native-releases.md). Downloads require authenticated repository access. No production credentials, signing certificates or release publication permissions are supplied to PR jobs. These are validation artifacts, not signed end-user releases. Generated mobile projects are ephemeral CI output; the checked-in Tauri configuration remains the source of truth.
 
 ## Build evidence — October 22, 2026
 

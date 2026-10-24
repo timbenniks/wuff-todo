@@ -1,18 +1,7 @@
 name: Native test builds
 on:
+  # Platform compilation is done locally. Keep this only as an explicit fallback.
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    paths:
-      - ".github/workflows/native-builds.yml"
-      - "scripts/native_release.py"
-      - "tests/test_native_release.py"
-      - "apps/native/**"
-      - "packages/ui/**"
-      - "packages/client/**"
-      - "packages/contracts/**"
-      - "pnpm-lock.yaml"
 permissions:
   contents: read
 concurrency:
@@ -161,8 +150,8 @@ jobs:
           retention-days: 14
 
   publish:
-    # Never grant a PR build write permissions or publish a branch build.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # Only an explicit manual run on main can publish a native prerelease.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     needs: [release-check, desktop, android, ios]
     runs-on: ubuntu-latest
     permissions:

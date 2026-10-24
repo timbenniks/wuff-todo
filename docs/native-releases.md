@@ -1,6 +1,12 @@
 # Native download releases
 
-Decision, October 22, 2026 (WUFF-82): every push to `main`, including merged PRs, runs **Native test builds** and publishes one private GitHub prerelease after application checks and all four package jobs succeed. Multiple commits merged in one push produce one release. PR builds retain read-only permissions and never publish. No signing credentials are required by this test distribution workflow.
+Updated decision, October 24, 2026: Tim handles platform compilation locally.
+**Native test builds** is manual-only; pushes and PRs no longer launch platform
+builds or publish releases. This supersedes the October 22 (WUFF-82) automatic
+release decision. The retained manual fallback publishes one private GitHub
+prerelease only when explicitly run on `main`, after application checks and all
+four package jobs succeed. No signing credentials are required by this test
+distribution workflow.
 
 Download from the private [Releases page](https://github.com/timbenniks/wuff-todo/releases). Unlike Actions artifacts, release assets have no 14-day artifact expiry. GitHub requires repository access; the owner can download and share the files directly with authorized testers. The workflow does not change repository visibility or grant access.
 
@@ -24,7 +30,10 @@ In Actions → **Native test builds** → **Run workflow**, select **main**. CLI
 gh workflow run native-builds.yml --ref main
 ```
 
-This rebuilds and publishes the current main commit with a new run ID. Manual runs on other branches only build; they cannot publish. An active release build is never interrupted by a newer merge. GitHub retains only the newest pending run, so rapid merges while a build is running are grouped into the next release.
+This rebuilds and publishes the current main commit with a new run ID. Manual runs
+on other branches only build; they cannot publish. An active manual build is never
+interrupted by another run. GitHub retains only the newest pending run in the same
+branch concurrency group. Merges do not queue a build.
 
 For a failed publication, use **Re-run failed jobs** on the original run while its build artifacts still exist. The same run ID resumes its draft and replaces draft assets before validation. A retry of a completed publication verifies its commit and asset set and preserves the published files. It never clobbers published assets. If a draft contains unexpected files, publication fails rather than silently dropping them; inspect and correct that draft before retrying. After artifact expiry, run a fresh main build.
 
@@ -38,4 +47,7 @@ Nine synthetic Python tests cover complete package checksums/source names, missi
 python3 -m unittest discover -s tests -p test_native_release.py -v
 ```
 
-Local tests passed with the bundled Python 3.12 runtime. macOS system Python 3.9 lacks `tomllib`; CI explicitly selects Python 3.12. PR CI and first main-branch publication are required before claiming live release automation verified.
+Local tests passed with the bundled Python 3.12 runtime. macOS system Python 3.9
+lacks `tomllib`; the manual workflow explicitly selects Python 3.12. A successful
+manual main-branch publication is required before claiming the current manual
+release path verified live.
