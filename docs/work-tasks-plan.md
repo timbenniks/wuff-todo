@@ -48,7 +48,7 @@ Build a provider-neutral task execution contract: task/version, authorized repos
 
 ## Delivery state
 
-Stage 1 is implemented; release verification follows below. Stage 2 personal views are implemented and released; see [personal views](personal-views.md). Stage 3 GitHub synchronization is implemented and released within its documented scope; Stage 4 is deferred by user decision. The user subsequently selected online-only React Native/Expo mobile; the initial local slice and next delivery gate are recorded in [native mobile](native-mobile.md).
+Stage 1 is implemented; release verification follows below. Stage 2 personal views and Stage 3 GitHub synchronization are implemented within their documented scope. Later Cursor work is recorded in [Cursor agents](cursor-agents.md). The maintained online-only native client is now [Tauri](tauri-client.md); the earlier Expo frontend was retired on October 24. See [platform gates](tauri-platforms.md) for remaining device/release acceptance.
 
 ## Stage 1 development verification
 

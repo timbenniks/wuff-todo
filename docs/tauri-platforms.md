@@ -16,12 +16,12 @@ The final Apple jobs use the supported Apple Silicon `macos-15` runner with Xcod
 
 ## Acceptance matrix
 
-| Platform | Build evidence | Installed evidence | Remaining release gate |
-| --- | --- | --- | --- |
-| macOS | Local debug app and Rust check passed | Browser login, warm/cold callback, Keychain restart, live connection, list/task edits, formatted notes, private image upload/read, date and subtask verified | Signed/notarized clean-machine install, background/reconnect/accessibility acceptance |
-| Windows | Rust CI check passed; unsigned NSIS installer artifact built | Not yet performed | Install/WebView2, Credential Manager, warm/cold callback, keyboard/live/image acceptance, signing |
-| iOS | Unsigned Apple Silicon simulator app artifact built | Not yet performed | Full Xcode/device, developer team, provisioning, Keychain/auth/photo/keyboard/safe-area/live acceptance, TestFlight |
-| Android | ARM64 debug APK artifact built | Not yet performed | Device/emulator, Keystore/auth/photo/keyboard/back/live acceptance, private signed test channel |
+| Platform | Build evidence                                               | Installed evidence                                                                                                                                           | Remaining release gate                                                                                              |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| macOS    | Local debug app and Rust check passed                        | Browser login, warm/cold callback, Keychain restart, live connection, list/task edits, formatted notes, private image upload/read, date and subtask verified | Signed/notarized clean-machine install, background/reconnect/accessibility acceptance                               |
+| Windows  | Rust CI check passed; unsigned NSIS installer artifact built | Not yet performed                                                                                                                                            | Install/WebView2, Credential Manager, warm/cold callback, keyboard/live/image acceptance, signing                   |
+| iOS      | Unsigned Apple Silicon simulator app artifact built          | Not yet performed                                                                                                                                            | Full Xcode/device, developer team, provisioning, Keychain/auth/photo/keyboard/safe-area/live acceptance, TestFlight |
+| Android  | ARM64 debug APK artifact built                               | Not yet performed                                                                                                                                            | Device/emulator, Keystore/auth/photo/keyboard/back/live acceptance, private signed test channel                     |
 
 Use synthetic data on the existing development backend for destructive and account-isolation acceptance. Production-configured build artifacts must never embed development credentials or a localhost override. Development overrides stay in the existing explicit local build configuration.
 
@@ -39,16 +39,16 @@ References: [Tauri distribution](https://v2.tauri.app/distribute/), [GitHub pipe
 
 ## Feature coverage
 
-| Feature | Website | Tauri | MCP |
-| --- | --- | --- | --- |
-| Lists, tasks, sections, subtasks, dates, personal views | Shared screens | Same shared screens through bearer adapters | Existing domain-backed tools |
-| Sharing and owner controls | Shared screens | Same screens and server permissions | Existing sharing tools |
-| Formatted notes/private images | Cookie-authorized editor and image streams | Same editor; bearer streams and bounded blob previews | Canonical Markdown and attachment tools |
-| Work metadata, linked issues and PR context | Existing screens | Shared context; synchronized mutations require optional GitHub consent | Existing Work/GitHub tools |
-| Agent conversations/run context | Existing screens | Readable task context | Existing agent tools |
-| Agent launch/recovery, personal credentials and repository administration | Existing authorized website flows | Explicit system-browser handoff | Existing tools subject to personal credentials and execution gates |
+| Feature                                                                   | Website                                    | Tauri                                                                  | MCP                                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Lists, tasks, sections, subtasks, dates, personal views                   | Shared screens                             | Same shared screens through bearer adapters                            | Existing domain-backed tools                                       |
+| Sharing and owner controls                                                | Shared screens                             | Same screens and server permissions                                    | Existing sharing tools                                             |
+| Formatted notes/private images                                            | Cookie-authorized editor and image streams | Same editor; bearer streams and bounded blob previews                  | Canonical Markdown and attachment tools                            |
+| Work metadata, linked issues and PR context                               | Existing screens                           | Shared context; synchronized mutations require optional GitHub consent | Existing Work/GitHub tools                                         |
+| Agent conversations/run context                                           | Existing screens                           | Readable task context                                                  | Existing agent tools                                               |
+| Agent launch/recovery, personal credentials and repository administration | Existing authorized website flows          | Explicit system-browser handoff                                        | Existing tools subject to personal credentials and execution gates |
 
-No native offline write queue, reminders or push notification service is introduced. Existing Expo remains until the Tauri installed-platform gates pass.
+No native offline write queue is selected. Personal reminder settings and server delivery adapters are documented in [reminders](reminders.md); installed native delivery remains a separate gate. The Expo frontend was retired on October 24 at the maintainer’s request; the installed-platform gates above remain open independently.
 
 ## Device handoff (owner confirmed October 22)
 

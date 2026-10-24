@@ -1,14 +1,14 @@
 # Tauri client development
 
-Updated: October 22, 2026
+Updated: October 24, 2026
 
 The client is tracked in the private **Wuff Todo** Work list, bound to `timbenniks/wuff-todo` with automatic GitHub issue creation. Specs live in WUFF-70 through WUFF-79; the sequencing and architecture are in [the client plan](tauri-client-plan.md).
 
 ## Current implementation
 
-PRs #11–15 are merged: system-browser authentication and native credentials, shared controls, native live transport, and the full shared list/task workspace with cache, notes/private images and Work context. See [feature evidence](tauri-features.md) and [platform/distribution matrix](tauri-platforms.md). Core checks include 74 unit tests and 28 isolated development integration tests. Packaged macOS flows are verified within those documents; remaining installed targets and signed releases are not yet certified.
+PRs #11–15 are merged: system-browser authentication and native credentials, shared controls, native live transport, and the full shared list/task workspace with cache, notes/private images and Work context. See [feature evidence](tauri-features.md) and [platform/distribution matrix](tauri-platforms.md). The October 22 delivery recorded 74 unit tests and 28 isolated development integration tests; current cleanup evidence is in [verification](verification.md). Packaged macOS flows are verified within those documents; remaining installed targets and signed releases are not yet certified.
 
-The following foundation section is historical WUFF-70 evidence and does not describe the current authentication/feature set.
+`apps/native` is the only maintained native workspace; the Expo frontend is retired. The WUFF-70 foundation and verification sections below are historical, not current capability or toolchain claims.
 
 ## Initial foundation — WUFF-70
 
@@ -36,7 +36,7 @@ pnpm dev:native
 pnpm build:native
 ```
 
-`build:native` requests a native binary without installer bundling. The first successful Cargo resolution must produce a reviewed, committed Cargo.lock; none can be generated here until Cargo is installed. `src-tauri/target` and generated platform projects are ignored.
+`build:native` requests a native binary without installer bundling. The reviewed `apps/native/src-tauri/Cargo.lock` is committed; keep it aligned with the native manifests. `src-tauri/target` and generated platform projects are ignored.
 
 ## Platform prerequisites and gates
 
@@ -45,9 +45,9 @@ pnpm build:native
 - iOS: macOS, full Xcode, required Rust targets, simulator/device setup and signing for device builds.
 - Android: Android SDK/NDK/JDK, required Rust targets and an emulator/device.
 
-Follow [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for exact supported versions when provisioning each host. Mobile platform initialization and device-addressable development server/CSP configuration belong to WUFF-78 after toolchains are available. The existing loopback configuration is for desktop development only.
+Follow [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for exact supported versions when provisioning each host. Generated mobile platform projects remain disposable output. Use the current Tauri config and [platform matrix](tauri-platforms.md) for mobile build evidence and outstanding installed-device gates.
 
-The current machine reports Apple command-line tools but no Rust, Cargo, rustup or full Xcode. Native compilation, Cargo dependency resolution, native CSP execution, app installation and signing have not been verified. This is a toolchain prerequisite, not evidence of a failure in the app.
+Earlier WUFF-70 checks lacked Rust/Cargo on the initial host. Subsequent macOS compilation and runtime evidence is recorded in [auth](tauri-auth.md) and [features](tauri-features.md). Verify toolchains on each host; full Xcode, physical-device acceptance and signing remain separate requirements.
 
 ## Task map
 
@@ -66,7 +66,7 @@ The current machine reports Apple command-line tools but no Rust, Cargo, rustup 
 
 All ten links were reread through Wuff MCP as synced. Update task status/spec notes through MCP with a fresh list version; retain exact operation IDs when retrying an uncertain write.
 
-## Verification — October 22
+## Historical WUFF-70 verification — October 22
 
 - `pnpm build:native:web`: native TypeScript and Vite production build passed. JavaScript output was about 221 kB / 69 kB gzip, excluding local font and image assets. This is the initial shell size, not a full-app performance claim.
 - `pnpm typecheck`: all workspaces and root checks passed, including existing web/mobile packages.

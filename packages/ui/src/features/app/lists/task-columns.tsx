@@ -35,7 +35,6 @@ function TaskCell({
   list,
   busy,
   change,
-  today,
   drafts,
 }: {
   column: Exclude<Column, "due">;

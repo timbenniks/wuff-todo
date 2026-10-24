@@ -2,15 +2,15 @@
 
 Status: implemented web/API/MCP architecture with explicitly marked future scope
 
-Updated: October 17, 2026
+Updated: October 24, 2026
 
-The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication, new-account invitation delivery, and future packages remain planned.
+The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication and the shared Tauri workspace are implemented; installed-platform/signing acceptance and new-account invitation delivery remain separate gates.
 
 ## Stack and deployment
 
 Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzle ORM, Neon Postgres, Neon Auth, and Vercel hosting. Provision Neon through the Vercel integration. Use the GitHub CLI and Vercel CLI in the development and delivery workflow.
 
-The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. Mobile applications will have separate release pipelines within the same repository.
+The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. The Tauri application has its own native build/release pipeline in the same repository.
 
 Private task-note images use Vercel Blob for bytes and Neon for task-bound attachment records. Current admission/list permissions authorize each delivery; Markdown uses stable application attachment references. Development and production use separate private Frankfurt stores. See [private task images](task-images.md) for lifecycle, APIs, MCP and verification status.
 
@@ -20,30 +20,30 @@ DM Sans upright/italic variable assets and their OFL license live in `apps/web/s
 
 [GitHub issue synchronization](github-sync.md) adds owner-verified personal installations, encrypted expiring credentials, durable jobs and signed webhooks. The visual release remains separate; agent-run services are still deferred.
 
-## Repository layout and future packages
+## Repository layout
 
-The [design language and list themes](design-language.md) use a pure, client-safe palette derivation and shared CSS in `apps/web/src/lib`. Web renders selected-list tokens on its container and synchronizes the document root for gutters/dialogs; MCP applies the same palette to its standalone document. No theme state or database table is added, and the existing owner-controlled list color remains authoritative. Status/danger colors retain their semantic meaning.
+The [design language and list themes](design-language.md) use a pure, client-safe palette derivation in `packages/design` and shared CSS in `packages/ui`. Web renders selected-list tokens on its container and synchronizes the document root for gutters/dialogs; MCP applies the same palette to its standalone document. No theme state or database table is added, and the existing owner-controlled list color remains authoritative. Status/danger colors retain their semantic meaning.
 
 ```text
 apps/
   web/                 Next.js website, API routes, MCP transport
-  mobile/              Future Expo/React Native app for iOS and Android
+  native/              React/Vite frontend and Tauri shell for desktop and phones
 packages/
   contracts/           Shared validation schemas, DTOs, error contracts
   domain/              Server-side list/task operations and permissions
   db/                  Drizzle schema, database access, migrations
-  client/              Future typed HTTP client
-  ui/                  Future shared web component package
-  design/              Future shared design asset package
+  client/              Native HTTP transport, session lifecycle and refresh helpers
+  ui/                  Shared browser-compatible React controls and feature screens
+  design/              Shared client-safe palettes and theme derivation
 docs/
 ```
 
-Create packages when they acquire real responsibilities. Do not scaffold an unused mobile application during the first phase.
+Create packages only when they acquire real responsibilities. The retired Expo app remains available in Git history; Tauri is the sole maintained native workspace.
 
 ## Request flow and package boundaries
 
 ```text
-Website / future mobile ── HTTP API ──┐
+Website / Tauri client ── HTTP API ──┐
                                     ├── Domain services ── Drizzle ── Neon
 AI client / MCP App ────── MCP tools ─┘
 ```
@@ -58,15 +58,15 @@ AI client / MCP App ────── MCP tools ─┘
 - Database credentials, auth secrets, domain implementation, and database packages never enter browser or mobile bundles.
 - Contracts expose stable public representations, not raw database rows.
 - The HTTP client and mobile application do not import server-only packages.
-- Website and MCP App may share web components. Native mobile components share design tokens and assets, not browser-dependent shadcn components.
+- Website and Tauri share browser-compatible React controls/features from `@wuff/ui`; native storage, transport and navigation use explicit adapters. The standalone MCP App reuses public contracts/design and its own packaged interface.
 
 ## Identity and authorization
 
-Native implementation started October 17: the online-only Expo app reuses admitted Neon identity through browser PKCE, a fixed first-party callback and a separate `/api/mobile` token audience. The bearer-only adapter delegates to existing domain services; no managed-auth plugin or schema migration is introduced. See [native architecture and limits](native-mobile.md).
+Tauri uses admitted Neon identity through system-browser PKCE, the fixed `wuff-tauri-v1` client and exact callback, and the separate `/api/mobile` token audience. Its bearer-only adapter delegates to existing domain services. The retired Expo frontend’s legacy fixed OAuth identity remains supported for compatibility; no OAuth endpoint or default shared-client behavior is removed. See [native auth](tauri-auth.md) and [shared features](tauri-features.md).
 
 Neon Auth is the chosen identity system. Validate the current managed service capabilities before selecting an integration. Old Neon examples based on Stack Auth are not evidence for the current managed Better Auth implementation.
 
-Website sessions, future native sign-in, and delegated MCP authorization need explicit integration paths. A website login cookie alone does not authorize an external MCP client.
+Website sessions, Tauri sign-in, and delegated MCP authorization need explicit integration paths. A website login cookie alone does not authorize an external MCP client.
 
 The first technical proof must establish:
 
@@ -126,7 +126,7 @@ Keep reorder and membership operations explicit. Do not expose generic database 
 
 ## MCP and MCP Apps
 
-The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its 41 tools include the original list/task/view/image tools and the eleven [GitHub tools](github-sync.md#surfaces):
+The implemented endpoint is `/api/mcp`, using stateless Streamable HTTP with delegated bearer authentication. Its tools include list/task/view/image capabilities and the eleven [GitHub tools](github-sync.md#surfaces):
 
 - `list_lists`, `get_list`, `get_task`, `create_list`, `rename_list`, `delete_list`.
 - `update_list`, `get_list_order`, `reorder_lists`.
@@ -141,11 +141,11 @@ MCP App packaging must respect host sandboxing and resource policies. Do not emb
 
 ## Web and mobile offline boundary
 
-**October 17 decision:** the user selected online-only native iPhone/Android apps for now. The alternatives below retain earlier planning context; offline persistence/queued edits are deferred, not an implementation prerequisite. See [native mobile](native-mobile.md).
+**Current native decision:** online-only Tauri for desktop and phones. Offline persistence and queued edits remain deferred. See [client architecture](tauri-client-plan.md).
 
-Confirmed October 15, 2026: preserve the website’s current online behavior. Its manifest and icon assets provide identity; do not extend them into offline-first PWA behavior. No service worker, durable offline task cache, or disconnected mutation queue is part of the current web scope. Transient in-memory list snapshots and retrying an uncertain online request are separate from offline editing. Live updates and reconnect reconciliation are implemented online features.
+Preserve the website’s online behavior and manifest/icon identity. The push-only notification service worker adds no fetch interception or offline task storage. No offline-first PWA or disconnected mutation queue is selected. Transient in-memory snapshots, uncertain-request retries and reconnect reconciliation are online features.
 
-The native client follows the same online-only boundary. SecureStore persists only authentication credentials, scoped by server origin; snapshots and unsaved edits remain in memory. Foreground refresh and active polling use the bearer-only native adapter. Sign-out clears local state and attempts remote revocation. Offline read caches and queued writes require a separate future decision covering privacy, revocation, conflict handling and cleanup. See [native authentication and refresh](native-mobile.md).
+The Tauri client follows the same online-only boundary. Native credential storage is scoped by server origin; snapshots and unsaved edits stay in memory. Bearer-authorized live invalidation, polling and foreground reconciliation refresh authoritative state. Sign-out clears local state and attempts remote revocation. Offline caches and queued writes need a separate privacy/revocation/conflict decision. See [authentication](tauri-auth.md) and [live refresh](tauri-live.md).
 
 ## Environments and delivery
 
@@ -168,7 +168,7 @@ Research reviewed October 15, 2026. Current integration evidence is recorded in 
 - [Neon auth in Vercel previews](https://neon.com/blog/auth-that-just-works-in-vercel-previews)
 - [MCP Apps overview](https://modelcontextprotocol.io/extensions/apps/overview)
 - [MCP Apps authorization](https://apps.extensions.modelcontextprotocol.io/api/documents/authorization.html)
-- [Expo documentation](https://docs.expo.dev/)
+- [Tauri documentation](https://v2.tauri.app/)
 - [shadcn/ui documentation](https://ui.shadcn.com/docs)
 
 ## Existing-account sharing

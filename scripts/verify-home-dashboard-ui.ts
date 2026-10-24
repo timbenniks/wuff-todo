@@ -3,11 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { eq } from "drizzle-orm";
-import {
-  scopes,
-  defaultDashboardSettings,
-  dashboardThrough,
-} from "@wuff/contracts";
+import { scopes, defaultDashboardSettings } from "@wuff/contracts";
 import { database, dashboardPreferences, members } from "@wuff/db";
 import {
   createList,

@@ -71,7 +71,8 @@
     "markdown-it": "15.0.3",
     "@wuff/client": "workspace:*",
     "@wuff/design": "workspace:*",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "@tiptap/pm": "3.32.0"
   },
   "peerDependencies": {
     "react": "^19.3.1"

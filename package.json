@@ -22,8 +22,6 @@
     "dev:native:web": "pnpm --filter @wuff/native dev",
     "build:native:web": "pnpm --filter @wuff/native build",
     "build:native": "pnpm --filter @wuff/native tauri build --no-bundle",
-    "dev:mobile": "pnpm --filter @wuff/mobile start",
-    "build:mobile": "pnpm --filter @wuff/mobile export && node scripts/verify-mobile-bundle.mjs",
     "build:guide": "node scripts/build-guide.mjs"
   },
   "devDependencies": {
@@ -42,7 +40,8 @@
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "ws": "8.21.2"
+    "ws": "8.21.2",
+    "@tiptap/markdown": "3.32.0"
   },
   "type": "module"
 }

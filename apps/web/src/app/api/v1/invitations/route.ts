@@ -1,4 +1,4 @@
-import { failure, jsonInput, sameOrigin } from "@/lib/http";
+import { failure } from "@/lib/http";
 import { listResponse } from "@/lib/list-response";
 import { listInvitations } from "@wuff/domain";
 export async function GET() {
