@@ -10,7 +10,8 @@ playwright-report/
 .DS_Store
 *.tsbuildinfo
 .mcp/
-.agents/skills/
+.agents/skills/*
+!.agents/skills/wuff-contributor/
 skills-lock.json
 
 # Expo generated projects and local state

@@ -34,7 +34,8 @@
       "parameters": {
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
-          { "context": "check", "integration_id": 15368 }
+          { "context": "check", "integration_id": 15368 },
+          { "context": "Contributor policy", "integration_id": 15368 }
         ]
       }
     }

@@ -13,6 +13,10 @@ Start with `docs/implementation-plan.md` for current status and the next planned
 
 ## Contributor delivery
 
+- Follow [the contributor workflow](docs/contributor-workflow.md) and the repository's
+  `wuff-contributor` skill for real feature work. Before implementation, record a
+  brief/acceptance criteria in a draft PR and obtain Tim's technical scope approval.
+  Confirm environment readiness before preview or integration writes.
 - Implement features on a `codex/` branch and open a draft PR early. Commit and push
   to that branch; do not push directly to `main`. Keep the PR current with scope,
   preview, actual verification evidence and remaining technical work.

@@ -4,6 +4,41 @@ Updated: October 24, 2026. Older sections retain their milestone-specific eviden
 
 ## Contributor GitHub safeguards — October 24, 2026
 
+Expanded contributor delivery workflow and local evidence:
+
+- Root instructions route real feature work to the canonical contributor workflow
+  and repository skill. The hosted guide adds `/docs/build`, a separate starter,
+  skill download, PR template and full workflow. Prototype-only behavior remains.
+- A metadata-only trusted-main policy workflow validates maintainer-created scope
+  approvals, brief hashes, changed/renamed paths, sensitive-file exceptions,
+  current-commit evidence and large-diff approval. No PR code or dependencies run
+  with its write-check token. Checkout/setup actions are pinned to verified v4
+  commit SHAs. The prepared ruleset now requires `check` and `Contributor policy`.
+- Final `pnpm check` passed workspace/root TypeScript, all 108 unit tests and the
+  optimized prototype-kit/MCP/web build. Seventeen new policy cases cover forged
+  approvals, revocation, stale brief/evidence, path traversal and rename escapes,
+  sensitive paths, credential filenames, large/incomplete inventories, API errors,
+  exact evaluated SHA and changes during evaluation. The existing docs `@source`
+  CSS parser advisory remains; the optimized build completed successfully.
+- Workflow YAML/permission/trigger/checkout inspection and ruleset JSON checks
+  passed locally. Contributor skill validation passed. ZIP CRC and exact source
+  byte checks passed for the contributor skill and workflow/template downloads.
+- `node scripts/verify-contributor-guide.mjs` passed at 320/390/1280px against the
+  optimized local website: one main heading, responsive navigation, copy prompt,
+  keyboard Enter, downloads, raw agent reference, retained prototype resources,
+  no document overflow, no page errors and no app API requests. Clipboard is an
+  in-memory test stub. The first test caught long approval examples overflowing;
+  scoped code-block wrapping fixed it. A harness label selector was corrected to
+  the actual combobox accessible name. Phone/desktop screenshots were visually
+  inspected: [phone](screenshots/contributor-guide-390.png) and
+  [desktop](screenshots/contributor-guide-1280.png).
+- No native compilation/device, actual contributor-agent run, production guide
+  deployment or live policy rejection is claimed. The new privileged workflow
+  must first land on main, then be exercised against a synthetic PR before
+  protection activation/onboarding. Owner review remains necessary; upstream
+  write access can also create similarly named Actions checks, so upstream read
+  access plus private forks is preferred where supported.
+
 Live `gh` reads confirmed private `timbenniks/wuff-todo`, ADMIN access, default
 branch `main` and auto-merge disabled. Ruleset listing and main protection reads
 both returned HTTP 403 requiring GitHub Pro or a public repository. No protection
@@ -20,7 +55,8 @@ contributor pushes/merges remain unverified until the plan block is resolved.
 CI simplification: automatic Verify now has one Ubuntu `check` job running
 `pnpm typecheck` and `pnpm test`, with a 15-minute limit and superseded-run
 cancellation. Both commands passed locally, including all 91 unit tests.
-Native test builds is manual-only and the prepared ruleset requires only `check`.
+Native test builds is manual-only. The initial ruleset required only `check`;
+the expanded contributor workflow adds the metadata-only `Contributor policy`.
 Workflow YAML parsing and trigger/job inspection, JSON parsing, formatting and
 whitespace checks passed. This is local configuration evidence; remote Actions
 execution remains subject to the account billing block. No native compilation,

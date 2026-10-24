@@ -36,10 +36,18 @@ for (const slug of [
   "accessibility",
   "prototyping",
   "handoff",
+  "build",
 ]) {
-  const markdown = (
+  let markdown = (
     await readFile(resolve(root, `docs/prototyping/${slug}.md`), "utf8")
   ).replace("<!-- PALETTE_TABLE -->", paletteTable);
+  if (slug === "build") {
+    markdown +=
+      "\n\n" +
+      (
+        await readFile(resolve(root, "docs/contributor-workflow.md"), "utf8")
+      ).replace(/^#/gm, "##");
+  }
   pages.push({
     slug,
     title: markdown.split("\n")[0].replace(/^# /, ""),
@@ -302,6 +310,22 @@ async function skillTree(source, prefix) {
 }
 await skillTree(resolve(root, "docs/prototyping/skill"), "wuff-prototype");
 await writeFile(resolve(output, "wuff-prototype-skill.zip"), zip(skillEntries));
+const contributorSkill = await readFile(
+  resolve(root, ".agents/skills/wuff-contributor/SKILL.md"),
+);
+await writeFile(resolve(output, "CONTRIBUTOR-SKILL.md"), contributorSkill);
+await writeFile(
+  resolve(output, "wuff-contributor-skill.zip"),
+  zip(new Map([["wuff-contributor/SKILL.md", contributorSkill]])),
+);
+await writeFile(
+  resolve(output, "contributor-workflow.md"),
+  await readFile(resolve(root, "docs/contributor-workflow.md")),
+);
+await writeFile(
+  resolve(output, "contributor-pr-template.md"),
+  await readFile(resolve(root, ".github/pull_request_template.md")),
+);
 await writeFile(
   resolve(output, "SKILL.md"),
   await readFile(resolve(root, "docs/prototyping/skill/SKILL.md")),

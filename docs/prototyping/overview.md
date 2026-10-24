@@ -2,6 +2,10 @@
 
 This guide is for people designing Wuff Todo features with an agent. You do not need to code or clone the app. Bring an idea, iterate on a prototype and send Tim a clear specification when it feels right.
 
+Have a contributor workspace? Use [Build a feature](/docs/build) for real repository
+work, scope approval and review evidence. The prototype path remains available
+without a checkout.
+
 Use the early kit download, starter prompt and feature brief template above. Each build links its source base and exact input hashes.
 
 ## Start a ChatGPT Work conversation

@@ -14,6 +14,9 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   No main-branch protection is claimed active. See [configuration and gates](contributor-github.md).
   Automatic CI is reduced to one Ubuntu typecheck/unit-test job; platform
   compilation is local, with the native release workflow retained as manual-only.
+  The contributor workflow, `/docs/build`, portable contributor skill and trusted
+  main-based scope/evidence policy are implemented locally; bootstrap and isolated
+  contributor/preview environments remain onboarding gates.
 
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.

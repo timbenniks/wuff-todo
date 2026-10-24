@@ -13,6 +13,7 @@ const links = [
   ["accessibility", "Responsive & accessible"],
   ["prototyping", "Make a prototype"],
   ["handoff", "Hand it off"],
+  ["build", "Build a feature"],
 ];
 export function DocsControls({ basePath = "/docs" }: { basePath?: string }) {
   const router = useRouter();

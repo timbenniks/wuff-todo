@@ -3,7 +3,8 @@ import catalog from "../catalog.generated.json";
 export const dynamic = "force-static";
 export function GET() {
   const text = [
-    "# Wuff Todo prototype reference",
+    "# Wuff Todo feature reference",
+    "Real repository contributions: https://wuff-todo.vercel.app/docs/build. Prototype downloads below remain mock-only.",
     "Living guide: https://wuff-todo.vercel.app/docs",
     "Starter: https://wuff-todo.vercel.app/prototype-kit/wuff-prototype.zip",
     "Skill: https://wuff-todo.vercel.app/prototype-kit/SKILL.md",
