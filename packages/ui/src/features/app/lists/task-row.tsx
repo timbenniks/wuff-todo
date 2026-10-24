@@ -57,8 +57,10 @@ export function TaskRow({
   disableChildDrag = false,
   onOpenTask,
   workDrafts,
+  hidden = false,
 }: {
   workDrafts?: Map<string, WorkCellDraft>;
+  hidden?: boolean;
   task: Task;
   userId: string;
   list: TodoList;
@@ -110,6 +112,7 @@ export function TaskRow({
   };
   return (
     <li
+      hidden={hidden}
       {...rowProps}
       onClick={(event) => {
         if (

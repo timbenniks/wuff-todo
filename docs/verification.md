@@ -439,3 +439,73 @@ Phase 2 is **locally complete; production release is pending**. These browser
 checks do not certify physical-phone keyboards, screen readers, installed native
 packages or named embedded MCP hosts. The existing API/MCP domain contracts and
 permissions are unchanged. Phase 3 is actionable Home and completion flow.
+
+
+## UX improvement Phase 3 — October 24, 2026
+
+Home now provides a compact Your day header, separate completion/title controls,
+explicit destination capture and the existing task drawer without leaving Home.
+Recovery uses session-only Recently completed/Reopen instead of a timed Undo.
+The all-completion list view folds previously completed roots into Completed;
+newly completed rows stay in place during the current visit. Parents with open
+children remain visible. No view preference, schema, permission or API/MCP tool
+contract was changed. See [decisions](ux-improvement-spec.md#phase-3--actionable-home-and-completion-flow).
+
+Final local checks:
+
+- `pnpm typecheck`: workspace/root TypeScript passed.
+- `pnpm test`: all 91 unit tests passed.
+- `pnpm build`: optimized web/MCP/prototype build passed; existing docs CSS
+  `@source` warning remains.
+- `pnpm build:native:web`: passed with the existing bundle-size advisory.
+- `node --env-file=.env.local --import tsx scripts/verify-ux-phase-three.ts`:
+  passed against the optimized localhost application. At 320/390/1440px, Home
+  has no horizontal overflow, reachable capture and completion targets at least
+  44px. Task titles independently open/close details on Home with focus return.
+  Completion moves Work to Done; Reopen restores an active task. Aborting the
+  response after a committed completion and creation then retrying sent identical
+  bodies/operation IDs, created one task and only offered recovery after ack.
+  A known conflict retained the task without a false completed entry. Destination
+  load failure/retry and list/section switches retained the title; the final task
+  reached the chosen Basic list with no stale Work section. Undated creation
+  explained Today exclusion; Open list retained its saved filter/empty-state
+  recovery. Completed starts collapsed without preference writes, keeps parents
+  with open children visible, and reopens into the original section with focus.
+  Explicit completed-only views remain explicit. Focus refresh showed a remote
+  domain title update. Revoked membership removed the destination while retaining
+  the capture title and disabling submission. Other-account preferences stayed
+  unchanged; no captured page errors occurred.
+- `node --env-file=.env.local --import tsx scripts/verify-desktop-workspace.ts`:
+  passed Home customization/reload/reset/all-hidden, last-list/explicit-Home and
+  history navigation, personal isolation, exact preference retries, conflict draft
+  recovery and failed reads, plus desktop canvas/navigation/drawer geometry and
+  phone reflow. The harness now waits for responsive navigation to mount after
+  resizing and uses the new Home title/link/drawer semantics.
+
+- `node --env-file=.env.local --import tsx scripts/verify-list-workspace-ui.ts`:
+  passed Basic/Work responsive controls/columns, preset lifecycle, metadata saves,
+  personal isolation, note/conflict drafts, saved views and exact retries. The
+  390×844 first-task position remains y=227px.
+
+Early runs corrected a Work fixture using an unsupported create field and a
+responsive test that measured navigation before React had mounted it. Visual
+review also found an unrelated completion error inside fresh capture; feedback
+is now scoped to capture's own failure or unresolved retry.
+
+Browser fixtures use only the existing isolated development branch. Lists,
+memberships and synthetic views are deleted in finally; original personal Home
+preferences/sidebar settings are restored. No deployment, migration, external
+connection or paid action was needed. These are optimized local browser checks,
+not production, installed-native, physical-keyboard, screen-reader or named MCP
+host certification. Remote update evidence uses focus/fallback refresh and does
+not certify a named client event stream.
+
+Visually reviewed [phone Home](screenshots/ux-phase-three-home-390.png),
+[narrow Home](screenshots/ux-phase-three-home-320.png),
+[desktop Home](screenshots/ux-phase-three-home-1440.png),
+[capture](screenshots/ux-phase-three-capture-390.png) and
+[Reopen recovery](screenshots/ux-phase-three-reopen-390.png), and
+[expanded Completed group](screenshots/ux-phase-three-completed-390.png).
+
+Phase 3 is **locally complete; production release pending**. Phase 4 is shared
+management and recovery.

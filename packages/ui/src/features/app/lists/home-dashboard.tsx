@@ -17,15 +17,21 @@ import {
   type DashboardPreferences,
   type DashboardSettings,
   type DashboardSection,
+  type ListSummary,
+  type DashboardTask,
 } from "@wuff/contracts";
 import { useActorApi } from "../../actor-api";
 import { ApiError } from "../../api";
-import { useRuntime } from "../../runtime";
 import { useCalendarDay } from "../../lib/use-calendar-day";
 import { formatDueDate } from "../../lib/due-date";
 import { listPalette } from "../../lib/list-colors";
 import { Corgi } from "../../components/corgi";
 import { Button } from "../../../button";
+import { containDialogFocus } from "../../components/dialog-focus";
+import { TaskCapture } from "./task-capture";
+import { TaskDetailDrawer } from "./task-detail-drawer";
+import { useHomeTasks } from "./use-home-tasks";
+import type { ListChange } from "./list-settings";
 import { NativeSelect } from "../../../native-select";
 
 const labels = {
@@ -39,15 +45,24 @@ export function HomeDashboard({
   chooseList,
   createList,
   initialEntry,
+  lists = [],
+  busy = false,
+  change,
+  taskError = "",
+  retryTask,
 }: {
   userId: string;
   revision: string;
   chooseList: (id: string) => void;
   createList: () => void;
   initialEntry: boolean;
+  lists?: ListSummary[];
+  busy?: boolean;
+  change: ListChange;
+  taskError?: string;
+  retryTask?: () => Promise<boolean>;
 }) {
   const api = useActorApi(),
-    runtime = useRuntime(),
     today = useCalendarDay();
   const [data, setData] = useState<Dashboard | null>(null),
     [error, setError] = useState(""),
@@ -112,6 +127,26 @@ export function HomeDashboard({
       }
     }
   }, [api, today, limit, userId]);
+  const tasks = useHomeTasks({
+    lists,
+    busy: busy || saving,
+    change,
+    retry: retryTask,
+    blocked,
+    invalidate: () => {
+      epoch.current++;
+    },
+    refresh,
+  });
+  const [captureNotice, setCaptureNotice] = useState<{
+    title: string;
+    listId: string;
+    listTitle: string;
+  } | null>(null);
+  const locked = busy || saving || tasks.working;
+  const canRecover = tasks.recent.filter((task) =>
+    tasks.activeLists.some((list) => list.id === task.list.id),
+  );
   useEffect(() => {
     void refresh();
     const onFocus = () => void refresh();
@@ -134,14 +169,14 @@ export function HomeDashboard({
     }
   }, [revision, refresh]);
   function customize() {
-    if (!data) return;
+    if (!data || locked || retryTask || blocked.current) return;
     setDraft(structuredClone(data.preferences.settings));
     setDraftVersion(data.preferences.version);
     setSaveError("");
     dialog.current?.showModal();
   }
   async function save(exact = false) {
-    if (saving || !data) return;
+    if (saving || !data || blocked.current) return;
     const request = exact
       ? retry
       : {
@@ -183,6 +218,25 @@ export function HomeDashboard({
       return { ...old, sections };
     });
   }
+  async function completeTask(
+    task: Pick<DashboardTask, "id" | "title" | "path" | "list">,
+    completed: boolean,
+  ) {
+    if (await tasks.toggle(task, completed))
+      requestAnimationFrame(() => {
+        const target = document.querySelector<HTMLButtonElement>(
+          completed
+            ? `[data-home-recovery-id="${task.id}"] button`
+            : `[data-home-task-id="${task.id}"] button`,
+        );
+        (
+          target ??
+          document.querySelector<HTMLButtonElement>(
+            ".home-actionable .task-capture-trigger",
+          )
+        )?.focus();
+      });
+  }
   const hour = new Date().getHours(),
     greeting = !today
       ? "Welcome"
@@ -192,29 +246,136 @@ export function HomeDashboard({
           ? "Good afternoon"
           : "Good evening";
   return (
-    <div className="home-dashboard">
-      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <div className="home-dashboard home-actionable">
+      <header className="home-daily-header">
         <div className="flex min-w-0 max-w-full items-center gap-3">
-          <Corgi size={60} />
+          <Corgi size={40} />
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground break-words">
               {greeting}
               {data ? `, ${data.name}` : ""}
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-1">
-              Wuff do I need to know?
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Your day</h1>
           </div>
         </div>
-        <Button
-          variant="outline"
-          disabled={!data || !!retry}
-          onClick={customize}
-        >
-          <Settings2 size={16} />
-          Customize Home
-        </Button>
+        <div className="home-header-actions">
+          <TaskCapture
+            list={
+              tasks.activeLists.some((l) => l.id === tasks.destination?.id)
+                ? tasks.destination
+                : null
+            }
+            busy={locked}
+            change={tasks.write}
+            destinations={tasks.activeLists}
+            destinationId={tasks.destinationId}
+            onDestinationChange={(id) => void tasks.selectDestination(id)}
+            destinationLoading={tasks.destinationLoading}
+            error={tasks.error || taskError}
+            retry={retryTask ? tasks.repeat : undefined}
+            onCreated={(title) => {
+              if (tasks.destination)
+                setCaptureNotice({
+                  title,
+                  listId: tasks.destination.id,
+                  listTitle: tasks.destination.title,
+                });
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Customize Home"
+            title="Customize Home"
+            disabled={!data || !!retry || locked || !!retryTask}
+            onClick={customize}
+          >
+            <Settings2 size={18} aria-hidden="true" />
+          </Button>
+        </div>
       </header>
+      {(taskError || tasks.error || retryTask) && (
+        <div role="alert" className="home-action-feedback">
+          <p>
+            {tasks.error ||
+              taskError ||
+              "A previous task change needs confirmation."}
+          </p>
+          {retryTask && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={locked}
+              onClick={() => void tasks.repeat()}
+            >
+              Retry same request
+            </Button>
+          )}
+        </div>
+      )}
+      {captureNotice &&
+        tasks.activeLists.some((list) => list.id === captureNotice.listId) && (
+          <div role="status" className="home-action-feedback">
+            Added “{captureNotice.title}” to {captureNotice.listTitle}. New
+            tasks have no due date, so they won’t appear in Today yet.
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => chooseList(captureNotice.listId)}
+            >
+              Open list
+            </Button>
+          </div>
+        )}
+      {!!canRecover.length && (
+        <section
+          aria-label="Recently completed"
+          className="home-recent-completed"
+        >
+          <h2 className="text-sm font-semibold">Recently completed</h2>
+          <p className="text-xs text-muted-foreground">
+            Reopen tasks completed here while Home stays open.
+          </p>
+          {canRecover.map((task) => (
+            <div
+              key={task.id}
+              className="home-recovery-row"
+              data-home-recovery-id={task.id}
+            >
+              <span className="min-w-0 break-words">
+                <span className="font-medium">{task.title}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {task.list.title}
+                </span>
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={locked || !!retryTask}
+                aria-label={`Reopen ${task.title}`}
+                onClick={() => void completeTask(task, false)}
+              >
+                Reopen
+              </Button>
+            </div>
+          ))}
+        </section>
+      )}
+      {tasks.detailList &&
+        tasks.detailId &&
+        tasks.activeLists.some((l) => l.id === tasks.detailList?.id) && (
+          <TaskDetailDrawer
+            taskId={tasks.detailId}
+            list={tasks.detailList}
+            userId={userId}
+            busy={locked}
+            change={tasks.write}
+            error={tasks.error || taskError}
+            retry={retryTask ? tasks.repeat : undefined}
+            refresh={tasks.refreshDetail}
+            navigate={tasks.setDetailId}
+          />
+        )}
       {notice && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">
           {notice}
@@ -271,36 +432,44 @@ export function HomeDashboard({
                   {section === "favorites" ? (
                     <div className="p-3">
                       {data.favorites.length ? (
-                        data.favorites.map((list) => (
-                          <button
-                            type="button"
-                            key={list.id}
-                            onClick={() => chooseList(list.id)}
-                            className="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 hover:bg-accent text-left"
-                          >
-                            <Star
-                              size={17}
-                              className="shrink-0"
-                              style={{ color: listPalette[list.color].accent }}
-                            />
-                            <span className="break-words min-w-0 font-semibold">
-                              {list.title}
-                            </span>
-                            {list.shared && (
-                              <span
-                                className="ml-auto shrink-0"
-                                title="Shared list"
-                              >
-                                <Users size={16} />
-                                <span className="sr-only">Shared list</span>
+                        data.favorites
+                          .filter((list) =>
+                            tasks.activeLists.some(
+                              (current) => current.id === list.id,
+                            ),
+                          )
+                          .map((list) => (
+                            <button
+                              type="button"
+                              key={list.id}
+                              onClick={() => chooseList(list.id)}
+                              className="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 hover:bg-accent text-left"
+                            >
+                              <Star
+                                size={17}
+                                className="shrink-0"
+                                style={{
+                                  color: listPalette[list.color].accent,
+                                }}
+                              />
+                              <span className="break-words min-w-0 font-semibold">
+                                {list.title}
                               </span>
-                            )}
-                            <ArrowRight
-                              size={16}
-                              className="ml-auto shrink-0"
-                            />
-                          </button>
-                        ))
+                              {list.shared && (
+                                <span
+                                  className="ml-auto shrink-0"
+                                  title="Shared list"
+                                >
+                                  <Users size={16} />
+                                  <span className="sr-only">Shared list</span>
+                                </span>
+                              )}
+                              <ArrowRight
+                                size={16}
+                                className="ml-auto shrink-0"
+                              />
+                            </button>
+                          ))
                       ) : (
                         <p className="p-3 text-sm text-muted-foreground">
                           Add your regular lists to Favorites in list settings.
@@ -319,53 +488,83 @@ export function HomeDashboard({
                         {(section === "today"
                           ? data.todayTasks
                           : data.upcomingTasks
-                        ).map((task) => (
-                          <button
-                            type="button"
-                            key={task.id}
-                            onClick={() => runtime.navigate(task.path)}
-                            className="flex w-full items-start gap-3 rounded-xl p-3 text-left hover:bg-accent min-h-11"
-                          >
-                            <span
-                              className="mt-1 h-3 w-3 rounded-full shrink-0"
-                              style={{
-                                background: listPalette[task.list.color].accent,
-                              }}
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-semibold break-words">
-                                {task.title}
-                              </span>
-                              <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                                <span className="break-words">
-                                  {task.list.title}
-                                  {task.parentTitle
-                                    ? ` · ${task.parentTitle}`
-                                    : ""}
-                                </span>
-                                {task.list.shared && (
-                                  <span className="inline-flex items-center gap-1">
-                                    <Users size={12} />
-                                    Shared
-                                  </span>
-                                )}
+                        )
+                          .filter((task) =>
+                            tasks.activeLists.some(
+                              (list) => list.id === task.list.id,
+                            ),
+                          )
+                          .map((task) => (
+                            <div
+                              key={task.id}
+                              className="home-task-row"
+                              data-home-task-id={task.id}
+                            >
+                              <button
+                                type="button"
+                                className="home-task-complete"
+                                aria-label={`Complete ${task.title}`}
+                                disabled={locked || !!retryTask}
+                                onClick={async () => {
+                                  await completeTask(task, true);
+                                }}
+                              >
                                 <span
-                                  className={
-                                    task.dueDate < data.today
-                                      ? "font-semibold text-red-800"
-                                      : ""
+                                  className="task-checkbox"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                              <a
+                                href={task.path}
+                                className="home-task-title"
+                                aria-label={`Open task: ${task.title}`}
+                                onClick={(event) => {
+                                  if (
+                                    !event.metaKey &&
+                                    !event.ctrlKey &&
+                                    !event.shiftKey &&
+                                    !event.altKey &&
+                                    event.button === 0
+                                  ) {
+                                    event.preventDefault();
+                                    void tasks.openTask(task);
                                   }
-                                >
-                                  {task.dueDate < data.today
-                                    ? "Overdue · "
-                                    : ""}
-                                  {formatDueDate(task.dueDate)}
+                                }}
+                              >
+                                <span className="min-w-0 flex-1">
+                                  <span className="block font-semibold break-words">
+                                    {task.title}
+                                  </span>
+                                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                    <span className="break-words">
+                                      {task.list.title}
+                                      {task.parentTitle
+                                        ? ` · ${task.parentTitle}`
+                                        : ""}
+                                    </span>
+                                    {task.list.shared && (
+                                      <span className="inline-flex items-center gap-1">
+                                        <Users size={12} />
+                                        Shared
+                                      </span>
+                                    )}
+                                    <span
+                                      className={
+                                        task.dueDate < data.today
+                                          ? "font-semibold text-red-800"
+                                          : ""
+                                      }
+                                    >
+                                      {task.dueDate < data.today
+                                        ? "Overdue · "
+                                        : ""}
+                                      {formatDueDate(task.dueDate)}
+                                    </span>
+                                  </span>
                                 </span>
-                              </span>
-                            </span>
-                            <ArrowRight size={16} className="mt-1 shrink-0" />
-                          </button>
-                        ))}
+                              </a>
+                            </div>
+                          ))}
                       </div>
                       {!(
                         section === "today"
@@ -385,6 +584,7 @@ export function HomeDashboard({
                           {limit < 100 ? (
                             <Button
                               variant="ghost"
+                              disabled={locked}
                               onClick={() =>
                                 setLimit(Math.min(100, limit + 10))
                               }
@@ -427,6 +627,7 @@ export function HomeDashboard({
         </>
       )}
       <dialog
+        onKeyDown={containDialogFocus}
         ref={dialog}
         className="m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-foreground/20"
         aria-labelledby="customize-home-heading"

@@ -28,6 +28,7 @@ import { mergeVisibleOrder } from "../../lib/reorder";
 import { useCalendarDay } from "../../lib/use-calendar-day";
 import type { DueDateDraft } from "./task-due-date";
 import { InlineName } from "./inline-name";
+import { CompletedTasks } from "./completed-tasks";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 
 export function TaskGroups({
@@ -47,6 +48,9 @@ export function TaskGroups({
   retry?: () => Promise<boolean>;
   refresh: () => Promise<void>;
 }) {
+  const initialCompleted = useRef(
+    new Set(list.tasks.filter((task) => task.completed).map((task) => task.id)),
+  );
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const today = useCalendarDay();
   const workDrafts = useRef(new Map<string, WorkCellDraft>());
@@ -83,6 +87,24 @@ export function TaskGroups({
   };
   const grid = `44px minmax(180px,1fr) ${columns.map((c) => widths[c]).join(" ")} 88px 44px`;
   const groups = projectListView(list, view, today ?? "0001-01-01");
+  const folded = new Set(
+    view.completed === "all"
+      ? groups.flatMap((group) =>
+          group.tasks
+            .filter(
+              (task) =>
+                task.completed &&
+                initialCompleted.current.has(task.id) &&
+                !list.tasks.some(
+                  (child) => child.parentTaskId === task.id && !child.completed,
+                ),
+            )
+            .map((task) => task.id),
+        )
+      : [],
+  );
+  const count = (group?: ViewGroup) =>
+    group?.tasks.filter((task) => !folded.has(task.id)).length ?? 0;
   const filtersActive = !!(
     view.search ||
     view.sections.length ||
@@ -147,6 +169,7 @@ export function TaskGroups({
               >
                 {({ ref, style, rowProps, moveControl }) => (
                   <TaskRow
+                    hidden={folded.has(task.id)}
                     workDrafts={workDrafts.current}
                     userId={userId}
                     rowRef={ref}
@@ -316,7 +339,7 @@ export function TaskGroups({
                 className="mt-5"
               >
                 <summary className="font-semibold py-3">
-                  {g.title} ({g.tasks.length})
+                  {g.title} ({count(g)})
                 </summary>
                 {rows(null, g)}
               </details>
@@ -333,7 +356,7 @@ export function TaskGroups({
           >
             <summary className="section-summary">
               {list.sections.length ? "No section" : "Tasks"} (
-              {groups.find((g) => g.sectionId === null)?.tasks.length ?? 0})
+              {count(groups.find((g) => g.sectionId === null))})
             </summary>
             {rows(null)}
             {addTask(null)}
@@ -433,11 +456,11 @@ export function TaskGroups({
                           )
                         }
                       >
-                        {groups.find((g) => g.sectionId === section.id)?.tasks
-                          .length ?? 0}{" "}
+                        {count(groups.find((g) => g.sectionId === section.id))}{" "}
                         task
-                        {(groups.find((g) => g.sectionId === section.id)?.tasks
-                          .length ?? 0) === 1
+                        {count(
+                          groups.find((g) => g.sectionId === section.id),
+                        ) === 1
                           ? ""
                           : "s"}{" "}
                         ·{" "}
@@ -459,6 +482,14 @@ export function TaskGroups({
           </SortableList>
         </>
       )}
+      <CompletedTasks
+        list={list}
+        groups={groups}
+        ids={folded}
+        busy={busy}
+        change={change}
+        openTask={setOpenTaskId}
+      />
       {owner && !list.archived && (
         <div className="mt-6">
           {addingSection ? (

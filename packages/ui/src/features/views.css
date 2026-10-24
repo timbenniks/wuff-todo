@@ -1152,3 +1152,103 @@ button:focus-visible {
     grid-row: 2;
   }
 }
+
+/* Phase 3: Home is a daily task surface with explicit completion recovery. */
+.home-daily-header,
+.home-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.home-daily-header {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.home-task-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 4px;
+  border-radius: 8px;
+}
+.home-task-complete {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+.home-task-complete:disabled {
+  opacity: 0.5;
+}
+.home-task-complete:hover:not(:disabled),
+.home-task-title:hover {
+  background: var(--wuff-accent);
+}
+.home-task-title {
+  display: block;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 8px;
+  border-radius: 8px;
+}
+.home-task-row .task-checkbox {
+  width: 22px;
+  height: 22px;
+}
+.home-action-feedback,
+.home-recent-completed {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 12px;
+  background: var(--wuff-surface);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.home-recovery-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 8px;
+}
+.home-recovery-row > button {
+  flex-shrink: 0;
+}
+.task-row[hidden] {
+  display: none;
+}
+.completed-task-group {
+  margin-top: 24px;
+  border-top: 1px solid var(--wuff-border);
+}
+.completed-task-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+@media (max-width: 767px) {
+  .home-actionable {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+  .home-daily-header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .home-daily-header h1 {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .home-task-title {
+    padding-inline: 4px;
+  }
+}
+.home-daily-header {
+  flex-wrap: nowrap;
+}
+.home-daily-header > div:first-child {
+  flex: 1;
+  min-width: 0;
+}

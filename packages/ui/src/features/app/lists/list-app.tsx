@@ -860,7 +860,7 @@ export function ListApp({
             {readFailure}
           </p>
         )}
-        {(error || retryWrite) && (
+        {(selectedId || showArchive) && (error || retryWrite) && (
           <div
             role="alert"
             className="rounded-xl bg-red-50 text-red-800 px-4 py-3 mb-6 text-sm"
@@ -907,6 +907,21 @@ export function ListApp({
         )}
         {!selectedId && !showArchive && (
           <HomeDashboard
+            lists={summaries}
+            busy={busy}
+            change={change}
+            taskError={error}
+            retryTask={
+              retryWrite
+                ? () =>
+                    change(
+                      retryWrite.path,
+                      retryWrite.method,
+                      retryWrite.body,
+                      true,
+                    )
+                : undefined
+            }
             userId={userId}
             revision={summaries
               .map(

@@ -10,6 +10,16 @@
     ]
   },
   {
+    "source": "packages/ui/src/features/app/lists/completed-tasks.tsx",
+    "module": "@wuff/ui/features/app/lists/completed-tasks.tsx",
+    "components": [
+      {
+        "name": "CompletedTasks",
+        "signature": "export function CompletedTasks({\n  list,\n  groups,\n  ids,\n  busy,\n  change,\n  openTask,\n}: {\n  list: TodoList;\n  groups: ViewGroup[];\n  ids: Set<string>;\n  busy: boolean;\n  change: ListChange;\n  openTask: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/features/app/lists/create-list-form.tsx",
     "module": "@wuff/ui/features/app/lists/create-list-form.tsx",
     "components": [
@@ -25,7 +35,7 @@
     "components": [
       {
         "name": "HomeDashboard",
-        "signature": "export function HomeDashboard({\n  userId,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n}: {\n  userId: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n})"
+        "signature": "export function HomeDashboard({\n  userId,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
       }
     ]
   },
@@ -109,7 +119,7 @@
     "components": [
       {
         "name": "TaskCapture",
-        "signature": "export function TaskCapture({\n  list,\n  busy,\n  change,\n  error,\n  retry,\n  onCreated,\n}: {\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  error: string;\n  retry?: () => Promise<boolean>;\n  onCreated: (title: string) => void;\n})"
+        "signature": "export function TaskCapture({\n  list,\n  busy,\n  change,\n  error,\n  retry,\n  onCreated,\n  destinations,\n  destinationId = \"\",\n  onDestinationChange,\n  destinationLoading = false,\n}: {\n  list: TodoList | null;\n  busy: boolean;\n  change: ListChange;\n  error: string;\n  retry?: () => Promise<boolean>;\n  onCreated: (title: string) => void;\n  destinations?: ListSummary[];\n  destinationId?: string;\n  onDestinationChange?: (id: string) => void;\n  destinationLoading?: boolean;\n})"
       }
     ]
   },
@@ -193,7 +203,7 @@
     "components": [
       {
         "name": "TaskRow",
-        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n  hidden = false,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  hidden?: boolean;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
       },
       {
         "name": "Subtasks",

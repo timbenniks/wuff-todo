@@ -2,7 +2,7 @@
 import { containDialogFocus } from "../../components/dialog-focus";
 import { useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import type { TodoList } from "@wuff/contracts";
+import type { ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../button";
 import { Input } from "../../../input";
 import { NativeSelect } from "../../../native-select";
@@ -15,13 +15,21 @@ export function TaskCapture({
   error,
   retry,
   onCreated,
+  destinations,
+  destinationId = "",
+  onDestinationChange,
+  destinationLoading = false,
 }: {
-  list: TodoList;
+  list: TodoList | null;
   busy: boolean;
   change: ListChange;
   error: string;
   retry?: () => Promise<boolean>;
   onCreated: (title: string) => void;
+  destinations?: ListSummary[];
+  destinationId?: string;
+  onDestinationChange?: (id: string) => void;
+  destinationLoading?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -35,7 +43,10 @@ export function TaskCapture({
   useEffect(() => {
     if (!retry && !saving) ownsRetry.current = false;
   }, [retry, saving]);
-  if (list.archived) return null;
+  useEffect(() => {
+    if (!retry) setSection("");
+  }, [list?.id]);
+  if (list?.archived) return null;
   const locked = busy || saving;
   function finish() {
     onCreated(title.trim());
@@ -50,6 +61,7 @@ export function TaskCapture({
         type="button"
         variant="primary"
         className="task-capture-trigger"
+        disabled={!!destinations && destinations.length === 0}
         onClick={() => {
           if (!retry) setFailed(false);
           dialog.current?.showModal();
@@ -83,14 +95,23 @@ export function TaskCapture({
             <X size={20} />
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground mb-4 break-words">
-          Adding to <strong>{list.title}</strong>
-        </p>
+        {!destinations && (
+          <p className="text-sm text-muted-foreground mb-4 break-words">
+            Adding to <strong>{list?.title}</strong>
+          </p>
+        )}
         <form
           className="grid gap-4"
           onSubmit={async (e) => {
             e.preventDefault();
-            if (locked || pending.current || retry) return;
+            if (
+              locked ||
+              pending.current ||
+              retry ||
+              !list ||
+              destinationLoading
+            )
+              return;
             if (!title.trim()) {
               setFailed(true);
               input.current?.focus();
@@ -131,7 +152,40 @@ export function TaskCapture({
               }}
             />
           </label>
-          {!!list.sections.length && (
+          {destinations && (
+            <label className="grid gap-1 text-sm">
+              Destination list
+              <NativeSelect
+                required
+                value={destinationId}
+                disabled={locked || !!retry}
+                onChange={(e) => onDestinationChange?.(e.target.value)}
+              >
+                <option value="">Choose a list</option>
+                {destinations.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.title}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+          )}
+          {destinationLoading && (
+            <p role="status" className="text-sm">
+              Loading list details…
+            </p>
+          )}
+          {destinations && destinationId && !list && !destinationLoading && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={locked || !!retry}
+              onClick={() => onDestinationChange?.(destinationId)}
+            >
+              Retry list details
+            </Button>
+          )}
+          {!!list?.sections.length && (
             <label className="grid gap-1 text-sm">
               Section
               <NativeSelect
@@ -148,7 +202,9 @@ export function TaskCapture({
               </NativeSelect>
             </label>
           )}
-          {(failed || error || retry) && (
+          {(failed ||
+            retry ||
+            (destinations && error && !list && destinationId)) && (
             <p role="alert" className="text-sm">
               {retry
                 ? "The previous change needs confirmation. Retry it before adding another task."
@@ -185,7 +241,13 @@ export function TaskCapture({
             <Button
               type="submit"
               variant="primary"
-              disabled={locked || !!retry || !title.trim()}
+              disabled={
+                locked ||
+                !!retry ||
+                !title.trim() ||
+                !list ||
+                destinationLoading
+              }
             >
               {locked ? "Saving…" : "Add task"}
             </Button>
@@ -199,7 +261,9 @@ export function TaskCapture({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Closing keeps your draft while this list stays open.
+            {destinations
+              ? "Closing keeps your draft while Home stays open."
+              : "Closing keeps your draft while this list stays open."}
           </p>
         </form>
       </dialog>

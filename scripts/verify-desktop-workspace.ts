@@ -120,7 +120,7 @@ try {
     await page.goto("http://localhost:3000/lists?home=1");
     await expect(
       main.getByRole("heading", {
-        name: "Wuff do I need to know?",
+        name: "Your day",
         exact: true,
       }),
     ).toBeVisible();
@@ -144,7 +144,7 @@ try {
   await expect(
     main
       .getByRole("region", { name: "Today", exact: true })
-      .getByRole("button", { name: /Check monstera/ }),
+      .getByRole("link", { name: "Open task: Check monstera", exact: true }),
   ).toBeVisible();
   await expect(
     main
@@ -156,9 +156,14 @@ try {
   ).toContainText("Repot");
   await main
     .getByRole("region", { name: "Today", exact: true })
-    .getByRole("button", { name: /Check monstera/ })
+    .getByRole("link", { name: "Open task: Check monstera", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/tasks\//);
+  await expect(
+    page.getByRole("dialog", { name: "Task details", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Close task details", exact: true })
+    .click();
   await gotoHome();
   for (const width of [320, 390, 768, 1024, 1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -187,6 +192,9 @@ try {
       `card columns at ${width}`,
     );
     if (width >= 768) {
+      await expect(
+        page.locator(".desktop-list-navigation .sidebar-home"),
+      ).toBeVisible();
       assert.equal(layout.mainX, 260);
       assert.equal(Math.round(layout.mainWidth), width - 260);
       assert.ok(layout.cardX - layout.mainX <= 40);
@@ -222,7 +230,7 @@ try {
     });
     if (width < 768) {
       const toggle = page.getByRole("button", {
-        name: "Choose a list",
+        name: "Lists",
         exact: true,
       });
       await toggle.click();
@@ -246,7 +254,9 @@ try {
         path: `docs/screenshots/sidebar-mobile-${width}.png`,
         fullPage: true,
       });
-      await toggle.click();
+      await page
+        .getByRole("button", { name: "Close lists", exact: true })
+        .click();
     }
     await customize();
     assert.ok(
@@ -405,11 +415,11 @@ try {
   ).toBeVisible();
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await expect(
-    main.getByRole("heading", { name: "Wuff do I need to know?", exact: true }),
+    main.getByRole("heading", { name: "Your day", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    main.getByRole("heading", { name: "Wuff do I need to know?", exact: true }),
+    main.getByRole("heading", { name: "Your day", exact: true }),
   ).toBeVisible();
   await expect(
     main.getByRole("button", { name: "Customize Home", exact: true }),
@@ -420,7 +430,7 @@ try {
   ).toBeVisible();
   await page.goForward();
   await expect(
-    main.getByRole("heading", { name: "Wuff do I need to know?", exact: true }),
+    main.getByRole("heading", { name: "Your day", exact: true }),
   ).toBeVisible();
   await expect(
     main.getByRole("button", { name: "Customize Home", exact: true }),

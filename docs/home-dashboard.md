@@ -13,3 +13,25 @@ Customize Home uses explicit Save/Cancel, show/hide and up/down section ordering
 Active Home refreshes on focus, visibility, reconnect and ten-second fallback; list-version changes delivered to the workspace by Neon also invalidate Home. Preferences from another device appear on the fallback/focus refresh. Failed reads clear the overview and offer Retry rather than implying an empty day. Dates are reevaluated across midnight and DST. Normal list task views, edits and permissions remain independent.
 
 Migration `0017_tiresome_dreadnoughts.sql` is additive. Apply it only through the existing direct Vercel-managed connection, isolated development first, before production application release. Preserve existing rows and preference fields. Verification and release evidence belong in `verification.md`.
+
+## UX Phase 3 — October 24, 2026
+
+Implemented locally; production release pending. The heading is now “Your day”.
+Separate completion buttons leave title links free to open the shared task drawer
+on Home. The drawer retains Home context; ordinary modified links retain their
+existing URLs. Add task requires a destination list, supports sections and retains
+its title through destination changes and failed reads/saves. Undated creation
+explains Today exclusion and offers the destination list with its saved view intact.
+
+Acknowledged Home completions appear in a session-only Recently completed area
+with Reopen. This explicit recovery path has no countdown and stores no personal
+preference or offline task content. Completion/reopen/capture reuse the workspace
+mutation pipeline and exact operation-ID retries. Fresh authorized reads precede
+scalar writes; drawer form drafts keep their original conflict version. Catalog
+changes prune inaccessible/archived destinations and task previews. Dashboard
+refreshes cannot overwrite an in-flight task action or customization draft.
+
+Customization, section order/visibility, startup preferences and account isolation
+remain independent. This UI work adds no schema, API or MCP tool contract. See
+[Phase 3 decisions](ux-improvement-spec.md#phase-3--actionable-home-and-completion-flow)
+and [verification](verification.md#ux-improvement-phase-3--october-24-2026).

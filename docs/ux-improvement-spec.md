@@ -124,6 +124,27 @@ Audit F04; Basic/completed/subtask reviews.
 - Evaluate a transient Undo shortcut against an explicit reopen path before
   selecting its final behavior. Undo must use current versioned domain operations.
 
+Selected implementation (October 24): Home uses a compact “Your day” heading,
+separate 44px completion controls and task-title links into the existing detail
+drawer. Capture requires an explicit destination and preserves the title across
+list/section changes. Successful undated capture explains why Today stays unchanged
+and offers Open list without clearing saved filters.
+
+Recovery uses explicit Reopen in a session-only Recently completed area rather
+than a timed Undo: it remains discoverable after the mutation finishes and avoids
+a time limit. Only acknowledged completions enter recovery. Writes use existing
+versioned, actor-bound task operations and exact-payload retries. Scalar completion
+and creation read the current authorized list revision; multi-field drawer drafts
+retain their original version so concurrent edits still conflict visibly.
+
+The collapsed Completed group applies only to the existing all-completion view,
+without saving a preference. Previously completed roots fold; newly completed rows
+stay in place during that list visit for recovery. Parents with unfinished children
+stay visible. Reopening preserves section/order and restores focus, with guidance
+when a section/filter hides the restored row. Explicit completed-only/hidden views
+retain their meaning. Detail/destination reads reject stale selection responses;
+revoked/archived destinations disappear while capture text remains.
+
 Gate: complete/reopen and capture from Home, account/access changes, cross-list
 destination, filtered creation, exact retries, live refresh and return context.
 
@@ -205,4 +226,5 @@ named MCP hosts need their own evidence.
 | ----- | ------------------------------------ | --------------------------------------------------------------------------- |
 | 1     | Locally complete; production pending | [Phase 1 evidence](verification.md#ux-improvement-phase-1--october-24-2026) |
 | 2     | Locally complete; production pending | [Phase 2 evidence](verification.md#ux-improvement-phase-2--october-24-2026) |
-| 3–6   | Specified                            | Phase 3: actionable Home and completion flow                                |
+| 3     | Locally complete; production pending | [Phase 3 evidence](verification.md#ux-improvement-phase-3--october-24-2026) |
+| 4–6   | Specified                            | Phase 4: shared management and recovery |

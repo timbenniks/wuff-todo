@@ -16,8 +16,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   a labeled mobile Lists sheet, focused list creation, View subpages within one
   modal, Work summaries/details before notes, and keyboard focus wrapping. See
   [Phase 2 evidence](verification.md#ux-improvement-phase-2--october-24-2026).
-  **Phase 3 (actionable Home) is next**, followed by shared management/recovery,
-  readiness and consistency. This authorised UX work runs alongside the native milestone.
+  Phase 3 is locally complete: Home capture/completion/Reopen, task details in
+  context, and a collapsed Completed group that preserves saved views and open
+  children. See [Phase 3 evidence](verification.md#ux-improvement-phase-3--october-24-2026).
+  **Phase 4 (shared management and recovery) is next**, followed by readiness and
+  consistency. Phases 1–3 still require production release. This authorised UX work runs alongside the native milestone.
 
 - **Task-first phone lists (October 24):** compact sticky title/settings bar, on-demand list management and a phone View panel are implemented locally. See [design and verification scope](mobile-task-first.md); production release remains pending.
 
