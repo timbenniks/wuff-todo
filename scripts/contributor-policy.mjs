@@ -73,7 +73,9 @@ export function sensitive(path) {
     /^(?:apps\/native\/src-tauri\/|apps\/mobile\/.*(?:app\.config|app\.json))/.test(
       path,
     ) ||
-    /^(?:docs\/(?:contributor|github-main)|\.env\.example|tsconfig)/.test(path)
+    /^(?:docs\/(?:contributor|github-main|guide\/|implementation-guide\.md)|\.env\.example|tsconfig)/.test(
+      path,
+    )
   );
 }
 

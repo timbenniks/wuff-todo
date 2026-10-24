@@ -267,6 +267,8 @@ test("line endings and explanatory comments do not change brief approval", () =>
 test("high-risk boundaries include workflows, migration, auth, dependencies and global styles", () => {
   for (const path of [
     ".github/workflows/ci.yml",
+    "docs/guide/product.md",
+    ".agents/skills/wuff-contributor/SKILL.md",
     "AGENTS.md",
     "packages/db/migrations/a.sql",
     "packages/domain/src/index.ts",

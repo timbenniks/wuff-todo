@@ -56,7 +56,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 - **Personal list nesting (WUFF-85, October 23):** one-level account-specific sidebar hierarchy is implemented across shared web/Tauri features and MCP and released on the website/MCP. Authenticated production save/reload/collapse and live Codex reads passed; WUFF-85 is done. Native artifact publication remains blocked by GitHub runner billing limits. Parent and child lists retain independent tasks/subtasks and sharing. See [contract, migration and release boundaries](personal-list-nesting.md).
 
-- **Contributor prototyping (October 23):** hosted `/docs` guide, real component examples, generated source kit, agent-readable reference and portable skill support a non-coder using ChatGPT Work without a local checkout. See [design guide and verification](prototype-guide.md). Actual use in her Work workspace remains a separate check.
+- **Contributor implementation guide (October 24):** `/docs` now presents one
+  repository implementation workflow with product/design/accessibility rules,
+  real component examples, a contributor skill, scoped PRs and review evidence.
+  The standalone prototype kit/skill and design-handoff path are retired; useful
+  iteration and decision guidance is retained. See [guide decisions](implementation-guide.md)
+  and [activation gates](contributor-github.md). Local checks are separate from
+  production deployment and an actual contributor-agent run.
 
 - **Personal reminders and Settings (October 22):** selected scheduled jobs rather than minute polling, personal account/list/task UX, and all server delivery adapters together. The core implementation is built locally alongside Tauri, with development-only migrations and provider-mocked verification. See [reminder plan and release gates](reminders.md); provider setup and installed native delivery remain explicit gates.
 

@@ -1,4 +1,3 @@
-@source "../../../../../tools/prototype-kit/src";
 .docs-shell {
   max-width: 1160px;
   margin: auto;
@@ -298,18 +297,18 @@
   background: none;
   padding: 0;
 }
-.docs-source .prototype {
+.docs-source .example {
   padding-block: 24px;
 }
-.docs-source .prototype h1 {
+.docs-source .example h1 {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
 }
-.docs-source .prototype h2 {
+.docs-source .example h2 {
   font-size: 18px;
 }
-.docs-source .prototype-panel {
+.docs-source .example-panel {
   margin-block: 20px;
   padding-block: 12px;
   border-block: 1px solid var(--wuff-border);

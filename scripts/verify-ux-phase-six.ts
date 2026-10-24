@@ -147,7 +147,7 @@ try {
   await page.goto("http://localhost:3000/docs");
   await expect(page.locator(".docs-palette")).toHaveCount(0);
   const resources = page.getByRole("complementary", {
-    name: "Prototype resources",
+    name: "Contributor resources",
     exact: true,
   });
   await expect(resources).toBeVisible();
@@ -166,10 +166,10 @@ try {
   assert.match(copied, /actual components/);
   await expect(page.getByRole("status")).toContainText("Starter prompt copied");
   for (const path of [
-    "/prototype-kit/wuff-prototype.zip",
-    "/prototype-kit/wuff-prototype-skill.zip",
-    "/prototype-kit/feature-brief.md",
-    "/prototype-kit/source-manifest.json",
+    "/contributor-kit/wuff-contributor-skill.zip",
+    "/contributor-kit/wuff-contributor-skill.zip",
+    "/contributor-kit/feature-brief.md",
+    "/contributor-kit/source-manifest.json",
     "/docs/agent-context.md",
   ]) {
     const r = await context.request.get(`http://localhost:3000${path}`);

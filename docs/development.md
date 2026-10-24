@@ -29,6 +29,11 @@ Required variables are listed in [the environment template](../.env.example). Us
 
 ## Commands
 
+`pnpm build:guide` refreshes `/docs` and `/contributor-kit/` directly from maintained
+guide content, the contributor skill and current component source. It runs before
+web development/build. The standalone prototype kit/build command is retired;
+see [the implementation guide](implementation-guide.md).
+
 ```sh
 pnpm dev
 pnpm preview:local

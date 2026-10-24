@@ -2,6 +2,48 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Implementation guide consolidation — October 24, 2026
+
+Tim selected a single repository contributor workflow, superseding the standalone
+prototype/design-handoff path. The guide and contributor skill retain early
+interaction/iteration, product and permission rules, real component reuse, design
+tokens, accessible layouts, decision/acceptance records and honest mock/evidence
+boundaries. Root AGENTS.md routes to these rules; GitHub policy/review remain
+separate enforcement. Maintained pages now live in `docs/guide/`.
+
+- `pnpm check` passed workspace/root TypeScript, all 108 tests and optimized
+  guide/MCP/web builds. The obsolete docs `@source` directive is removed and the
+  final build no longer reports that CSS parser advisory. Policy coverage includes
+  sensitive approval for the maintained guide and contributor skill.
+- `pnpm build:guide` indexes the actual UI source. Its generated component inventory
+  was structurally identical to the previous 48-component inventory. The removed
+  Vite source kit, copied dependencies/lockfile, packaging script and prototype
+  skill are not part of delivery. Guide TaskRow examples still import real code
+  with synthetic local runtime callbacks and no private backend calls.
+- Contributor skill validation passed. Every download matched its SHA-256
+  manifest, the ZIP passed CRC checks and contained only the exact contributor
+  SKILL.md. The retired generated public archive directory was absent after build.
+- `node scripts/verify-contributor-guide.mjs` passed against the optimized local
+  site: all seven pages at 320/390/1280px without overflow; starter copy with a
+  clipboard stub, keyboard Enter, navigation, raw agent reference, component
+  search and actual TaskRow completion; no captured page errors or app API calls.
+  Old guide URLs returned 308 to Build/Review; old kit/skill downloads returned 410
+  retirement messages. Initial page-level redirects produced duplicate Location
+  headers on a cold request; explicit Next config redirects fixed this and the
+  final compatibility checks passed. Phone/desktop screenshots were visually
+  inspected: [phone](screenshots/contributor-guide-390.png),
+  [desktop](screenshots/contributor-guide-1280.png).
+- The obsolete local `wuff-prototype` skill was archived outside skill discovery
+  with original files preserved; this does not update another person's installed
+  skills. Existing shell/UX verification scripts now expect contributor resources.
+  Their broader authenticated mutation scenarios were not rerun for this docs
+  change; this is a targeted anonymous-guide/browser verification.
+
+No production deployment, native/device check, actual contributor-agent session,
+schema change or environment-isolation setup is claimed. GitHub plan/runner and
+preview-isolation onboarding gates remain in [GitHub safeguards](contributor-github.md).
+Earlier prototype evidence below is historical and superseded by this decision.
+
 ## Contributor GitHub safeguards — October 24, 2026
 
 Expanded contributor delivery workflow and local evidence:

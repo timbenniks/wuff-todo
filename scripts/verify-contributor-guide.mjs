@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { mkdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
 const require = createRequire(
   new URL("../apps/web/package.json", import.meta.url),
 );
@@ -9,17 +10,49 @@ const origin = "http://localhost:3000";
 for (const file of [
   "contributor-workflow.md",
   "contributor-pr-template.md",
-  "CONTRIBUTOR-SKILL.md",
+  "SKILL.md",
+  "feature-brief.md",
+  "components.json",
   "wuff-contributor-skill.zip",
-  "wuff-prototype.zip",
 ]) {
-  const response = await fetch(`${origin}/prototype-kit/${file}`);
+  const response = await fetch(`${origin}/contributor-kit/${file}`);
   assert.equal(response.status, 200, file);
   assert.ok((await response.arrayBuffer()).byteLength > 100, file);
 }
 const reference = await (await fetch(`${origin}/docs/agent-context.md`)).text();
 assert.ok(reference.includes("/wuff-scope"));
 assert.ok(reference.includes("Evidence commit:"));
+assert.ok(reference.includes("implementation reference"));
+assert.ok(!reference.includes("wuff-prototype.zip"));
+const manifest = await (
+  await fetch(`${origin}/contributor-kit/source-manifest.json`)
+).json();
+for (const [file, hash] of Object.entries(manifest.files)) {
+  const bytes = Buffer.from(
+    await (await fetch(`${origin}/contributor-kit/${file}`)).arrayBuffer(),
+  );
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), hash, file);
+}
+for (const file of [
+  "wuff-prototype.zip",
+  "wuff-prototype-skill.zip",
+  "SKILL.md",
+]) {
+  const retired = await fetch(`${origin}/prototype-kit/${file}`);
+  assert.equal(retired.status, 410);
+  assert.match(await retired.text(), /retired/);
+}
+for (const [old, current] of [
+  ["prototyping", "build"],
+  ["handoff", "review"],
+]) {
+  const redirect = await fetch(`${origin}/docs/${old}`, { redirect: "manual" });
+  assert.equal(redirect.status, 308);
+  assert.equal(
+    new URL(redirect.headers.get("location"), origin).pathname,
+    `/docs/${current}`,
+  );
+}
 const browser = await chromium.launch({ headless: true, channel: "chrome" });
 await mkdir("docs/screenshots", { recursive: true });
 const errors = [],
@@ -46,7 +79,7 @@ try {
     const response = await page.goto(`${origin}/docs/build`);
     assert.equal(response.status(), 200);
     await page
-      .getByRole("heading", { name: "Build a real feature", exact: true })
+      .getByRole("heading", { name: "Build a feature", exact: true })
       .waitFor();
     assert.equal(await page.locator("h1").count(), 1);
     await page
@@ -69,8 +102,8 @@ try {
     if (width < 1000) {
       await page
         .getByRole("combobox", { name: /Guide page/ })
-        .selectOption("/docs/prototyping");
-      await page.waitForURL("**/docs/prototyping");
+        .selectOption("/docs/review");
+      await page.waitForURL("**/docs/review");
       await page
         .getByRole("combobox", { name: /Guide page/ })
         .selectOption("/docs/build");
@@ -91,14 +124,60 @@ try {
       fullPage: false,
     });
   }
-  await page.goto(`${origin}/docs/prototyping`);
+  await page.goto(`${origin}/docs/review`);
   await page
-    .getByRole("link", { name: "Download prototype kit", exact: true })
+    .getByRole("link", { name: "Download contributor skill", exact: true })
+    .waitFor();
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 950 });
+    for (const slug of [
+      "",
+      "product",
+      "design",
+      "components",
+      "accessibility",
+      "review",
+    ]) {
+      assert.equal(
+        (await page.goto(`${origin}/docs${slug ? `/${slug}` : ""}`)).status(),
+        200,
+      );
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${slug} overflow at ${width}`,
+      );
+    }
+  }
+  await page.goto(`${origin}/docs/components`);
+  await page
+    .getByRole("searchbox", { name: "Search components or source paths" })
+    .fill("TaskRow");
+  await page
+    .getByRole("navigation", { name: "Component jump links" })
+    .getByRole("link", { name: /TaskRow/ })
+    .click();
+  assert.equal(await page.locator("#module-taskrow").getAttribute("open"), "");
+  await page
+    .getByRole("searchbox", { name: "Search components or source paths" })
+    .fill("");
+  await page
+    .getByText("Open the interactive task example", { exact: true })
+    .click();
+  const row = page.locator(".task-row").first();
+  await row
+    .getByRole("button", { name: /complete/i })
+    .first()
+    .click();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "Updated in this example only." })
     .waitFor();
   assert.deepEqual(errors, []);
   assert.deepEqual(writes, []);
   console.log(
-    "Contributor guide: 320/390/1280px, copy/keyboard/navigation, downloads, raw reference, prototype path and zero app API requests passed.",
+    "Contributor guide: 320/390/1280px, copy/keyboard/navigation, downloads, raw reference, implementation and review paths and zero app API requests passed.",
   );
 } finally {
   await browser.close();

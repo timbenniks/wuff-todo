@@ -13,6 +13,9 @@ Start with `docs/implementation-plan.md` for current status and the next planned
 
 ## Contributor delivery
 
+- `/docs` is the implementation guide, backed by `docs/guide/`. Keep its product,
+  component, design and accessibility rules consistent with current source. The
+  contributor skill applies these rules; GitHub checks and review enforce delivery.
 - Follow [the contributor workflow](docs/contributor-workflow.md) and the repository's
   `wuff-contributor` skill for real feature work. Before implementation, record a
   brief/acceptance criteria in a draft PR and obtain Tim's technical scope approval.

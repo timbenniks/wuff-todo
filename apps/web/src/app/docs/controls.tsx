@@ -11,9 +11,8 @@ const links = [
   ["design", "Design language"],
   ["components", "Components"],
   ["accessibility", "Responsive & accessible"],
-  ["prototyping", "Make a prototype"],
-  ["handoff", "Hand it off"],
   ["build", "Build a feature"],
+  ["review", "Review & delivery"],
 ];
 export function DocsControls({ basePath = "/docs" }: { basePath?: string }) {
   const router = useRouter();

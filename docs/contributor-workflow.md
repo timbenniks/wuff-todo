@@ -29,7 +29,8 @@ Tim must finish these gates before granting contributor write access:
   isolation.
 
 Repository changes do not provision a contributor sandbox or preview backend.
-Until those gates pass, use the mock prototype kit or read-only access.
+Until those gates pass, use read-only access or clearly labeled local mock work
+inside the feature branch. There is no separate standalone prototype workflow.
 
 ## 1. Understand and define
 
@@ -48,6 +49,13 @@ behavior, existing behavior to preserve and testable acceptance checkboxes. Unde
 `## Scope`, identify files, UI/API interactions and sensitive changes. Resolve
 product questions with the contributor in ordinary language. Do not ask them to
 choose database designs or approve infrastructure commands.
+
+Use `docs/guide/` (hosted at `/docs`) for product, design, component and accessibility
+rules. Show the main interaction early, offer small concrete product choices and
+keep a short decision log. Distinguish preserved behavior from proposed changes.
+Record entry points, outcomes, cancellation/recovery and personal/shared effects
+so the brief stands alone without the chat. Local mocks are an iteration tool,
+not proof of backend persistence or authorization.
 
 ## 2. Get technical scope approved
 

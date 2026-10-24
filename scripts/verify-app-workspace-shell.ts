@@ -49,14 +49,14 @@ try {
     const page = await anonymous.newPage();
     await page.goto("http://localhost:3000/docs");
     await expect(
-      page.getByRole("heading", { name: "Make an idea feel like Wuff" }),
+      page.getByRole("heading", { name: "Build features that belong in Wuff" }),
     ).toBeVisible();
     assert.equal(await page.locator(".workspace-sidebar").count(), 0);
     const html = await page.content();
     assert(!html.includes(list.id) && !html.includes(privateList.id));
     for (const path of [
       "/docs/agent-context.md",
-      "/prototype-kit/wuff-prototype.zip",
+      "/contributor-kit/wuff-contributor-skill.zip",
     ]) {
       const r = await anonymous.request.get(`http://localhost:3000${path}`);
       assert.equal(r.status(), 200);
@@ -127,7 +127,7 @@ try {
     .click();
   await expect(page).toHaveURL(/\/settings\/docs$/);
   await expect(
-    page.getByRole("heading", { name: "Make an idea feel like Wuff" }),
+    page.getByRole("heading", { name: "Build features that belong in Wuff" }),
   ).toBeVisible();
   await expect(
     page.locator('.workspace-settings-nav a[aria-current="page"]'),

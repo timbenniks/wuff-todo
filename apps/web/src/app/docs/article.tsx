@@ -11,9 +11,7 @@ export function Article({ slug }: { slug: string }) {
       <div className="docs-eyebrow">
         Wuff field guide · {slug === "overview" ? "Start here" : page.title}
       </div>
-      {["overview", "prototyping", "handoff", "build"].includes(slug) && (
-        <GuideResources contributor={slug === "build"} />
-      )}
+      {["overview", "review", "build"].includes(slug) && <GuideResources />}
       {slug === "components" && (
         <a href="#component-catalog" className="docs-app-link">
           Jump to component search ↓

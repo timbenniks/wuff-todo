@@ -9,6 +9,20 @@ const config: NextConfig = {
   ],
   poweredByHeader: false,
   outputFileTracingIncludes: { "/api/mcp": ["./.mcp/ui.html"] },
+  async redirects() {
+    return ["/docs", "/settings/docs"].flatMap((base) => [
+      {
+        source: `${base}/prototyping`,
+        destination: `${base}/build`,
+        permanent: true,
+      },
+      {
+        source: `${base}/handoff`,
+        destination: `${base}/review`,
+        permanent: true,
+      },
+    ]);
+  },
   async headers() {
     return [
       {

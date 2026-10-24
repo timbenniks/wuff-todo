@@ -1,6 +1,6 @@
 ---
 name: wuff-contributor
-description: Implement and verify real Wuff Todo features in an authorized repository checkout with approved scope and a reviewable PR. Use for contributor coding work; prototype-only exploration uses wuff-prototype.
+description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, approved scope and a reviewable PR. Use for Wuff contributor design and coding work.
 ---
 
 # Wuff contributor
@@ -8,6 +8,18 @@ description: Implement and verify real Wuff Todo features in an authorized repos
 Read root/nearby AGENTS.md and `docs/contributor-workflow.md` before implementation.
 Hosted reference: https://wuff-todo.vercel.app/docs/build. Current repository
 instructions and code govern implementation; hosted docs may lag an unmerged PR.
+
+Read the relevant `docs/guide/` product, design, component and accessibility pages.
+The raw reference is https://wuff-todo.vercel.app/docs/agent-context.md and exact
+component inventory is https://wuff-todo.vercel.app/contributor-kit/components.json.
+Check actual props/event behavior in repository source. Do not initialize shadcn
+defaults over Wuff's components or build a separate copied application.
+
+Understand the problem and intended users, offer small product choices, show the
+main interaction early and iterate from feedback. Keep agreed decisions and open
+questions explicit. Use synthetic data and clearly labeled local mocks within the
+feature branch when needed; simulated behavior never proves backend integration.
+Explain deliberate visual departures or new components as scope proposals.
 
 Handle branches, commits, PRs, checks and evidence for the contributor. Ask product
 questions in plain language. Use one `codex/` branch and early draft PR per feature.
@@ -24,3 +36,8 @@ Confirm environment readiness before writes. If credentials, preview isolation o
 scope are missing, prepare a brief/mock and concrete technical handoff to Tim.
 Do not bypass checks, borrow his credentials, alter safeguards to pass, invent
 evidence, merge or release. Record remaining limitations clearly.
+
+Use `docs/guide/review.md` for a self-contained delivery record and optional Wuff
+task updates. Only create/update tasks when requested; resolve the intended list,
+preserve existing content and verify the write. Tools/hosting availability must be
+checked rather than assumed. No task write authorizes a paid agent run or release.

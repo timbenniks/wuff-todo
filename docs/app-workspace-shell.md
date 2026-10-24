@@ -14,7 +14,7 @@ October 24, 2026. Wishlist WUFF-120, WUFF-121, WUFF-122 and WUFF-123.
    Existing provider, connection and reminder forms retain their behavior.
 3. Docs is available at `/settings/docs` with seven guide pages, page selection,
    palette preview, component examples/search and downloads in the same shell.
-   Public `/docs`, `/docs/agent-context.md` and prototype downloads remain public
+   Public `/docs`, `/docs/agent-context.md` and contributor downloads remain public
    and contain only synthetic examples. Private sidebar data requires an enabled
    signed-in account. Existing routes and public links stay valid.
 4. Desktop list header and 48px sidebar brand share a vertical center. Preserve

@@ -1,53 +1,23 @@
 "use client";
-import { useEffect, useState } from "react";
-const prototypeStarter =
-  "Read https://wuff-todo.vercel.app/docs/agent-context.md. Help me explore a Wuff Todo feature. Use Wuff’s actual components and design tokens from the prototype kit and show a working prototype. Iterate with me before preparing a specification. Do not create a Wuff task until I ask for a handoff.";
-export function GuideResources({
-  contributor = false,
-}: {
-  contributor?: boolean;
-}) {
-  const starter = contributor
-    ? "Use the wuff-contributor skill. Read AGENTS.md and docs/contributor-workflow.md in this repository. Help me define a feature brief and acceptance criteria, create a codex/ branch and draft PR, and request Tim's scope approval before implementation. Handle Git and verification for me. Preserve Wuff's components and permission/retry behavior. Use only an isolated preview backend and synthetic data. Keep current-commit evidence and remaining gaps in the PR. Do not merge or release. My idea is:"
-    : prototypeStarter;
+import { useState } from "react";
+const starter =
+  "Use the wuff-contributor skill. Read AGENTS.md and docs/contributor-workflow.md in this repository, plus the product, design, component and accessibility guide. Help me define a feature brief and acceptance criteria, create a codex/ branch and draft PR, and request Tim's scope approval before implementation. Reuse Wuff's actual components and tokens, show the main interaction early and iterate with me. Handle Git and verification for me. Preserve permissions, personal/shared boundaries and save recovery. Use synthetic data and only a confirmed isolated preview backend. Keep decisions, current-commit evidence and remaining gaps in the PR. Do not merge or release. My idea is:";
+export function GuideResources() {
   const [status, setStatus] = useState("");
-  const [revision, setRevision] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    fetch("/prototype-kit/source-manifest.json")
-      .then((r) => r.json())
-      .then((m) => {
-        if (active) setRevision(m.sourceCommit);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
   return (
     <aside
       className="docs-downloads docs-quick-start"
-      aria-label={contributor ? "Contributor resources" : "Prototype resources"}
+      aria-label="Contributor resources"
     >
-      <h2>
-        {contributor
-          ? "Start in your contributor workspace"
-          : "Start with the real Wuff kit"}
-      </h2>
+      <h2>Start in your contributor workspace</h2>
       <div>
         <a
           className="wuff-button"
           data-variant="primary"
-          href={
-            contributor
-              ? "/prototype-kit/wuff-contributor-skill.zip"
-              : "/prototype-kit/wuff-prototype.zip"
-          }
+          href="/contributor-kit/wuff-contributor-skill.zip"
           download
         >
-          {contributor
-            ? "Download contributor skill"
-            : "Download prototype kit"}
+          Download contributor skill
         </a>
         <button
           className="wuff-button"
@@ -69,57 +39,31 @@ export function GuideResources({
         <a
           className="wuff-button"
           data-variant="outline"
-          href={
-            contributor
-              ? "/prototype-kit/contributor-pr-template.md"
-              : "/prototype-kit/feature-brief.md"
-          }
+          href="/contributor-kit/contributor-pr-template.md"
           download
         >
-          {contributor ? "PR brief template" : "Feature brief template"}
+          PR brief template
         </a>
       </div>
       <details>
-        <summary>Starter prompt and extra resources</summary>
+        <summary>Starter prompt and agent resources</summary>
         <p className="select-text">{starter}</p>
         <div>
-          <a
-            href={
-              contributor
-                ? "/prototype-kit/contributor-workflow.md"
-                : "/prototype-kit/wuff-prototype-skill.zip"
-            }
-            download
-          >
-            {contributor ? "Download full workflow" : "Download skill"}
+          <a href="/contributor-kit/contributor-workflow.md" download>
+            Download full workflow
           </a>
-          <a
-            href={
-              contributor
-                ? "/prototype-kit/CONTRIBUTOR-SKILL.md"
-                : "/prototype-kit/SKILL.md"
-            }
-          >
-            Read skill instructions
-          </a>
+          {" · "}
+          <a href="/contributor-kit/SKILL.md">Read skill instructions</a>
+          {" · "}
           <a href="/docs/agent-context.md">Agent reference</a>
+          {" · "}
+          <a href="/contributor-kit/source-manifest.json">Download hashes</a>
         </div>
       </details>
-      {contributor ? (
-        <p className="docs-caption">
-          Use the rules in your current repository checkout. Hosted downloads
-          may lag unmerged changes.
-        </p>
-      ) : (
-        <p className="docs-caption">
-          Source base{" "}
-          {revision ? revision.slice(0, 12) : "recorded in manifest"} ·{" "}
-          <a href="/prototype-kit/source-manifest.json">
-            Exact build input hashes
-          </a>
-          . Hashes include any changes made after the source base.
-        </p>
-      )}
+      <p className="docs-caption">
+        Use the rules in your current repository checkout. Hosted downloads may
+        lag unmerged changes.
+      </p>
       {status && <p role="status">{status}</p>}
     </aside>
   );

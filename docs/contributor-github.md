@@ -1,7 +1,8 @@
 # Contributor GitHub safeguards
 
 October 24, 2026. This is the GitHub foundation for contributors implementing real
-features. The hosted prototype skill remains a separate design-only workflow.
+features. `/docs` is the implementation guide and `wuff-contributor` is the single
+feature skill; the old standalone prototype workflow is retired.
 
 ## Current enforcement boundary
 
@@ -45,7 +46,8 @@ metadata-only policy checks are required; removed native jobs cannot block PRs.
 The canonical [contributor workflow](contributor-workflow.md) defines the brief,
 technical approvals, coding rules, verification matrix and review handoff. It is
 published at `/docs/build`, included in the raw agent reference and downloadable
-with the `wuff-contributor` skill. The prototype skill remains design-only.
+with the `wuff-contributor` skill under `/contributor-kit/`. Product, design,
+component and accessibility pages are maintained in `docs/guide/`.
 
 `contributor-policy.yml` executes only the policy script checked out from main.
 It never checks out PR code, installs dependencies or evaluates content as code.

@@ -3,12 +3,12 @@ import catalog from "../catalog.generated.json";
 export const dynamic = "force-static";
 export function GET() {
   const text = [
-    "# Wuff Todo feature reference",
-    "Real repository contributions: https://wuff-todo.vercel.app/docs/build. Prototype downloads below remain mock-only.",
+    "# Wuff Todo implementation reference",
+    "Read root/nearby AGENTS.md and docs/contributor-workflow.md in the current repository checkout first. Hosted content may lag unmerged changes.",
     "Living guide: https://wuff-todo.vercel.app/docs",
-    "Starter: https://wuff-todo.vercel.app/prototype-kit/wuff-prototype.zip",
-    "Skill: https://wuff-todo.vercel.app/prototype-kit/SKILL.md",
-    "Exact source hashes: https://wuff-todo.vercel.app/prototype-kit/source-manifest.json",
+    "Skill: https://wuff-todo.vercel.app/contributor-kit/SKILL.md",
+    "Download hashes: https://wuff-todo.vercel.app/contributor-kit/source-manifest.json",
+    "Component inventory: https://wuff-todo.vercel.app/contributor-kit/components.json. Read actual implementation source from the checkout.",
     ...pages.map((p) => p.markdown),
     "# Exact exported component signatures",
     ...catalog.map(

@@ -1,6 +1,6 @@
 # Responsive and accessible by design
 
-Design the feature so it is usable on a phone and with a keyboard from the first prototype. Existing components provide useful defaults; each new composition still needs review.
+Design the feature so it is usable on a phone and with a keyboard from the first working iteration. Existing components provide useful defaults; each new composition still needs review.
 
 ## Viewports and content
 
@@ -19,7 +19,7 @@ Design the feature so it is usable on a phone and with a keyboard from the first
 
 ## State and consequences
 
-Show loading, pending/saving, saved, empty, offline/request-failure, denied, stale/conflicting and disabled states where relevant. A failed save retains the draft and provides a clear recovery action. A prototype should distinguish simulated results from actual persistence.
+Show loading, pending/saving, saved, empty, offline/request-failure, denied, stale/conflicting and disabled states where relevant. A failed save retains the draft and provides a clear recovery action. A local mock or component example must distinguish simulated results from actual persistence.
 
 Deletion has explicit confirmation and names affected subtasks/members when relevant. The cancellation path preserves data. Personal preferences must be labelled as personal rather than implying a change for the whole shared list.
 
@@ -27,6 +27,6 @@ Deletion has explicit confirmation and names affected subtasks/members when rele
 
 Text and controls must remain understandable without color. Use semantic text/icons alongside state colors. Aim for WCAG AA contrast (4.5:1 normal text, 3:1 large text and meaningful controls/focus boundaries), checking new combinations against their actual background. Preserve reduced-motion behavior; animation must not be required to understand or operate the feature.
 
-Review keyboard sequence and focus in the rendered prototype, not only its JSX. Browser viewport checks do not prove a physical device, touch keyboard, screen reader or full accessibility conformance. State which checks were performed and leave untested behavior explicit.
+Review keyboard sequence and focus in the rendered implementation, not only its JSX. Browser viewport checks do not prove a physical device, touch keyboard, screen reader or full accessibility conformance. State which checks were performed and leave untested behavior explicit.
 
 Reference: [W3C guidance on text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).

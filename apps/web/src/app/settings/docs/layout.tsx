@@ -6,8 +6,8 @@ export default function SettingsDocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <section className="settings-guide" aria-label="Design & prototype guide">
-      <h2 className="text-xl font-bold">Design & prototype guide</h2>
+    <section className="settings-guide" aria-label="Implementation guide">
+      <h2 className="text-xl font-bold">Implementation guide</h2>
       <DocsControls basePath="/settings/docs" />
       <div className="docs-main" id="guide-content" tabIndex={-1}>
         {children}

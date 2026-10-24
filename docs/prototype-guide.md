@@ -1,9 +1,8 @@
 # Hosted design guide and prototype skill
 
-October 24 extension (local, pending PR merge/deployment): `/docs/build` adds the
-real contributor workflow, separate repository skill and downloadable instructions.
-The original prototype skill remains design-only. See [contributor workflow](contributor-workflow.md),
-[GitHub enforcement gates](contributor-github.md) and [verification](verification.md#contributor-github-safeguards--october-24-2026).
+Superseded October 24: the prototype workflow is retired in favor of the single
+[implementation guide](implementation-guide.md). The sections below retain dated
+historical decisions and evidence, not current setup instructions.
 
 October 23, 2026. The selected contributor workflow is ChatGPT Work in a shared
 workspace, with URLs and no local checkout for the designer. The hosted guide at
