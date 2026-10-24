@@ -2,6 +2,35 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Contributor API/MCP/connection completeness — October 24, 2026
+
+Tim confirmed equivalent API/MCP capabilities for every persisted-data feature,
+with explicit MCP App UI and connection impacts. Root instructions, product spec,
+architecture, contributor skill/workflow, starter prompts and PR/brief templates
+now require the surface contract in `docs/guide/surfaces.md` (`/docs/surfaces`).
+This includes personal settings, authorized reads, shared domain services,
+idempotency/conflicts and explicit connection scopes/consent/recovery/revocation
+and credential privacy. MCP UI is implemented with evidence or explicitly not
+needed; secure browser handoffs never expose tokens or privileged callbacks.
+
+The policy requires one JSON declaration in every PR. It rejects incomplete
+domain/API/MCP mutation mappings, unimplemented operations, absent adapter results,
+unresolved MCP UI decisions and affected connections without verification. No-data
+changes need an explicit explanation. Scope hashes bind capability mappings and
+UI/connection decisions while allowing implementation status and test results to
+evolve. Changing approved capability scope requires renewed maintainer approval.
+
+`pnpm check` passed workspace/root TypeScript, all 115 tests and optimized
+guide/MCP/web build. Seven additional policy cases cover required mappings,
+adapter deferral, MCP UI evidence, connection verification, no-data contradictions,
+invalid declarations and scope changes versus evidence-only updates. The guide
+now has eight pages. This is validation of contributor requirements and metadata
+checks, not new application API/MCP adapter or provider integration proof.
+The targeted guide browser check also passed all eight pages at 320/390/1280px,
+including the new surface guide, current download hashes and raw agent reference,
+with no document overflow, captured page errors or application API requests.
+GitHub protection/runner and preview-isolation gates remain unchanged.
+
 ## Implementation guide consolidation — October 24, 2026
 
 Tim selected a single repository contributor workflow, superseding the standalone

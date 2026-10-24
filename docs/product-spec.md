@@ -29,6 +29,16 @@ October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) a
 
 ## First-release scope
 
+### Contributor feature completeness
+
+Every new persisted-data capability must ship equivalent authorized HTTP API and
+MCP operations through the same domain services, including reads to discover and
+verify state. Personal settings and connection management are included. Each PR
+declares its MCP App UI decision and connection/scope/consent/revocation impact,
+with actual adapter and recovery evidence. Secure browser handoffs preserve secret
+boundaries; parity never means exposing credentials or internal callbacks. See
+[the required surface contract](guide/surfaces.md).
+
 ### Accounts and access
 
 Each user has their own identity and session. New accounts require a valid invitation. Knowing an email address, list ID, or URL must never grant access by itself.

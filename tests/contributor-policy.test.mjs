@@ -6,15 +6,36 @@ import {
   MAINTAINER_ID,
   sensitive,
   run,
+  surfaceContractErrors,
 } from "../scripts/contributor-policy.mjs";
 
 function fixture() {
   const sha = "a".repeat(40);
+  const surface = {
+    dataChanges: false,
+    operations: [],
+    noDataChangesReason:
+      "Only the visual task summary changes; all existing persistence behavior is preserved.",
+    mcpUi: {
+      decision: "not-needed",
+      reason:
+        "No new agent capability or interactive control is introduced by this layout change.",
+    },
+    connections: {
+      affected: false,
+      review:
+        "No connection types, scopes, consent, token handling or revocation behavior changes.",
+    },
+  };
   const body = `## Feature brief
 Let editors see a compact task summary using existing controls. Preserve permissions and ordering. Exclude backend changes.
 - [ ] The summary is usable by keyboard and at phone widths.
 ## Scope
 Change the task row and its focused regression test only.
+## API, MCP and connections
+\`\`\`json
+${JSON.stringify(surface)}
+\`\`\`
 ## Preview
 Preview unavailable until Tim confirms the isolated backend; local screenshots attached.
 ## Verification
@@ -48,8 +69,129 @@ Tim must verify installed native behavior before the native release.
       body: `/wuff-scope\n${JSON.stringify(approval)}`,
     },
   ];
-  return { pr, files, comments, approval };
+  return { pr, files, comments, approval, surface };
 }
+function setSurface(f, patch, approve = true) {
+  Object.assign(f.surface, patch);
+  f.pr.body = f.pr.body.replace(
+    /```json\n[\s\S]*?\n```/,
+    "```json\n" + JSON.stringify(f.surface) + "\n```",
+  );
+  if (approve) setApproval(f, { briefSha256: briefHash(f.pr.body) });
+}
+function mutation() {
+  return {
+    action: "Save a task preference",
+    domain: "saveTaskPreference in packages/domain/src/index.ts",
+    api: "PUT /api/v1/tasks/preferences",
+    mcp: "update_task_preference",
+    status: "implemented",
+    verification:
+      "Isolated API write/MCP read and MCP write/API read tests passed with denied/conflict/retry coverage.",
+  };
+}
+
+test("data-changing features require complete implemented domain/API/MCP mappings", () => {
+  const f = fixture();
+  setSurface(f, { dataChanges: true, operations: [] });
+  assert.match(evaluate(f).errors.join(" "), /operation mappings/);
+  setSurface(f, { operations: [mutation()] });
+  assert.deepEqual(evaluate(f).errors, []);
+  for (const field of ["domain", "api", "mcp"]) {
+    const op = mutation();
+    delete op[field];
+    setSurface(f, { operations: [op] });
+    assert.match(
+      evaluate(f).errors.join(" "),
+      /actual API write route and MCP tool/,
+    );
+  }
+  setSurface(f, { operations: [{ ...mutation(), status: "planned" }] });
+  assert.match(evaluate(f).errors.join(" "), /placeholders or deferrals/);
+});
+test("MCP UI decisions require reasons and implemented UI requires verification", () => {
+  const f = fixture();
+  setSurface(f, {
+    mcpUi: {
+      decision: "deferred",
+      reason: "This is deferred until a later unrelated feature.",
+    },
+  });
+  assert.match(evaluate(f).errors.join(" "), /Decide MCP UI/);
+  setSurface(f, {
+    mcpUi: {
+      decision: "implemented",
+      reason: "The structured editor benefits from an interactive MCP App.",
+    },
+  });
+  assert.match(
+    evaluate(f).errors.join(" "),
+    /UI\/host and tool-only verification/,
+  );
+  f.surface.mcpUi.verification =
+    "Local SDK controls and tool-only fallback passed; named host remains a separate gate.";
+  setSurface(f, {});
+  assert.deepEqual(evaluate(f).errors, []);
+});
+test("affected connections cannot omit recovery/privacy verification", () => {
+  const f = fixture();
+  setSurface(f, {
+    connections: {
+      affected: true,
+      review:
+        "Optional scopes and delegated connections are affected by this feature.",
+    },
+  });
+  assert.match(
+    evaluate(f).errors.join(" "),
+    /Affected connections need verification/,
+  );
+  f.surface.connections.verification =
+    "Missing/revoked/expired grants, consent, missing scope and cross-account privacy tests passed.";
+  setSurface(f, {});
+  assert.deepEqual(evaluate(f).errors, []);
+});
+test("surface declaration changes invalidate maintainer scope approval", () => {
+  const f = fixture();
+  setSurface(f, { dataChanges: true, operations: [mutation()] }, false);
+  assert.match(evaluate(f).errors.join(" "), /brief changed/);
+});
+test("verification updates preserve approved capabilities but mapping changes need reapproval", () => {
+  const f = fixture();
+  setSurface(f, { dataChanges: true, operations: [mutation()] });
+  const hash = briefHash(f.pr.body);
+  const op = {
+    ...mutation(),
+    verification:
+      "Additional actual API/MCP retry and conflict checks passed on isolated synthetic data.",
+  };
+  setSurface(f, { operations: [op] }, false);
+  assert.equal(briefHash(f.pr.body), hash);
+  assert.deepEqual(evaluate(f).errors, []);
+  setSurface(f, { operations: [{ ...op, mcp: "another_mutation" }] }, false);
+  assert.match(evaluate(f).errors.join(" "), /brief changed/);
+});
+
+test("no-data claims require an explanation and cannot contain mutations", () => {
+  const f = fixture();
+  setSurface(f, { operations: [mutation()] });
+  assert.match(evaluate(f).errors.join(" "), /No-data changes/);
+  setSurface(f, { operations: [], noDataChangesReason: "None" });
+  assert.match(evaluate(f).errors.join(" "), /noDataChangesReason/);
+});
+test("missing, malformed and non-object surface contracts fail closed", () => {
+  assert.match(surfaceContractErrors("")[0], /exactly one/);
+  assert.match(
+    surfaceContractErrors(
+      "## API, MCP and connections\n```json\n{bad}\n```",
+    )[0],
+    /valid JSON/,
+  );
+  assert.match(
+    surfaceContractErrors("## API, MCP and connections\n```json\nnull\n```")[0],
+    /JSON object/,
+  );
+});
 function setApproval(f, patch) {
   Object.assign(f.approval, patch);
   f.comments[0].body = `/wuff-scope\n${JSON.stringify(f.approval)}`;

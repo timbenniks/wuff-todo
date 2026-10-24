@@ -15,6 +15,10 @@ PR. The conversation supports that record; Tim should not need to reconstruct it
   behavior, including cancellation, retained drafts and uncertain-save recovery.
 - List commands actually run, results, mocked behavior, unverified checks and
   rollout/native/device gates. A green check is not proof that evidence is true.
+- For every data-changing operation, include shared domain/API/MCP mappings and
+  actual cross-surface adapter evidence. Record the MCP App UI decision and
+  affected connection scopes, consent, recovery, revocation and privacy checks.
+  Web-only writes and unresolved parity work cannot be presented as complete.
 
 Do not silently expand the scope or turn unanswered questions into requirements.
 After new code, rerun affected checks and update the evidence for the current PR

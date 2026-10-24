@@ -15,6 +15,13 @@ component inventory is https://wuff-todo.vercel.app/contributor-kit/components.j
 Check actual props/event behavior in repository source. Do not initialize shadcn
 defaults over Wuff's components or build a separate copied application.
 
+Read `docs/guide/surfaces.md` for every feature. Map every persisted mutation to
+the shared domain service, HTTP API and MCP tool, including authorized reads and
+cross-surface verification. Assess MCP App UI and delegated/provider connection
+scopes, consent, missing/expired/revoked states and personal credential isolation.
+Fill the PR's surface-contract JSON before requesting scope approval. Do not ship
+web-only writes, placeholder tools or silent parity/UI/connection deferrals.
+
 Understand the problem and intended users, offer small product choices, show the
 main interaction early and iterate from feedback. Keep agreed decisions and open
 questions explicit. Use synthetic data and clearly labeled local mocks within the

@@ -57,14 +57,24 @@ Record entry points, outcomes, cancellation/recovery and personal/shared effects
 so the brief stands alone without the chat. Local mocks are an iteration tool,
 not proof of backend persistence or authorization.
 
+Complete `## API, MCP and connections` using `docs/guide/surfaces.md` before scope
+approval. Inventory every persisted mutation and its shared domain/API/MCP mapping,
+authorized reads, MCP UI decision and connection/consent/revocation impact. Existing
+tools may be extended; web-only data changes cannot be marked complete.
+
 ## 2. Get technical scope approved
 
 Before implementation, obtain Tim's brief and path approval on the PR. Prepare
 a mock/proposal while waiting; do not implement outside approved scope. The
 contributor cannot authorize sensitive technical changes.
 
-The policy reports a SHA-256 of `## Feature brief` (normalized line endings, HTML
-comments removed, outer whitespace trimmed). Tim can compute it read-only from a
+The policy reports a SHA-256 binding `## Feature brief` and the scope fields of
+`## API, MCP and connections`: data-change classification, operation/domain/API/MCP
+mappings, MCP UI decision/reason and connection impact/review. Verification results
+and implementation status may evolve without changing scope; mappings and decisions
+need renewed approval. Brief text has normalized line endings, comments removed
+and outer whitespace trimmed; surface fields use the helper's canonical JSON.
+Tim can compute the hash read-only from a
 trusted checkout:
 
 ```sh
@@ -100,7 +110,9 @@ approval. Never impersonate Tim or use his credentials for contributor approvals
   compact layouts, 44px grouped action targets, keyboard/focus and accessible
   labels. Do not initialize a replacement component system.
 - Keep server/domain/database code out of browser bundles. Use existing authorized
-  services and preserve API/MCP parity when their shared contract changes.
+  services. Every persisted-data feature ships equivalent API and MCP capabilities
+  through the same domain operations. Assess MCP App UI and connection handling
+  explicitly; do not postpone parity until a later feature.
 - Preserve private admission, owner-only list administration, shared editor
   permissions, personal preferences/credentials and online-only behavior. Use no
   real private data in previews.
@@ -138,6 +150,12 @@ For authorized server changes, verify relevant owner/editor/outsider isolation,
 revocation, idempotency, concurrent/stale writes and API/MCP parity. Record actual
 performance measurements when affected. Native compilation and installed-platform
 checks are Tim's local release gate; Vercel's web build is separate evidence.
+
+For each persisted mutation, prove API-write/MCP-read and MCP-write/API-or-web-read
+against isolated data, including relevant permission/conflict/retry failures. For
+affected connections, test missing/expired/revoked grants, insufficient scopes,
+explicit consent recovery, disconnect and cross-account credential privacy. MCP
+UI needs actual control checks and tool-only fallback; report the host tested.
 
 Fill `## Verification` with commands/results and the full current source commit:
 

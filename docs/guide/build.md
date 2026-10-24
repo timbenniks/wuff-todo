@@ -11,7 +11,8 @@ services. You choose the behavior; your agent manages implementation and deliver
 > branch and draft PR, and get Tim's technical scope approval before implementation.
 > Reuse Wuff's actual components and tokens, show the main interaction early, and
 > iterate with me. Preserve permissions, personal/shared boundaries and save recovery.
-> Handle Git and verification for me. Use synthetic data and only a confirmed
+> Map every persisted mutation to API and MCP equivalents, assess MCP UI and
+> preserve connection scopes, consent and revocation. Handle Git and verification for me. Use synthetic data and only a confirmed
 > isolated preview backend. Keep decisions, current-commit evidence and remaining
 > gaps in the PR. Do not merge or release. My idea is:
 

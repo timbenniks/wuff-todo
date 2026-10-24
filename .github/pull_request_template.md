@@ -2,13 +2,24 @@
 
 <!-- Replace comments with the goal, intended users, included/excluded behavior,
 preserved behavior and testable acceptance checkboxes: - [ ] Observable result.
-Tim approves a hash of this section; changes need renewed scope approval. -->
+Tim approves a hash of this brief AND the surface scope fields below. Capability
+or UI/connection decisions changing need renewed approval; evidence can evolve. -->
 
 ## Scope
 
 <!-- Identify files/components, interactions, test/doc changes and any schema,
 auth, contracts, dependencies, global styles, native config or safeguard changes.
 Explain sensitive changes and request Tim's approval. -->
+
+## API, MCP and connections
+
+<!-- Include exactly one JSON block following docs/guide/surfaces.md.
+Declare dataChanges, operations, mcpUi and connections. Every persisted mutation
+needs action/domain/api/mcp/status/verification; status must be implemented.
+No-data changes use dataChanges:false, operations:[] and noDataChangesReason.
+MCP UI: implemented with verification, or not-needed with reason.
+Connections: affected boolean and review; affected connections need verification.
+Map existing or new routes/tools; no web-only writes or silent deferral. -->
 
 ## Preview
 

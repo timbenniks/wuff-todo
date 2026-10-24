@@ -10,7 +10,8 @@ decision/acceptance records are incorporated into one contributor workflow.
 - Root and nearby AGENTS.md are the repository entry points and architectural
   boundaries. Root instructions route agents to the canonical contributor workflow.
 - `docs/guide/` maintains product, design, component, accessibility, build and
-  review guidance. `/docs` and authenticated `/settings/docs` render the same
+  review guidance, including mandatory API/MCP/connection surface contracts.
+  `/docs` and authenticated `/settings/docs` render the same
   content. `docs/contributor-workflow.md` is included in the Build page.
 - `.agents/skills/wuff-contributor/SKILL.md` applies those rules to discovery,
   scoped implementation, iteration, evidence and PR delivery. It does not duplicate
@@ -19,6 +20,10 @@ decision/acceptance records are incorporated into one contributor workflow.
   [Activation and environment gates](contributor-github.md) remain separate.
 
 ## Generation and downloads
+
+The API/MCP/connections page makes every persisted mutation, MCP UI decision,
+connection consent/revocation/privacy impact and cross-surface test plan explicit.
+Its scope fields are bound to Tim's approval; web-only writes cannot be complete.
 
 `pnpm build:guide` runs before web development/build. It reads the maintained
 Markdown, palette source and actual `packages/ui/src` exports. The generated

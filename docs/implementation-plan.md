@@ -17,6 +17,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   The contributor workflow, `/docs/build`, portable contributor skill and trusted
   main-based scope/evidence policy are implemented locally; bootstrap and isolated
   contributor/preview environments remain onboarding gates.
+  Every feature PR now requires an API/MCP/connection surface contract, approved
+  capability mappings and actual adapter evidence for persisted-data changes.
 
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.

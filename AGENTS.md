@@ -4,6 +4,10 @@ Start with `docs/implementation-plan.md` for current status and the next planned
 
 - First release: invite-only, private/shared basic lists, tasks, ordering, web and MCP/MCP Apps. Mobile and list themes follow later.
 - Only owners rename/delete lists. Every API and MCP operation enforces access in shared server-side domain services.
+- Every persisted-data feature must ship equivalent authorized HTTP API and MCP
+  capabilities through shared domain services. Assess MCP App UI and connection/
+  scope/consent/revocation impacts explicitly; document and test adapter parity.
+  Follow [the surface contract](docs/guide/surfaces.md). Web-only mutations are incomplete.
 - Provision and connect Neon through the Vercel CLI. Use `gh` for GitHub and `vercel` for deployment. Never substitute a separately provisioned Neon project.
 - Keep secrets in ignored environment files. Never print tokens, passwords, invitation links, or database URLs in logs or chat.
 - Use pnpm workspaces. Server packages must not enter client bundles. Keep public contracts independent of database implementation.

@@ -56,12 +56,22 @@ no production credentials are provided. `pull_request_target` evaluates PR updat
 `issue_comment` reevaluates on scope approval edits/deletions. Tim's approval is
 identified by immutable numeric user ID, not an agent-written label or PR field.
 
-The policy binds approval to the brief hash, checks changed/renamed paths against
+The policy binds approval to the brief plus surface scope (domain/API/MCP mappings,
+MCP UI decision and connection impact), checks changed/renamed paths against
 the approved allowlist, requires separate exact-file approval for sensitive paths,
 rejects common credential filenames, and requires current-head evidence. It fails
 closed on missing scope, incomplete inventories or API errors. Diffs over 800
 changed lines require an explicit large-diff exception. It does not scan arbitrary
 file contents for secrets, assess evidence truth or understand every semantic risk.
+
+Every PR also supplies a JSON surface contract: persisted-data classification,
+domain/API/MCP operation mappings, an MCP UI decision and connection impact/review.
+Data-changing operations must declare implemented adapters and verification;
+implemented MCP UI and affected connections require their own verification.
+Missing/malformed contracts, web-only mappings and unresolved UI decisions fail
+the policy. Scope approvals bind the intended mappings and decisions; status and
+test results may evolve without changing approved capability scope. This remains
+declaration validation; actual adapter/connection tests and owner review prove behavior.
 
 Use upstream read access plus private forks where supported. A collaborator with
 upstream write access can create other branch workflows and similarly named

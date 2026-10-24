@@ -11,6 +11,7 @@ const links = [
   ["design", "Design language"],
   ["components", "Components"],
   ["accessibility", "Responsive & accessible"],
+  ["surfaces", "API, MCP & connections"],
   ["build", "Build a feature"],
   ["review", "Review & delivery"],
 ];

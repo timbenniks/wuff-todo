@@ -18,6 +18,10 @@ Start at [Build a feature](/docs/build), then use [Review and delivery](/docs/re
 when the result is ready. Read the product rules, design language, real component
 reference and accessibility requirements while building.
 
+Read [API, MCP and connections](/docs/surfaces) before defining the feature. Every
+persisted-data action needs API/MCP capability parity, an MCP UI decision and a
+connection/consent/revocation review; these are part of the approved scope.
+
 ## Which instructions do what?
 
 | Layer                                       | Job                                                                                       |

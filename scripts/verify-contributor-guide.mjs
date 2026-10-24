@@ -23,6 +23,9 @@ const reference = await (await fetch(`${origin}/docs/agent-context.md`)).text();
 assert.ok(reference.includes("/wuff-scope"));
 assert.ok(reference.includes("Evidence commit:"));
 assert.ok(reference.includes("implementation reference"));
+assert.ok(
+  reference.includes("API, MCP and connections are core product surfaces"),
+);
 assert.ok(!reference.includes("wuff-prototype.zip"));
 const manifest = await (
   await fetch(`${origin}/contributor-kit/source-manifest.json`)
@@ -136,6 +139,7 @@ try {
       "design",
       "components",
       "accessibility",
+      "surfaces",
       "review",
     ]) {
       assert.equal(

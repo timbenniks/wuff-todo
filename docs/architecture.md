@@ -49,6 +49,10 @@ AI client / MCP App ────── MCP tools ─┘
 ```
 
 - HTTP routes and MCP tools are adapters around the same domain operations.
+- New persisted-data features must map each mutation to those domain/API/MCP
+  surfaces and verify both write/read directions. Connection consent, scope,
+  revocation, actor privacy and the MCP App UI decision are explicit parts of the
+  approved feature contract. See [contributor surface requirements](guide/surfaces.md).
 - The website uses the versioned API for mutations. Server rendering may call those domain services directly with the same verified user context.
 - Domain services enforce permissions on every operation and receive authenticated identity from trusted server code.
 - Database credentials, auth secrets, domain implementation, and database packages never enter browser or mobile bundles.

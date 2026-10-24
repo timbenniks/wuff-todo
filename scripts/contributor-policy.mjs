@@ -7,6 +7,7 @@ export const MAINTAINER_ID = 121096;
 const sections = [
   "Feature brief",
   "Scope",
+  "API, MCP and connections",
   "Preview",
   "Verification",
   "Remaining work or risks",
@@ -28,9 +29,127 @@ export function section(body, title) {
 }
 
 export function briefHash(body) {
+  const content = section(body, "API, MCP and connections");
+  let scope = content;
+  try {
+    const matches = [...content.matchAll(/```json\s*\n([\s\S]*?)\n```/g)];
+    if (matches.length !== 1) throw new Error("Invalid contract");
+    const value = JSON.parse(matches[0][1]);
+    // Bind intended capabilities, not results/status that must evolve during implementation.
+    scope = JSON.stringify({
+      dataChanges: value.dataChanges,
+      noDataChangesReason:
+        value.dataChanges === false ? value.noDataChangesReason : undefined,
+      operations: Array.isArray(value.operations)
+        ? value.operations.map((op) => ({
+            action: op?.action,
+            domain: op?.domain,
+            api: op?.api,
+            mcp: op?.mcp,
+          }))
+        : value.operations,
+      mcpUi: { decision: value.mcpUi?.decision, reason: value.mcpUi?.reason },
+      connections: {
+        affected: value.connections?.affected,
+        review: value.connections?.review,
+      },
+    });
+  } catch {
+    /* Invalid declarations still get a reportable hash but can never pass policy. */
+  }
   return createHash("sha256")
-    .update(section(body, "Feature brief"))
+    .update(
+      section(body, "Feature brief") +
+        "\n\n## API, MCP and connections\n" +
+        scope,
+    )
     .digest("hex");
+}
+
+export function surfaceContractErrors(body) {
+  const blocks = [
+    ...section(body, "API, MCP and connections").matchAll(
+      /```json\s*\n([\s\S]*?)\n```/g,
+    ),
+  ];
+  if (blocks.length !== 1)
+    return [
+      "Provide exactly one JSON surface contract under 'API, MCP and connections'.",
+    ];
+  let contract;
+  try {
+    contract = JSON.parse(blocks[0][1]);
+  } catch {
+    return ["The API/MCP/connection surface contract must be valid JSON."];
+  }
+  if (!contract || typeof contract !== "object" || Array.isArray(contract))
+    return ["The surface contract must be a JSON object."];
+  const errors = [];
+  const text = (value, min = 20) =>
+    typeof value === "string" &&
+    value.trim().length >= min &&
+    !/^(?:todo|tbd|pending|n\/a|none|example)[.!]?$/i.test(value.trim());
+  if (
+    typeof contract.dataChanges !== "boolean" ||
+    !Array.isArray(contract.operations)
+  )
+    errors.push("Declare dataChanges as a boolean and operations as an array.");
+  else if (contract.dataChanges) {
+    if (!contract.operations.length)
+      errors.push(
+        "Every data-changing feature needs domain/API/MCP operation mappings.",
+      );
+    for (const op of contract.operations) {
+      if (
+        !op ||
+        !text(op.action, 8) ||
+        !text(op.domain, 5) ||
+        !/\b(?:POST|PUT|PATCH|DELETE) \/api\//.test(op.api ?? "") ||
+        /\/example\b/.test(op.api ?? "") ||
+        !/^[a-z][a-z0-9_]{2,}$/.test(op.mcp ?? "") ||
+        op.mcp === "update_example"
+      )
+        errors.push(
+          "Each mutation must name its action, shared domain operation, actual API write route and MCP tool.",
+        );
+      if (op?.status !== "implemented" || !text(op?.verification))
+        errors.push(
+          "API/MCP operations must be implemented with actual adapter verification; placeholders or deferrals cannot pass.",
+        );
+    }
+  } else if (contract.operations.length || !text(contract.noDataChangesReason))
+    errors.push(
+      "No-data changes need empty operations and a concrete noDataChangesReason.",
+    );
+  if (
+    !["implemented", "not-needed"].includes(contract.mcpUi?.decision) ||
+    !text(contract.mcpUi?.reason)
+  )
+    errors.push(
+      "Decide MCP UI explicitly: implemented or not-needed, with a concrete reason.",
+    );
+  if (
+    contract.mcpUi?.decision === "implemented" &&
+    !text(contract.mcpUi.verification)
+  )
+    errors.push(
+      "Implemented MCP UI needs explicit UI/host and tool-only verification.",
+    );
+  if (
+    typeof contract.connections?.affected !== "boolean" ||
+    !text(contract.connections?.review)
+  )
+    errors.push(
+      "Declare connection impact and review scopes, consent, recovery, revocation and credential privacy.",
+    );
+  if (
+    contract.connections?.affected === true &&
+    !text(contract.connections.verification)
+  )
+    errors.push(
+      "Affected connections need verification of grant/consent/revocation/privacy behavior.",
+    );
+  return [...new Set(errors)];
 }
 
 function validPath(path) {
@@ -90,7 +209,7 @@ function forbidden(path) {
 }
 
 export function evaluate({ pr, files, comments }) {
-  const errors = [];
+  const errors = surfaceContractErrors(pr.body);
   const hash = briefHash(pr.body);
   if (pr.base?.ref !== "main") errors.push("Contributor PRs must target main.");
   if (!pr.head?.ref?.startsWith("codex/"))
@@ -139,7 +258,7 @@ export function evaluate({ pr, files, comments }) {
   else {
     if (approval.briefSha256 !== hash)
       errors.push(
-        "The feature brief changed or is not approved; request a new scope approval.",
+        "The feature brief changed or its API/MCP/connection scope is not approved; request a new scope approval.",
       );
     if (
       !Array.isArray(approval.allowedPaths) ||
@@ -284,7 +403,7 @@ export async function run({ event, request = fetch, env = process.env } = {}) {
         "PR changed during evaluation. Rerun the policy before review.",
       );
     const summary = [
-      `Feature brief SHA-256: \`${result.briefSha256}\``,
+      `Feature scope SHA-256: \`${result.briefSha256}\``,
       `Evidence commit: ${pr.head.sha}`,
       ...result.errors.map((error) => `- ${error}`),
       "This check validates declared scope and evidence presence, not evidence truth or application quality. Tim's review and passing Verify checks remain required.",

@@ -34,6 +34,7 @@ for (const slug of [
   "design",
   "components",
   "accessibility",
+  "surfaces",
   "build",
   "review",
 ]) {

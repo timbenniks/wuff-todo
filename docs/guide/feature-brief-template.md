@@ -17,6 +17,13 @@ recovery and where the user returns.
 
 Who can see and change each part? What happens after archive or access removal?
 
+## API, MCP and connections
+
+Inventory persisted mutations and authorized reads. Name the shared domain
+operation, API route and MCP tool for each, whether an MCP App UI is needed, and
+affected connection types/scopes/consent/revocation/privacy. Include cross-surface
+adapter verification. Use the surface-contract JSON in the PR template.
+
 ## Design reference
 
 Reviewed preview and source commit, phone/desktop screenshots, existing components
