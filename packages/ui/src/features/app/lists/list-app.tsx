@@ -1,15 +1,11 @@
 "use client";
-import {
-  InputGroup,
-  InputGroupInput,
-  InputGroupAddon,
-  InputGroupButton,
-} from "../../../input-group";
-
+import { containDialogFocus } from "../../components/dialog-focus";
 import { wuffCopy, wuffError } from "../../lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Archive,
+  ArrowLeft,
+  X,
   House,
   ListTodo,
   LogOut,
@@ -35,12 +31,14 @@ import { listThemeVariables } from "../../lib/list-theme";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
 import { HomeDashboard } from "./home-dashboard";
+import { CreateListForm } from "./create-list-form";
 import { SidebarLists } from "./sidebar-lists";
 import { mergeVisibleOrder } from "../../lib/reorder";
 
 type PendingCreate = {
   id: string;
   title: string;
+  mode: "simple" | "work";
   operationId: string;
   status: "saving" | "failed";
 };
@@ -71,6 +69,18 @@ export function ListApp({
   const [liveStatus, setLiveStatus] = useState("connecting");
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationTrigger = useRef<HTMLButtonElement>(null);
+  const navigationDialog = useRef<HTMLDialogElement>(null);
+  const navigationFocus = useRef<HTMLElement | null>(null);
+  const navigationScroll = useRef(0);
+  const focusNewList = useRef<string | null>(null);
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const query = matchMedia("(max-width: 767px)");
+    const update = () => setMobile(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const [readFailure, setReadFailure] = useState("");
   const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
@@ -83,6 +93,40 @@ export function ListApp({
     [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(false),
     [creating, setCreating] = useState(false);
+  useEffect(() => {
+    const el = navigationDialog.current;
+    if (!el) return;
+    if ((mobile && navigationOpen) || creating) {
+      if (!el.open) {
+        navigationFocus.current = document.activeElement as HTMLElement;
+        el.showModal();
+      }
+      if (!creating) {
+        const nav = el.querySelector<HTMLElement>(".workspace-list-nav");
+        if (nav) nav.scrollTop = navigationScroll.current;
+        el.querySelector<HTMLElement>('[aria-current="page"]')?.focus({
+          preventScroll: true,
+        });
+      }
+    } else if (el.open) el.close();
+  }, [mobile, navigationOpen, creating]);
+  useEffect(() => {
+    if (focusNewList.current !== list?.id || busy) return;
+    const frame = requestAnimationFrame(() => {
+      const capture = document.querySelector<HTMLButtonElement>(
+        ".task-capture-trigger",
+      );
+      if (capture) {
+        focusNewList.current = null;
+        capture.click();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [list?.id, busy]);
+  const [newListDraft, setNewListDraft] = useState<{
+    title: string;
+    mode: "simple" | "work";
+  }>({ title: "", mode: "simple" });
   const [cache] = useState(() => new ListCache(initialList));
   useEffect(() => () => cache.clear(), [cache]);
   const [pendingCreate, setPendingCreate] = useState<PendingCreate | null>(
@@ -281,7 +325,7 @@ export function ListApp({
       ),
     );
   }
-  async function create(title?: string) {
+  async function create(title?: string, mode: "simple" | "work" = "simple") {
     if (mutating.current) return;
     let request = pending.current;
     if (!request) {
@@ -290,6 +334,7 @@ export function ListApp({
         id: `pending-${operationId}`,
         operationId,
         title: (title ?? "").trim(),
+        mode,
         status: "saving",
       };
       if (!request.title) return;
@@ -300,7 +345,7 @@ export function ListApp({
         shared: false,
         version: 0,
         color: "blue" as const,
-        mode: "simple" as const,
+        mode: request.mode,
         assignees: [],
         description: "",
         archived: false,
@@ -311,6 +356,7 @@ export function ListApp({
       setSummaries((items) => [...items, preview]);
       chooseList(request.id);
       setCreating(false);
+      setNavigationOpen(false);
       setShowArchive(false);
     }
     request = { ...request, status: "saving" };
@@ -323,6 +369,7 @@ export function ListApp({
     try {
       const created = await api<TodoList>("/api/v1/lists", "POST", {
         title: request.title,
+        mode: request.mode,
         operationId: request.operationId,
       });
       cache.forget(request.id);
@@ -338,13 +385,16 @@ export function ListApp({
           shared: created.shared,
           version: created.version,
           color: created.color,
+          mode: created.mode,
           archived: created.archived,
         },
       ]);
       pending.current = null;
       setPendingCreate(null);
+      setNewListDraft({ title: "", mode: "simple" });
       if (selected.current === request.id) {
         skipSelectionRead.current = created.id;
+        focusNewList.current = created.id;
         chooseList(created.id);
       }
     } catch (error) {
@@ -526,6 +576,150 @@ export function ListApp({
     return () => window.removeEventListener("popstate", restore);
   }, [cache]);
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
+  const navigationContent = (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        className="sidebar-home justify-start mb-3"
+        aria-current={!selectedId && !showArchive ? "page" : undefined}
+        onClick={() => {
+          chooseList("");
+          setShowArchive(false);
+          setNavigationOpen(false);
+        }}
+      >
+        <House size={18} />
+        Home
+      </Button>
+      <div className="workspace-list-nav">
+        <SidebarLists
+          controls={
+            <>
+              <div className="sidebar-section-heading">
+                <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                  {showArchive
+                    ? wuffCopy.archiveHeading
+                    : wuffCopy.listsHeading}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Create list"
+                  disabled={busy || !!pendingCreate}
+                  onClick={() => setCreating(true)}
+                >
+                  <Plus size={18} />
+                </Button>
+              </div>
+            </>
+          }
+          lists={summaries}
+          archived={showArchive}
+          selectedId={selectedId}
+          disabled={busy || !!pendingCreate || !!sidebarRetry}
+          pending={pendingCreate}
+          choose={(id) => {
+            chooseList(id);
+            if (navigationOpen) {
+              setNavigationOpen(false);
+              requestAnimationFrame(() => navigationTrigger.current?.focus());
+            }
+          }}
+          preload={(id) => {
+            if (!cache.get(id)) void reload(id).catch(() => {});
+          }}
+          reorder={moveList}
+          toggle={(id, collapsed) =>
+            saveSidebar((order) => ({
+              collapsedListIds: !collapsed
+                ? (order.collapsedListIds ?? []).filter((value) => value !== id)
+                : [
+                    ...(order.collapsedListIds ?? []).filter(
+                      (value) => value !== id,
+                    ),
+                    id,
+                  ],
+            }))
+          }
+        />
+        {sidebarRetry && (
+          <div role="alert" className="grid gap-2 py-3 text-sm">
+            <p>
+              The sidebar change wasn’t confirmed. Retry the same request to
+              check it.
+            </p>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => saveSidebar(null)}
+            >
+              Retry sidebar change
+            </Button>
+          </div>
+        )}
+        {showArchive && visibleLists.length === 0 && (
+          <p className="text-sm text-muted-foreground px-3 py-4">
+            No lists taking a paws yet.
+          </p>
+        )}
+      </div>
+      <div className="workspace-footer mt-4 md:mt-auto pt-3 text-sm flex flex-wrap md:block items-center justify-between gap-1">
+        <div className="sidebar-utilities flex flex-wrap md:grid items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-start"
+            onClick={() => {
+              const next = !showArchive;
+              setShowArchive(next);
+              chooseList(summaries.find((s) => s.archived === next)?.id ?? "");
+            }}
+          >
+            <Archive size={15} />
+            {showArchive
+              ? "Back to lists"
+              : `Archive (${summaries.filter((s) => s.archived).length})`}
+          </Button>
+
+          <a
+            href={runtime.webOrigin + "/settings"}
+            className="sidebar-settings flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 font-medium hover:bg-surface/60"
+          >
+            <Settings2 size={17} aria-hidden="true" />
+            Settings
+          </a>
+        </div>
+        {runtime.githubConsent && (
+          <Button
+            className="my-2"
+            disabled={busy}
+            onClick={() =>
+              void runtime.githubConsent!().catch((error) =>
+                setError(error.message),
+              )
+            }
+          >
+            Enable GitHub changes
+          </Button>
+        )}
+        <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
+          <span className="hidden md:inline truncate">{name}</span>
+          <Button
+            aria-label="Sign out"
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              cache.clear();
+              await runtime.signOut();
+            }}
+          >
+            <LogOut size={16} />
+          </Button>
+        </div>
+      </div>
+    </>
+  );
   return (
     <div
       className="workspace-shell bg-background text-foreground"
@@ -554,216 +748,100 @@ export function ListApp({
             ref={navigationTrigger}
             type="button"
             variant="ghost"
-            size="icon"
             className="md:hidden ml-auto"
-            aria-label="Choose a list"
-            title="Choose a list"
+            aria-label="Lists"
+            title="Lists"
             aria-expanded={navigationOpen}
             aria-controls="pack-navigation"
             onClick={() => setNavigationOpen((open) => !open)}
           >
-            <ListTodo size={20} />
+            <ListTodo size={20} aria-hidden="true" /> Lists
           </Button>
         </div>
-        <div
-          id="pack-navigation"
-          className={`${navigationOpen ? "flex" : "hidden"} md:flex flex-1 min-h-0 flex-col pt-4 md:pt-0`}
-          onKeyDown={(e) => {
-            if (e.key === "Escape" && navigationOpen) {
-              setNavigationOpen(false);
-              navigationTrigger.current?.focus();
-            }
-          }}
-        >
+        {!mobile && (
+          <div
+            id="pack-navigation"
+            className="desktop-list-navigation flex flex-1 min-h-0 flex-col"
+          >
+            {navigationContent}
+          </div>
+        )}
+      </aside>
+      <dialog
+        onKeyDown={containDialogFocus}
+        ref={navigationDialog}
+        className="list-navigation-dialog"
+        aria-labelledby="list-navigation-title"
+        onCancel={(e) => {
+          if (busy) e.preventDefault();
+        }}
+        onClose={() => {
+          setNavigationOpen(false);
+          setCreating(false);
+          if (navigationFocus.current?.getClientRects().length)
+            navigationFocus.current.focus({ preventScroll: true });
+        }}
+      >
+        <header className="list-navigation-header">
+          <h2 id="list-navigation-title" className="text-xl font-bold">
+            {creating ? "Create list" : "Lists"}
+          </h2>
           <Button
             type="button"
             variant="ghost"
-            className="sidebar-home justify-start mb-3"
-            aria-current={!selectedId && !showArchive ? "page" : undefined}
-            onClick={() => {
-              chooseList("");
-              setShowArchive(false);
-              setNavigationOpen(false);
-            }}
+            size="icon"
+            aria-label="Close lists"
+            disabled={busy}
+            onClick={() => navigationDialog.current?.close()}
           >
-            <House size={18} />
-            Home
+            <X size={20} aria-hidden="true" />
           </Button>
-          <div className="workspace-list-nav">
-            <SidebarLists
-              controls={
-                <>
-                  <div className="sidebar-section-heading">
-                    <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                      {showArchive
-                        ? wuffCopy.archiveHeading
-                        : wuffCopy.listsHeading}
-                    </span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Create list"
-                      disabled={busy || !!pendingCreate}
-                      onClick={() => setCreating((v) => !v)}
-                    >
-                      <Plus size={18} />
-                    </Button>
-                  </div>
-                  {creating && (
-                    <form
-                      className="mb-4 grid gap-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        await create(
-                          String(new FormData(e.currentTarget).get("title")),
-                        );
-                      }}
-                    >
-                      <label
-                        htmlFor="new-list-name"
-                        className="text-xs text-muted-foreground"
-                      >
-                        List name
-                      </label>
-                      <InputGroup>
-                        <InputGroupInput
-                          id="new-list-name"
-                          name="title"
-                          aria-label="List name"
-                          placeholder={wuffCopy.listPlaceholder}
-                          maxLength={300}
-                          required
-                          autoFocus
-                        />
-                        <InputGroupAddon align="inline-end">
-                          <InputGroupButton
-                            type="submit"
-                            size="sm"
-                            variant="primary"
-                            disabled={busy}
-                            aria-label="Create list"
-                            title="Create list"
-                          >
-                            <Plus size={18} aria-hidden="true" /> Create
-                          </InputGroupButton>
-                        </InputGroupAddon>
-                      </InputGroup>
-                    </form>
-                  )}
-                </>
-              }
-              lists={summaries}
-              archived={showArchive}
-              selectedId={selectedId}
-              disabled={busy || !!pendingCreate || !!sidebarRetry}
-              pending={pendingCreate}
-              choose={(id) => {
-                chooseList(id);
-                if (navigationOpen) {
-                  setNavigationOpen(false);
-                  requestAnimationFrame(() =>
-                    navigationTrigger.current?.focus(),
-                  );
-                }
-              }}
-              preload={(id) => {
-                if (!cache.get(id)) void reload(id).catch(() => {});
-              }}
-              reorder={moveList}
-              toggle={(id, collapsed) =>
-                saveSidebar((order) => ({
-                  collapsedListIds: !collapsed
-                    ? (order.collapsedListIds ?? []).filter(
-                        (value) => value !== id,
-                      )
-                    : [
-                        ...(order.collapsedListIds ?? []).filter(
-                          (value) => value !== id,
-                        ),
-                        id,
-                      ],
-                }))
+        </header>
+        {creating ? (
+          <div className="p-4">
+            {mobile && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="mb-3"
+                disabled={busy}
+                onClick={() => setCreating(false)}
+              >
+                <ArrowLeft size={16} />
+                Back to lists
+              </Button>
+            )}
+            <CreateListForm
+              draft={newListDraft}
+              onChange={setNewListDraft}
+              busy={busy}
+              create={create}
+              cancel={() =>
+                mobile ? setCreating(false) : navigationDialog.current?.close()
               }
             />
-            {sidebarRetry && (
-              <div role="alert" className="grid gap-2 py-3 text-sm">
-                <p>
-                  The sidebar change wasn’t confirmed. Retry the same request to
-                  check it.
-                </p>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => saveSidebar(null)}
-                >
-                  Retry sidebar change
-                </Button>
-              </div>
-            )}
-            {showArchive && visibleLists.length === 0 && (
-              <p className="text-sm text-muted-foreground px-3 py-4">
-                No lists taking a paws yet.
-              </p>
-            )}
           </div>
-          <div className="workspace-footer mt-4 md:mt-auto pt-3 text-sm flex flex-wrap md:block items-center justify-between gap-1">
-            <div className="sidebar-utilities flex flex-wrap md:grid items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  const next = !showArchive;
-                  setShowArchive(next);
-                  chooseList(
-                    summaries.find((s) => s.archived === next)?.id ?? "",
-                  );
-                }}
-              >
-                <Archive size={15} />
-                {showArchive
-                  ? "Back to lists"
-                  : `Archive (${summaries.filter((s) => s.archived).length})`}
-              </Button>
-
-              <a
-                href={runtime.webOrigin + "/settings"}
-                className="sidebar-settings flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 font-medium hover:bg-surface/60"
-              >
-                <Settings2 size={17} aria-hidden="true" />
-                Settings
-              </a>
-            </div>
-            {runtime.githubConsent && (
-              <Button
-                className="my-2"
-                disabled={busy}
-                onClick={() =>
-                  void runtime.githubConsent!().catch((error) =>
-                    setError(error.message),
+        ) : (
+          mobile && (
+            <div
+              id="pack-navigation"
+              className="mobile-list-navigation flex flex-1 min-h-0 flex-col px-4 pb-4"
+              onScrollCapture={(e) => {
+                if (
+                  (e.target as HTMLElement).classList.contains(
+                    "workspace-list-nav",
                   )
-                }
-              >
-                Enable GitHub changes
-              </Button>
-            )}
-            <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
-              <span className="hidden md:inline truncate">{name}</span>
-              <Button
-                aria-label="Sign out"
-                variant="ghost"
-                size="icon"
-                onClick={async () => {
-                  cache.clear();
-                  await runtime.signOut();
-                }}
-              >
-                <LogOut size={16} />
-              </Button>
+                )
+                  navigationScroll.current = (
+                    e.target as HTMLElement
+                  ).scrollTop;
+              }}
+            >
+              {navigationContent}
             </div>
-          </div>
-        </div>
-      </aside>
+          )
+        )}
+      </dialog>
       <main
         id="list-content"
         tabIndex={-1}
@@ -857,7 +935,13 @@ export function ListApp({
                 ? "Your lists can take a paws here until you need them again."
                 : "Groceries, weekend plans, anything your pack needs to remember."}
             </p>
-            <Button variant="primary" onClick={() => setCreating(true)}>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setCreating(true);
+                setNavigationOpen(true);
+              }}
+            >
               <Plus size={18} />
               Create your first list
             </Button>

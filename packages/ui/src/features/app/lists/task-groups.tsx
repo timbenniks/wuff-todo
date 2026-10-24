@@ -66,6 +66,7 @@ export function TaskGroups({
       if (!list.tasks.some((t) => t.id === id)) dueDrafts.current.delete(id);
   }, [list.tasks]);
   const [addingSection, setAddingSection] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState("");
   const owner = list.ownerId === userId,
     disabled = busy || list.archived;
   const body = { listId: list.id, version: list.version };
@@ -82,6 +83,16 @@ export function TaskGroups({
   };
   const grid = `44px minmax(180px,1fr) ${columns.map((c) => widths[c]).join(" ")} 88px 44px`;
   const groups = projectListView(list, view, today ?? "0001-01-01");
+  const filtersActive = !!(
+    view.search ||
+    view.sections.length ||
+    view.statuses.length ||
+    view.priorities.length ||
+    view.assignees.length ||
+    view.due !== "all" ||
+    view.completed !== "all"
+  );
+  const created = (title: string) => setCaptureNotice(title);
   const active = list.tasks.filter((t) => !t.parentTaskId);
   const saveCollapsed = (id: string, open: boolean) => {
     if (preview) return;
@@ -176,15 +187,20 @@ export function TaskGroups({
           className="task-add grid gap-1 mt-3"
           onSubmit={async (e) => {
             e.preventDefault();
+            if (disabled) return;
             const form = e.currentTarget;
+            const title = String(new FormData(form).get("title")).trim();
+            if (!title) return;
             if (
               await change("/api/v1/tasks", "POST", {
                 ...body,
                 sectionId,
-                title: String(new FormData(form).get("title")),
+                title,
               })
-            )
+            ) {
               form.reset();
+              created(title);
+            }
           }}
         >
           <label
@@ -259,6 +275,8 @@ export function TaskGroups({
       )}
       <ListViewControls
         retry={retry}
+        error={error}
+        onCreated={created}
         list={list}
         userId={userId}
         busy={busy}
@@ -267,6 +285,14 @@ export function TaskGroups({
         shown={groups.reduce((n, g) => n + g.tasks.length, 0)}
         total={active.length}
       />
+      {captureNotice && (
+        <p role="status" className="text-sm my-3 break-words">
+          Added “{captureNotice}” to {list.title}.
+          {filtersActive
+            ? " Your filters still apply and may hide the task. Clear filters to see all tasks."
+            : ""}
+        </p>
+      )}
       {workColumns && (
         <div className="work-column-headings" aria-hidden="true">
           <span className="work-task-heading">Task</span>

@@ -308,3 +308,134 @@ The updated `scripts/verify-list-workspace-ui.ts` passed against the optimized i
 Screenshots were visually reviewed: [phone list](screenshots/mobile-task-first-390.png), [View panel](screenshots/mobile-task-first-view-390.png), [settings](screenshots/mobile-task-first-settings-390.png). Additional responsive/sticky images are in ignored `.vercel/mobile-task-first/`.
 
 Production release verification is pending; no production deployment or production mutation was performed during these checks. Browser tests and frontend builds do not certify physical phones, installed native packages or screen-reader use.
+
+## UX improvement Phase 1 — October 24, 2026
+
+The [six-phase specification](ux-improvement-spec.md) turns the complete local
+screenshot audit into sequential acceptance gates. Phase 1 is implemented in the
+shared web/Tauri UI: a stable desktop Add task action and phone bottom action,
+a title-first capture dialog with explicit list/section destination, two-line
+phone titles, active-filter chips and Clear filters, distinct empty/no-match
+messages and acknowledged creation feedback. Clearing filters previews personal
+changes and preserves sorting/grouping/display and saved-view definitions until
+an explicit save. Task-title navigation already existed and remains unchanged.
+
+Checks against the optimized localhost website and the existing isolated
+Vercel-managed Neon development branch:
+
+- `pnpm typecheck` passed workspace and root TypeScript, including the new harness.
+- `pnpm test` passed all 91 unit tests.
+- `pnpm build` passed optimized web/MCP/prototype builds. The existing docs CSS
+  `@source` warning remains. The generated component catalog includes TaskCapture.
+- `pnpm build:native:web` passed; the existing bundle-size advisory remains.
+- `node --env-file=.env.local --import tsx scripts/verify-list-workspace-ui.ts`
+  passed responsive Basic/Work layouts, bounded popovers, settings/role controls,
+  saved-view preview/save/reload/presets, metadata edits, conflict/draft retention,
+  personal isolation and exact-request retry checks. The first phone task remains
+  at y=227px at 390×844. This pass caught duplicate filter controls outside an open
+  phone View dialog; the implementation now hides the outside controls while
+  that dialog is open, and the suite passed afterward.
+- `node --env-file=.env.local --import tsx scripts/verify-ux-phase-one.ts` passed
+  against the final optimized build. A disposable 100-task Work list verifies
+  capture reachability at 320/390/1440px without end scrolling, a minimum 44px
+  capture target, no horizontal document overflow, two-line phone titles, initial
+  title focus, Escape/Cancel focus return and retained drafts. A rejected 409
+  preserves input; aborting a response after server commit then retrying sends an
+  identical operation/payload and leaves exactly one new task in the chosen
+  section. Active search/zero-match recovery, creation-under-filter feedback,
+  unsaved-versus-saved view state, preserved sort/group/density/columns, editor
+  capture and archived-list capture restrictions pass. No captured browser page
+  errors occurred. The synthetic lists/membership/view records were deleted in
+  `finally`; no production data or preferences were changed.
+
+Visual review: [capture](screenshots/ux-phase-one-capture-390.png),
+[filter recovery](screenshots/ux-phase-one-filters-390.png),
+[two-line list](screenshots/ux-phase-one-list-390.png). The workspace harness also
+refreshes the earlier mobile-task-first screenshots to show the current controls.
+
+A first long-list run overlapped a local rebuild and failed before the responsive
+controls hydrated. Tests were rerun against a freshly started, stable optimized
+server; the final Phase 1 run passed. That failed run's fixture was also cleaned
+up. This is local browser/build evidence, not production release, physical-phone
+keyboard, screen-reader, installed native or named embedded MCP-host validation.
+No migration, dependency/environment change, deployment or paid execution was
+needed. Phase 2 (mobile navigation/View surfaces/task detail hierarchy) is next.
+
+## UX improvement Phase 2 — October 24, 2026
+
+The [phase specification and decisions](ux-improvement-spec.md#phase-2--mobile-navigation-view-and-task-details)
+are implemented locally in the shared web/Tauri UI. Phones use a labeled Lists
+trigger and dedicated modal navigation with wrapping list names, current selection
+and an independently scrolling list area. Create list replaces that surface with
+one title/type form; Simple remains the default. Its draft survives Back/closing,
+its pending operation retains the selected mode on exact retries, and an
+acknowledged create opens task capture for the new list. Desktop keeps the sidebar
+and uses the same short create form in a dialog.
+
+Phone Filter/Sort/Group/Display/Presets are named regions replacing the contents of
+the same View dialog, with Back to view, Done and explicit Save view. Display omits
+columns that are only rendered on desktop. Existing view conflicts, drafts and
+retry feedback remain inside the modal. Desktop popovers remain available.
+
+Phone Work rows show status and assignee. The shared task detail source places Work
+details before Notes; Change status sits alongside completion and opens the
+existing scoped Work form. Wide task pages keep Notes on the left and Work details,
+Subtasks and integrations on the right. Explicit grid rows keep long notes from
+pushing the right-hand Subtasks section down. Open notes are not saved by Work
+edits, and the existing dirty-close confirmation remains in force.
+
+Native modal/inert behavior is supplemented by shared first/last Tab wrapping in
+Lists, View, task details and capture. This resolves the browser check that found
+Shift+Tab could otherwise move focus outside the dialog. The helper ignores
+already-handled keys and hidden/disabled controls; normal interior tab order and
+editor-specific behavior stay intact.
+
+Final local checks:
+
+- `pnpm typecheck`: workspace and root TypeScript passed, including the new harness.
+- `pnpm test`: all 91 unit tests passed.
+- `pnpm build`: optimized web/MCP/prototype build passed; the existing docs CSS
+  `@source` warning remains. The source kit/catalog includes the new form/helper.
+- `pnpm build:native:web`: passed, retaining the existing bundle-size advisory.
+- `node --env-file=.env.local --import tsx scripts/verify-ux-phase-two.ts`: passed
+  against the final optimized localhost build. At 320/390px, navigation wraps full
+  names, marks one current selection, returns focus and leaves the main canvas in
+  place. A 390×320 viewport forces independent navigation scrolling and verifies
+  the same scroll position after reopening, plus first/last keyboard wrapping.
+  Create checks name focus, Simple default, retained name/type drafts, a committed
+  then aborted response, identical retry bodies/operation IDs, exactly one Work
+  list and focused task-capture handoff. Every phone View page remains in one
+  active modal with zero floating popovers; Back restores its trigger, Done closes
+  the sheet, focus wraps and unsaved filters survive reopening. Work checks status
+  and assignment summaries, Work-before-Notes hierarchy, status input focus,
+  In progress → In review save without completion, independent note drafts through
+  Work editing/resize, dirty-close confirmation and return to the originating
+  task. Long notes/references, wide standalone columns/Subtasks placement,
+  completion → Done, and Basic omission of Work controls pass. No captured browser
+  page errors occurred.
+- `node --env-file=.env.local --import tsx scripts/verify-list-workspace-ui.ts`:
+  passed after updating its phone assertions from nested popovers to in-sheet
+  regions/Back. Existing Basic/Work responsive geometry, metadata saves, preset
+  lifecycle, personal isolation, draft/conflict recovery and exact lost-response
+  view retries still pass. The first phone task remains at y=227px at 390×844.
+
+One preliminary workspace run encountered a temporary development session-check
+failure during priority saving and correctly retained its draft; a subsequent
+stable run passed. Earlier targeted runs corrected fixture/locator assumptions
+and exposed the keyboard boundary issue above. No auth configuration was changed.
+The browser suites use only the existing isolated development branch, delete their
+synthetic lists/membership/view fixtures in `finally`, and do not alter production
+content or preferences. No migration, dependency/environment change, deployment,
+external integration connection or paid run was needed.
+
+Visually reviewed screenshots: [navigation at 320px](screenshots/ux-phase-two-navigation-320.png),
+[navigation at 390px](screenshots/ux-phase-two-navigation-390.png),
+[create list](screenshots/ux-phase-two-create-390.png),
+[View subpage](screenshots/ux-phase-two-view-390.png),
+[phone task details](screenshots/ux-phase-two-details-390.png), and
+[desktop task details](screenshots/ux-phase-two-details-desktop.png).
+
+Phase 2 is **locally complete; production release is pending**. These browser
+checks do not certify physical-phone keyboards, screen readers, installed native
+packages or named embedded MCP hosts. The existing API/MCP domain contracts and
+permissions are unchanged. Phase 3 is actionable Home and completion flow.

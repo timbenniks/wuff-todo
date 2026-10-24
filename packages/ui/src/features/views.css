@@ -934,7 +934,53 @@ button:focus-visible {
   border-radius: 50%;
   background: currentColor;
 }
+.task-capture-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 16px;
+  background: var(--wuff-surface);
+  color: var(--wuff-foreground);
+}
+.task-capture-dialog::backdrop {
+  background: #17202a55;
+}
+.list-empty-message {
+  padding-block: 12px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 767px) {
+  .workspace-task-list {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+  .task-name .inline-name-value {
+    -webkit-line-clamp: 2;
+  }
+  .task-capture-trigger {
+    position: fixed;
+    z-index: 15;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
+    min-height: 48px;
+    box-shadow: 0 4px 16px #17202a20;
+  }
+  .mobile-filter-recovery .view-toolbar-state {
+    align-items: flex-start;
+  }
+  .mobile-filter-recovery .view-filter-chips {
+    width: 100%;
+  }
+  .mobile-filter-recovery .view-filter-chip {
+    max-width: 100%;
+  }
   .workspace-sidebar {
     padding-block: 8px;
   }
@@ -979,5 +1025,130 @@ button:focus-visible {
   .view-toolbar-line > .view-preset-picker,
   .view-toolbar-line > .view-toolbar-tools {
     display: none;
+  }
+}
+
+/* Phase 2: one phone navigation/dialog context, with in-sheet view pages. */
+.list-navigation-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(480px, calc(100vw - 24px));
+  max-width: 100vw;
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 1px solid var(--wuff-border);
+  border-radius: 16px;
+  background: var(--wuff-background);
+  color: var(--wuff-foreground);
+  overflow-y: auto;
+}
+.list-navigation-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.list-navigation-dialog::backdrop {
+  background: #17202a55;
+}
+.list-navigation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--wuff-border);
+  flex-shrink: 0;
+}
+.mobile-view-dialog .view-toolbar-tools:has(.view-sheet-page) {
+  display: block;
+}
+.view-sheet-page {
+  min-width: 0;
+}
+.view-sheet-page > button {
+  margin-bottom: 12px;
+}
+.task-phone-work-summary {
+  display: none;
+}
+.task-detail-panels > .work-details {
+  margin-block: 0 20px;
+  padding: 16px 0;
+  border: 0;
+  border-block: 1px solid var(--wuff-border);
+  border-radius: 0;
+  background: transparent;
+}
+.work-details dd {
+  overflow-wrap: anywhere;
+}
+.work-details form > .flex:last-child {
+  position: sticky;
+  bottom: 0;
+  padding-block: 8px;
+  background: var(--wuff-background);
+  z-index: 2;
+}
+@media (max-width: 767px) {
+  .desktop-list-navigation {
+    display: none;
+  }
+  .list-navigation-dialog {
+    inset: 0 auto 0 0;
+    margin: 0;
+    width: min(440px, 100vw);
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .mobile-list-navigation .workspace-list-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .mobile-list-navigation .sidebar-list-row button > span.truncate,
+  .mobile-list-navigation .sidebar-favorites button > span.truncate {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+  .task-phone-work-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: center;
+    grid-column: 2 / -1;
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--wuff-muted);
+    overflow-wrap: anywhere;
+  }
+  .task-phone-assignee {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .task-summary [data-cue-kind="status"],
+  .task-summary [data-cue-kind="assignee"] {
+    display: none;
+  }
+}
+
+@container task-content (min-width:960px) {
+  .task-detail-panels:has(> .work-details) {
+    grid-template-rows: max-content 1fr;
+  }
+  .task-detail-panels:has(> .work-details) > .work-details {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .task-detail-panels:has(> .work-details) > .task-detail-notes {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .task-detail-panels:has(> .work-details) > .task-detail-context {
+    grid-column: 2;
+    grid-row: 2;
   }
 }

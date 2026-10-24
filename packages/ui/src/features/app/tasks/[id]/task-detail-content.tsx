@@ -52,6 +52,8 @@ export function TaskDetailContent({
   const notes = useRef(new Map<string, NoteDraft>()),
     dates = useRef(new Map<string, DueDateDraft>()),
     children = useRef(new Map<string, string>());
+  const [workEditing, setWorkEditing] = useState(false);
+  const statusTrigger = useRef<HTMLButtonElement>(null);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [githubVisited, setGithubVisited] = useState(false);
   const [agentVisited, setAgentVisited] = useState(false);
@@ -108,6 +110,18 @@ export function TaskDetailContent({
           <Check size={16} />
           {task.completed ? "Reopen task" : "Complete task"}
         </Button>
+        {list.mode === "work" && (
+          <Button
+            ref={statusTrigger}
+            type="button"
+            variant="outline"
+            disabled={busy || list.archived}
+            aria-expanded={workEditing}
+            onClick={() => setWorkEditing(true)}
+          >
+            Change status
+          </Button>
+        )}
         <Button
           variant="outline"
           disabled={busy || list.archived}
@@ -126,6 +140,7 @@ export function TaskDetailContent({
           Remind me
         </Button>
       </div>
+
       {reminderOpen && (
         <div className="mb-6">
           <TaskReminder
@@ -153,6 +168,15 @@ export function TaskDetailContent({
         </div>
       )}
       <div className="task-detail-panels grid gap-4">
+        <WorkMetadata
+          task={task}
+          list={list}
+          busy={busy}
+          change={change}
+          editing={workEditing}
+          onEditingChange={setWorkEditing}
+          returnFocus={statusTrigger}
+        />
         <section className="task-detail-notes rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold">Notes</h2>
@@ -190,10 +214,18 @@ export function TaskDetailContent({
           )}
         </section>
         <div className="task-detail-context min-w-0">
-          <WorkMetadata task={task} list={list} busy={busy} change={change} />
           {!task.parentTaskId && (
             <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
-              <h2 className="text-lg font-bold mb-4">Subtasks</h2>
+              <h2 className="text-lg font-bold">Subtasks</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                {
+                  list.tasks.filter(
+                    (t) => t.parentTaskId === task.id && t.completed,
+                  ).length
+                }{" "}
+                of {list.tasks.filter((t) => t.parentTaskId === task.id).length}{" "}
+                done
+              </p>
               <Subtasks
                 focusNewTask={false}
                 detailed

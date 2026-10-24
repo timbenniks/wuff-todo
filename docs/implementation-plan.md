@@ -8,6 +8,17 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **UX improvement programme (October 24):** the complete audit is translated into
+  [a six-phase specification](ux-improvement-spec.md). Phase 1 is locally complete:
+  stable task capture, readable phone titles and visible filter recovery. Production
+  release is pending; [local evidence](verification.md#ux-improvement-phase-1--october-24-2026)
+  records browser recovery checks and builds. Phase 2 is also locally complete:
+  a labeled mobile Lists sheet, focused list creation, View subpages within one
+  modal, Work summaries/details before notes, and keyboard focus wrapping. See
+  [Phase 2 evidence](verification.md#ux-improvement-phase-2--october-24-2026).
+  **Phase 3 (actionable Home) is next**, followed by shared management/recovery,
+  readiness and consistency. This authorised UX work runs alongside the native milestone.
+
 - **Task-first phone lists (October 24):** compact sticky title/settings bar, on-demand list management and a phone View panel are implemented locally. See [design and verification scope](mobile-task-first.md); production release remains pending.
 
 - **List workspace (October 24):** compact toolbar and personal named presets for both list types, richer optional Work columns and inline metadata editing are released on the website/MCP. Local unit/integration/browser/SDK checks, web/native frontend builds and authenticated production Work/Basic layout checks passed. Native downloads remain blocked by runner billing. See [contract and release evidence](list-workspace.md).

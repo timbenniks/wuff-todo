@@ -36,6 +36,7 @@ import { TaskActions } from "./task-actions";
 import { TaskReminder } from "../../components/reminders/task-reminder";
 import { TaskMetadata } from "./task-metadata";
 import { TaskColumns, type WorkCellDraft } from "./task-columns";
+import { StatusTag } from "../../../status-tag";
 
 export function TaskRow({
   task,
@@ -404,6 +405,15 @@ export function TaskRow({
             onSubtasks={() => setExpanded(!subtasksOpen)}
           />
         )}
+      {list.mode === "work" && (
+        <div className="task-phone-work-summary">
+          <StatusTag status={task.status} />
+          <span className="task-phone-assignee">
+            {list.assignees.find((a) => a.id === task.assigneeId)?.name ??
+              "Unassigned"}
+          </span>
+        </div>
+      )}
       <TaskMetadata
         task={task}
         list={list}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import {
   taskStatuses,
@@ -27,21 +27,28 @@ export function WorkMetadata({
   list,
   busy,
   change,
+  editing,
+  onEditingChange,
+  returnFocus,
 }: {
   task: Task;
   list: TodoList;
   busy: boolean;
   change: ListChange;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
+  returnFocus?: RefObject<HTMLButtonElement | null>;
 }) {
-  const [editing, setEditing] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   function close() {
-    setEditing(false);
-    requestAnimationFrame(() => trigger.current?.focus());
+    onEditingChange(false);
+    requestAnimationFrame(() =>
+      (returnFocus?.current ?? trigger.current)?.focus(),
+    );
   }
   if (list.mode !== "work" && !editing) return null;
   return (
-    <section className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <section className="work-details rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-lg font-bold">Work details</h2>
         {!list.archived && !editing && (
@@ -51,7 +58,7 @@ export function WorkMetadata({
             aria-label="Edit work details"
             disabled={busy}
             ref={trigger}
-            onClick={() => setEditing(true)}
+            onClick={() => onEditingChange(true)}
           >
             <Pencil size={16} aria-hidden="true" /> Edit details
           </Button>

@@ -10,6 +10,16 @@
     ]
   },
   {
+    "source": "packages/ui/src/features/app/lists/create-list-form.tsx",
+    "module": "@wuff/ui/features/app/lists/create-list-form.tsx",
+    "components": [
+      {
+        "name": "CreateListForm",
+        "signature": "export function CreateListForm({\n  busy,\n  create,\n  cancel,\n  draft,\n  onChange,\n}: {\n  busy: boolean;\n  create: (title: string, mode: \"simple\" | \"work\") => Promise<void>;\n  cancel: () => void;\n  draft: { title: string; mode: \"simple\" | \"work\" };\n  onChange: (draft: { title: string; mode: \"simple\" | \"work\" }) => void;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/features/app/lists/home-dashboard.tsx",
     "module": "@wuff/ui/features/app/lists/home-dashboard.tsx",
     "components": [
@@ -55,7 +65,7 @@
     "components": [
       {
         "name": "ListViewControls",
-        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n  retry,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n  retry?: () => Promise<boolean>;\n})"
+        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n  retry,\n  error = \"\",\n  onCreated,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n  retry?: () => Promise<boolean>;\n  error?: string;\n  onCreated: (title: string) => void;\n})"
       }
     ]
   },
@@ -90,6 +100,16 @@
       {
         "name": "TaskActions",
         "signature": "export function TaskActions({\n  title,\n  disabled,\n  trigger,\n  children,\n}: {\n  title: string;\n  disabled: boolean;\n  trigger: RefObject<HTMLButtonElement | null>;\n  children: (close: () => void) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/app/lists/task-capture.tsx",
+    "module": "@wuff/ui/features/app/lists/task-capture.tsx",
+    "components": [
+      {
+        "name": "TaskCapture",
+        "signature": "export function TaskCapture({\n  list,\n  busy,\n  change,\n  error,\n  retry,\n  onCreated,\n}: {\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  error: string;\n  retry?: () => Promise<boolean>;\n  onCreated: (title: string) => void;\n})"
       }
     ]
   },
@@ -187,7 +207,7 @@
     "components": [
       {
         "name": "ViewPopover",
-        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n})"
+        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n  sheet,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n  sheet?: ViewSheet;\n})"
       }
     ]
   },
@@ -227,7 +247,7 @@
     "components": [
       {
         "name": "WorkMetadata",
-        "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n})"
+        "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n  editing,\n  onEditingChange,\n  returnFocus,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  editing: boolean;\n  onEditingChange: (editing: boolean) => void;\n  returnFocus?: RefObject<HTMLButtonElement | null>;\n})"
       }
     ]
   },

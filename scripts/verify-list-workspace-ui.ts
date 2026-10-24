@@ -104,7 +104,13 @@ try {
   const tool = (name: string) =>
     page.getByRole("button", { name, exact: true });
   const panel = (name: string) =>
-    page.getByRole("dialog", { name, exact: true });
+    page.getByRole(
+      page.viewportSize()!.width < 768 &&
+        ["Filter", "Sort", "Group", "Display", "Presets"].includes(name)
+        ? "region"
+        : "dialog",
+      { name, exact: true },
+    );
   const open = async (name: string) => {
     const trigger = page.getByRole("button", {
       name: /^View(?: · \d+)?(?: Unsaved changes)?$/,
@@ -125,7 +131,12 @@ try {
     return panel(name);
   };
   const done = async (p: any) => {
-    await p.getByRole("button", { name: "Done", exact: true }).click();
+    await p
+      .getByRole("button", {
+        name: page.viewportSize()!.width < 768 ? "Back to view" : "Done",
+        exact: true,
+      })
+      .click();
     await expect(p).not.toBeVisible();
   };
   const save = async () => {

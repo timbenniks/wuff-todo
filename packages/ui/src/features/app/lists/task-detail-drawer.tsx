@@ -1,4 +1,5 @@
 "use client";
+import { containDialogFocus } from "../../components/dialog-focus";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ExternalLink, X } from "lucide-react";
@@ -102,6 +103,7 @@ export function TaskDetailDrawer({
   if (typeof document === "undefined") return null;
   return createPortal(
     <dialog
+      onKeyDown={containDialogFocus}
       ref={dialog}
       className="task-drawer"
       style={listThemeVariables(list.color)}

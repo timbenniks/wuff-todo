@@ -1,4 +1,5 @@
 "use client";
+import { containDialogFocus } from "../../components/dialog-focus";
 import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import {
   Search,
@@ -26,6 +27,7 @@ import { NativeSelect } from "../../../native-select";
 import { Button } from "../../../button";
 import { ViewPopover } from "./view-popover";
 import type { ListChange } from "./list-settings";
+import { TaskCapture } from "./task-capture";
 
 export function ListViewControls({
   list,
@@ -36,6 +38,8 @@ export function ListViewControls({
   shown,
   total,
   retry,
+  error = "",
+  onCreated,
 }: {
   list: TodoList;
   userId: string;
@@ -45,9 +49,14 @@ export function ListViewControls({
   shown: number;
   total: number;
   retry?: () => Promise<boolean>;
+  error?: string;
+  onCreated: (title: string) => void;
 }) {
   const optionsDialog = useRef<HTMLDialogElement>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [viewPage, setViewPage] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
+  const sheet = mobile ? { active: viewPage, select: setViewPage } : undefined;
   useEffect(() => {
     const query = window.matchMedia("(max-width: 767px)");
     const update = () => {
@@ -228,6 +237,7 @@ export function ListViewControls({
   const viewTools = (
     <div className="view-toolbar-tools">
       <ViewPopover
+        sheet={sheet}
         panelLabel="Filter"
         label={
           <>
@@ -320,6 +330,8 @@ export function ListViewControls({
         )}
       </ViewPopover>
       <ViewPopover
+        sheet={sheet}
+        panelLabel="Sort"
         label={
           <>
             <ArrowDownWideNarrow size={16} />
@@ -380,6 +392,8 @@ export function ListViewControls({
         )}
       </ViewPopover>
       <ViewPopover
+        sheet={sheet}
+        panelLabel="Group"
         label={
           <>
             <Layers size={16} />
@@ -402,6 +416,8 @@ export function ListViewControls({
         )}
       </ViewPopover>
       <ViewPopover
+        sheet={sheet}
+        panelLabel="Display"
         label={
           <>
             <Columns3 size={16} />
@@ -419,7 +435,7 @@ export function ListViewControls({
           ],
           (v) => edit({ layout: v as ListView["layout"] }),
         )}
-        {list.mode === "work" && (
+        {list.mode === "work" && !mobile && (
           <>
             {select(
               "Row layout",
@@ -469,7 +485,7 @@ export function ListViewControls({
           Reset to defaults
         </Button>
       </ViewPopover>
-      <ViewPopover label="Presets" disabled={busy}>
+      <ViewPopover sheet={sheet} label="Presets" disabled={busy}>
         <p className="text-xs text-muted-foreground">
           Personal presets for this list. Up to 20.
         </p>
@@ -592,24 +608,47 @@ export function ListViewControls({
       </ViewPopover>
     </div>
   );
+  const filterChips = (
+    <div className="view-filter-chips">
+      {chips.map((chip) => (
+        <button
+          key={chip.label}
+          type="button"
+          disabled={busy}
+          onClick={chip.clear}
+          title={chip.label}
+          className="view-filter-chip"
+          aria-label={`Clear ${chip.label}`}
+        >
+          <span>{chip.label}</span>
+          <X size={12} />
+        </button>
+      ))}
+      {!!chips.length && (
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={busy}
+          onClick={() =>
+            edit({
+              search: "",
+              sections: [],
+              statuses: [],
+              priorities: [],
+              assignees: [],
+              due: "all",
+              completed: "all",
+            })
+          }
+        >
+          Clear filters
+        </Button>
+      )}
+    </div>
+  );
   const viewState = (
     <div className="view-toolbar-state">
-      <div className="view-filter-chips">
-        {chips.map((chip) => (
-          <button
-            key={chip.label}
-            type="button"
-            disabled={busy}
-            onClick={chip.clear}
-            title={chip.label}
-            className="view-filter-chip"
-            aria-label={`Clear ${chip.label}`}
-          >
-            <span>{chip.label}</span>
-            <X size={12} />
-          </button>
-        ))}
-      </div>
+      {filterChips}
       <p role="status" className="text-xs text-muted-foreground">
         {shown} of {total} tasks shown ·{" "}
         {draft.sortBy === "manual"
@@ -711,7 +750,10 @@ export function ListViewControls({
             type="button"
             variant="outline"
             className="mobile-view-trigger"
-            onClick={() => optionsDialog.current?.showModal()}
+            onClick={() => {
+              optionsDialog.current?.showModal();
+              setOptionsOpen(true);
+            }}
           >
             <SlidersHorizontal size={16} aria-hidden="true" />
             View{chips.length ? ` · ${chips.length}` : ""}
@@ -722,18 +764,34 @@ export function ListViewControls({
         ) : (
           viewTools
         )}
+        <TaskCapture
+          list={list}
+          busy={busy}
+          change={change}
+          error={error}
+          retry={retry}
+          onCreated={onCreated}
+        />
       </div>
       {mobile ? (
         <>
+          {!!chips.length && !optionsOpen && (
+            <div className="mobile-filter-recovery">{filterChips}</div>
+          )}
           {(shown !== total || dirty) && (
             <p role="status" className="mobile-view-summary">
-              {shown} of {total} tasks{dirty ? " · Unsaved view" : ""}
+              {shown} of {total} tasks{dirty ? " · View changes not saved" : ""}
             </p>
           )}
           <dialog
+            onKeyDown={containDialogFocus}
             ref={optionsDialog}
             aria-labelledby="mobile-view-title"
             className="mobile-view-dialog"
+            onClose={() => {
+              setOptionsOpen(false);
+              setViewPage(null);
+            }}
             onCancel={(e) => {
               if (busy) e.preventDefault();
             }}
@@ -756,13 +814,35 @@ export function ListViewControls({
             <p className="text-sm text-muted-foreground mb-4">
               Filters, sorting and display. Only changes your view.
             </p>
-            {presetPicker}
+            {!viewPage && presetPicker}
             {viewTools}
             {viewState}
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full mt-3"
+              disabled={busy}
+              onClick={() => optionsDialog.current?.close()}
+            >
+              Done
+            </Button>
           </dialog>
         </>
       ) : (
         viewState
+      )}
+      {shown === 0 && (
+        <p className="list-empty-message" role="status">
+          {total === 0
+            ? list.archived
+              ? "This archived list has no tasks."
+              : "No tasks yet. Add your first task."
+            : chips.length
+              ? draft.search
+                ? "No tasks match your search. Clear the search or filters to see your tasks."
+                : "No tasks match these filters. Clear filters to see your tasks."
+              : "No tasks to show."}
+        </p>
       )}
     </div>
   );

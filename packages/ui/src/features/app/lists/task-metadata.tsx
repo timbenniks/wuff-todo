@@ -114,7 +114,7 @@ export function TaskMetadata({
             </a>
           );
         return (
-          <span key={cue.kind} className={className}>
+          <span key={cue.kind} className={className} data-cue-kind={cue.kind}>
             {content}
           </span>
         );
