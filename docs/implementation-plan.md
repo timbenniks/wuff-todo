@@ -1,6 +1,6 @@
 # Wuff Todo implementation plan
 
-Status: web/MCP and GitHub synchronization released; online-only Tauri cross-platform client foundation started
+Status: web/MCP and GitHub synchronization released; shared online-only Tauri client implemented, platform/release gates remain
 
 Updated: October 24, 2026
 
@@ -76,12 +76,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 - **Implemented:** personal sidebar order, shared owner-controlled list colors/descriptions, sections, archive/restore; invite-only admission and password activation/recovery; private lists; shared editor membership; owner-only list/sharing management; task CRUD, completion/reopening, and shared task ordering; safe retries and stale-version conflicts.
 - **Sharing:** existing admitted accounts receive in-app invitations with seven-day expiry. Owners cancel invitations or remove members; editors can leave. Invitations send no email. See [sharing](sharing.md).
-- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog has 41 tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
-- **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. Native source assets are reused by the new local Expo app; installed-device validation is outstanding. See [mascot details](waffles-mascot.md).
+- **Clients:** the website and authenticated MCP endpoint are deployed at `https://wuff-todo.vercel.app` and `/api/mcp`. The MCP catalog exposes authorized list/task/preference/integration tools, including private image upload/read. The embedded MCP App manages lists/tasks; sharing controls are on the website and available as structured MCP tools.
+- **Branding:** Waffles is integrated into web identity, favicon/manifest/share assets, and the MCP App. The Tauri frontend reuses web branding/font assets; installed-platform validation remains separate. See [mascot details](waffles-mascot.md).
 - **Typography and controls:** DM Sans is selected and self-hosted across web/MCP with real italics; shared web selects have inset chevrons and Your view has centered disclosures and tighter spacing. [Typography](typography-review.md) records the decision.
 - **Design language:** [shared controls, status tags and list-driven themes](design-language.md) unify web/MCP appearance. The selected list's named color drives app surfaces, text, controls and focus; semantic status/danger colors remain explicit. See that document for local checks and release limits.
 - **Freshness today:** Neon Realtime streams accessible list/version changes to open web views. Changes trigger authorized API reads; ten-second polling and focus/visibility refresh remain as fallback. See [live updates](live-updates.md).
-- **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. On October 17, the user also selected online-only React Native/Expo mobile for now; native offline editing is deferred.
+- **Web/offline decision:** keep the website online as it is, with its existing manifest/icons. No offline-first PWA or offline mutation queue. Tauri is also online-only; native offline editing remains deferred.
 - **Verification:** the GitHub release passed 39 unit tests, TypeScript, optimized web/MCP builds and all 22 isolated-development integration cases. Actual installed-App create/edit/close/reopen, signed production deliveries, suspension/reconnection and local MCP SDK controls passed. Production palette/view/italic-note smoke passed. Named ChatGPT/Codex interactive-host and physical-device checks remain separate. See [GitHub evidence](github-sync.md) and [verification](verification.md).
 - **GitHub:** owner-authorized personal-account repository bindings, explicit issue link/create, two-way title/notes/open-state, durable jobs/webhooks, conflicts/retries and related PR context. The App is installed only on the approved private test repository; production test links were removed after verification. External clients need explicit `github:manage` consent.
 - **Task notes:** formatted text and canonical Markdown are implemented for web/API/MCP, with an on-demand Tiptap toolbar, safe shared renderer and MCP App source editor. Website task actions now open editing directly, hide Markdown implementation details and use drag handles for tasks, sections and the sidebar; see [task controls](task-controls.md). Corgi wordplay covers app guidance and feedback. Release verification is recorded in [task content and voice](task-content.md).
@@ -112,9 +112,9 @@ Verified scenarios: synthetic shared-list changes arrive through the live transp
 
 ## Next milestone
 
-**Current milestone: online-only Tauri 2 for macOS, Windows, iPhone and Android.** On October 22 the user requested a client-side React/shadcn application using the existing hosted APIs and live refresh, tracked through Wuff itself. See [Tauri client plan](tauri-client-plan.md) for phases and gates. WUFF-70 introduces the React/Vite workspace and Tauri shell; frontend checks pass. The sign-in foundation now compiles as a macOS app; [auth evidence](tauri-auth.md) records protocol tests and remaining installed-platform gates. WUFF-71/72 cover installed sign-in, secure storage, API access and a live subscription probe before full interface migration. The dedicated Wuff Todo Work list is bound to `timbenniks/wuff-todo`; [development and task map](tauri-client.md) record all ten tasks and evidence.
+**Current milestone: online-only Tauri 2 for macOS, Windows, iPhone and Android.** PRs #11–15 delivered the shell, system-browser sign-in, secure storage, bearer API/live transport and shared core workspace. See [client development](tauri-client.md), [authentication](tauri-auth.md) and [shared features](tauri-features.md). Remaining work is installed-platform acceptance and signed distribution, recorded in [platform gates](tauri-platforms.md). The dedicated Wuff Todo Work list is bound to `timbenniks/wuff-todo`; its ten original tasks and evidence remain in the [task map](tauri-client.md).
 
-The October 17 React Native/Expo slice remains available as a reference for authentication and client behavior. Its historical implementation and verification limits are recorded in [native mobile](native-mobile.md). Preserve it until the Tauri replacement passes its gates; its earlier milestone wording below is historical and does not override the new client plan.
+The October 17 React Native/Expo frontend was retired on October 24 at the maintainer’s request. Its history remains in Git; [retirement notes](native-mobile.md) preserve the historical link. Shared `NativeClient`, `/api/mobile`, native OAuth compatibility and regression coverage remain because Tauri and server consumers still use them. Retirement does not pass any outstanding installed-platform gate.
 
 On October 20 the user explicitly resumed Stage 4 research and implementation. The first local PR tracking and Cursor agent handoff implementation is now built alongside the existing native milestone; see [Cursor agents](cursor-agents.md). Stage 3 [GitHub synchronization](github-sync.md) remains released within its documented limits. Paid production agent execution is not enabled.
 
@@ -126,7 +126,7 @@ On October 20 the user explicitly resumed Stage 4 research and implementation. T
 
 **Mobile website check — October 17, 2026:** a fresh synthetic local responsive review exercised capture, rename, subtasks, notes, calendar dates, completion/reopening and keyboard reordering. See [mobile usability check](mobile-usability-check.md) for measured 320/390px layouts, screenshots, prioritized findings and verification limits. The design release resolves childless-delete confirmation, list reload/Back context, labeled secondary actions and non-drag position picking. Narrow titles and quiet notes/progress cues remain usability follow-ups; perform physical iPhone/Android checks before detailed native planning. No native app or offline behavior was implemented by this review.
 
-The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Formatted task notes and Markdown are now implemented in [task content and voice](task-content.md); the user chose formatted text first. Private images are implemented in [private task images](task-images.md), with release verification recorded there. One-level subtasks are implemented in [subtasks](subtasks.md). Calendar due dates are implemented in [due dates](due-dates.md). After the selected work-feature milestones, plan React Native/Expo mobile and validate native auth; decide offline needs before building queued edits. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
+The list-focused [mature lists milestone](mature-lists.md) is implemented: personal sidebar order, shared owner-controlled colors, plain-text list descriptions, sections, and owner archive/restore. Formatted task notes and Markdown are now implemented in [task content and voice](task-content.md); the user chose formatted text first. Private images are implemented in [private task images](task-images.md), with release verification recorded there. One-level subtasks are implemented in [subtasks](subtasks.md). Calendar due dates are implemented in [due dates](due-dates.md). The selected native implementation is Tauri; offline edits still require a separate decision. Cover images, arbitrary custom colors, notifications, and recurrence have not been selected. Preserve the online website/offline boundary.
 
 **Image milestone — October 16, 2026:** implementation uses separate private Vercel Blob stores, Neon attachment records, authorized delivery, and Markdown references. Web upload/paste/drop and MCP image tools are implemented; release verification is recorded there. See [private task images](task-images.md) for the lifecycle and release evidence. Subtasks and calendar due dates are now implemented; mobile/offline behaviour is unchanged.
 
@@ -172,7 +172,7 @@ Exit criteria: all first-release acceptance criteria pass, supported clients are
 
 ## Phase 4: native mobile
 
-**In progress, selected October 17, 2026.** The user confirmed online-only for now. `apps/mobile` uses React Native/Expo, shared public contracts/client/design packages and existing Waffles assets. The initial local slice includes secure sign-in/session restoration, authorized list/task/sharing operations and active-app polling/foreground refresh. See [native scope, auth and delivery gates](native-mobile.md).
+**Superseded by Tauri on October 22, 2026.** `apps/native` uses shared React features, public contracts/client/design packages and hosted APIs for macOS, Windows, iPhone and Android. The Expo frontend was removed during the October 24 maintenance pass. See [Tauri features](tauri-features.md) and [installed-platform/release gates](tauri-platforms.md).
 
 No persistent task/list cache, offline mutation queue, notifications, widgets or share extensions are included. Native authentication uses the existing admitted website identity via a system-browser PKCE flow with separate native token audience. Installed-device validation, advanced native feature UI and signing/distribution remain outstanding. Website behavior stays online and unchanged.
 
@@ -194,7 +194,7 @@ Named shared list colors were delivered before mobile in the mature-list milesto
 | Cross-client freshness        | Polling/focus refresh implemented; live updates are implemented with polling/focus fallback                           |
 | Archive and deletion          | Owner-only permanent deletion and archive/restore implemented                                                         |
 | Corgi branding                | Waffles integrated; see mascot asset and verification documentation                                                   |
-| Native and offline support    | Online-only selected for Expo native apps; initial local slice implemented, installed-device proof pending            |
+| Native and offline support    | Online-only Tauri client implemented; outstanding installed-platform/signing proof remains explicit                   |
 
 ## Verification strategy
 

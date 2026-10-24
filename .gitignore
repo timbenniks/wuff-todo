@@ -14,11 +14,6 @@ playwright-report/
 !.agents/skills/wuff-contributor/
 skills-lock.json
 
-# Expo generated projects and local state
-.expo/
-apps/mobile/ios/
-apps/mobile/android/
-
 # Tauri build output and generated platform projects
 apps/native/src-tauri/target/
 apps/native/src-tauri/gen/

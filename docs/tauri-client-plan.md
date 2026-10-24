@@ -1,7 +1,7 @@
 # Tauri client implementation plan
 
 Date: October 22, 2026
-Status: implementation started; WUFF-70 adds the frontend workspace and Tauri shell. Native runtime verification is pending. See [development and task tracking](tauri-client.md).
+Status: shared Tauri workspace implemented; remaining installed-platform/signing gates are recorded in [development and task tracking](tauri-client.md). The phases below retain the original delivery plan. Later personal reminder decisions are recorded in [reminders](reminders.md).
 
 ## Direction and scope
 
@@ -9,7 +9,7 @@ Build an online-only, client-side React application packaged with stable Tauri 2
 
 The hosted Next.js application remains the API, authentication and MCP backend as well as the website. Packaged clients contain UI/assets and call authorized APIs. No Next.js server, database credentials or domain implementation runs on a device. Reuse the existing Vercel-managed infrastructure and isolated development environment.
 
-This becomes the next cross-platform client workstream. Keep the existing Expo source as a working reference until Tauri passes the replacement gates; avoid developing two competing mobile interfaces. Retiring Expo is a later explicit cleanup, after preserving reusable code and proving the replacement.
+Tauri is the maintained cross-platform client. The earlier Expo frontend served as a migration reference and was retired on October 24 at the maintainer’s explicit request. Reusable client/contracts/design code and server OAuth compatibility remain. Installed-platform and signing gates below remain open until separately verified.
 
 Preserve invite-only access, owner-only list administration, shared editor permissions, server-side concurrency/idempotency, explicit GitHub consent, Waffles branding and accessible controls. Existing notes and private image viewing/upload/removal are required for the first complete client release. Offline task storage, offline writes, push notifications, widgets and share extensions remain deferred.
 
@@ -32,8 +32,8 @@ Build the smallest useful end-to-end slice before migrating full screens.
 
 - Add `apps/native` with React/Vite, Tauri 2, workspace scripts and a bundled Wuff loading/sign-in/list screen. Document Rust, Xcode and Windows/Android build prerequisites.
 - Package local frontend assets; restrict Tauri capabilities and content security policy to the required commands and network destinations. Open external content in the system browser.
-- Parameterize the existing `NativeClient`, which currently hardcodes the Expo client ID, callback and native API audience. Preserve refresh rotation, serialized storage, account-generation guards and exact retry payloads.
-- Register a distinct fixed first-party Tauri client/callback so Expo and Tauri installations cannot compete for the same custom scheme. Keep the existing native API audience initially; desktop does not require renaming `/api/mobile`. Do not widen third-party redirect registration.
+- Completed foundation: `NativeClient` accepts the explicit Tauri identity while retaining legacy defaults for compatible consumers. Preserve refresh rotation, serialized storage, account-generation guards and exact retry payloads.
+- Register a distinct fixed first-party Tauri client/callback separate from the retained legacy native identity. Keep the existing native API audience initially; desktop does not require renaming `/api/mobile`. Do not widen third-party redirect registration.
 - Use system-browser authorization with S256 PKCE, random state, issuer verification and exact callback matching. Handle both a running app and a cold-start callback, duplicate callbacks, cancellation and expired codes. Store pending authorization state only as necessary for process recovery and remove it after completion.
 - Select and document a maintained credential-storage integration with confirmed support on all four targets. Test persistence/removal and failure behavior; tokens never go into localStorage, a plain preferences file or logs. Keep the existing `TokenStorage` interface where practical.
 - Prove a restricted native HTTP transport for OAuth/API requests, using the client's injectable fetcher where compatible. Validate request/response, timeout and redirect semantics. If WebView fetch is chosen instead, implement exact origin/preflight handling without weakening cookie-route CSRF checks. Do not assume browser CORS permits Tauri origins.
@@ -95,9 +95,9 @@ Implement Phase 1 as a reviewable vertical slice: `apps/native`, fixed Tauri ide
 
 ## Planning evidence and references
 
-This plan is based on the current source: `packages/client/src/index.ts`, `apps/web/src/app/api/mobile/route.ts`, `apps/web/src/app/api/v1/live/route.ts`, `apps/web/src/lib/live-server.ts`, `apps/web/src/app/lists/live-updates.tsx`, `apps/web/src/lib/list-cache.ts`, `apps/web/src/lib/live-refresh.ts` and the current UI controls. Source inspection establishes reuse opportunities, not Tauri runtime compatibility.
+This plan is based on the current source: `packages/client/src/index.ts`, `apps/web/src/app/api/mobile/route.ts`, `apps/web/src/app/api/v1/live/route.ts`, `apps/web/src/lib/live-server.ts`, `apps/web/src/app/lists/live-updates.tsx`, `packages/ui/src/features/lib/list-cache.ts`, `apps/web/src/lib/live-refresh.ts` and the current UI controls. Source inspection establishes reuse opportunities, not Tauri runtime compatibility.
 
-- [Native implementation and prior delivery limits](native-mobile.md)
+- [Expo retirement and prior delivery limits](native-mobile.md)
 - [Development environments and Realtime origins](development.md)
 - [Verification requirements](verification.md)
 - [Tauri frontend architecture](https://v2.tauri.app/start/frontend/)

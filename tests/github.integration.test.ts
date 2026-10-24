@@ -1,6 +1,5 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { createHmac, generateKeyPairSync } from "node:crypto";
 import { database } from "@wuff/db";
 import { scopes } from "@wuff/contracts";

@@ -137,7 +137,7 @@ test("all transport adapters build provider-specific payloads and distinguish re
         });
       };
       await sendReminderPush({ ...target, transport }, payload, {
-        appleConnect: ((host: string) => ({
+        appleConnect: (() => ({
           on() {
             return this;
           },

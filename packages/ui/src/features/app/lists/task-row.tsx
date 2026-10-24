@@ -547,8 +547,6 @@ export function Subtasks({
   today,
   focusNewTask = true,
   disableDrag = false,
-  detailed = false,
-  onOpenTask,
 }: {
   parent: Task;
   items: Task[];

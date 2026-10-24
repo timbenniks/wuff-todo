@@ -1,4 +1,4 @@
-import { failure, jsonInput, sameOrigin } from "@/lib/http";
+import { failure } from "@/lib/http";
 import { listResponse } from "@/lib/list-response";
 import { getListSharing } from "@wuff/domain";
 import { idSchema } from "@wuff/contracts";

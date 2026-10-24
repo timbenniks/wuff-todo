@@ -114,13 +114,13 @@ export function createMcpServer(actor: Actor) {
       "get_github_connections",
       "Read your GitHub connection status. Requires github:manage consent.",
       z.object({}),
-      (data: any) => domain.githubConnections(actor),
+      () => domain.githubConnections(actor),
     ],
     [
       "list_github_repositories",
       "List repositories from verified personal GitHub installations. Requires github:manage consent.",
       z.object({}),
-      (data: any) => domain.githubRepositories(actor),
+      () => domain.githubRepositories(actor),
     ],
     [
       "get_github_list",

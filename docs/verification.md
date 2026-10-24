@@ -2,6 +2,37 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Tauri migration cleanup — October 24, 2026
+
+See [cleanup decisions and inventory](cleanup-audit.md). The maintainer explicitly
+overrode the contributor skill’s extra scope-approval step in this chat. The
+cleanup removes Expo source/exclusive tooling, 25 obsolete forwarding modules,
+15 redundant web dependency declarations and unused source/tooling/test bindings.
+No public runtime behavior, OAuth/API compatibility or safeguard change is selected.
+
+`pnpm install --frozen-lockfile`, `pnpm typecheck`, all 119 unit tests,
+`pnpm build` (guide/MCP/web) and `pnpm build:native:web` passed. The pnpm graph has
+386 fewer resolved package/version entries and no added versions. All workspace
+and root compiler unused-local/parameter diagnostics passed. Regression tests
+retain every case and now import actual shared implementations/public dependencies.
+
+`pnpm test:integration` passed all 37 cases against existing isolated development
+services, with no failures/skips. Coverage includes web/MCP/native adapter parity,
+OAuth/PKCE/scopes/refresh/revocation, permissions, personal preferences, retry and
+concurrent changes, mocked GitHub/Cursor providers, reminders, notes and private
+images. After final import cleanup, the two earlier affected integration suites
+were rerun: all four cases passed. Development DB/loopback/synthetic fixtures and
+separate auth/Blob configuration were checked without printing credentials.
+
+The existing contributor-guide browser check passed 320/390/1280px, downloads,
+keyboard/navigation, compatibility paths and zero app API requests. Authenticated
+workspace browser verification also passed at 320–1920px: Work/basic columns,
+saved-view create/rename/select/delete and reloads, personal isolation, metadata
+conflicts, exact retries and note-draft retention. Phone/desktop screenshots were
+visually inspected; the existing harness cleaned up its synthetic lists. No migration, provisioning,
+production write/deployment, installed-device/native compilation/signing or
+named-host MCP UI test was performed for this cleanup.
+
 ## Contributor preview build failure — October 24, 2026
 
 PR #22 deployment `D3koosgLtjQAnNxUEJ8L882AnAZN` failed because

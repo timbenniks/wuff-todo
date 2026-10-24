@@ -14,4 +14,3 @@ node_modules
 docs/screenshots
 test-results
 playwright-report
-apps/mobile

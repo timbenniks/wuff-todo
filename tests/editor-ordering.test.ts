@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeVisibleOrder } from "../apps/web/src/lib/reorder";
+import { mergeVisibleOrder } from "../packages/ui/src/features/lib/reorder";
 import {
   PreservedNote,
   preservedNoteDocument,
-} from "../apps/web/src/lib/preserved-note";
-import { MarkdownManager } from "../apps/web/node_modules/@tiptap/markdown/dist/index.js";
+} from "../packages/ui/src/features/lib/preserved-note";
+import { MarkdownManager } from "@tiptap/markdown";
 test("moving within a section/sidebar preserves all hidden positions", () => {
   assert.deepEqual(
     mergeVisibleOrder(

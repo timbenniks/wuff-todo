@@ -2,14 +2,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { and, eq, sql } from "drizzle-orm";
-import {
-  database,
-  members,
-  reminderJobs,
-  reminderPreferences,
-  reminderDevices,
-  reminderLists,
-} from "@wuff/db";
+import { database, members, reminderJobs, reminderPreferences } from "@wuff/db";
 import { scopes, reminderPreferencesSchema } from "@wuff/contracts";
 import {
   createList,

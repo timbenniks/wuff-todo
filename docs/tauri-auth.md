@@ -2,7 +2,7 @@
 
 WUFF-71 / GitHub #9. This is the authentication foundation, not completion of the four-platform acceptance gate.
 
-The fixed `wuff-tauri-v1` public client uses `com.timbenniks.wufftodo.tauri://oauth/callback` and the existing `/api/mobile` audience. `/oauth/tauri` registers only that callback. Expo retains its original identity. Dynamic clients cannot register either custom scheme or obtain the native audience. Existing admission, scope, PKCE, refresh rotation and revocation enforcement are unchanged.
+The fixed `wuff-tauri-v1` public client uses `com.timbenniks.wufftodo.tauri://oauth/callback` and the existing `/api/mobile` audience. `/oauth/tauri` registers only that callback. The retired Expo frontend’s original server-side identity remains supported for compatibility. Dynamic clients cannot register either custom scheme or obtain the native audience. Existing admission, scope, PKCE, refresh rotation and revocation enforcement are unchanged.
 
 The bundled client opens the system browser with random state and S256 PKCE. Pending state/verifier live in native credential storage for at most ten minutes, enabling process-restart recovery. Callback parsing requires the exact scheme/host/path, one matching state, one matching issuer and one code. Duplicate callbacks serialize and cannot exchange twice. Cancellation deletes pending state. Tokens use the existing serialized storage/account-generation transport; logout clears local credentials even if cancellation cleanup fails.
 

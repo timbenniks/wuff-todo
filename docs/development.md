@@ -1,6 +1,6 @@
 # Development and operations
 
-Updated: October 17, 2026
+Updated: October 24, 2026
 
 ## Provisioned infrastructure
 
@@ -97,7 +97,7 @@ The recipient visits `/set-password`, enters their invited email, requests a cod
 
 Auth currently uses Neon's shared sender (`Neon Auth`, `auth@mail.myneon.app`) for this initial private setup. Configure custom SMTP before treating email delivery as production-ready. Existing-account list invitations use an in-app inbox; they send no email. See [sharing](sharing.md) for the implemented flow.
 
-MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity. Public clients register via DCR and receive only the `authorization_code` and `refresh_token` grants. Authorization requires explicit consent, S256 PKCE, state, exact registered redirect matching, and the MCP resource. Tokens are opaque, stored as SHA-256 digests, resource/issuer-bound, short-lived, and revocable. Every token use checks application admission. Refresh tokens rotate. Client ID Metadata Documents and native custom callback schemes are not implemented yet.
+MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity. Public clients register via DCR and receive only the `authorization_code` and `refresh_token` grants. Authorization requires explicit consent, S256 PKCE, state, exact registered redirect matching, and the MCP resource. Tokens are opaque, stored as SHA-256 digests, resource/issuer-bound, short-lived, and revocable. Every token use checks application admission. Refresh tokens rotate. Client ID Metadata Documents are not implemented. Custom native callbacks are restricted to the fixed first-party registrations; dynamic third-party clients cannot register them.
 
 ## Implemented endpoints
 
@@ -113,7 +113,7 @@ MCP authorization uses `@node-oauth/oauth2-server`, separate from Neon identity.
 | `/.well-known/oauth-authorization-server`                              | Authorization-server discovery                                |
 | `/oauth/register`, `/oauth/authorize`, `/oauth/token`, `/oauth/revoke` | Client registration, consent, tokens, revocation              |
 
-Website API mutations require a same-origin session. External MCP clients use bearer tokens scoped to the MCP resource. The new `/api/mobile` adapter accepts separate native-audience bearer tokens; cookie-only `/api/v1` routes remain unchanged. See [native mobile](native-mobile.md). An OpenAPI document has not been added yet.
+Website API mutations require a same-origin session. External MCP clients use bearer tokens scoped to the MCP resource. Tauri uses the separate native-audience bearer adapter at `/api/mobile`; cookie-only `/api/v1` routes retain their existing authorization. See [Tauri auth](tauri-auth.md). An OpenAPI document has not been added yet.
 
 ## Migrations and deployment
 
@@ -194,11 +194,11 @@ The verified installation is restricted to the disposable private `timbenniks/wu
 
 See [the October 18 checkpoint](pre-mobile-checkpoint.md) for row-level issue summaries, explicit optional native GitHub consent, phone content cues, real-user/client checks, the agreed native notes/images release gate and source/deployment evidence. Reconnect only clients whose stored grants are rejected; never add scopes during refresh or weaken managed auth to simplify tests. Run browser checks separately from the auth integration suite to avoid upstream rate limits.
 
-## Native mobile development
+## Tauri client development
 
-React Native/Expo online-only development is in `apps/mobile`; [native mobile](native-mobile.md) records the full auth design, feature scope, simulator/device setup and release limits. Run `pnpm dev:mobile` for Metro after installing a development binary; `pnpm --filter @wuff/mobile ios` or `android` requires the respective toolchain. `pnpm build:mobile` exports both platforms without signing or distributing binaries. CI checks both exports after `pnpm check`.
+The maintained native workspace is `apps/native`, a React/Vite frontend packaged with Tauri. See [client development](tauri-client.md), [auth](tauri-auth.md) and [platform gates](tauri-platforms.md). `pnpm dev:native:web` previews the frontend, `pnpm build:native:web` builds it, and `pnpm dev:native` / `pnpm build:native` require native toolchains. Native platform builds are local; the retained GitHub native workflow is manual-only.
 
-The only mobile environment input is the public `EXPO_PUBLIC_WUFF_ORIGIN`. Reuse the existing isolated backend and align its `WUFF_ORIGIN` exactly. Never expose database/auth/provider secrets in a mobile bundle. The fixed first-party OAuth registration uses existing app tables and requires no migration. No production deployment or EAS project registration is implied by local native work.
+The native origin is fixed by its build mode. The explicit local configuration uses the existing isolated backend; align the backend `WUFF_ORIGIN` exactly. Never put database/auth/provider secrets in frontend assets. Expo/Metro/EAS commands and `EXPO_PUBLIC_WUFF_ORIGIN` are retired. Existing native OAuth registrations and `/api/mobile` remain compatible; no migration is needed for frontend retirement.
 
 ## Personal Cursor connections — October 20, 2026
 

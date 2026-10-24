@@ -207,7 +207,7 @@
       },
       {
         "name": "Subtasks",
-        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n  detailed = false,\n  onOpenTask,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
       }
     ]
   },

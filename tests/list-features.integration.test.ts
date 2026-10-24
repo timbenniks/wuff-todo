@@ -1,7 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { eq } from "drizzle-orm";
 import { database, members } from "@wuff/db";
 import { scopes } from "@wuff/contracts";
 import {

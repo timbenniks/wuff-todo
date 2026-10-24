@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { scopes, defaultListView } from "@wuff/contracts";
+import { scopes } from "@wuff/contracts";
 import { database, members } from "@wuff/db";
 import {
   createList,
