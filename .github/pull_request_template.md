@@ -21,6 +21,14 @@ MCP UI: implemented with verification, or not-needed with reason.
 Connections: affected boolean and review; affected connections need verification.
 Map existing or new routes/tools; no web-only writes or silent deferral. -->
 
+## Unit tests
+
+<!-- Include one JSON block. Behavior changes require:
+{"required":true,"files":["tests/actual-feature.test.ts"],"verification":"Actual cases, command and results including boundary/failure behavior"}
+Files must be added/updated in this PR. Integration-only files do not substitute.
+Docs/style-only changes can use required:false with a concrete reason. Data
+changes cannot waive coverage. Do not add empty tests just to pass this check. -->
+
 ## Preview
 
 <!-- Link the Vercel deployment for the evidence commit and give test steps.

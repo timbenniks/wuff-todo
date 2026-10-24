@@ -39,6 +39,14 @@ Maintain the brief, acceptance criteria and current-commit evidence in the PR.
 Inspect the actual diff and behavior: green policy checks validate declarations,
 not truth or quality.
 
+Every changed behavior needs meaningful unit tests and bug fixes need regression
+coverage. Test outcomes and relevant boundary/failure cases, not code text or
+incidental markup. Put JS/TS tests under `tests/` for automatic `pnpm test`
+discovery. Fill the PR's Unit tests declaration with changed files and actual
+cases/commands/results. Integration checks do not replace unit coverage; data
+changes cannot waive it. Run local language-specific tests for native/Python
+changes. Keep the PR a draft when required checks are blocked or unrun.
+
 Confirm environment readiness before writes. If credentials, preview isolation or
 scope are missing, prepare a brief/mock and concrete technical handoff to Tim.
 Do not bypass checks, borrow his credentials, alter safeguards to pass, invent

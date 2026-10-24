@@ -7,6 +7,7 @@ import {
   sensitive,
   run,
   surfaceContractErrors,
+  unitTestErrors,
 } from "../scripts/contributor-policy.mjs";
 
 function fixture() {
@@ -27,6 +28,11 @@ function fixture() {
         "No connection types, scopes, consent, token handling or revocation behavior changes.",
     },
   };
+  const unit = {
+    required: false,
+    reason:
+      "This fixture is a visual-only summary change with no new logic or persistence behavior.",
+  };
   const body = `## Feature brief
 Let editors see a compact task summary using existing controls. Preserve permissions and ordering. Exclude backend changes.
 - [ ] The summary is usable by keyboard and at phone widths.
@@ -35,6 +41,10 @@ Change the task row and its focused regression test only.
 ## API, MCP and connections
 \`\`\`json
 ${JSON.stringify(surface)}
+\`\`\`
+## Unit tests
+\`\`\`json
+${JSON.stringify(unit)}
 \`\`\`
 ## Preview
 Preview unavailable until Tim confirms the isolated backend; local screenshots attached.
@@ -69,10 +79,25 @@ Tim must verify installed native behavior before the native release.
       body: `/wuff-scope\n${JSON.stringify(approval)}`,
     },
   ];
-  return { pr, files, comments, approval, surface };
+  return { pr, files, comments, approval, surface, unit };
 }
 function setSurface(f, patch, approve = true) {
   Object.assign(f.surface, patch);
+  if (patch.dataChanges === true && !f.unit.required) {
+    f.unit = {
+      required: true,
+      files: ["tests/task-metadata.test.ts"],
+      verification:
+        "New success, boundary, denial and failure regression cases passed with pnpm test.",
+    };
+    f.files.push({ filename: f.unit.files[0], additions: 1, deletions: 0 });
+    f.pr.changed_files = f.files.length;
+    f.approval.allowedPaths.push(f.unit.files[0]);
+    f.pr.body = f.pr.body.replace(
+      /(## Unit tests\n```json\n)[\s\S]*?(\n```)/,
+      (_match, start, end) => start + JSON.stringify(f.unit) + end,
+    );
+  }
   f.pr.body = f.pr.body.replace(
     /```json\n[\s\S]*?\n```/,
     "```json\n" + JSON.stringify(f.surface) + "\n```",
@@ -90,6 +115,68 @@ function mutation() {
       "Isolated API write/MCP read and MCP write/API read tests passed with denied/conflict/retry coverage.",
   };
 }
+
+test("unit coverage declarations require changed unit files and concrete verification", () => {
+  const f = fixture();
+  setSurface(f, { dataChanges: true, operations: [mutation()] });
+  assert.deepEqual(unitTestErrors(f.pr.body, f.files), []);
+  assert.match(
+    unitTestErrors(f.pr.body, [f.files[0]]).join(" "),
+    /actual added\/updated/,
+  );
+  assert.match(
+    unitTestErrors(
+      f.pr.body,
+      f.files.map((file) => ({ ...file, status: "removed" })),
+    ).join(" "),
+    /deleted tests/,
+  );
+});
+test("unit declarations cannot waive data changes or substitute integration-only tests", () => {
+  const f = fixture();
+  setSurface(f, { dataChanges: true, operations: [mutation()] });
+  const replace = (value) =>
+    f.pr.body.replace(
+      /(## Unit tests\n```json\n)[\s\S]*?(\n```)/,
+      (_match, start, end) => start + JSON.stringify(value) + end,
+    );
+  assert.match(
+    unitTestErrors(
+      replace({
+        required: false,
+        reason: "We only want to run integration tests for this data feature.",
+      }),
+      f.files,
+    ).join(" "),
+    /cannot waive/,
+  );
+  assert.match(
+    unitTestErrors(
+      replace({
+        required: true,
+        files: ["tests/domain.integration.test.ts"],
+        verification:
+          "The integration checks passed locally on isolated synthetic data.",
+      }),
+      [{ filename: "tests/domain.integration.test.ts" }],
+    ).join(" "),
+    /integration-only/,
+  );
+});
+test("unit declarations fail closed when missing, malformed or unexplained", () => {
+  assert.ok(unitTestErrors("", []).length);
+  assert.match(
+    unitTestErrors("## Unit tests\n```json\n{bad}\n```", []).join(" "),
+    /valid JSON/,
+  );
+  assert.match(
+    unitTestErrors(
+      '## Unit tests\n```json\n{"required":false,"reason":"None"}\n```',
+      [],
+    ).join(" "),
+    /concrete explanation/,
+  );
+});
 
 test("data-changing features require complete implemented domain/API/MCP mappings", () => {
   const f = fixture();
@@ -412,6 +499,8 @@ test("high-risk boundaries include workflows, migration, auth, dependencies and 
     "docs/guide/product.md",
     ".agents/skills/wuff-contributor/SKILL.md",
     "AGENTS.md",
+    "AGENTS.override.md",
+    "apps/web/AGENTS.override.md",
     "packages/db/migrations/a.sql",
     "packages/domain/src/index.ts",
     "packages/contracts/src/index.ts",

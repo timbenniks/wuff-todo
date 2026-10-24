@@ -12,7 +12,7 @@ services. You choose the behavior; your agent manages implementation and deliver
 > Reuse Wuff's actual components and tokens, show the main interaction early, and
 > iterate with me. Preserve permissions, personal/shared boundaries and save recovery.
 > Map every persisted mutation to API and MCP equivalents, assess MCP UI and
-> preserve connection scopes, consent and revocation. Handle Git and verification for me. Use synthetic data and only a confirmed
+> preserve connection scopes, consent and revocation. Add meaningful unit tests for changed behavior and regression tests for fixes. Handle Git and verification for me. Use synthetic data and only a confirmed
 > isolated preview backend. Keep decisions, current-commit evidence and remaining
 > gaps in the PR. Do not merge or release. My idea is:
 

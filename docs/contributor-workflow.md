@@ -135,8 +135,36 @@ code path or judge architecture; Tim must inspect semantic changes too.
 
 ## 4. Verify and record current evidence
 
-Run `pnpm typecheck`, `pnpm test` and relevant regression checks. For new behavior,
-write a meaningful failing regression case before the fix when practical. Use the
+Every new or changed behavior requires meaningful unit coverage: successful
+outcomes, boundary/invalid inputs and applicable failure/recovery cases. Bug fixes
+need regression cases that fail without the fix. Test observable contracts, not
+private details, static copy, CSS classes, source text or stubbed success.
+
+`pnpm test` automatically discovers nested JS/TS unit files under `tests/` and
+excludes `*.integration.test.*`. Adding a unit test must not require editing a
+manual list. Python/native behavior also needs the appropriate local test command.
+Line coverage or a test count alone is not proof of meaningful behavior coverage.
+
+Fill `## Unit tests` with one JSON block:
+
+```json
+{
+  "required": true,
+  "files": ["tests/actual-feature.test.ts"],
+  "verification": "Actual cases, commands and results including boundary/failure behavior"
+}
+```
+
+Tests must be added/updated in this PR; deleted or integration-only files cannot
+satisfy the declaration. For Rust, list the changed source containing actual inline
+tests and record the local test command. Docs/style-only work may use `required:
+false` with a concrete `reason` explaining why no testable behavior changes. Data
+changes cannot waive unit tests. Policy checks file presence and declarations;
+reviewers still inspect the cases and outcomes.
+
+Run `pnpm typecheck`, `pnpm test` and relevant integration/UI checks. Keep the PR a
+draft when required checks are blocked/unrun and never claim completion from a
+build alone. Write a meaningful failing case first when practical. Use the
 configured isolated backend and synthetic accounts for integration tests. Never
 fall back to production when local services are unavailable.
 

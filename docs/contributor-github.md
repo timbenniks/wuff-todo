@@ -73,6 +73,14 @@ the policy. Scope approvals bind the intended mappings and decisions; status and
 test results may evolve without changing approved capability scope. This remains
 declaration validation; actual adapter/connection tests and owner review prove behavior.
 
+Every PR includes a Unit tests JSON declaration with changed test files and actual
+cases/commands/results. The policy rejects missing files, deleted or integration-only
+tests, unexplained exceptions and waived unit coverage for data changes. JS/TS
+tests are discovered automatically by `pnpm test`; new files cannot be silently
+omitted from a manual list. Native/Python unit execution remains a documented local
+gate. File presence and self-reported results do not prove meaningful assertions;
+review still checks behavior coverage and test quality.
+
 Use upstream read access plus private forks where supported. A collaborator with
 upstream write access can create other branch workflows and similarly named
 Actions checks. Binding a check to the Actions app does not uniquely identify its

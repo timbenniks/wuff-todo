@@ -2,6 +2,36 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Contributor unit tests and instruction clarity — October 24, 2026
+
+Root AGENTS.md now explicitly requires meaningful unit coverage for every changed
+behavior, regression tests for fixes, boundary/failure cases and actual completion
+evidence. Docs/style-only exceptions must explain why no behavior changes;
+data-changing features cannot waive coverage. The skill, PR template and hosted
+workflow carry the same requirements. Obsolete first-release timing was replaced
+with a pointer to the current milestone. Root instructions remain under 5 KiB.
+
+`pnpm test` now discovers JS/TS unit files recursively instead of maintaining a
+manual file list. Integration suites, helpers, hidden directories and dependencies
+are excluded. Python/native tests remain local language-specific gates. The PR
+policy requires test declarations, actual added/updated unit files and results;
+deleted or integration-only files cannot substitute. Instruction override files
+are explicitly sensitive and need maintainer approval.
+
+`pnpm check` passed TypeScript, all 119 tests and optimized guide/MCP/web builds.
+New policy cases verify unit-file evidence, non-waivable data changes and invalid
+exceptions; discovery coverage verifies new nested files and exclusion of live
+integration suites. A temporary, unregistered failing unit case was discovered by
+the real runner and made `pnpm test` exit nonzero; the fixture was removed. The
+targeted eight-page guide browser check passed at 320/390/1280px without overflow,
+page errors or app API calls. Clipboard remains an in-memory test stub.
+
+Instruction discovery guidance was checked against official OpenAI documentation.
+Loading instructions is not proof of compliance: client/workspace overrides,
+permissions, required checks and human review remain distinct. No actual new-agent
+compliance run or live GitHub protection/rejection proof is claimed. Existing
+GitHub plan/runner and preview-isolation onboarding gates remain unresolved.
+
 ## Contributor API/MCP/connection completeness — October 24, 2026
 
 Tim confirmed equivalent API/MCP capabilities for every persisted-data feature,

@@ -8,6 +8,7 @@ const sections = [
   "Feature brief",
   "Scope",
   "API, MCP and connections",
+  "Unit tests",
   "Preview",
   "Verification",
   "Remaining work or risks",
@@ -181,7 +182,7 @@ export function sensitive(path) {
     /^(?:\.github\/|\.codex\/|\.agents\/|scripts\/|packages\/(?:db|domain|contracts|design)\/)/.test(
       path,
     ) ||
-    /(?:^|\/)AGENTS\.md$/.test(path) ||
+    /(?:^|\/)AGENTS(?:\.override)?\.md$/.test(path) ||
     /(?:^|\/)(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vercel\.json|drizzle\.config\.[^/]+|tsconfig[^/]*\.json|next\.config\.[^/]+|postcss\.config\.[^/]+|Cargo\.(?:toml|lock)|\.gitignore)$/.test(
       path,
     ) ||
@@ -208,8 +209,76 @@ function forbidden(path) {
   );
 }
 
+export function unitTestErrors(body, files) {
+  const matches = [
+    ...section(body, "Unit tests").matchAll(/```json\s*\n([\s\S]*?)\n```/g),
+  ];
+  if (matches.length !== 1)
+    return [
+      "Provide one JSON Unit tests declaration with required, files/verification or a no-behavior reason.",
+    ];
+  let unit;
+  try {
+    unit = JSON.parse(matches[0][1]);
+  } catch {
+    return ["Unit tests declaration must be valid JSON."];
+  }
+  if (!unit || typeof unit.required !== "boolean")
+    return ["Unit tests must declare required as a boolean."];
+  let dataChanges = false;
+  try {
+    dataChanges =
+      JSON.parse(
+        section(body, "API, MCP and connections").match(
+          /```json\s*\n([\s\S]*?)\n```/,
+        )?.[1],
+      ).dataChanges === true;
+  } catch {
+    /* Surface validator rejects invalid contracts. */
+  }
+  if (!unit.required)
+    return dataChanges
+      ? ["Data-changing features cannot waive unit tests."]
+      : typeof unit.reason !== "string" || unit.reason.trim().length < 30
+        ? [
+            "A unit-test exception needs a concrete explanation that no testable behavior changes.",
+          ]
+        : [];
+  const errors = [];
+  if (!Array.isArray(unit.files) || unit.files.length === 0)
+    errors.push("Required unit tests must name added/updated test files.");
+  else
+    for (const path of unit.files) {
+      const unitPath =
+        typeof path === "string" &&
+        validPath(path) &&
+        (/^tests\/.*\.test\.(?:[cm]?[jt]s|tsx)$/.test(path) ||
+          /^tests\/(?:.*\/)?test_[^/]+\.py$/.test(path) ||
+          /^apps\/native\/src-tauri\/.*\.rs$/.test(path)) &&
+        !/\.integration\.test\./.test(path);
+      if (
+        !unitPath ||
+        !files.some(
+          (file) => file.filename === path && file.status !== "removed",
+        )
+      )
+        errors.push(
+          "Unit test files must be actual added/updated unit tests in this PR, not integration-only or deleted tests.",
+        );
+    }
+  if (
+    typeof unit.verification !== "string" ||
+    unit.verification.trim().length < 30
+  )
+    errors.push(
+      "Unit tests need actual cases, commands and results; declarations do not prove coverage.",
+    );
+  return [...new Set(errors)];
+}
+
 export function evaluate({ pr, files, comments }) {
   const errors = surfaceContractErrors(pr.body);
+  errors.push(...unitTestErrors(pr.body, files));
   const hash = briefHash(pr.body);
   if (pr.base?.ref !== "main") errors.push("Contributor PRs must target main.");
   if (!pr.head?.ref?.startsWith("codex/"))

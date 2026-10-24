@@ -46,6 +46,20 @@ Git history and [historical verification](prototype-guide.md) preserve prior wor
 
 ## Verification boundary
 
+Codex discovers AGENTS.md through its workspace instruction chain; global or
+nearer overrides and client configuration can affect which files load. Keep root
+rules concise, launch from the intended repository and ask the agent to identify
+its active instructions, approved scope, test plan and surface impacts. Start a
+fresh session after changing loaded instructions. A summary is a useful setup
+check, never proof that the agent will comply. Other coding agents may load files
+differently. See [official instruction discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+
+Root instructions require unit coverage for every behavior change, regression
+cases for fixes and actual completion evidence. `pnpm test` automatically discovers
+JS/TS unit files while excluding live integration suites. Required GitHub checks,
+scope/permission restrictions and Tim's review back up these instructions. No
+prompt, skill or instruction file guarantees correctness or compliance.
+
 See [current evidence](verification.md#implementation-guide-consolidation--october-24-2026).
 No domain/API/schema behavior, admission model, migration or production setting
 changes. This guide does not provision a safe workspace or isolate a preview.
