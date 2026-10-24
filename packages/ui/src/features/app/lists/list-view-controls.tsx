@@ -35,6 +35,7 @@ export function ListViewControls({
   onPreview,
   shown,
   total,
+  retry,
 }: {
   list: TodoList;
   userId: string;
@@ -43,7 +44,20 @@ export function ListViewControls({
   onPreview: (view: ListView | null) => void;
   shown: number;
   total: number;
+  retry?: () => Promise<boolean>;
 }) {
+  const optionsDialog = useRef<HTMLDialogElement>(null);
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
+    const update = () => {
+      setMobile(query.matches);
+      if (!query.matches) optionsDialog.current?.close();
+    };
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const toolbarRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = toolbarRef.current;
@@ -71,6 +85,7 @@ export function ListViewControls({
       setDraft(saved.view);
       setBase(saved.version);
       setDirty(false);
+      setNotice("");
     }
   }, [saved.version, dirty]);
   useEffect(() => {
@@ -110,6 +125,10 @@ export function ListViewControls({
       setNaming(null);
       setDeleting(false);
       setNotice("");
+    } else {
+      setNotice(
+        "Your view wasn’t saved. Your draft is kept; try again or revert to the saved view.",
+      );
     }
   }
   const select = (
@@ -172,6 +191,502 @@ export function ListViewControls({
       label: draft.completed === "hide" ? "Hide completed" : "Only completed",
       clear: () => edit({ completed: "all" }),
     });
+  const presetPicker = (
+    <label className="view-preset-picker">
+      <span className="sr-only">Saved preset</span>
+      <NativeSelect
+        aria-label="Saved preset"
+        disabled={busy || dirty}
+        value={draft.activePresetId ?? "current"}
+        onChange={(e) => {
+          const preset = choices.find((p) => p.id === e.target.value);
+          if (preset) edit({ ...preset.settings, activePresetId: preset.id });
+        }}
+      >
+        <option value="current">Personal view</option>
+        <optgroup label="Starter views">
+          {choices
+            .filter((p) => !draft.presets.some((c) => c.id === p.id))
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+        </optgroup>
+        {!!draft.presets.length && (
+          <optgroup label="Your presets">
+            {draft.presets.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </NativeSelect>
+    </label>
+  );
+  const viewTools = (
+    <div className="view-toolbar-tools">
+      <ViewPopover
+        panelLabel="Filter"
+        label={
+          <>
+            <SlidersHorizontal size={16} />
+            Filter{chips.length ? ` · ${chips.length}` : ""}
+          </>
+        }
+        disabled={busy}
+      >
+        <h3 className="font-bold">Filters</h3>
+        <p className="text-xs text-muted-foreground">Only changes your view.</p>
+        {select(
+          "Section filter",
+          draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
+          [
+            ["all", "All sections"],
+            ["none", "No section"],
+            ...list.sections.map((s) => [s.id, s.title] as [string, string]),
+          ],
+          (v) =>
+            edit({
+              sections: v === "all" ? [] : [v === "none" ? null : v],
+            }),
+        )}
+        {list.mode === "work" && (
+          <>
+            {select(
+              "Status filter",
+              draft.statuses[0] ?? "all",
+              [
+                ["all", "All statuses"],
+                ...taskStatuses.map(
+                  (s) => [s, statusLabels[s]] as [string, string],
+                ),
+              ],
+              (v) =>
+                edit({
+                  statuses:
+                    v === "all" ? [] : [v as ListView["statuses"][number]],
+                }),
+            )}
+            {select(
+              "Priority filter",
+              draft.priorities[0] ?? "all",
+              [["all", "All priorities"], ...options(taskPriorities)],
+              (v) =>
+                edit({
+                  priorities:
+                    v === "all" ? [] : [v as ListView["priorities"][number]],
+                }),
+            )}
+            {select(
+              "Assignee filter",
+              draft.assignees[0] ?? (draft.assignees.length ? "none" : "all"),
+              [
+                ["all", "Anyone"],
+                ["none", "Unassigned"],
+                ...list.assignees.map(
+                  (a) => [a.id, a.name] as [string, string],
+                ),
+              ],
+              (v) =>
+                edit({
+                  assignees: v === "all" ? [] : [v === "none" ? null : v],
+                }),
+            )}
+          </>
+        )}
+        {select(
+          "Due date filter",
+          draft.due,
+          [
+            ["all", "Any due date"],
+            ["overdue", "Before today"],
+            ["today", "Today"],
+            ["upcoming", "After today"],
+            ["no_date", "No due date"],
+          ],
+          (v) => edit({ due: v as ListView["due"] }),
+        )}
+        {select(
+          "Completed tasks",
+          draft.completed,
+          [
+            ["all", "Include completed"],
+            ["hide", "Hide completed"],
+            ["only", "Only completed"],
+          ],
+          (v) => edit({ completed: v as ListView["completed"] }),
+        )}
+      </ViewPopover>
+      <ViewPopover
+        label={
+          <>
+            <ArrowDownWideNarrow size={16} />
+            Sort
+          </>
+        }
+        disabled={busy}
+      >
+        {select(
+          "Sort by",
+          draft.sortBy,
+          [
+            ["manual", "Manual"],
+            ...(list.mode === "work"
+              ? [["priority", "Priority"] as [string, string]]
+              : []),
+            ["due", "Due date"],
+            ["updated", "Recently updated"],
+          ],
+          (v) => edit({ sortBy: v as ListView["sortBy"] }),
+        )}
+        {draft.groupBy === "section" && (
+          <details>
+            <summary className="min-h-11 py-3 text-sm">
+              Sorting per section
+            </summary>
+            <div className="grid gap-3">
+              {[{ id: null, title: "No section" }, ...list.sections].map(
+                (s) => (
+                  <div key={s.id ?? "none"}>
+                    {select(
+                      `Sort ${s.title}`,
+                      draft.sectionSorts.find((o) => o.sectionId === s.id)
+                        ?.sortBy ?? "inherit",
+                      [["inherit", "Use list sorting"], ...options(viewSorts)],
+                      (v) =>
+                        edit({
+                          sectionSorts: [
+                            ...draft.sectionSorts.filter(
+                              (o) => o.sectionId !== s.id,
+                            ),
+                            ...(v === "inherit"
+                              ? []
+                              : [
+                                  {
+                                    sectionId: s.id,
+                                    sortBy: v as ListView["sortBy"],
+                                  },
+                                ]),
+                          ],
+                        }),
+                    )}
+                  </div>
+                ),
+              )}
+            </div>
+          </details>
+        )}
+      </ViewPopover>
+      <ViewPopover
+        label={
+          <>
+            <Layers size={16} />
+            Group
+          </>
+        }
+        disabled={busy}
+      >
+        {select(
+          "Group by",
+          draft.groupBy,
+          [
+            ["section", "Section"],
+            ...(list.mode === "work"
+              ? [["status", "Status"] as [string, string]]
+              : []),
+            ["date", "Due date"],
+          ],
+          (v) => edit({ groupBy: v as ListView["groupBy"] }),
+        )}
+      </ViewPopover>
+      <ViewPopover
+        label={
+          <>
+            <Columns3 size={16} />
+            Display
+          </>
+        }
+        disabled={busy}
+      >
+        {select(
+          "Row density",
+          draft.layout,
+          [
+            ["compact", "Compact"],
+            ["detailed", "Comfortable"],
+          ],
+          (v) => edit({ layout: v as ListView["layout"] }),
+        )}
+        {list.mode === "work" && (
+          <>
+            {select(
+              "Row layout",
+              draft.rowStyle,
+              [
+                ["columns", "Columns"],
+                ["list", "Simple rows"],
+              ],
+              (v) => edit({ rowStyle: v as ListView["rowStyle"] }),
+            )}
+            <fieldset className="grid gap-1">
+              <legend className="text-sm mb-1">Visible columns</legend>
+              {viewColumns.map((column) => (
+                <label
+                  key={column}
+                  className="flex items-center gap-2 min-h-11 text-sm capitalize"
+                >
+                  <input
+                    type="checkbox"
+                    checked={draft.columns.includes(column)}
+                    onChange={(e) =>
+                      edit({
+                        columns: viewColumns.filter((c) =>
+                          c === column
+                            ? e.target.checked
+                            : draft.columns.includes(c),
+                        ),
+                      })
+                    }
+                  />
+                  {column === "due" ? "Due date" : column}
+                </label>
+              ))}
+            </fieldset>
+          </>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() =>
+            edit({
+              ...viewSettings(defaultListView()),
+              activePresetId: "default",
+            })
+          }
+        >
+          Reset to defaults
+        </Button>
+      </ViewPopover>
+      <ViewPopover label="Presets" disabled={busy}>
+        <p className="text-xs text-muted-foreground">
+          Personal presets for this list. Up to 20.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={draft.presets.length >= 20}
+          onClick={() => {
+            setName("");
+            setNaming("new");
+            setDeleting(false);
+          }}
+        >
+          Save as preset…
+        </Button>
+        {!!custom && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setName(custom.name);
+                setNaming("rename");
+                setDeleting(false);
+              }}
+            >
+              Rename preset
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setDeleting(true);
+                setNaming(null);
+              }}
+            >
+              Delete preset
+            </Button>
+          </>
+        )}
+        {naming && (
+          <form
+            className="grid gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const trimmed = name.trim();
+              if (
+                !trimmed ||
+                draft.presets.some(
+                  (p) =>
+                    p.name.toLowerCase() === trimmed.toLowerCase() &&
+                    (naming !== "rename" || p.id !== custom?.id),
+                )
+              ) {
+                setNotice("Choose a unique preset name.");
+                return;
+              }
+              const id =
+                naming === "rename" && custom ? custom.id : crypto.randomUUID();
+              void save({
+                ...draft,
+                activePresetId: id,
+                presets: [
+                  ...draft.presets.filter((p) => p.id !== id),
+                  { id, name: trimmed, settings: viewSettings(draft) },
+                ],
+              });
+            }}
+          >
+            <label className="grid gap-1 text-sm">
+              Preset name
+              <Input
+                aria-label="Preset name"
+                value={name}
+                maxLength={60}
+                required
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <Button variant="primary" disabled={busy || conflict}>
+              Save preset
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setNaming(null)}
+            >
+              Cancel
+            </Button>
+          </form>
+        )}
+        {deleting && custom && (
+          <div className="grid gap-2">
+            <p className="text-sm">
+              Delete “{custom.name}”? Your tasks stay here.
+            </p>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy || conflict}
+              onClick={() =>
+                void save({
+                  ...draft,
+                  presets: draft.presets.filter((p) => p.id !== custom.id),
+                  activePresetId: null,
+                })
+              }
+            >
+              Confirm delete preset
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeleting(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+      </ViewPopover>
+    </div>
+  );
+  const viewState = (
+    <div className="view-toolbar-state">
+      <div className="view-filter-chips">
+        {chips.map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            disabled={busy}
+            onClick={chip.clear}
+            title={chip.label}
+            className="view-filter-chip"
+            aria-label={`Clear ${chip.label}`}
+          >
+            <span>{chip.label}</span>
+            <X size={12} />
+          </button>
+        ))}
+      </div>
+      <p role="status" className="text-xs text-muted-foreground">
+        {shown} of {total} tasks shown ·{" "}
+        {draft.sortBy === "manual"
+          ? "Manual order"
+          : "Sorted view · Dragging off"}
+        {modified ? " · Modified preset" : ""}
+        {dirty ? " · Unsaved changes" : ""}
+      </p>
+      {dirty && (
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="primary"
+            disabled={busy || conflict}
+            onClick={() =>
+              void save(
+                custom
+                  ? {
+                      ...draft,
+                      presets: draft.presets.map((p) =>
+                        p.id === custom.id
+                          ? { ...p, settings: viewSettings(draft) }
+                          : p,
+                      ),
+                    }
+                  : draft,
+              )
+            }
+          >
+            Save view
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => {
+              setDraft(saved.view);
+              setBase(saved.version);
+              setDirty(false);
+              setNotice("");
+            }}
+          >
+            Revert to saved view
+          </Button>
+        </div>
+      )}
+      {mobile && retry && (
+        <div className="grid gap-2">
+          <p role="alert" className="text-sm">
+            We couldn’t confirm your previous change. Retry the same request to
+            check and finish it.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              if (await retry()) setNotice("");
+            }}
+          >
+            Retry same request
+          </Button>
+        </div>
+      )}
+      {conflict && (
+        <p role="alert" className="text-sm">
+          Your view changed elsewhere. Your draft is kept. Revert to the saved
+          view to load the latest version.
+        </p>
+      )}
+      {notice && (
+        <p role="alert" className="text-sm">
+          {notice}
+        </p>
+      )}
+    </div>
+  );
   return (
     <div
       ref={toolbarRef}
@@ -179,39 +694,7 @@ export function ListViewControls({
       aria-label="List toolbar"
     >
       <div className="view-toolbar-line">
-        <label className="view-preset-picker">
-          <span className="sr-only">Saved preset</span>
-          <NativeSelect
-            aria-label="Saved preset"
-            disabled={busy || dirty}
-            value={draft.activePresetId ?? "current"}
-            onChange={(e) => {
-              const preset = choices.find((p) => p.id === e.target.value);
-              if (preset)
-                edit({ ...preset.settings, activePresetId: preset.id });
-            }}
-          >
-            <option value="current">Personal view</option>
-            <optgroup label="Starter views">
-              {choices
-                .filter((p) => !draft.presets.some((c) => c.id === p.id))
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </optgroup>
-            {!!draft.presets.length && (
-              <optgroup label="Your presets">
-                {draft.presets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </NativeSelect>
-        </label>
+        {!mobile && presetPicker}
         <label className="view-search">
           <Search size={16} aria-hidden="true" />
           <Input
@@ -223,458 +706,63 @@ export function ListViewControls({
             onChange={(e) => edit({ search: e.target.value })}
           />
         </label>
-        <div className="view-toolbar-tools">
-          <ViewPopover
-            panelLabel="Filter"
-            label={
-              <>
-                <SlidersHorizontal size={16} />
-                Filter{chips.length ? ` · ${chips.length}` : ""}
-              </>
-            }
-            disabled={busy}
+        {mobile ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="mobile-view-trigger"
+            onClick={() => optionsDialog.current?.showModal()}
           >
-            <h3 className="font-bold">Filters</h3>
-            <p className="text-xs text-muted-foreground">
-              Only changes your view.
-            </p>
-            {select(
-              "Section filter",
-              draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
-              [
-                ["all", "All sections"],
-                ["none", "No section"],
-                ...list.sections.map(
-                  (s) => [s.id, s.title] as [string, string],
-                ),
-              ],
-              (v) =>
-                edit({
-                  sections: v === "all" ? [] : [v === "none" ? null : v],
-                }),
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            View{chips.length ? ` · ${chips.length}` : ""}
+            {dirty && (
+              <span aria-label="Unsaved changes" className="view-draft-dot" />
             )}
-            {list.mode === "work" && (
-              <>
-                {select(
-                  "Status filter",
-                  draft.statuses[0] ?? "all",
-                  [
-                    ["all", "All statuses"],
-                    ...taskStatuses.map(
-                      (s) => [s, statusLabels[s]] as [string, string],
-                    ),
-                  ],
-                  (v) =>
-                    edit({
-                      statuses:
-                        v === "all" ? [] : [v as ListView["statuses"][number]],
-                    }),
-                )}
-                {select(
-                  "Priority filter",
-                  draft.priorities[0] ?? "all",
-                  [["all", "All priorities"], ...options(taskPriorities)],
-                  (v) =>
-                    edit({
-                      priorities:
-                        v === "all"
-                          ? []
-                          : [v as ListView["priorities"][number]],
-                    }),
-                )}
-                {select(
-                  "Assignee filter",
-                  draft.assignees[0] ??
-                    (draft.assignees.length ? "none" : "all"),
-                  [
-                    ["all", "Anyone"],
-                    ["none", "Unassigned"],
-                    ...list.assignees.map(
-                      (a) => [a.id, a.name] as [string, string],
-                    ),
-                  ],
-                  (v) =>
-                    edit({
-                      assignees: v === "all" ? [] : [v === "none" ? null : v],
-                    }),
-                )}
-              </>
-            )}
-            {select(
-              "Due date filter",
-              draft.due,
-              [
-                ["all", "Any due date"],
-                ["overdue", "Before today"],
-                ["today", "Today"],
-                ["upcoming", "After today"],
-                ["no_date", "No due date"],
-              ],
-              (v) => edit({ due: v as ListView["due"] }),
-            )}
-            {select(
-              "Completed tasks",
-              draft.completed,
-              [
-                ["all", "Include completed"],
-                ["hide", "Hide completed"],
-                ["only", "Only completed"],
-              ],
-              (v) => edit({ completed: v as ListView["completed"] }),
-            )}
-          </ViewPopover>
-          <ViewPopover
-            label={
-              <>
-                <ArrowDownWideNarrow size={16} />
-                Sort
-              </>
-            }
-            disabled={busy}
-          >
-            {select(
-              "Sort by",
-              draft.sortBy,
-              [
-                ["manual", "Manual"],
-                ...(list.mode === "work"
-                  ? [["priority", "Priority"] as [string, string]]
-                  : []),
-                ["due", "Due date"],
-                ["updated", "Recently updated"],
-              ],
-              (v) => edit({ sortBy: v as ListView["sortBy"] }),
-            )}
-            {draft.groupBy === "section" && (
-              <details>
-                <summary className="min-h-11 py-3 text-sm">
-                  Sorting per section
-                </summary>
-                <div className="grid gap-3">
-                  {[{ id: null, title: "No section" }, ...list.sections].map(
-                    (s) => (
-                      <div key={s.id ?? "none"}>
-                        {select(
-                          `Sort ${s.title}`,
-                          draft.sectionSorts.find((o) => o.sectionId === s.id)
-                            ?.sortBy ?? "inherit",
-                          [
-                            ["inherit", "Use list sorting"],
-                            ...options(viewSorts),
-                          ],
-                          (v) =>
-                            edit({
-                              sectionSorts: [
-                                ...draft.sectionSorts.filter(
-                                  (o) => o.sectionId !== s.id,
-                                ),
-                                ...(v === "inherit"
-                                  ? []
-                                  : [
-                                      {
-                                        sectionId: s.id,
-                                        sortBy: v as ListView["sortBy"],
-                                      },
-                                    ]),
-                              ],
-                            }),
-                        )}
-                      </div>
-                    ),
-                  )}
-                </div>
-              </details>
-            )}
-          </ViewPopover>
-          <ViewPopover
-            label={
-              <>
-                <Layers size={16} />
-                Group
-              </>
-            }
-            disabled={busy}
-          >
-            {select(
-              "Group by",
-              draft.groupBy,
-              [
-                ["section", "Section"],
-                ...(list.mode === "work"
-                  ? [["status", "Status"] as [string, string]]
-                  : []),
-                ["date", "Due date"],
-              ],
-              (v) => edit({ groupBy: v as ListView["groupBy"] }),
-            )}
-          </ViewPopover>
-          <ViewPopover
-            label={
-              <>
-                <Columns3 size={16} />
-                Display
-              </>
-            }
-            disabled={busy}
-          >
-            {select(
-              "Row density",
-              draft.layout,
-              [
-                ["compact", "Compact"],
-                ["detailed", "Comfortable"],
-              ],
-              (v) => edit({ layout: v as ListView["layout"] }),
-            )}
-            {list.mode === "work" && (
-              <>
-                {select(
-                  "Row layout",
-                  draft.rowStyle,
-                  [
-                    ["columns", "Columns"],
-                    ["list", "Simple rows"],
-                  ],
-                  (v) => edit({ rowStyle: v as ListView["rowStyle"] }),
-                )}
-                <fieldset className="grid gap-1">
-                  <legend className="text-sm mb-1">Visible columns</legend>
-                  {viewColumns.map((column) => (
-                    <label
-                      key={column}
-                      className="flex items-center gap-2 min-h-11 text-sm capitalize"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={draft.columns.includes(column)}
-                        onChange={(e) =>
-                          edit({
-                            columns: viewColumns.filter((c) =>
-                              c === column
-                                ? e.target.checked
-                                : draft.columns.includes(c),
-                            ),
-                          })
-                        }
-                      />
-                      {column === "due" ? "Due date" : column}
-                    </label>
-                  ))}
-                </fieldset>
-              </>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() =>
-                edit({
-                  ...viewSettings(defaultListView()),
-                  activePresetId: "default",
-                })
-              }
-            >
-              Reset to defaults
-            </Button>
-          </ViewPopover>
-          <ViewPopover label="Presets" disabled={busy}>
-            <p className="text-xs text-muted-foreground">
-              Personal presets for this list. Up to 20.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={draft.presets.length >= 20}
-              onClick={() => {
-                setName("");
-                setNaming("new");
-                setDeleting(false);
-              }}
-            >
-              Save as preset…
-            </Button>
-            {!!custom && (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setName(custom.name);
-                    setNaming("rename");
-                    setDeleting(false);
-                  }}
-                >
-                  Rename preset
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setDeleting(true);
-                    setNaming(null);
-                  }}
-                >
-                  Delete preset
-                </Button>
-              </>
-            )}
-            {naming && (
-              <form
-                className="grid gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const trimmed = name.trim();
-                  if (
-                    !trimmed ||
-                    draft.presets.some(
-                      (p) =>
-                        p.name.toLowerCase() === trimmed.toLowerCase() &&
-                        (naming !== "rename" || p.id !== custom?.id),
-                    )
-                  ) {
-                    setNotice("Choose a unique preset name.");
-                    return;
-                  }
-                  const id =
-                    naming === "rename" && custom
-                      ? custom.id
-                      : crypto.randomUUID();
-                  void save({
-                    ...draft,
-                    activePresetId: id,
-                    presets: [
-                      ...draft.presets.filter((p) => p.id !== id),
-                      { id, name: trimmed, settings: viewSettings(draft) },
-                    ],
-                  });
-                }}
-              >
-                <label className="grid gap-1 text-sm">
-                  Preset name
-                  <Input
-                    aria-label="Preset name"
-                    value={name}
-                    maxLength={60}
-                    required
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </label>
-                <Button variant="primary" disabled={busy || conflict}>
-                  Save preset
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setNaming(null)}
-                >
-                  Cancel
-                </Button>
-              </form>
-            )}
-            {deleting && custom && (
-              <div className="grid gap-2">
-                <p className="text-sm">
-                  Delete “{custom.name}”? Your tasks stay here.
-                </p>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={busy || conflict}
-                  onClick={() =>
-                    void save({
-                      ...draft,
-                      presets: draft.presets.filter((p) => p.id !== custom.id),
-                      activePresetId: null,
-                    })
-                  }
-                >
-                  Confirm delete preset
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setDeleting(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </ViewPopover>
-        </div>
-      </div>
-      <div className="view-toolbar-state">
-        <div className="view-filter-chips">
-          {chips.map((chip) => (
-            <button
-              key={chip.label}
-              type="button"
-              disabled={busy}
-              onClick={chip.clear}
-              title={chip.label}
-              className="view-filter-chip"
-              aria-label={`Clear ${chip.label}`}
-            >
-              <span>{chip.label}</span>
-              <X size={12} />
-            </button>
-          ))}
-        </div>
-        <p role="status" className="text-xs text-muted-foreground">
-          {shown} of {total} tasks shown ·{" "}
-          {draft.sortBy === "manual"
-            ? "Manual order"
-            : "Sorted view · Dragging off"}
-          {modified ? " · Modified preset" : ""}
-          {dirty ? " · Unsaved changes" : ""}
-        </p>
-        {dirty && (
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              type="button"
-              variant="primary"
-              disabled={busy || conflict}
-              onClick={() =>
-                void save(
-                  custom
-                    ? {
-                        ...draft,
-                        presets: draft.presets.map((p) =>
-                          p.id === custom.id
-                            ? { ...p, settings: viewSettings(draft) }
-                            : p,
-                        ),
-                      }
-                    : draft,
-                )
-              }
-            >
-              Save view
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                setDraft(saved.view);
-                setBase(saved.version);
-                setDirty(false);
-                setNotice("");
-              }}
-            >
-              Revert to saved view
-            </Button>
-          </div>
+          </Button>
+        ) : (
+          viewTools
         )}
       </div>
-      {conflict && (
-        <p role="alert" className="text-sm">
-          Your view changed elsewhere. Your draft is kept. Revert to the saved
-          view to load the latest version.
-        </p>
-      )}
-      {notice && (
-        <p role="alert" className="text-sm">
-          {notice}
-        </p>
+      {mobile ? (
+        <>
+          {(shown !== total || dirty) && (
+            <p role="status" className="mobile-view-summary">
+              {shown} of {total} tasks{dirty ? " · Unsaved view" : ""}
+            </p>
+          )}
+          <dialog
+            ref={optionsDialog}
+            aria-labelledby="mobile-view-title"
+            className="mobile-view-dialog"
+            onCancel={(e) => {
+              if (busy) e.preventDefault();
+            }}
+          >
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 id="mobile-view-title" className="text-xl font-bold">
+                Your view
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Close view options"
+                disabled={busy}
+                onClick={() => optionsDialog.current?.close()}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Filters, sorting and display. Only changes your view.
+            </p>
+            {presetPicker}
+            {viewTools}
+            {viewState}
+          </dialog>
+        </>
+      ) : (
+        viewState
       )}
     </div>
   );

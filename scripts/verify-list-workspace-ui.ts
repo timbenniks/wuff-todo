@@ -106,6 +106,20 @@ try {
   const panel = (name: string) =>
     page.getByRole("dialog", { name, exact: true });
   const open = async (name: string) => {
+    const trigger = page.getByRole("button", {
+      name: /^View(?: · \d+)?(?: Unsaved changes)?$/,
+    });
+    if (page.viewportSize()!.width < 768) {
+      await expect(trigger).toBeVisible();
+      if (
+        !(await page
+          .getByRole("dialog", { name: "Your view", exact: true })
+          .isVisible())
+      )
+        await trigger.click();
+    } else {
+      await expect(trigger).toHaveCount(0);
+    }
     await tool(name).click();
     await expect(panel(name)).toBeVisible();
     return panel(name);
@@ -123,6 +137,9 @@ try {
   await go(work.id);
   for (const width of [320, 390, 1024, 1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
+    if (width < 768)
+      await expect(page.locator(".mobile-view-trigger")).toBeVisible();
+    else await expect(page.locator(".mobile-view-trigger")).toHaveCount(0);
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -134,23 +151,144 @@ try {
       width >= 1440,
     );
     const d = await open("Display");
-    assert.ok(
-      await d.evaluate(
-        (el: HTMLElement) =>
-          el.getBoundingClientRect().left >= 0 &&
-          el.getBoundingClientRect().right <= innerWidth,
-      ),
-    );
+    await expect
+      .poll(() =>
+        d.evaluate((el: HTMLElement) => {
+          const box = el.getBoundingClientRect();
+          return box.left >= 0 && box.right <= innerWidth;
+        }),
+      )
+      .toBe(true);
     await page.screenshot({
-      path: `docs/screenshots/workspace-display-${width}.png`,
+      path: `.vercel/mobile-task-first/workspace-display-${width}.png`,
       fullPage: true,
     });
     await done(d);
+    if (width < 768) {
+      await tool("Close view options").click();
+      const firstTask = await row().boundingBox();
+      assert.ok(
+        firstTask && firstTask.y < 260,
+        `tasks near top at ${width}: ${firstTask?.y}`,
+      );
+      await tool("List settings").click();
+      const settings = panel("List settings");
+      await expect(
+        settings.getByRole("textbox", { name: "List name", exact: true }),
+      ).toBeVisible();
+      await expect(
+        settings.getByRole("button", { name: "Delete list", exact: true }),
+      ).toBeVisible();
+      await settings
+        .getByRole("button", { name: "Share", exact: true })
+        .click();
+      await expect(panel("Share with your pack")).toBeVisible();
+      await tool("Close sharing").click();
+      await expect(settings).toBeVisible();
+      await tool("Close list settings").click();
+    }
     await page.screenshot({
-      path: `docs/screenshots/workspace-work-${width}.png`,
+      path: `.vercel/mobile-task-first/workspace-work-${width}.png`,
       fullPage: true,
     });
   }
+  // Phone settings, destructive confirmation, preview/save and focus restoration.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await tool("List settings").click();
+  const settings = panel("List settings");
+  await page.screenshot({
+    path: "docs/screenshots/mobile-task-first-settings-390.png",
+  });
+  const longTitle =
+    "Release planning with a much longer list name that stays on one line";
+  await settings
+    .getByRole("textbox", { name: "List name", exact: true })
+    .fill(longTitle);
+  await settings
+    .getByRole("button", { name: "Save settings", exact: true })
+    .click();
+  await expect(settings).not.toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: longTitle, exact: true }),
+  ).toBeVisible();
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await tool("List settings").click();
+  page.once("dialog", async (dialog: any) => {
+    assert.match(dialog.message(), /cannot be undone/);
+    await dialog.dismiss();
+  });
+  await settings
+    .getByRole("button", { name: "Delete list", exact: true })
+    .click();
+  assert.equal((await getList(actor, work.id)).title, longTitle);
+  await settings
+    .getByRole("textbox", { name: "List name", exact: true })
+    .fill("Release planning");
+  await settings
+    .getByRole("button", { name: "Save settings", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Search title or key", exact: true })
+    .fill("sign-in");
+  const phoneView = page.getByRole("button", { name: /^View/ });
+  await phoneView.click();
+  await page.screenshot({
+    path: "docs/screenshots/mobile-task-first-view-390.png",
+  });
+  await expect(panel("Your view")).toContainText("Unsaved changes");
+  let phoneLost = true;
+  const phoneBodies: string[] = [];
+  await page.route("**/api/v1/lists/*/view", async (route: any) => {
+    if (route.request().method() !== "PUT") return route.continue();
+    phoneBodies.push(route.request().postData());
+    if (phoneLost) {
+      phoneLost = false;
+      const response = await route.fetch();
+      assert.equal(response.status(), 200);
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  await tool("Save view").click();
+  await expect(panel("Your view")).toContainText(
+    "We couldn’t confirm your previous change",
+  );
+  await panel("Your view")
+    .getByRole("button", { name: "Retry same request", exact: true })
+    .click();
+  await expect(tool("Save view")).toHaveCount(0);
+  assert.equal(phoneBodies.length, 2);
+  assert.equal(phoneBodies[0], phoneBodies[1]);
+  await page.unroute("**/api/v1/lists/*/view");
+  await tool("Close view options").click();
+  await expect(phoneView).toBeFocused();
+  await page.reload();
+  await expect(
+    page.getByRole("textbox", { name: "Search title or key", exact: true }),
+  ).toHaveValue("sign-in");
+  await phoneView.click();
+  await page
+    .getByRole("button", { name: "Clear Search: sign-in", exact: true })
+    .click();
+  await save();
+  await tool("Close view options").click();
+  await page.screenshot({
+    path: "docs/screenshots/mobile-task-first-390.png",
+    fullPage: true,
+  });
+  const firstTaskTop = (await row().boundingBox())!.y;
+  console.log(`Phone 390x844: first task y=${firstTaskTop}px`);
+  await page.setViewportSize({ width: 390, height: 640 });
+  await page.evaluate(() => window.scrollTo(0, 500));
+  await expect
+    .poll(async () =>
+      Math.round((await page.locator(".list-heading").boundingBox())!.y),
+    )
+    .toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.setViewportSize({ width: 1440, height: 500 });
   await page.locator(".workspace-main").hover();
@@ -173,11 +311,13 @@ try {
       .toJSON(),
     height: document.documentElement.scrollHeight,
   }));
-  assert.equal(sticky.toolbar.top, 0);
+  const listHeader = await page.locator(".list-heading").boundingBox();
+  assert.ok(listHeader && Math.abs(listHeader.y) <= 1);
+  assert.ok(sticky.toolbar.top >= listHeader.y + listHeader.height - 1);
   assert.ok(sticky.header.top >= sticky.toolbar.bottom - 1);
   assert.equal(sticky.height, 500);
   await page.screenshot({
-    path: "docs/screenshots/workspace-sticky.png",
+    path: ".vercel/mobile-task-first/workspace-sticky.png",
     fullPage: true,
   });
   await page
@@ -465,16 +605,50 @@ try {
       p.getByRole("combobox", { name: "Status filter", exact: true }),
     ).toHaveCount(0);
     await done(p);
+    if (width < 768) await tool("Close view options").click();
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
     await page.screenshot({
-      path: `docs/screenshots/workspace-basic-${width}.png`,
+      path: `.vercel/mobile-task-first/workspace-basic-${width}.png`,
       fullPage: true,
     });
   }
+  const editorContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const editorLogin = await editorContext.request.post(
+    "http://localhost:3000/api/auth/sign-in/email",
+    {
+      headers: { Origin: "http://localhost:3000" },
+      data: { email: other.email, password: other.password },
+    },
+  );
+  assert.equal(editorLogin.status(), 200);
+  const editorPage = await editorContext.newPage();
+  await editorPage.goto(`http://localhost:3000/lists?listId=${work.id}`);
+  await editorPage
+    .getByRole("button", { name: "List settings", exact: true })
+    .click();
+  const editorSettings = editorPage.getByRole("dialog", {
+    name: "List settings",
+    exact: true,
+  });
+  await expect(
+    editorSettings.getByRole("button", { name: "People", exact: true }),
+  ).toBeVisible();
+  await expect(
+    editorSettings.getByRole("textbox", { name: "List name", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    editorSettings.getByRole("button", { name: "Delete list", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    editorSettings.getByRole("button", { name: "Archive list", exact: true }),
+  ).toHaveCount(0);
+  await editorContext.close();
   assert.deepEqual(errors, []);
   console.log(
     "List workspace: responsive Work/basic toolbar and columns, preview/save/reload, named preset create/rename/select/delete, personal isolation, metadata saves/conflict drafts, display preferences, note draft retention, view conflicts and exact retry passed.",

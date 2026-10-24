@@ -8,6 +8,8 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Task-first phone lists (October 24):** compact sticky title/settings bar, on-demand list management and a phone View panel are implemented locally. See [design and verification scope](mobile-task-first.md); production release remains pending.
+
 - **List workspace (October 24):** compact toolbar and personal named presets for both list types, richer optional Work columns and inline metadata editing are released on the website/MCP. Local unit/integration/browser/SDK checks, web/native frontend builds and authenticated production Work/Basic layout checks passed. Native downloads remain blocked by runner billing. See [contract and release evidence](list-workspace.md).
 
 - **Desktop workspace (October 24):** fluid Home card rows, wider list/task/settings canvas and independently scrolling desktop navigation are released. Local 320–1920px browser checks and authenticated production geometry checks passed. See [layout decisions and verification](desktop-workspace.md).

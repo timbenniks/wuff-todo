@@ -290,3 +290,21 @@ Production release evidence follows after deployment. No installed native, physi
 Source `269244b` was committed/pushed. Vercel CLI deployment `dpl_9aba3Dqf82k14RX9f8qec74D371z` is Ready and aliased to the canonical production URL, with `fra1` runtime outputs. Authenticated production Chrome at 1710px verified the Work toolbar, five starter choices, preset-save entrypoint, Columns/Simple rows, density and four visibility controls. The Work grid measured 44/636/130/100/140/140/88/44px tracks; the old details panel was absent and no horizontal overflow occurred. Basic Pawvisions rendered zero Work headers and only section/date/completion filters, with a viewport-bounded popover. Live updates connected and no captured console errors occurred. The production smoke only navigated/read/opened controls: no task/content/server preference writes or production fixtures were required. Screenshots: [Work](screenshots/workspace-production-work.png), [Basic](screenshots/workspace-production-basic.png).
 
 GitHub Verify `40036292290` and Native test builds `40036292242` failed before any steps started; the check annotation confirms the account payment/spending limit. Local checks and Vercel build passed; new downloadable native packages and installed-device behavior remain separate. MCP clients need a catalog refresh for the expanded view schema.
+
+## Task-first phone lists — October 24, 2026
+
+[Design and scope](mobile-task-first.md) replace the large list card with a compact sticky title/settings bar and move phone view controls into a modal panel. Healthy/initial live-status copy no longer occupies task space; subscriptions remain mounted and reconnection/read failures still surface. Owner rename is part of the existing versioned settings save; sharing and confirmed deletion are reachable inside settings. The shared website/Tauri frontend receives the layout.
+
+Final workspace/root TypeScript, optimized web/MCP/prototype build and native frontend build passed. The web build retains the existing docs CSS `@source` warning and the native frontend retains its bundle-size advisory. No dependency, schema or environment change was needed.
+
+The updated `scripts/verify-list-workspace-ui.ts` passed against the optimized isolated-development website:
+
+- Work/Basic layouts at 320/390/1024/1280/1440/1920px as applicable, bounded popovers and no document overflow. Responsive geometry checks wait for the phone controls to mount; CSS also hides desktop-only controls during the initial narrow server render.
+- At 390×844 the first task starts at **y=227px**, about 27% down the viewport. An additional 390×640 scrolling check pins the title bar at y=0. At 1440×500 the title, view toolbar and Work column headings remain stacked without overlap.
+- Phone settings open sharing and return to settings; a long list name saves without overflow, then restores. Cancelling the explicit permanent-delete confirmation preserves the list. Editor settings expose People/personal preferences and omit owner name/delete/archive controls.
+- Phone search preview, unsaved indicator, save/reload, draft clearing and dialog focus restoration pass. An aborted response after a committed phone view save displays in-panel recovery; retry sends the identical body and operation ID and completes successfully.
+- Existing preset create/rename/select/delete, account isolation, metadata saves/conflict drafts, display preferences, notes retained across phone resizing, saved-view conflicts and desktop exact-request retries all pass. No captured page errors occurred. Disposable lists were deleted in cleanup.
+
+Screenshots were visually reviewed: [phone list](screenshots/mobile-task-first-390.png), [View panel](screenshots/mobile-task-first-view-390.png), [settings](screenshots/mobile-task-first-settings-390.png). Additional responsive/sticky images are in ignored `.vercel/mobile-task-first/`.
+
+Production release verification is pending; no production deployment or production mutation was performed during these checks. Browser tests and frontend builds do not certify physical phones, installed native packages or screen-reader use.

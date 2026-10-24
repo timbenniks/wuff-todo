@@ -45,7 +45,7 @@
     "components": [
       {
         "name": "ListSettings",
-        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n  sidebar,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n})"
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n  sidebar,\n  actions,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n})"
       }
     ]
   },
@@ -55,7 +55,7 @@
     "components": [
       {
         "name": "ListViewControls",
-        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n})"
+        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n  retry,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n  retry?: () => Promise<boolean>;\n})"
       }
     ]
   },

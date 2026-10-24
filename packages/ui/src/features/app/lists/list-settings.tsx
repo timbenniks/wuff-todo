@@ -3,12 +3,13 @@ import { ListReminders } from "../../components/reminders/list-reminders";
 import { Textarea } from "../../../textarea";
 import { NativeSelect } from "../../../native-select";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { Input } from "../../../input";
 import {
   Archive,
   ArchiveRestore,
   Check,
-  Settings2,
+  Settings,
   Star,
   X,
 } from "lucide-react";
@@ -182,6 +183,7 @@ export function ListSettings({
   change,
   retry,
   sidebar,
+  actions,
 }: {
   list: TodoList;
   userId: string;
@@ -189,9 +191,11 @@ export function ListSettings({
   change: ListChange;
   retry?: () => Promise<boolean>;
   sidebar?: SidebarLocation;
+  actions?: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState({
+    title: list.title,
     description: list.description,
     color: list.color,
     mode: list.mode,
@@ -202,6 +206,7 @@ export function ListSettings({
   function load() {
     setOpened((count) => count + 1);
     setDraft({
+      title: list.title,
       description: list.description,
       color: list.color,
       mode: list.mode,
@@ -212,7 +217,8 @@ export function ListSettings({
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
+        size="icon"
         aria-label="List settings"
         title="List settings"
         disabled={busy}
@@ -221,7 +227,7 @@ export function ListSettings({
           dialog.current?.showModal();
         }}
       >
-        <Settings2 size={16} aria-hidden="true" /> Settings
+        <Settings size={20} aria-hidden="true" />
       </Button>
       <dialog
         ref={dialog}
@@ -250,14 +256,19 @@ export function ListSettings({
             <X size={18} />
           </Button>
         </div>
-        {sidebar && (
-          <ListLocation
-            key={`${list.id}:${opened}`}
-            list={list}
-            busy={busy}
-            {...sidebar}
-          />
+        <p className="text-sm text-muted-foreground mb-4 break-words">
+          {list.title} ·{" "}
+          {list.ownerId === userId
+            ? "Your list · Pack leader"
+            : "Shared with your pack"}
+          {list.mode === "work" && " · Work"}
+        </p>
+        {list.ownerId !== userId && list.description && (
+          <p className="whitespace-pre-wrap break-words text-sm mb-4">
+            {list.description}
+          </p>
         )}
+        <div className="flex flex-wrap gap-2 mb-5">{actions}</div>
         {list.ownerId === userId && (
           <>
             <form
@@ -273,6 +284,18 @@ export function ListSettings({
                 else setFailed(true);
               }}
             >
+              <label className="grid gap-2 text-sm font-semibold">
+                List name
+                <Input
+                  value={draft.title}
+                  required
+                  maxLength={300}
+                  readOnly={busy}
+                  onChange={(e) =>
+                    setDraft({ ...draft, title: e.target.value })
+                  }
+                />
+              </label>
               <label className="grid gap-2 text-sm font-semibold">
                 List type
                 <NativeSelect
@@ -428,6 +451,16 @@ export function ListSettings({
             </div>
           </>
         )}
+        <div className="mt-6">
+          {sidebar && (
+            <ListLocation
+              key={`${list.id}:${opened}`}
+              list={list}
+              busy={busy}
+              {...sidebar}
+            />
+          )}
+        </div>
         <ListReminders key={list.id} listId={list.id} userId={userId} />
       </dialog>
     </>

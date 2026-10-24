@@ -37,7 +37,6 @@ import { TaskGroups } from "./task-groups";
 import { HomeDashboard } from "./home-dashboard";
 import { SidebarLists } from "./sidebar-lists";
 import { mergeVisibleOrder } from "../../lib/reorder";
-import { InlineName } from "./inline-name";
 
 type PendingCreate = {
   id: string;
@@ -770,15 +769,13 @@ export function ListApp({
         tabIndex={-1}
         className="list-content workspace-main"
       >
-        {(liveConfig || runtime.native) && (
-          <p role="status" className="text-xs text-muted-foreground mb-4">
-            {liveStatus === "live"
-              ? wuffCopy.liveConnected
-              : liveStatus === "connecting"
-                ? wuffCopy.connectingLive
-                : wuffCopy.reconnectingLive}
-          </p>
-        )}
+        {(liveConfig || runtime.native) &&
+          liveStatus !== "live" &&
+          liveStatus !== "connecting" && (
+            <p role="status" className="text-xs text-muted-foreground mb-4">
+              {wuffCopy.reconnectingLive}
+            </p>
+          )}
         <InvitationInbox initial={initialInvitations} onJoined={joinedList} />
         {readFailure && (
           <p role="status" className="text-sm text-muted-foreground mb-4">
@@ -868,48 +865,9 @@ export function ListApp({
         )}
         {list && (
           <>
-            <div className="list-heading flex flex-wrap items-start gap-4 mb-4 rounded-2xl border border-border bg-accent p-5">
-              <div className="min-w-0 flex-1 basis-full sm:basis-60">
-                <InlineName
-                  key={list.id}
-                  value={list.title}
-                  heading="h1"
-                  label="List name"
-                  editLabel="Rename list"
-                  editable={list.ownerId === userId && !isPending}
-                  disabled={busy}
-                  onSave={(title) =>
-                    change(`/api/v1/lists/${list.id}`, "PATCH", {
-                      listId: list.id,
-                      version: list.version,
-                      title,
-                    })
-                  }
-                />
-                {!isPending && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {list.ownerId === userId
-                      ? "Your list · Pack leader"
-                      : "Shared with your pack"}
-                    {list.mode === "work" && " · Work"}
-                  </p>
-                )}
-                {list.description && (
-                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed mt-3">
-                    {list.description}
-                  </p>
-                )}
-              </div>
+            <header className="list-heading">
+              <h1 title={list.title}>{list.title}</h1>
               <div className="list-management flex flex-wrap items-center gap-2">
-                {!isPending && (
-                  <SharingDialog
-                    key={`sharing:${list.id}`}
-                    list={list}
-                    userId={userId}
-                    disabled={busy}
-                    onChanged={sharingChanged}
-                  />
-                )}
                 {!isPending && (
                   <ListSettings
                     key={`settings:${list.id}`}
@@ -917,6 +875,68 @@ export function ListApp({
                     userId={userId}
                     busy={busy}
                     change={change}
+                    actions={
+                      <>
+                        {!isPending && (
+                          <SharingDialog
+                            key={`sharing:${list.id}`}
+                            list={list}
+                            userId={userId}
+                            disabled={busy}
+                            onChanged={sharingChanged}
+                          />
+                        )}
+                        {list.ownerId === userId && !isPending && (
+                          <div className="contents">
+                            <Button
+                              variant="danger"
+                              className="list-delete"
+                              disabled={busy}
+                              aria-label="Delete list"
+                              onClick={async () => {
+                                if (
+                                  !window.confirm(
+                                    `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+                                  )
+                                )
+                                  return;
+                                if (mutating.current) return;
+                                setBusy(true);
+                                mutating.current = true;
+                                summaryEpoch.current++;
+                                cache.supersede(list.id);
+                                try {
+                                  await api(
+                                    `/api/v1/lists/${list.id}`,
+                                    "DELETE",
+                                    {
+                                      version: list.version,
+                                      operationId: crypto.randomUUID(),
+                                    },
+                                  );
+                                  cache.forget(list.id);
+                                  const next = summariesRef.current.filter(
+                                    (item) => item.id !== list.id,
+                                  );
+                                  setSummaries(next);
+                                  if (selected.current === list.id)
+                                    chooseList(next[0]?.id ?? "");
+                                } catch (e) {
+                                  setError(wuffError((e as Error).message));
+                                } finally {
+                                  mutating.current = false;
+                                  setBusy(false);
+                                  void liveRefresh.current?.flush();
+                                }
+                              }}
+                            >
+                              <Trash2 size={17} aria-hidden="true" /> Delete
+                              list
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    }
                     sidebar={{
                       lists: summaries,
                       disabled: busy || !!pendingCreate || !!sidebarRetry,
@@ -959,52 +979,8 @@ export function ListApp({
                     }
                   />
                 )}
-                {list.ownerId === userId && !isPending && (
-                  <div className="contents">
-                    <Button
-                      variant="danger"
-                      className="list-delete"
-                      disabled={busy}
-                      aria-label="Delete list"
-                      onClick={async () => {
-                        if (
-                          !window.confirm(
-                            `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
-                          )
-                        )
-                          return;
-                        if (mutating.current) return;
-                        setBusy(true);
-                        mutating.current = true;
-                        summaryEpoch.current++;
-                        cache.supersede(list.id);
-                        try {
-                          await api(`/api/v1/lists/${list.id}`, "DELETE", {
-                            version: list.version,
-                            operationId: crypto.randomUUID(),
-                          });
-                          cache.forget(list.id);
-                          const next = summariesRef.current.filter(
-                            (item) => item.id !== list.id,
-                          );
-                          setSummaries(next);
-                          if (selected.current === list.id)
-                            chooseList(next[0]?.id ?? "");
-                        } catch (e) {
-                          setError(wuffError((e as Error).message));
-                        } finally {
-                          mutating.current = false;
-                          setBusy(false);
-                          void liveRefresh.current?.flush();
-                        }
-                      }}
-                    >
-                      <Trash2 size={17} aria-hidden="true" /> Delete list
-                    </Button>
-                  </div>
-                )}
               </div>
-            </div>
+            </header>
             {isPending ? (
               <div className="mt-6 text-sm text-muted-foreground">
                 {pendingCreate?.status === "saving" ? (

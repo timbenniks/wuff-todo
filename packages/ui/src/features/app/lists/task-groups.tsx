@@ -258,6 +258,7 @@ export function TaskGroups({
         </p>
       )}
       <ListViewControls
+        retry={retry}
         list={list}
         userId={userId}
         busy={busy}
