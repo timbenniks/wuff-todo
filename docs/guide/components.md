@@ -1,6 +1,9 @@
 # Real components, visible behavior
 
-These demos import Wuff’s shipped React components. The complete inventory below is generated from exported component declarations in `packages/ui/src`, not from the upstream shadcn catalogue. Exact source and signatures are included in the prototype kit.
+These demos import Wuff’s shipped React components. The inventory below is generated
+directly from exported declarations in `packages/ui/src`. Use its exact signatures
+and inspect event behavior in the current repository source; do not substitute
+upstream shadcn defaults or a copied component tree.
 
 Use the component search and jump links to find a component by name or source path. Expand a module for its exact props.
 
@@ -21,10 +24,20 @@ InputGroupAddon supports inline-start/end and block-start/end. InputGroupButton 
 
 TaskRow, task metadata, notes/editor, due-date controls, task actions, task groups/detail drawer, ListSettings, Sharing, ListApp, personal views, Work metadata, GitHub/agent controls, reminders, sortable controls, Corgi and ListTheme are included. Some depend on FeatureRuntime, parent callbacks, task/list shapes and live state. Use their declared props; do not treat them as isolated zero-configuration primitives.
 
-The starter demonstrates TaskRow with in-memory changes and an injected runtime. For another screen, supply only the local mock methods needed by that flow. Unsupported actions should explain that they are not simulated; do not silently contact real services.
+The interactive TaskRow example uses synthetic data, in-memory changes and an
+injected runtime. Unsupported actions explain that they are not simulated; the
+guide never contacts private services. This is a component reference, not a
+standalone application or proof of backend behavior.
 
 ## Source and reuse
 
-`packages/ui/src/features/runtime.ts` defines FeatureRuntime and RuntimeContext. It separates components from routing, requests, image retrieval and account behavior. `@wuff/contracts` supplies public types; `@wuff/design` supplies palette derivation; `@wuff/client` supplies typed interfaces. No database or server packages are needed in a prototype.
+`packages/ui/src/features/runtime.ts` defines FeatureRuntime and RuntimeContext.
+It separates shared components from routing, requests, image retrieval and account
+behavior. `@wuff/contracts` supplies public types; `@wuff/design` supplies palette
+derivation; `@wuff/client` supplies typed interfaces. Real features use the existing
+authorized runtime/adapters. Database and domain packages stay server-side.
 
-Inspect the generated inventory for import paths and signatures, then read the matching file in the archive for event behavior and other exported types. Props are exact for this snapshot; the source manifest identifies the copied version. A new export or variant requires a kit rebuild.
+Inspect import paths and signatures, then read the matching repository file for
+event behavior and other types. `pnpm build:guide` refreshes the inventory directly
+from source. Download hashes identify the published guide resources, not a copied
+app. The current checkout governs any difference from the hosted snapshot.

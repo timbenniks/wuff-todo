@@ -2,6 +2,182 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Contributor preview build failure — October 24, 2026
+
+PR #22 deployment `D3koosgLtjQAnNxUEJ8L882AnAZN` failed because
+`.vercelignore` removed the contributor skill required by `build:guide`.
+The deployment log showed the removed file and an ENOENT at that exact path.
+The ignore rules now admit only `.agents/skills/wuff-contributor/SKILL.md`
+while excluding other agent skills/files. Local `pnpm check` passed TypeScript,
+all 119 unit tests and the optimized guide/MCP/web build. Hosted packaging must
+also be verified on the replacement Vercel preview; local builds alone did not
+exercise the original exclusion.
+
+The separate Actions job for commit `9878b20` failed before any steps because
+GitHub reported failed account payments or a spending limit. This is an external
+runner blocker, not a passing or executed test suite. The PR stays a draft.
+
+## Contributor unit tests and instruction clarity — October 24, 2026
+
+Root AGENTS.md now explicitly requires meaningful unit coverage for every changed
+behavior, regression tests for fixes, boundary/failure cases and actual completion
+evidence. Docs/style-only exceptions must explain why no behavior changes;
+data-changing features cannot waive coverage. The skill, PR template and hosted
+workflow carry the same requirements. Obsolete first-release timing was replaced
+with a pointer to the current milestone. Root instructions remain under 5 KiB.
+
+`pnpm test` now discovers JS/TS unit files recursively instead of maintaining a
+manual file list. Integration suites, helpers, hidden directories and dependencies
+are excluded. Python/native tests remain local language-specific gates. The PR
+policy requires test declarations, actual added/updated unit files and results;
+deleted or integration-only files cannot substitute. Instruction override files
+are explicitly sensitive and need maintainer approval.
+
+`pnpm check` passed TypeScript, all 119 tests and optimized guide/MCP/web builds.
+New policy cases verify unit-file evidence, non-waivable data changes and invalid
+exceptions; discovery coverage verifies new nested files and exclusion of live
+integration suites. A temporary, unregistered failing unit case was discovered by
+the real runner and made `pnpm test` exit nonzero; the fixture was removed. The
+targeted eight-page guide browser check passed at 320/390/1280px without overflow,
+page errors or app API calls. Clipboard remains an in-memory test stub.
+
+Instruction discovery guidance was checked against official OpenAI documentation.
+Loading instructions is not proof of compliance: client/workspace overrides,
+permissions, required checks and human review remain distinct. No actual new-agent
+compliance run or live GitHub protection/rejection proof is claimed. Existing
+GitHub plan/runner and preview-isolation onboarding gates remain unresolved.
+
+## Contributor API/MCP/connection completeness — October 24, 2026
+
+Tim confirmed equivalent API/MCP capabilities for every persisted-data feature,
+with explicit MCP App UI and connection impacts. Root instructions, product spec,
+architecture, contributor skill/workflow, starter prompts and PR/brief templates
+now require the surface contract in `docs/guide/surfaces.md` (`/docs/surfaces`).
+This includes personal settings, authorized reads, shared domain services,
+idempotency/conflicts and explicit connection scopes/consent/recovery/revocation
+and credential privacy. MCP UI is implemented with evidence or explicitly not
+needed; secure browser handoffs never expose tokens or privileged callbacks.
+
+The policy requires one JSON declaration in every PR. It rejects incomplete
+domain/API/MCP mutation mappings, unimplemented operations, absent adapter results,
+unresolved MCP UI decisions and affected connections without verification. No-data
+changes need an explicit explanation. Scope hashes bind capability mappings and
+UI/connection decisions while allowing implementation status and test results to
+evolve. Changing approved capability scope requires renewed maintainer approval.
+
+`pnpm check` passed workspace/root TypeScript, all 115 tests and optimized
+guide/MCP/web build. Seven additional policy cases cover required mappings,
+adapter deferral, MCP UI evidence, connection verification, no-data contradictions,
+invalid declarations and scope changes versus evidence-only updates. The guide
+now has eight pages. This is validation of contributor requirements and metadata
+checks, not new application API/MCP adapter or provider integration proof.
+The targeted guide browser check also passed all eight pages at 320/390/1280px,
+including the new surface guide, current download hashes and raw agent reference,
+with no document overflow, captured page errors or application API requests.
+GitHub protection/runner and preview-isolation gates remain unchanged.
+
+## Implementation guide consolidation — October 24, 2026
+
+Tim selected a single repository contributor workflow, superseding the standalone
+prototype/design-handoff path. The guide and contributor skill retain early
+interaction/iteration, product and permission rules, real component reuse, design
+tokens, accessible layouts, decision/acceptance records and honest mock/evidence
+boundaries. Root AGENTS.md routes to these rules; GitHub policy/review remain
+separate enforcement. Maintained pages now live in `docs/guide/`.
+
+- `pnpm check` passed workspace/root TypeScript, all 108 tests and optimized
+  guide/MCP/web builds. The obsolete docs `@source` directive is removed and the
+  final build no longer reports that CSS parser advisory. Policy coverage includes
+  sensitive approval for the maintained guide and contributor skill.
+- `pnpm build:guide` indexes the actual UI source. Its generated component inventory
+  was structurally identical to the previous 48-component inventory. The removed
+  Vite source kit, copied dependencies/lockfile, packaging script and prototype
+  skill are not part of delivery. Guide TaskRow examples still import real code
+  with synthetic local runtime callbacks and no private backend calls.
+- Contributor skill validation passed. Every download matched its SHA-256
+  manifest, the ZIP passed CRC checks and contained only the exact contributor
+  SKILL.md. The retired generated public archive directory was absent after build.
+- `node scripts/verify-contributor-guide.mjs` passed against the optimized local
+  site: all seven pages at 320/390/1280px without overflow; starter copy with a
+  clipboard stub, keyboard Enter, navigation, raw agent reference, component
+  search and actual TaskRow completion; no captured page errors or app API calls.
+  Old guide URLs returned 308 to Build/Review; old kit/skill downloads returned 410
+  retirement messages. Initial page-level redirects produced duplicate Location
+  headers on a cold request; explicit Next config redirects fixed this and the
+  final compatibility checks passed. Phone/desktop screenshots were visually
+  inspected: [phone](screenshots/contributor-guide-390.png),
+  [desktop](screenshots/contributor-guide-1280.png).
+- The obsolete local `wuff-prototype` skill was archived outside skill discovery
+  with original files preserved; this does not update another person's installed
+  skills. Existing shell/UX verification scripts now expect contributor resources.
+  Their broader authenticated mutation scenarios were not rerun for this docs
+  change; this is a targeted anonymous-guide/browser verification.
+
+No production deployment, native/device check, actual contributor-agent session,
+schema change or environment-isolation setup is claimed. GitHub plan/runner and
+preview-isolation onboarding gates remain in [GitHub safeguards](contributor-github.md).
+Earlier prototype evidence below is historical and superseded by this decision.
+
+## Contributor GitHub safeguards — October 24, 2026
+
+Expanded contributor delivery workflow and local evidence:
+
+- Root instructions route real feature work to the canonical contributor workflow
+  and repository skill. The hosted guide adds `/docs/build`, a separate starter,
+  skill download, PR template and full workflow. Prototype-only behavior remains.
+- A metadata-only trusted-main policy workflow validates maintainer-created scope
+  approvals, brief hashes, changed/renamed paths, sensitive-file exceptions,
+  current-commit evidence and large-diff approval. No PR code or dependencies run
+  with its write-check token. Checkout/setup actions are pinned to verified v4
+  commit SHAs. The prepared ruleset now requires `check` and `Contributor policy`.
+- Final `pnpm check` passed workspace/root TypeScript, all 108 unit tests and the
+  optimized prototype-kit/MCP/web build. Seventeen new policy cases cover forged
+  approvals, revocation, stale brief/evidence, path traversal and rename escapes,
+  sensitive paths, credential filenames, large/incomplete inventories, API errors,
+  exact evaluated SHA and changes during evaluation. The existing docs `@source`
+  CSS parser advisory remains; the optimized build completed successfully.
+- Workflow YAML/permission/trigger/checkout inspection and ruleset JSON checks
+  passed locally. Contributor skill validation passed. ZIP CRC and exact source
+  byte checks passed for the contributor skill and workflow/template downloads.
+- `node scripts/verify-contributor-guide.mjs` passed at 320/390/1280px against the
+  optimized local website: one main heading, responsive navigation, copy prompt,
+  keyboard Enter, downloads, raw agent reference, retained prototype resources,
+  no document overflow, no page errors and no app API requests. Clipboard is an
+  in-memory test stub. The first test caught long approval examples overflowing;
+  scoped code-block wrapping fixed it. A harness label selector was corrected to
+  the actual combobox accessible name. Phone/desktop screenshots were visually
+  inspected: [phone](screenshots/contributor-guide-390.png) and
+  [desktop](screenshots/contributor-guide-1280.png).
+- No native compilation/device, actual contributor-agent run, production guide
+  deployment or live policy rejection is claimed. The new privileged workflow
+  must first land on main, then be exercised against a synthetic PR before
+  protection activation/onboarding. Owner review remains necessary; upstream
+  write access can also create similarly named Actions checks, so upstream read
+  access plus private forks is preferred where supported.
+
+Live `gh` reads confirmed private `timbenniks/wuff-todo`, ADMIN access, default
+branch `main` and auto-merge disabled. Ruleset listing and main protection reads
+both returned HTTP 403 requiring GitHub Pro or a public repository. No protection
+was activated and repository visibility was preserved. Verify run 40093282223
+reported zero job steps; check annotations identify billing/spending limits.
+Actual required-check names and Actions app ID were read from main's check runs.
+
+Prepared CODEOWNERS, contributor delivery guidance, a PR template and a ruleset
+payload; see [activation and limits](contributor-github.md). File formatting,
+JSON parsing and diff whitespace checks cover these configuration/documentation
+changes. GitHub API acceptance of the payload and rejection of unauthorized
+contributor pushes/merges remain unverified until the plan block is resolved.
+
+CI simplification: automatic Verify now has one Ubuntu `check` job running
+`pnpm typecheck` and `pnpm test`, with a 15-minute limit and superseded-run
+cancellation. Both commands passed locally, including all 91 unit tests.
+Native test builds is manual-only. The initial ruleset required only `check`;
+the expanded contributor workflow adds the metadata-only `Contributor policy`.
+Workflow YAML parsing and trigger/job inspection, JSON parsing, formatting and
+whitespace checks passed. This is local configuration evidence; remote Actions
+execution remains subject to the account billing block. No native compilation,
+manual workflow dispatch or release publication was performed for this change.
+
 ## Personal Home dashboard — October 23, 2026
 
 [WUFF-87](home-dashboard.md) adds a configurable personal Home: welcome/Waffles, Today, seven-day Coming up and Favorites. Settings control section order/visibility, reset and Home/last-list entry. Task previews preserve list/shared/parent context. Direct task/list links, authorization and shared revisions remain independent.

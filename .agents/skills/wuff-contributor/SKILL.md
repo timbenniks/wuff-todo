@@ -1,0 +1,58 @@
+---
+name: wuff-contributor
+description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, approved scope and a reviewable PR. Use for Wuff contributor design and coding work.
+---
+
+# Wuff contributor
+
+Read root/nearby AGENTS.md and `docs/contributor-workflow.md` before implementation.
+Hosted reference: https://wuff-todo.vercel.app/docs/build. Current repository
+instructions and code govern implementation; hosted docs may lag an unmerged PR.
+
+Read the relevant `docs/guide/` product, design, component and accessibility pages.
+The raw reference is https://wuff-todo.vercel.app/docs/agent-context.md and exact
+component inventory is https://wuff-todo.vercel.app/contributor-kit/components.json.
+Check actual props/event behavior in repository source. Do not initialize shadcn
+defaults over Wuff's components or build a separate copied application.
+
+Read `docs/guide/surfaces.md` for every feature. Map every persisted mutation to
+the shared domain service, HTTP API and MCP tool, including authorized reads and
+cross-surface verification. Assess MCP App UI and delegated/provider connection
+scopes, consent, missing/expired/revoked states and personal credential isolation.
+Fill the PR's surface-contract JSON before requesting scope approval. Do not ship
+web-only writes, placeholder tools or silent parity/UI/connection deferrals.
+
+Understand the problem and intended users, offer small product choices, show the
+main interaction early and iterate from feedback. Keep agreed decisions and open
+questions explicit. Use synthetic data and clearly labeled local mocks within the
+feature branch when needed; simulated behavior never proves backend integration.
+Explain deliberate visual departures or new components as scope proposals.
+
+Handle branches, commits, PRs, checks and evidence for the contributor. Ask product
+questions in plain language. Use one `codex/` branch and early draft PR per feature.
+Obtain Tim's scope approval using the documented `/wuff-scope` protocol. Contributor
+consent cannot authorize scope expansion, migrations or production operations.
+
+Follow the workflow's quality rules and verification matrix. Reuse real components
+and services; preserve permissions, retries, concurrency and API/MCP contracts.
+Maintain the brief, acceptance criteria and current-commit evidence in the PR.
+Inspect the actual diff and behavior: green policy checks validate declarations,
+not truth or quality.
+
+Every changed behavior needs meaningful unit tests and bug fixes need regression
+coverage. Test outcomes and relevant boundary/failure cases, not code text or
+incidental markup. Put JS/TS tests under `tests/` for automatic `pnpm test`
+discovery. Fill the PR's Unit tests declaration with changed files and actual
+cases/commands/results. Integration checks do not replace unit coverage; data
+changes cannot waive it. Run local language-specific tests for native/Python
+changes. Keep the PR a draft when required checks are blocked or unrun.
+
+Confirm environment readiness before writes. If credentials, preview isolation or
+scope are missing, prepare a brief/mock and concrete technical handoff to Tim.
+Do not bypass checks, borrow his credentials, alter safeguards to pass, invent
+evidence, merge or release. Record remaining limitations clearly.
+
+Use `docs/guide/review.md` for a self-contained delivery record and optional Wuff
+task updates. Only create/update tasks when requested; resolve the intended list,
+preserve existing content and verify the write. Tools/hosting availability must be
+checked rather than assumed. No task write authorizes a paid agent run or release.

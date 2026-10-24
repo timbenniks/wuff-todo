@@ -1,5 +1,9 @@
 # Hosted design guide and prototype skill
 
+Superseded October 24: the prototype workflow is retired in favor of the single
+[implementation guide](implementation-guide.md). The sections below retain dated
+historical decisions and evidence, not current setup instructions.
+
 October 23, 2026. The selected contributor workflow is ChatGPT Work in a shared
 workspace, with URLs and no local checkout for the designer. The hosted guide at
 `/docs` is the entry point. It covers current product/permission rules, real UI

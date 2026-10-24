@@ -8,6 +8,18 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Contributor GitHub safeguards (October 24):** owner mapping, PR template and
+  an activation payload are prepared. Private-repository protection is blocked by
+  the current GitHub plan; required checks are also blocked by runner billing.
+  No main-branch protection is claimed active. See [configuration and gates](contributor-github.md).
+  Automatic CI is reduced to one Ubuntu typecheck/unit-test job; platform
+  compilation is local, with the native release workflow retained as manual-only.
+  The contributor workflow, `/docs/build`, portable contributor skill and trusted
+  main-based scope/evidence policy are implemented locally; bootstrap and isolated
+  contributor/preview environments remain onboarding gates.
+  Every feature PR now requires an API/MCP/connection surface contract, approved
+  capability mappings and actual adapter evidence for persisted-data changes.
+
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.
   See [scope and acceptance](app-workspace-shell.md). Local browser/type/unit/build checks pass; production verification and installed
@@ -46,7 +58,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 - **Personal list nesting (WUFF-85, October 23):** one-level account-specific sidebar hierarchy is implemented across shared web/Tauri features and MCP and released on the website/MCP. Authenticated production save/reload/collapse and live Codex reads passed; WUFF-85 is done. Native artifact publication remains blocked by GitHub runner billing limits. Parent and child lists retain independent tasks/subtasks and sharing. See [contract, migration and release boundaries](personal-list-nesting.md).
 
-- **Contributor prototyping (October 23):** hosted `/docs` guide, real component examples, generated source kit, agent-readable reference and portable skill support a non-coder using ChatGPT Work without a local checkout. See [design guide and verification](prototype-guide.md). Actual use in her Work workspace remains a separate check.
+- **Contributor implementation guide (October 24):** `/docs` now presents one
+  repository implementation workflow with product/design/accessibility rules,
+  real component examples, a contributor skill, scoped PRs and review evidence.
+  The standalone prototype kit/skill and design-handoff path are retired; useful
+  iteration and decision guidance is retained. See [guide decisions](implementation-guide.md)
+  and [activation gates](contributor-github.md). Local checks are separate from
+  production deployment and an actual contributor-agent run.
 
 - **Personal reminders and Settings (October 22):** selected scheduled jobs rather than minute polling, personal account/list/task UX, and all server delivery adapters together. The core implementation is built locally alongside Tauri, with development-only migrations and provider-mocked verification. See [reminder plan and release gates](reminders.md); provider setup and installed native delivery remain explicit gates.
 

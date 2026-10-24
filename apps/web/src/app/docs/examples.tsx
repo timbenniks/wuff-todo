@@ -14,7 +14,7 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@wuff/ui/input-group";
-import { App as Prototype } from "./prototype-demo";
+import { App as ComponentDemo } from "./component-demo";
 
 export function ComponentExamples() {
   const [status, setStatus] = useState(""),
@@ -124,7 +124,7 @@ export function ComponentExamples() {
         <InputGroup>
           <InputGroupTextarea id="grouped-note" rows={2} />
           <InputGroupAddon align="block-end">
-            <InputGroupText>Only a prototype. Nothing is sent.</InputGroupText>
+            <InputGroupText>Synthetic example. Nothing is sent.</InputGroupText>
           </InputGroupAddon>
         </InputGroup>
       </section>
@@ -142,13 +142,13 @@ export function ComponentExamples() {
       <section aria-labelledby="task-example">
         <h2 id="task-example">The actual task row</h2>
         <p>
-          The downloadable starter below runs here too. Try completion,
-          renaming, notes, dates and subtasks. Data stays in this demonstration.
-          Opening it resets its sample state.
+          The real TaskRow component runs below with local example data. Try
+          completion, renaming, notes, dates and subtasks. Data stays in this
+          demonstration. Opening it resets its sample state.
         </p>
         <details className="docs-source">
-          <summary>Open the interactive prototype starter</summary>
-          <Prototype embedded />
+          <summary>Open the interactive task example</summary>
+          <ComponentDemo embedded />
         </details>
       </section>
     </div>

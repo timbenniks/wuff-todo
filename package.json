@@ -6,12 +6,11 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "pnpm build:prototype && pnpm build:mcp && pnpm --filter @wuff/web dev",
+    "dev": "pnpm build:guide && pnpm build:mcp && pnpm --filter @wuff/web dev",
     "preview:local": "pnpm build && pnpm --filter @wuff/web start",
-    "build": "pnpm build:prototype && pnpm build:mcp && pnpm --filter @wuff/web build",
-    "build:prototype": "node scripts/build-prototype-kit.mjs",
+    "build": "pnpm build:guide && pnpm build:mcp && pnpm --filter @wuff/web build",
     "typecheck": "pnpm -r typecheck && tsc --noEmit",
-    "test": "node --import tsx --test tests/contracts.test.ts tests/oauth-policy.test.ts tests/list-cache.test.ts tests/session-result.test.ts tests/page-session.test.ts tests/work-tasks.test.ts tests/list-view.test.ts tests/list-nesting.test.ts tests/dashboard.test.ts tests/live-refresh.test.ts tests/task-content.test.ts tests/editor-ordering.test.ts tests/task-images.test.ts tests/due-dates.test.ts tests/list-theme.test.ts tests/github-policy.test.ts tests/native-client.test.ts tests/tauri-auth.test.ts tests/native-socket.test.ts tests/native-features.test.ts tests/agents.test.ts tests/task-metadata.test.ts tests/reminders.test.ts",
+    "test": "node scripts/test-unit.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build",
@@ -24,7 +23,8 @@
     "build:native:web": "pnpm --filter @wuff/native build",
     "build:native": "pnpm --filter @wuff/native tauri build --no-bundle",
     "dev:mobile": "pnpm --filter @wuff/mobile start",
-    "build:mobile": "pnpm --filter @wuff/mobile export && node scripts/verify-mobile-bundle.mjs"
+    "build:mobile": "pnpm --filter @wuff/mobile export && node scripts/verify-mobile-bundle.mjs",
+    "build:guide": "node scripts/build-guide.mjs"
   },
   "devDependencies": {
     "@neon/realtime": "0.1.0",

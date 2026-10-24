@@ -37,11 +37,11 @@ Personal reminders and Settings are implemented. Scheduling, delivery-provider c
 
 ## Surfaces and boundaries
 
-The responsive website and MCP tools use the same authorized backend; the MCP App adds an embedded interface. An online-only Tauri client shares React components; installed-platform capabilities still need platform-specific proof. A browser prototype is not a native build or a live MCP-host test.
+The responsive website and MCP tools use the same authorized backend; the MCP App adds an embedded interface. An online-only Tauri client shares React components; installed-platform capabilities still need platform-specific proof. A browser preview is not a native build or a live MCP-host test.
 
 No offline list cache or queued offline edits. No arbitrary palette colors, dark mode, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
 
-This is the prototyping baseline, not a restriction on useful ideas. Clearly mark proposed changes to existing rules so Tim can assess them.
+These are implementation invariants. Clearly mark proposed changes and get Tim’s technical scope approval before changing them.
 
 ## Current interaction language
 

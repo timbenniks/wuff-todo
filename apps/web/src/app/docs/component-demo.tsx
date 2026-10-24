@@ -38,13 +38,13 @@ function task(title: string, position: number, id = crypto.randomUUID()): Task {
 const runtime: FeatureRuntime = {
   api: async () => {
     throw new Error(
-      "This interaction is not simulated yet. Your prototype has not contacted Wuff.",
+      "This interaction is not simulated yet. Your example has not contacted Wuff.",
     );
   },
   request: async () =>
     new Response(
       JSON.stringify({
-        error: "Prototype only: uploads and integrations need a local mock.",
+        error: "Example only: uploads and integrations need a local mock.",
       }),
       { status: 501 },
     ),
@@ -61,11 +61,11 @@ export function App({ embedded = false }: { embedded?: boolean }) {
     mode: "work",
     assignees: [],
     title: "Ideas for our pack",
-    ownerId: "prototype-person",
+    ownerId: "example-person",
     shared: false,
     version: 1,
     color: "blue",
-    description: "Synthetic examples. Refresh resets this prototype.",
+    description: "Synthetic examples. Refresh resets this example.",
     archived: false,
     sections: [],
     tasks: [
@@ -140,15 +140,15 @@ export function App({ embedded = false }: { embedded?: boolean }) {
         }));
       return { ...current, version: current.version + 1, tasks };
     });
-    setNotice("Updated in this prototype only.");
+    setNotice("Updated in this example only.");
     return true;
   };
   return (
     <RuntimeContext.Provider value={runtime}>
       {!embedded && <ListTheme color={list.color} />}
       <section
-        aria-label="Prototype workspace"
-        className="prototype"
+        aria-label="Example workspace"
+        className="example"
         style={listThemeVariables(list.color) as CSSProperties}
       >
         <header className="flex items-center gap-4">
@@ -163,7 +163,7 @@ export function App({ embedded = false }: { embedded?: boolean }) {
         <p className="mt-4 text-muted-foreground">
           {list.description} These controls use the real Wuff source.
         </p>
-        <div className="prototype-panel">
+        <div className="example-panel">
           <label htmlFor="palette" className="block font-semibold mb-2">
             List palette
           </label>
@@ -206,7 +206,7 @@ export function App({ embedded = false }: { embedded?: boolean }) {
             Add task
           </Button>
         </form>
-        <ul className="prototype-panel" aria-label="Prototype tasks">
+        <ul className="example-panel" aria-label="Example tasks">
           {list.tasks
             .filter((t) => !t.parentTaskId)
             .sort((a, b) => a.position - b.position)
@@ -236,15 +236,15 @@ export function App({ embedded = false }: { embedded?: boolean }) {
           ))}
         </div>
         <p className="mt-8 text-sm text-muted-foreground">
-          Save the prototype URL, source and screenshots with your final
-          specification.{" "}
+          This component example uses synthetic data and local state. Record
+          real feature behavior and checks in your PR.{" "}
           <a
             className="underline"
             href="https://wuff-todo.vercel.app/docs"
             target="_blank"
             rel="noreferrer"
           >
-            Read the Wuff design guide
+            Read the Wuff implementation guide
           </a>
           .
         </p>

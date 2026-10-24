@@ -5,9 +5,9 @@ import { DocsControls } from "./controls";
 import "./docs.css";
 
 export const metadata: Metadata = {
-  title: "Design & prototype guide · Wuff Todo",
+  title: "Implementation guide · Wuff Todo",
   description:
-    "Explore Wuff's real components, design decisions and product rules. Prototype a feature and prepare a clear handoff.",
+    "Implement Wuff features with its real components, product rules, approved scope and verified PR workflow.",
 };
 export default function DocsLayout({
   children,
@@ -28,7 +28,7 @@ export default function DocsLayout({
           <Corgi size={44} />
           <span>
             Wuff Todo
-            <span className="docs-caption">Design & prototype guide</span>
+            <span className="docs-caption">Implementation guide</span>
           </span>
         </Link>
         <Link className="docs-app-link" href="/lists">

@@ -6,6 +6,8 @@ Web and MCP are released. Online-only iPhone and Android development has started
 
 ## Project documents
 
+- [Contributor implementation guide](docs/implementation-guide.md): `/docs` product/design/component rules, contributor skill and approved feature-to-PR workflow.
+- [Build a feature safely](docs/contributor-workflow.md): workspace readiness, scope approval, verification and review requirements.
 - [Start here: current status and next build](docs/implementation-plan.md): handoff for a new agent; current scope and remaining work.
 - [Product specification](docs/product-spec.md): confirmed scope, permissions, behavior, and acceptance criteria.
 - [Architecture](docs/architecture.md): monorepo layout, backend boundaries, authentication, and deployment.
