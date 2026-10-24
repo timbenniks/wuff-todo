@@ -2,6 +2,21 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Contributor preview build failure — October 24, 2026
+
+PR #22 deployment `D3koosgLtjQAnNxUEJ8L882AnAZN` failed because
+`.vercelignore` removed the contributor skill required by `build:guide`.
+The deployment log showed the removed file and an ENOENT at that exact path.
+The ignore rules now admit only `.agents/skills/wuff-contributor/SKILL.md`
+while excluding other agent skills/files. Local `pnpm check` passed TypeScript,
+all 119 unit tests and the optimized guide/MCP/web build. Hosted packaging must
+also be verified on the replacement Vercel preview; local builds alone did not
+exercise the original exclusion.
+
+The separate Actions job for commit `9878b20` failed before any steps because
+GitHub reported failed account payments or a spending limit. This is an external
+runner blocker, not a passing or executed test suite. The PR stays a draft.
+
 ## Contributor unit tests and instruction clarity — October 24, 2026
 
 Root AGENTS.md now explicitly requires meaningful unit coverage for every changed

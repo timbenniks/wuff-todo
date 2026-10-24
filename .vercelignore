@@ -1,6 +1,11 @@
 .git
 .vercel
-.agents
+.agents/*
+!.agents/skills
+.agents/skills/*
+!.agents/skills/wuff-contributor
+.agents/skills/wuff-contributor/*
+!.agents/skills/wuff-contributor/SKILL.md
 .env*
 node_modules
 **/node_modules
