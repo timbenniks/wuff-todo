@@ -286,15 +286,33 @@ export function TaskGroups({
         />
       )}
       {list.archived && (
-        <p
+        <div
           role="status"
           className="rounded-xl border border-border bg-surface p-4 text-sm mb-6"
         >
-          This list is taking a paws in the archive.{" "}
-          {owner
-            ? "Restore it in List settings to make changes."
-            : "Its owner can restore it so you can make changes again."}
-        </p>
+          <p>
+            This list is archived. Tasks, subtasks and sharing are kept.{" "}
+            {owner
+              ? "Restore it to edit again."
+              : "Ask its owner to restore it so you can edit again."}
+          </p>
+          {owner && (
+            <Button
+              className="mt-3"
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                change(`/api/v1/lists/${list.id}`, "PATCH", {
+                  listId: list.id,
+                  version: list.version,
+                  archived: false,
+                })
+              }
+            >
+              Restore list
+            </Button>
+          )}
+        </div>
       )}
       <ListViewControls
         retry={retry}

@@ -1,4 +1,5 @@
 "use client";
+import { containDialogFocus } from "../../components/dialog-focus";
 import { ListReminders } from "../../components/reminders/list-reminders";
 import { Textarea } from "../../../textarea";
 import { NativeSelect } from "../../../native-select";
@@ -12,6 +13,7 @@ import {
   Settings,
   Star,
   X,
+  Users,
 } from "lucide-react";
 import {
   listColors,
@@ -179,11 +181,12 @@ function ListLocation({
 export function ListSettings({
   list,
   userId,
-  busy,
+  busy: writing,
   change,
   retry,
   sidebar,
   actions,
+  people,
 }: {
   list: TodoList;
   userId: string;
@@ -192,8 +195,22 @@ export function ListSettings({
   retry?: () => Promise<boolean>;
   sidebar?: SidebarLocation;
   actions?: ReactNode;
+  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;
 }) {
+  const [peopleBusy, setPeopleBusy] = useState(false);
+  const busy = writing || peopleBusy;
   const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement | null>(null);
+  const [page, setPage] = useState("details");
+  const [baseline, setBaseline] = useState(
+    JSON.stringify({
+      title: list.title,
+      description: list.description,
+      color: list.color,
+      mode: list.mode,
+      version: list.version,
+    }),
+  );
   const [draft, setDraft] = useState({
     title: list.title,
     description: list.description,
@@ -212,7 +229,22 @@ export function ListSettings({
       mode: list.mode,
       version: list.version,
     });
+    setBaseline(
+      JSON.stringify({
+        title: list.title,
+        description: list.description,
+        color: list.color,
+        mode: list.mode,
+        version: list.version,
+      }),
+    );
     setFailed(false);
+  }
+  function open(next: string, element: HTMLButtonElement) {
+    trigger.current = element;
+    if (JSON.stringify(draft) === baseline) load();
+    setPage(next);
+    dialog.current?.showModal();
   }
   return (
     <>
@@ -222,14 +254,25 @@ export function ListSettings({
         aria-label="List settings"
         title="List settings"
         disabled={busy}
-        onClick={() => {
-          load();
-          dialog.current?.showModal();
-        }}
+        onClick={(e) => open("details", e.currentTarget)}
       >
         <Settings size={20} aria-hidden="true" />
       </Button>
+      {people && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="People"
+          title="People"
+          disabled={busy}
+          onClick={(e) => open("people", e.currentTarget)}
+        >
+          <Users size={20} aria-hidden="true" />
+        </Button>
+      )}
       <dialog
+        onKeyDown={containDialogFocus}
+        onClose={() => trigger.current?.focus()}
         ref={dialog}
         aria-labelledby={`settings-${list.id}`}
         onCancel={(e) => {
@@ -243,7 +286,7 @@ export function ListSettings({
               List settings
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              List details and your personal preferences.
+              Shared list controls and preferences just for you.
             </p>
           </div>
           <Button
@@ -259,8 +302,8 @@ export function ListSettings({
         <p className="text-sm text-muted-foreground mb-4 break-words">
           {list.title} ·{" "}
           {list.ownerId === userId
-            ? "Your list · Pack leader"
-            : "Shared with your pack"}
+            ? `${list.shared ? "Shared" : "Private"} · Owner`
+            : "Shared · Editor"}
           {list.mode === "work" && " · Work"}
         </p>
         {list.ownerId !== userId && list.description && (
@@ -268,200 +311,262 @@ export function ListSettings({
             {list.description}
           </p>
         )}
-        <div className="flex flex-wrap gap-2 mb-5">{actions}</div>
-        {list.ownerId === userId && (
-          <>
-            <form
-              className="grid gap-5"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setFailed(false);
-                const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
-                  listId: list.id,
-                  ...draft,
-                });
-                if (ok) dialog.current?.close();
-                else setFailed(true);
-              }}
-            >
-              <label className="grid gap-2 text-sm font-semibold">
-                List name
-                <Input
-                  value={draft.title}
-                  required
-                  maxLength={300}
-                  readOnly={busy}
-                  onChange={(e) =>
-                    setDraft({ ...draft, title: e.target.value })
-                  }
-                />
-              </label>
-              <label className="grid gap-2 text-sm font-semibold">
-                List type
-                <NativeSelect
-                  aria-label="List type"
-                  value={draft.mode}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      mode: e.target.value as TodoList["mode"],
-                    })
-                  }
-                >
-                  <option value="simple">Simple</option>
-                  <option value="work">Work</option>
-                </NativeSelect>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Work adds workflow, priority and links. Share the list to
-                  assign tasks.
-                </span>
-              </label>
-              <label className="grid gap-2 text-sm font-semibold">
-                Description
-                <Textarea
-                  rows={4}
-                  maxLength={4000}
-                  placeholder="What’s the plan for your pack?"
-                  value={draft.description}
-                  onChange={(e) =>
-                    setDraft({ ...draft, description: e.target.value })
-                  }
-                />
-                <span className="font-normal text-xs text-muted-foreground">
-                  A few de-tails for your pack. Plain text, up to 4,000
-                  characters.
-                </span>
-              </label>
-              <fieldset>
-                <legend className="text-sm font-semibold mb-3">
-                  List color
-                </legend>
-                <p className="text-xs text-muted-foreground mb-3">
-                  This color themes the app while you’re in this list, including
-                  backgrounds, text and controls.
-                </p>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                  {listColors.map((color) => {
-                    const p = listPalette[color];
-                    return (
-                      <label
-                        key={color}
-                        className="relative cursor-pointer text-center text-xs grid justify-items-center gap-2 rounded-xl p-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
-                        style={{
-                          background:
-                            draft.color === color ? p.tint : undefined,
-                        }}
-                      >
-                        <input
-                          className="sr-only"
-                          type="radio"
-                          name="color"
-                          value={color}
-                          checked={draft.color === color}
-                          onChange={() =>
-                            setDraft({ ...draft, color: color as ListColor })
-                          }
-                        />
-                        <span
-                          className="rounded-full w-8 h-8 flex items-center justify-center text-white"
-                          style={{ background: p.accent }}
-                        >
-                          {draft.color === color && <Check size={17} />}
-                        </span>
-                        {p.label}
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-              {list.version !== draft.version && (
-                <div
-                  role="status"
-                  className="text-sm rounded-xl bg-amber-50 p-3"
-                >
-                  <p>
-                    New de-tails arrived while you were editing. Your draft is
-                    still here.
+        <nav aria-label="List settings pages" className="management-pages">
+          {[
+            ["details", "List details"],
+            ["people", "People"],
+            ["personal", "Only for me"],
+            ["manage", "Manage list"],
+          ]
+            .filter(([id]) => id !== "people" || people)
+            .map(([id, label]) => (
+              <Button
+                key={id}
+                type="button"
+                variant={page === id ? "primary" : "ghost"}
+                aria-current={page === id ? "page" : undefined}
+                disabled={busy}
+                onClick={() => setPage(id)}
+              >
+                {label}
+              </Button>
+            ))}
+        </nav>
+        <div hidden={page !== "people"}>
+          {people?.(page === "people", setPeopleBusy)}
+        </div>
+        <section hidden={page !== "details"} aria-label="List details">
+          {list.ownerId !== userId && (
+            <p className="text-sm mb-4">
+              You can edit tasks and subtasks. Ask the owner to change this
+              list’s name, type, description or color.
+            </p>
+          )}
+          {list.ownerId === userId && (
+            <>
+              <form
+                className="grid gap-5"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setFailed(false);
+                  const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
+                    listId: list.id,
+                    ...draft,
+                  });
+                  if (ok) {
+                    setBaseline(JSON.stringify(draft));
+                    dialog.current?.close();
+                  } else setFailed(true);
+                }}
+              >
+                <label className="grid gap-2 text-sm font-semibold">
+                  List name
+                  <Input
+                    value={draft.title}
+                    required
+                    maxLength={300}
+                    readOnly={busy}
+                    onChange={(e) =>
+                      setDraft({ ...draft, title: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-semibold">
+                  List type
+                  <NativeSelect
+                    aria-label="List type"
+                    value={draft.mode}
+                    disabled={busy}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        mode: e.target.value as TodoList["mode"],
+                      })
+                    }
+                  >
+                    <option value="simple">Simple</option>
+                    <option value="work">Work</option>
+                  </NativeSelect>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    Work adds workflow, priority and links. Share the list to
+                    assign tasks.
+                  </span>
+                </label>
+                <label className="grid gap-2 text-sm font-semibold">
+                  Description
+                  <Textarea
+                    rows={4}
+                    maxLength={4000}
+                    placeholder="What’s the plan for your pack?"
+                    value={draft.description}
+                    onChange={(e) =>
+                      setDraft({ ...draft, description: e.target.value })
+                    }
+                  />
+                  <span className="font-normal text-xs text-muted-foreground">
+                    A few de-tails for your pack. Plain text, up to 4,000
+                    characters.
+                  </span>
+                </label>
+                <fieldset>
+                  <legend className="text-sm font-semibold mb-3">
+                    List color
+                  </legend>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    This color themes the app while you’re in this list,
+                    including backgrounds, text and controls.
                   </p>
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                    {listColors.map((color) => {
+                      const p = listPalette[color];
+                      return (
+                        <label
+                          key={color}
+                          className="relative cursor-pointer text-center text-xs grid justify-items-center gap-2 rounded-xl p-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
+                          style={{
+                            background:
+                              draft.color === color ? p.tint : undefined,
+                          }}
+                        >
+                          <input
+                            className="sr-only"
+                            type="radio"
+                            name="color"
+                            value={color}
+                            checked={draft.color === color}
+                            onChange={() =>
+                              setDraft({ ...draft, color: color as ListColor })
+                            }
+                          />
+                          <span
+                            className="rounded-full w-8 h-8 flex items-center justify-center text-white"
+                            style={{ background: p.accent }}
+                          >
+                            {draft.color === color && <Check size={17} />}
+                          </span>
+                          {p.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                {list.version !== draft.version && (
+                  <div
+                    role="status"
+                    className="text-sm rounded-xl bg-amber-50 p-3"
+                  >
+                    <p>
+                      New de-tails arrived while you were editing. Your draft is
+                      still here.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={load}
+                    >
+                      Load latest settings
+                    </Button>
+                  </div>
+                )}
+                {failed && (
+                  <p role="alert" className="text-sm text-red-800">
+                    Ruff patch! Settings weren’t saved. Check the list’s error
+                    message or load its latest settings, then try again.
+                  </p>
+                )}
+                {retry && (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={load}
+                    variant="outline"
+                    disabled={busy}
+                    onClick={async () => {
+                      if (await retry()) dialog.current?.close();
+                    }}
                   >
-                    Load latest settings
+                    Retry same request
                   </Button>
-                </div>
-              )}
-              {failed && (
-                <p role="alert" className="text-sm text-red-800">
-                  Ruff patch! Settings weren’t saved. Check the list’s error
-                  message or load its latest settings, then try again.
-                </p>
-              )}
-              {retry && (
+                )}
                 <Button
-                  type="button"
+                  disabled={busy}
+                  type="submit"
+                  variant="primary"
+                  aria-label={busy ? "Saving settings" : "Save settings"}
+                  title="Save settings"
+                >
+                  <Check size={18} aria-hidden="true" />{" "}
+                  {busy ? "Saving…" : "Save changes"}
+                </Button>
+              </form>
+            </>
+          )}
+        </section>
+        <section hidden={page !== "manage"} aria-label="Manage list">
+          {list.ownerId !== userId && (
+            <p className="text-sm">
+              Only the owner can archive, restore or delete this list. Open
+              People to leave the list.
+            </p>
+          )}
+          {list.ownerId === userId && (
+            <>
+              <div className="border-t border-border mt-6 pt-5">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {list.archived
+                    ? "Restore this list so everyone with access can edit tasks again."
+                    : "Archive hides this list from active lists for everyone. Tasks, subtasks and sharing are kept; you can restore it later."}
+                </p>
+                <Button
                   variant="outline"
                   disabled={busy}
                   onClick={async () => {
-                    if (await retry()) dialog.current?.close();
+                    const ok = await change(
+                      `/api/v1/lists/${list.id}`,
+                      "PATCH",
+                      {
+                        listId: list.id,
+                        version: list.version,
+                        archived: !list.archived,
+                      },
+                    );
+                    if (ok) dialog.current?.close();
                   }}
                 >
-                  Retry same request
+                  {list.archived ? (
+                    <ArchiveRestore size={16} />
+                  ) : (
+                    <Archive size={16} />
+                  )}{" "}
+                  {list.archived ? "Restore list" : "Archive list"}
                 </Button>
-              )}
-              <Button
-                disabled={busy}
-                type="submit"
-                variant="primary"
-                aria-label={busy ? "Saving settings" : "Save settings"}
-                title="Save settings"
-              >
-                <Check size={18} aria-hidden="true" />{" "}
-                {busy ? "Saving…" : "Save changes"}
-              </Button>
-            </form>
-            <div className="border-t border-border mt-6 pt-5">
-              <p className="text-sm text-muted-foreground mb-3">
-                {list.archived
-                  ? "Paws over? Restore this list so everyone can edit its tasks again."
-                  : "Let this list take a paws for everyone. Its tasks and sharing are kept."}
-              </p>
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={async () => {
-                  const ok = await change(`/api/v1/lists/${list.id}`, "PATCH", {
-                    listId: list.id,
-                    version: list.version,
-                    archived: !list.archived,
-                  });
-                  if (ok) dialog.current?.close();
-                }}
-              >
-                {list.archived ? (
-                  <ArchiveRestore size={16} />
-                ) : (
-                  <Archive size={16} />
-                )}{" "}
-                {list.archived ? "Restore list" : "Archive list"}
-              </Button>
-            </div>
-          </>
-        )}
-        <div className="mt-6">
-          {sidebar && (
-            <ListLocation
-              key={`${list.id}:${opened}`}
-              list={list}
-              busy={busy}
-              {...sidebar}
-            />
+              </div>
+            </>
           )}
-        </div>
-        <ListReminders key={list.id} listId={list.id} userId={userId} />
+          <div className="border-t border-border mt-6 pt-5">
+            <h3 className="font-semibold mb-2">Delete permanently</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Delete removes this list, its tasks and subtasks for everyone.
+              Child lists in your sidebar are kept. This cannot be undone.
+            </p>
+            {actions}
+          </div>
+        </section>
+        <section hidden={page !== "personal"} aria-label="Only for me">
+          <p className="text-sm text-muted-foreground mb-3">
+            These preferences affect only your account.
+          </p>
+          <div className="mt-6">
+            {sidebar && (
+              <ListLocation
+                key={`${list.id}:${opened}`}
+                list={list}
+                busy={busy}
+                {...sidebar}
+              />
+            )}
+          </div>
+          <ListReminders key={list.id} listId={list.id} userId={userId} />
+        </section>
       </dialog>
     </>
   );

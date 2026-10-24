@@ -1,4 +1,5 @@
 "use client";
+import { containDialogFocus } from "../../components/dialog-focus";
 import { Input } from "../../../input";
 
 import { wuffCopy, wuffError } from "../../lib/copy";
@@ -191,10 +192,16 @@ export function SharingDialog({
   userId,
   disabled,
   onChanged,
+  embedded = false,
+  active = true,
+  onBusyChange,
 }: {
   list: TodoList;
   userId: string;
   disabled: boolean;
+  embedded?: boolean;
+  active?: boolean;
+  onBusyChange?: (busy: boolean) => void;
   onChanged: (id: string, left?: boolean) => Promise<void>;
 }) {
   const api = useActorApi();
@@ -219,6 +226,9 @@ export function SharingDialog({
       await onChanged(list.id);
     }
   });
+  useEffect(() => {
+    onBusyChange?.(mutation.busy);
+  }, [mutation.busy, onBusyChange]);
   const refresh = useCallback(async () => {
     const epoch = ++revision.current;
     try {
@@ -240,8 +250,8 @@ export function SharingDialog({
     }
   }, [list.id, api]);
   useEffect(() => {
-    if (!open) return;
-    dialog.current?.showModal();
+    if (!(embedded ? active : open)) return;
+    if (!embedded) dialog.current?.showModal();
     void refresh();
     const update = () => {
       if (!document.hidden && !mutation.pending.current) void refresh();
@@ -253,7 +263,7 @@ export function SharingDialog({
       clearInterval(timer);
       window.removeEventListener("focus", update);
     };
-  }, [open, refresh, mutation.pending]);
+  }, [open, embedded, active, refresh, mutation.pending]);
   async function change(
     path: string,
     method: string,
@@ -274,207 +284,224 @@ export function SharingDialog({
     if (!ok) await refresh();
     return ok;
   }
-  return (
+  const content = (
     <>
-      <Button
-        variant="outline"
-        aria-label={owner ? "Share" : "People"}
-        title={owner ? "Share" : "People"}
-        disabled={disabled}
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <Users size={16} aria-hidden="true" /> {owner ? "Share" : "People"}
-      </Button>
-      <dialog
-        ref={dialog}
-        aria-labelledby={`sharing-title-${list.id}`}
-        onClose={() => setOpen(false)}
-        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
-      >
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="min-w-0">
-            <h2 id={`sharing-title-${list.id}`} className="text-2xl font-bold">
-              Share with your pack
-            </h2>
-            <p className="text-sm text-muted-foreground break-words mt-1">
-              {list.title}
-            </p>
-          </div>
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="min-w-0">
+          <h2 id={`sharing-title-${list.id}`} className="text-2xl font-bold">
+            People
+          </h2>
+          <p className="text-sm text-muted-foreground break-words mt-1">
+            {list.title}
+          </p>
+        </div>
+        {!embedded && (
           <Button
             variant="ghost"
             size="icon"
             aria-label="Close sharing"
+            disabled={mutation.busy}
             onClick={() => dialog.current?.close()}
           >
             <X size={18} />
           </Button>
-        </div>
-        <div className="grid gap-5">
-          {readError && (
-            <div role="alert">
-              <p className="text-sm text-red-800">{readError}</p>
-              <Button size="sm" variant="outline" onClick={refresh}>
-                Refresh sharing
-              </Button>
-            </div>
-          )}
-          {!sharing && !readError && <p role="status">Fetching your pack…</p>}
-          {sharing && (
-            <>
-              <section aria-label="People with access" className="grid gap-3">
-                <Person
-                  name={sharing.owner.name}
-                  email={sharing.owner.email}
-                  role="Owner"
-                />
-                {sharing.members.map((person) => (
-                  <div key={person.id} className="flex items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <Person
-                        name={person.name}
-                        email={person.email}
-                        role="Editor"
-                      />
-                    </div>
-                    {owner && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`Remove ${person.name}`}
-                        disabled={mutation.busy || !!mutation.retry}
-                        onClick={() =>
-                          change(
-                            `/api/v1/lists/${list.id}/members/${encodeURIComponent(person.id)}`,
-                            "DELETE",
-                            {},
-                          )
-                        }
-                      >
-                        Remove
-                      </Button>
-                    )}
+        )}
+      </div>
+      <div className="grid gap-5">
+        {readError && (
+          <div role="alert">
+            <p className="text-sm text-red-800">{readError}</p>
+            <Button size="sm" variant="outline" onClick={refresh}>
+              Refresh sharing
+            </Button>
+          </div>
+        )}
+        {!sharing && !readError && <p role="status">Loading people…</p>}
+        {sharing && (
+          <>
+            <section aria-label="People with access" className="grid gap-3">
+              <Person
+                name={sharing.owner.name}
+                email={sharing.owner.email}
+                role="Owner"
+              />
+              {sharing.members.map((person) => (
+                <div key={person.id} className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <Person
+                      name={person.name}
+                      email={person.email}
+                      role="Editor"
+                    />
                   </div>
-                ))}
-              </section>
-              <p className="text-sm text-muted-foreground">
-                Pack rules: editors can change tasks. Only the owner can rename,
-                delete, or share the list.
-              </p>
-              {owner ? (
-                <>
-                  <form
-                    className="grid gap-2 border-t border-border pt-5"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (
-                        await change(
-                          `/api/v1/lists/${list.id}/invitations`,
-                          "POST",
-                          { email },
+                  {owner && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Remove ${person.name}`}
+                      disabled={mutation.busy || !!mutation.retry}
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            `Remove ${person.name}? They’ll lose access to this list and its tasks.`,
+                          )
                         )
-                      )
-                        setEmail("");
-                    }}
-                  >
-                    <label
-                      htmlFor={`invite-${list.id}`}
-                      className="text-sm font-semibold"
+                          return;
+                        void change(
+                          `/api/v1/lists/${list.id}/members/${encodeURIComponent(person.id)}`,
+                          "DELETE",
+                          {},
+                        );
+                      }}
                     >
-                      Invite someone to your pack
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <Input
-                        id={`invite-${list.id}`}
-                        type="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Their Wuff account email"
-                        required
-                        maxLength={254}
-                        className="min-w-0 flex-1 basis-48"
-                      />
-                      <Button
-                        variant="primary"
-                        disabled={mutation.busy || !!mutation.retry}
-                      >
-                        Invite
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Roll out the wag-on: they’ll see an invitation in Wuff.
-                      They need an existing account. No email is sent.
-                    </p>
-                  </form>
-                  {sharing.invitations.length > 0 && (
-                    <section
-                      aria-label="Pending invitations"
-                      className="grid gap-3"
-                    >
-                      <h3 className="text-sm font-semibold">
-                        Awaiting a tail wag · Pending invitations
-                      </h3>
-                      {sharing.invitations.map((invite) => (
-                        <div
-                          key={invite.id}
-                          className="flex items-center gap-3"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm break-words">
-                              {invite.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Expires{" "}
-                              {new Date(invite.expiresAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={mutation.busy || !!mutation.retry}
-                            aria-label={`Cancel invitation to ${invite.email}`}
-                            onClick={() =>
-                              change(
-                                `/api/v1/lists/${list.id}/invitations/${invite.id}`,
-                                "DELETE",
-                                {},
-                              )
-                            }
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ))}
-                    </section>
+                      Remove
+                    </Button>
                   )}
-                </>
-              ) : (
-                <Button
-                  variant="outline"
-                  disabled={mutation.busy || !!mutation.retry}
-                  onClick={() =>
-                    change(`/api/v1/lists/${list.id}/leave`, "POST", {})
-                  }
+                </div>
+              ))}
+            </section>
+            <p className="text-sm text-muted-foreground">
+              Editors can change tasks and subtasks. Only the owner can change
+              list details, manage access, archive or delete the list.
+            </p>
+            {owner ? (
+              <>
+                <form
+                  className="grid gap-2 border-t border-border pt-5"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (
+                      await change(
+                        `/api/v1/lists/${list.id}/invitations`,
+                        "POST",
+                        { email },
+                      )
+                    )
+                      setEmail("");
+                  }}
                 >
-                  Leave list
-                </Button>
-              )}
-            </>
-          )}
-          {mutation.busy && (
-            <p role="status" className="text-sm text-muted-foreground">
-              {wuffCopy.savingSharing}
-            </p>
-          )}
-          <MutationError mutation={mutation} />
-          {notice && (
-            <p role="status" className="text-sm text-muted-foreground">
-              {notice}
-            </p>
-          )}
-        </div>
+                  <label
+                    htmlFor={`invite-${list.id}`}
+                    className="text-sm font-semibold"
+                  >
+                    Invite an editor
+                  </label>
+                  <div className="sharing-invite-fields">
+                    <Input
+                      id={`invite-${list.id}`}
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Their Wuff account email"
+                      required
+                      maxLength={254}
+                      className="min-w-0 flex-1 basis-48"
+                    />
+                    <Button
+                      variant="primary"
+                      disabled={mutation.busy || !!mutation.retry}
+                    >
+                      Invite
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    They’ll see a pending invitation in Wuff. They need an
+                    existing account. No email is sent.
+                  </p>
+                </form>
+                {sharing.invitations.length > 0 && (
+                  <section
+                    aria-label="Pending invitations"
+                    className="grid gap-3"
+                  >
+                    <h3 className="text-sm font-semibold">
+                      Pending invitations
+                    </h3>
+                    {sharing.invitations.map((invite) => (
+                      <div key={invite.id} className="flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm break-words">{invite.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Expires{" "}
+                            {new Date(invite.expiresAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={mutation.busy || !!mutation.retry}
+                          aria-label={`Cancel invitation to ${invite.email}`}
+                          onClick={() =>
+                            change(
+                              `/api/v1/lists/${list.id}/invitations/${invite.id}`,
+                              "DELETE",
+                              {},
+                            )
+                          }
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ))}
+                  </section>
+                )}
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                disabled={mutation.busy || !!mutation.retry}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Leave this list? You’ll lose access to its tasks and subtasks. The owner can invite you again.",
+                    )
+                  )
+                    void change(`/api/v1/lists/${list.id}/leave`, "POST", {});
+                }}
+              >
+                Leave list
+              </Button>
+            )}
+          </>
+        )}
+        {mutation.busy && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {wuffCopy.savingSharing}
+          </p>
+        )}
+        <MutationError mutation={mutation} />
+        {notice && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {notice}
+          </p>
+        )}
+      </div>
+    </>
+  );
+  if (embedded) return <section aria-label="List people" className="list-people">{content}</section>;
+  return (
+    <>
+      <Button
+        variant="outline"
+        aria-label="People"
+        title="People"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        <Users size={16} aria-hidden="true" /> People
+      </Button>
+      <dialog
+        ref={dialog}
+        onKeyDown={containDialogFocus}
+        aria-labelledby={`sharing-title-${list.id}`}
+        onCancel={(e) => {
+          if (mutation.busy) e.preventDefault();
+        }}
+        onClose={() => setOpen(false)}
+        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
+      >
+        {content}
       </dialog>
     </>
   );

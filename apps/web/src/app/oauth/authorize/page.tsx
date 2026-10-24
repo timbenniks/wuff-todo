@@ -23,9 +23,18 @@ export default async function AuthorizePage({
     return (
       <main className="max-w-md mx-auto px-6 py-24">
         <h1 className="text-3xl font-bold mb-4">
-          Ruff request! This connection isn’t valid.
+          This connection request is invalid or expired.
         </h1>
-        <p>Head back to your AI pal and give this connection another sniff.</p>
+        <p>
+          Return to the app that started this connection and connect again.
+          Reloading this page cannot repair the request.
+        </p>
+        <a
+          className="inline-flex min-h-11 items-center mt-4 text-primary underline"
+          href="/lists"
+        >
+          Back to lists
+        </a>
       </main>
     );
   }

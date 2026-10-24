@@ -509,3 +509,40 @@ Visually reviewed [phone Home](screenshots/ux-phase-three-home-390.png),
 
 Phase 3 is **locally complete; production release pending**. Phase 4 is shared
 management and recovery.
+
+## UX improvement Phase 4 — October 24, 2026
+
+List settings now uses one dialog with List details, People, Only for me and
+Manage list pages. A direct People button opens that same dialog. Owner/editor
+and Private/Shared cues are literal. Page switches and closing/reopening retain
+unsaved owner details; loading latest is explicit. People separates access from
+pending in-app invitations and explains that no email is sent. Removal/leave and
+permanent deletion explain their consequences and require confirmation. Archive
+is separate from deletion; archived owners have direct Restore on the list while
+editors receive owner guidance. Wuff unavailable/error pages offer safe list/retry
+exits and invalid OAuth requests instruct restarting from the originating app.
+No sharing, ownership, version or API/MCP contract changed.
+
+Local verification uses `scripts/verify-ux-phase-four.ts` against the optimized
+website and the isolated development branch: one active settings modal, direct
+People, literal roles, retained details through page switches and invitations,
+committed/lost invitation response with identical retry payload/operation ID and
+one pending invitation, recipient acceptance, editor restrictions, cancelled
+leave/delete, member removal and denied access, archive/direct restore with tasks
+preserved, safe unavailable-task and invalid-OAuth exits. Screenshots cover Basic
+People/archive at 320/390/1280px. A first pass exposed 320px invitation-field
+min-content overflow; a bounded grid and wrapping content corrected it.
+
+`pnpm typecheck`, `pnpm test` (91 passing), optimized web/MCP/prototype `pnpm build`, and
+`pnpm build:native:web` passed (existing docs CSS and native size advisories).
+`node --env-file=.env.local --import tsx --test --test-concurrency=1
+ tests/domain.integration.test.ts tests/list-features.integration.test.ts` passed
+all nine existing real development integration cases. These additionally prove
+private/shared permissions, owner management, revocation, admission, exact
+retries, concurrency, ordering, invitation expiry/decline/cancel/accept races,
+archive boundaries, sections and personal order isolation.
+
+Disposable list/task/invitation/membership fixtures are deleted in finally. No
+production data, schema, provider connection or paid action was changed. Local
+browser/contract proof does not certify physical devices or screen readers.
+Production release remains pending.

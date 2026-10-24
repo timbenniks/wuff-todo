@@ -974,17 +974,19 @@ export function ListApp({
                     userId={userId}
                     busy={busy}
                     change={change}
+                    people={(active, setBusy) => (
+                      <SharingDialog
+                        embedded
+                        onBusyChange={setBusy}
+                        active={active}
+                        list={list}
+                        userId={userId}
+                        disabled={busy}
+                        onChanged={sharingChanged}
+                      />
+                    )}
                     actions={
                       <>
-                        {!isPending && (
-                          <SharingDialog
-                            key={`sharing:${list.id}`}
-                            list={list}
-                            userId={userId}
-                            disabled={busy}
-                            onChanged={sharingChanged}
-                          />
-                        )}
                         {list.ownerId === userId && !isPending && (
                           <div className="contents">
                             <Button

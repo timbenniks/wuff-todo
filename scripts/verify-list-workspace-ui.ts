@@ -187,14 +187,11 @@ try {
       await expect(
         settings.getByRole("textbox", { name: "List name", exact: true }),
       ).toBeVisible();
-      await expect(
-        settings.getByRole("button", { name: "Delete list", exact: true }),
-      ).toBeVisible();
-      await settings
-        .getByRole("button", { name: "Share", exact: true })
-        .click();
-      await expect(panel("Share with your pack")).toBeVisible();
-      await tool("Close sharing").click();
+      await settings.getByRole("button", {name:"Manage list",exact:true}).click();
+      await expect(settings.getByRole("button", { name: "Delete list", exact: true })).toBeVisible();
+      await settings.getByRole("button", {name:"People",exact:true}).click();
+      await expect(settings.getByRole("region", {name:"List people",exact:true})).toBeVisible();
+      assert.equal(await page.locator("dialog[open]").count(), 1);
       await expect(settings).toBeVisible();
       await tool("Close list settings").click();
     }
@@ -232,9 +229,11 @@ try {
     assert.match(dialog.message(), /cannot be undone/);
     await dialog.dismiss();
   });
+  await settings.getByRole("button", {name:"Manage list",exact:true}).click();
   await settings
     .getByRole("button", { name: "Delete list", exact: true })
     .click();
+  await settings.getByRole("button", {name:"List details",exact:true}).click();
   assert.equal((await getList(actor, work.id)).title, longTitle);
   await settings
     .getByRole("textbox", { name: "List name", exact: true })

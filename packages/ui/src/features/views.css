@@ -1252,3 +1252,11 @@ button:focus-visible {
   flex: 1;
   min-width: 0;
 }
+
+.management-pages { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--wuff-border); }
+.management-pages > button { min-height:44px; }
+
+.list-people { min-width:0; overflow-wrap:anywhere; }
+.list-people :where(div, form, section) { min-width:0; }
+.sharing-invite-fields { display:grid; gap:8px; }
+@media(min-width:480px) { .sharing-invite-fields { grid-template-columns:minmax(0,1fr) auto; } }

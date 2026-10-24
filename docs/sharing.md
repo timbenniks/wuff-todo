@@ -39,3 +39,13 @@ Shared lists show a small people icon beside their title in the website sidebar,
 List summaries and snapshots expose an additive `shared` boolean from current membership records. A pending invitation alone does not mark a list shared. Owners and editors receive the same status; removing the last editor returns the list to private. Existing live refresh/polling updates the catalog, and mutation snapshots retain the status when updating the sidebar. No migration or permission change is needed.
 
 Verification: `pnpm check` passed (workspace/root TypeScript, 56 unit tests, optimized web/MCP builds). The focused isolated-development identity-bound invitation integration test passed with assertions for pending invitations, accepted owner/editor snapshots/catalogs and removal of the last member. The final MCP tag styling was bundled again successfully with `pnpm build:mcp`. A signed-in synthetic browser on the local production build showed the people icon and accessible label only on the shared preview list, alongside private lists. [Desktop screenshot](screenshots/sidebar-sharing-desktop.png). The disposable shared preview was removed after inspection. No production deployment, responsive viewport review, physical-device or named MCP-host UI verification was performed for this change.
+
+## UX management update — October 24
+
+Locally implemented, production pending: direct People and List settings open the
+same management dialog. List details and owner-only archive/delete actions are
+separate from People and Only for me preferences. Pending invitations are labeled
+as in-app requests requiring an existing account. Closing/reopening or visiting
+another settings page retains an unsaved owner draft; Load latest settings is
+explicit. Access removal and leave confirm their effects on list/task access.
+The existing domain permissions and retry-safe operations remain authoritative.

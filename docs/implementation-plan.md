@@ -19,8 +19,10 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   Phase 3 is locally complete: Home capture/completion/Reopen, task details in
   context, and a collapsed Completed group that preserves saved views and open
   children. See [Phase 3 evidence](verification.md#ux-improvement-phase-3--october-24-2026).
-  **Phase 4 (shared management and recovery) is next**, followed by readiness and
-  consistency. Phases 1–3 still require production release. This authorised UX work runs alongside the native milestone.
+  Phase 4 is locally complete: one management dialog, direct People, owner/editor
+  cues, direct archive restoration and safe recovery exits. See [Phase 4 evidence](verification.md#ux-improvement-phase-4--october-24-2026).
+  **Phase 5 (reminders and integration readiness) is next**, followed by consistency.
+  Phases 1–4 still require production release. This authorised UX work runs alongside the native milestone.
 
 - **Task-first phone lists (October 24):** compact sticky title/settings bar, on-demand list management and a phone View panel are implemented locally. See [design and verification scope](mobile-task-first.md); production release remains pending.
 

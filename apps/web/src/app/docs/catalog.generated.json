@@ -65,7 +65,7 @@
     "components": [
       {
         "name": "ListSettings",
-        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy,\n  change,\n  retry,\n  sidebar,\n  actions,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n})"
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy: writing,\n  change,\n  retry,\n  sidebar,\n  actions,\n  people,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;\n})"
       }
     ]
   },
@@ -89,7 +89,7 @@
       },
       {
         "name": "SharingDialog",
-        "signature": "export function SharingDialog({\n  list,\n  userId,\n  disabled,\n  onChanged,\n}: {\n  list: TodoList;\n  userId: string;\n  disabled: boolean;\n  onChanged: (id: string, left?: boolean) => Promise<void>;\n})"
+        "signature": "export function SharingDialog({\n  list,\n  userId,\n  disabled,\n  onChanged,\n  embedded = false,\n  active = true,\n  onBusyChange,\n}: {\n  list: TodoList;\n  userId: string;\n  disabled: boolean;\n  embedded?: boolean;\n  active?: boolean;\n  onBusyChange?: (busy: boolean) => void;\n  onChanged: (id: string, left?: boolean) => Promise<void>;\n})"
       }
     ]
   },
