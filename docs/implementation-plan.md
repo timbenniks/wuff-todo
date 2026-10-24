@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Contributor GitHub safeguards (October 24):** owner mapping, PR template and
+  an activation payload are prepared. Private-repository protection is blocked by
+  the current GitHub plan; required checks are also blocked by runner billing.
+  No main-branch protection is claimed active. See [configuration and gates](contributor-github.md).
+
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.
   See [scope and acceptance](app-workspace-shell.md). Local browser/type/unit/build checks pass; production verification and installed

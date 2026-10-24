@@ -1,0 +1,3 @@
+# Every contributor change needs Tim's review when required owner reviews are enabled.
+# This includes this file, workflows, agent instructions and database migrations.
+* @timbenniks

@@ -2,6 +2,21 @@
 
 Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Contributor GitHub safeguards — October 24, 2026
+
+Live `gh` reads confirmed private `timbenniks/wuff-todo`, ADMIN access, default
+branch `main` and auto-merge disabled. Ruleset listing and main protection reads
+both returned HTTP 403 requiring GitHub Pro or a public repository. No protection
+was activated and repository visibility was preserved. Verify run 40093282223
+reported zero job steps; check annotations identify billing/spending limits.
+Actual required-check names and Actions app ID were read from main's check runs.
+
+Prepared CODEOWNERS, contributor delivery guidance, a PR template and a ruleset
+payload; see [activation and limits](contributor-github.md). File formatting,
+JSON parsing and diff whitespace checks cover these configuration/documentation
+changes. GitHub API acceptance of the payload and rejection of unauthorized
+contributor pushes/merges remain unverified until the plan block is resolved.
+
 ## Personal Home dashboard — October 23, 2026
 
 [WUFF-87](home-dashboard.md) adds a configurable personal Home: welcome/Waffles, Today, seven-day Coming up and Favorites. Settings control section order/visibility, reset and Home/last-list entry. Task previews preserve list/shared/parent context. Direct task/list links, authorization and shared revisions remain independent.

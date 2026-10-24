@@ -10,3 +10,16 @@ Start with `docs/implementation-plan.md` for current status and the next planned
 - Use Drizzle migrations and direct connections for schema changes. Do not modify auth-managed tables.
 - Test permissions, idempotency, concurrent updates, and OAuth flows with synthetic data. Distinguish builds from live integration proof.
 - Keep the UI concise, accessible, and consistent. Do not add scheduling or other deferred features without a request.
+
+## Contributor delivery
+
+- Implement features on a `codex/` branch and open a draft PR early. Commit and push
+  to that branch; do not push directly to `main`. Keep the PR current with scope,
+  preview, actual verification evidence and remaining technical work.
+- Stay within the agreed feature brief. Hand off database migrations, auth/access
+  changes, production operations and changes to GitHub safeguards to Tim unless
+  he explicitly authorizes that work. Explain the concrete proposed change.
+- Reuse existing UI components and tokens. Call out dependencies, global styling
+  changes and API contract changes in the PR for review.
+- Tim reviews and merges contributor work. Agent instructions are guidance;
+  [GitHub safeguards](docs/contributor-github.md) records actual enforcement and gates.
