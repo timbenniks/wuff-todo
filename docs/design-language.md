@@ -72,3 +72,13 @@ Before closing release validation, check the deployed signed-in list/task/settin
 ## Authenticated production follow-up — October 17
 
 The signed-in production list/task review saved all seven palettes and restored Slate; saved Detailed, verified it across reload, then restored/reloaded Compact. Formatted italic notes saved and rendered after reload. The generated smoke task records completion and explicit device/host limits. This closes the authenticated production interaction gap above. The same session subsequently verified real GitHub issue synchronization; see [GitHub sync](github-sync.md). Physical devices, manual screen-reader/zoom and named-host interactive checks remain separate.
+
+## UX language and dates — October 24
+
+Use Saved views for personal list display presets in user-facing copy. Save view
+updates the current view; Save as new view creates a name. Internal contract
+fields remain presets for compatibility. Role and destructive-action labels are
+literal; Waffles remains in supporting copy. All due-date surfaces reuse the
+same draft editor: shortcuts and Clear date stage a value, Save date commits it,
+and Cancel discards. A concurrent revision preserves the draft and requires an
+explicit latest-date load before another save.

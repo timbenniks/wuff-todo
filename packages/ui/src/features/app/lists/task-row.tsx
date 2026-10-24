@@ -383,6 +383,7 @@ export function TaskRow({
         )}
       </div>
       <TaskColumns
+        dueDrafts={dueDrafts}
         drafts={workDrafts}
         task={task}
         list={list}

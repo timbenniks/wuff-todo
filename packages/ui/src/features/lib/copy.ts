@@ -26,11 +26,6 @@ export function taskCount(count: number) {
 }
 
 export function wuffError(message: string) {
-  // Preserve an existing joke when an HTTP/MCP error crosses another adapter.
-  // Unknown errors still get a friendly prefix without losing their meaning.
-  return /^(?:Ruff|Wuff|Paws\b|Paw-some|That’s a (?:long tail|big pup)|Give it a name to bark|Your pack|Our pack|We lost the scent|A little paws|Fur-real)/.test(
-    message,
-  )
-    ? message
-    : `Ruff patch! ${message}`;
+  // Errors retain their concrete source message. Waffles stays in supporting copy.
+  return message;
 }

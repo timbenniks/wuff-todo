@@ -1,17 +1,17 @@
 "use client";
 import { Input } from "../../../input";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays, Check, Eraser, X } from "lucide-react";
 import { dueDateSchema, type Task, type TodoList } from "@wuff/contracts";
-import {
-  calendarDay,
-  dueDatePresentation,
-  formatDueDate,
-} from "../../lib/due-date";
+import { calendarDay, dueDatePresentation } from "../../lib/due-date";
 import { Button } from "../../../button";
 import type { ListChange } from "./list-settings";
-export type DueDateDraft = { value: string; base: string | null };
+export type DueDateDraft = {
+  value: string;
+  base: string | null;
+  version?: number;
+};
 export function DueDateBadge({
   task,
   today,
@@ -58,11 +58,28 @@ export function TaskDueDate({
   const initial = drafts.get(task.id) ?? {
     value: task.dueDate ?? "",
     base: task.dueDate,
+    version: list.version,
   };
   const [draft, setDraft] = useState(initial),
     [error, setError] = useState("");
   const saving = useRef(false);
-  const changed = (task.dueDate ?? null) !== (draft.base ?? null);
+  const dirty = draft.value !== (draft.base ?? "");
+  const changed =
+    dirty && draft.version !== undefined && list.version !== draft.version;
+  useEffect(() => {
+    if (
+      !dirty ||
+      ((task.dueDate ?? "") === draft.value && list.version !== draft.version)
+    ) {
+      setDraft({
+        value: task.dueDate ?? "",
+        base: task.dueDate,
+        version: list.version,
+      });
+      drafts.delete(task.id);
+      setError("");
+    }
+  }, [task.dueDate, list.version]);
   const disabled = busy || list.archived;
   function pick(value: string) {
     const next = { ...draft, value };
@@ -71,9 +88,9 @@ export function TaskDueDate({
     setError("");
   }
   async function save(value: string | null) {
-    if (disabled || saving.current) return;
+    if (disabled || saving.current || changed) return;
     if (value !== null && !dueDateSchema.safeParse(value).success) {
-      setError("That date needs a paw. Choose a real calendar date.");
+      setError("Choose a valid calendar date.");
       return;
     }
     pick(value ?? "");
@@ -83,7 +100,7 @@ export function TaskDueDate({
       if (
         await change("/api/v1/tasks", "PATCH", {
           listId: list.id,
-          version: list.version,
+          version: draft.version ?? list.version,
           taskId: task.id,
           dueDate: value,
         })
@@ -92,12 +109,10 @@ export function TaskDueDate({
         onClose();
       } else
         setError(
-          "Ruff patch! The date wasn’t confirmed saved. Your pick is kept; check the message above.",
+          "The date wasn’t confirmed saved. Your draft is kept; retry the same request if offered.",
         );
     } catch {
-      setError(
-        "Ruff patch! The date wasn’t saved. Your pick is kept. Try again.",
-      );
+      setError("The date wasn’t saved. Your draft is kept. Try again.");
     } finally {
       saving.current = false;
     }
@@ -110,19 +125,27 @@ export function TaskDueDate({
       className="rounded-xl border border-border bg-surface p-3 sm:p-4 grid gap-3"
       onSubmit={(e) => {
         e.preventDefault();
-        void save(String(new FormData(e.currentTarget).get("dueDate") ?? ""));
+        void save(
+          String(new FormData(e.currentTarget).get("dueDate") ?? "") || null,
+        );
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !disabled) {
           e.preventDefault();
           e.stopPropagation();
           drafts.delete(task.id);
+          setDraft({
+            value: task.dueDate ?? "",
+            base: task.dueDate,
+            version: list.version,
+          });
           onClose();
         }
       }}
     >
       <p className="text-xs text-muted-foreground">
-        Give this task a fetching finish date.
+        Choose a date or shortcut, then Save date. Clear date also waits for
+        Save.
       </p>
       {list.archived ? (
         <p className="text-sm">
@@ -136,7 +159,7 @@ export function TaskDueDate({
               variant="outline"
               size="sm"
               disabled={disabled}
-              onClick={() => void save(calendarDay())}
+              onClick={() => pick(calendarDay())}
             >
               Today
             </Button>
@@ -145,7 +168,7 @@ export function TaskDueDate({
               variant="outline"
               size="sm"
               disabled={disabled}
-              onClick={() => void save(calendarDay(1))}
+              onClick={() => pick(calendarDay(1))}
             >
               Tomorrow
             </Button>
@@ -167,21 +190,36 @@ export function TaskDueDate({
             />
           </label>
           {changed && (
-            <p role="status" className="text-xs text-muted-foreground">
-              New de-tails! The due date changed to{" "}
-              {task.dueDate ? formatDueDate(task.dueDate) : "no date"} while you
-              were choosing. Your pick is kept.
-            </p>
+            <div role="status" className="text-xs">
+              <p>
+                The list changed while you were choosing. Your date draft is
+                kept. Load latest date before saving.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  drafts.delete(task.id);
+                  setDraft({
+                    value: task.dueDate ?? "",
+                    base: task.dueDate,
+                    version: list.version,
+                  });
+                  setError("");
+                }}
+              >
+                Load latest date
+              </Button>
+            </div>
           )}
           <div className="flex flex-wrap gap-2">
             <Button
               type="submit"
               variant="primary"
-              disabled={disabled}
-              aria-label={
-                busy ? "Saving date" : changed ? "Save my date" : "Save date"
-              }
-              title={changed ? "Save my date" : "Save date"}
+              disabled={disabled || changed || !dirty}
+              aria-label={busy ? "Saving date" : "Save date"}
+              title="Save date"
             >
               <Check size={18} aria-hidden="true" />{" "}
               {busy ? "Saving…" : "Save date"}
@@ -193,7 +231,7 @@ export function TaskDueDate({
                 aria-label="Clear date"
                 title="Clear date"
                 disabled={disabled}
-                onClick={() => void save(null)}
+                onClick={() => pick("")}
               >
                 <Eraser size={18} aria-hidden="true" /> Clear date
               </Button>
@@ -206,6 +244,11 @@ export function TaskDueDate({
               disabled={busy}
               onClick={() => {
                 drafts.delete(task.id);
+                setDraft({
+                  value: task.dueDate ?? "",
+                  base: task.dueDate,
+                  version: list.version,
+                });
                 onClose();
               }}
             >

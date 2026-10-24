@@ -265,7 +265,7 @@ try {
   await expect(
     view.getByRole("button", { name: "Done", exact: true }),
   ).toBeFocused();
-  for (const name of ["Filter", "Sort", "Group", "Display", "Presets"]) {
+  for (const name of ["Filter", "Sort", "Group", "Display", "Saved views"]) {
     const trigger = view.getByRole("button", {
       name: new RegExp(`^${name}(?: · [0-9]+)?$`),
     });

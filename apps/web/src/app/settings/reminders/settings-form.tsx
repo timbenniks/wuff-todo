@@ -18,6 +18,7 @@ export function ReminderSettingsForm({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [status, setStatus] = useState("");
+  const [draftVersion, setDraftVersion] = useState(initial.version);
   const request = useReminderRequest(userId);
   const [permission, setPermission] = useState("Checking browser permission");
   useEffect(() => {
@@ -216,11 +217,12 @@ export function ReminderSettingsForm({
           e.preventDefault();
           void action(async () => {
             const next = await request<ReminderSettings>("settings", {
-              version: saved.version,
+              version: draftVersion,
               preferences: draft,
             });
             setSaved(next);
             setDraft(next.preferences);
+            setDraftVersion(next.version);
             setStatus("Reminder preferences saved.");
           });
         }}
@@ -396,8 +398,13 @@ export function ReminderSettingsForm({
           disabled={busy}
           onClick={() =>
             void action(async () => {
+              const action = request.pendingAction;
               const next = await request.retry<ReminderSettings>();
               setSaved(next);
+              if (action === "settings") {
+                setDraftVersion(next.version);
+                setDraft(next.preferences);
+              }
               setStatus("The previous request is confirmed saved.");
             })
           }
@@ -425,6 +432,7 @@ export function ReminderSettingsForm({
                 );
                 setSaved(next);
                 setDraft(next.preferences);
+                setDraftVersion(next.version);
                 setStatus("Latest preferences loaded.");
               })
             }

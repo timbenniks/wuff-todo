@@ -2,6 +2,8 @@
 
 These demos import Wuff’s shipped React components. The complete inventory below is generated from exported component declarations in `packages/ui/src`, not from the upstream shadcn catalogue. Exact source and signatures are included in the prototype kit.
 
+Use the component search and jump links to find a component by name or source path. Expand a module for its exact props.
+
 ## The primitive layer
 
 | Module                 | Exports and API notes                                                                                              |

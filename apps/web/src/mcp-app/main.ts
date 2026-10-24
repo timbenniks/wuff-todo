@@ -542,6 +542,7 @@ function taskNotes(task: Task) {
 }
 
 type DateDraft = {
+  version: number;
   value: string;
   base: string | null;
   request?: Record<string, unknown>;
@@ -582,7 +583,19 @@ function taskDueDate(task: Task) {
   const draft = dateDrafts.get(task.id) ?? {
     value: task.dueDate ?? "",
     base: task.dueDate ?? null,
+    version: current!.version,
   };
+  if (
+    !draft.request &&
+    draft.value === (draft.base ?? "") &&
+    draft.version !== current!.version
+  ) {
+    draft.base = task.dueDate ?? null;
+    draft.value = task.dueDate ?? "";
+    draft.version = current!.version;
+  }
+  const stale =
+    draft.value !== (draft.base ?? "") && draft.version !== current!.version;
   panel.open = dateDrafts.has(task.id);
   panel.ontoggle = () => {
     if (panel.open && !dateDrafts.has(task.id)) dateDrafts.set(task.id, draft);
@@ -601,11 +614,7 @@ function taskDueDate(task: Task) {
     input = element("input"),
     save = element(
       "button",
-      draft.request
-        ? "Retry save date"
-        : (task.dueDate ?? null) !== draft.base
-          ? "Save my date"
-          : "Save date",
+      draft.request ? "Retry same request" : "Save date",
     ),
     notice = element("p");
   form.style.cssText = "display:flex;flex-wrap:wrap";
@@ -622,10 +631,20 @@ function taskDueDate(task: Task) {
     dateDrafts.set(task.id, draft);
   };
   const controls: HTMLButtonElement[] = [];
+  const pick = (value: string) => {
+    draft.value = value;
+    input.value = value;
+    dateDrafts.set(task.id, draft);
+    notice.textContent = "";
+  };
   const commit = (dueDate: string | null) => {
-    if (dueDate !== null && !dueDateSchema.safeParse(dueDate).success) {
+    if (!draft.request && stale) {
       notice.textContent =
-        "That date needs a paw. Choose a real calendar date.";
+        "The list changed. Your date draft is kept. Load latest date before saving.";
+      return;
+    }
+    if (dueDate !== null && !dueDateSchema.safeParse(dueDate).success) {
+      notice.textContent = "Choose a valid calendar date.";
       save.disabled = false;
       return;
     }
@@ -639,7 +658,7 @@ function taskDueDate(task: Task) {
     input.value = draft.value;
     draft.request ??= {
       listId: current!.id,
-      version: current!.version,
+      version: draft.version,
       taskId: task.id,
       dueDate,
       operationId: crypto.randomUUID(),
@@ -670,6 +689,7 @@ function taskDueDate(task: Task) {
             .then(show)
             .catch(() => {});
         }
+        save.textContent = draft.request ? "Retry same request" : "Save date";
         save.disabled = false;
       });
   };
@@ -679,34 +699,60 @@ function taskDueDate(task: Task) {
     ["Today", 0],
     ["Tomorrow", 1],
   ] as const) {
-    const b = button(label, () => commit(calendarDay(offset)), !!draft.request);
+    const b = button(label, () => pick(calendarDay(offset)), !!draft.request);
     controls.push(b);
     quick.append(b);
   }
-  panel.append(element("p", "Give this task a fetching finish date."), quick);
-  if ((task.dueDate ?? null) !== draft.base)
+  panel.append(
+    element(
+      "p",
+      "Choose a date or shortcut, then Save date. Clear date also waits for Save.",
+    ),
+    quick,
+  );
+  if (stale && !draft.request) {
+    save.disabled = true;
     panel.append(
       element(
         "p",
-        `New de-tails! The due date changed to ${task.dueDate ? formatDueDate(task.dueDate) : "no date"}. Your pick is kept.`,
+        "The list changed. Your date draft is kept. Load latest date before saving.",
       ),
+      button("Load latest date", () => {
+        draft.value = task.dueDate ?? "";
+        draft.base = task.dueDate ?? null;
+        draft.version = current!.version;
+        draft.error = undefined;
+        dateDrafts.set(task.id, draft);
+        show({ list: current });
+      }),
     );
+  }
   form.append(input, save);
   wireForm(form, save, () =>
     commit(
-      draft.request ? (draft.request.dueDate as string | null) : input.value,
+      draft.request
+        ? (draft.request.dueDate as string | null)
+        : input.value || null,
     ),
   );
   panel.append(form);
   if (task.dueDate) {
-    const clear = button("Clear date", () => commit(null), !!draft.request);
+    const clear = button("Clear date", () => pick(""), !!draft.request);
     controls.push(clear);
     panel.append(clear);
   }
-  const cancel = button("Cancel", () => {
-    dateDrafts.delete(task.id);
-    panel.open = false;
-  });
+  const cancel = button(
+    "Cancel",
+    () => {
+      draft.value = task.dueDate ?? "";
+      draft.base = task.dueDate ?? null;
+      draft.version = current!.version;
+      input.value = draft.value;
+      dateDrafts.delete(task.id);
+      panel.open = false;
+    },
+    !!draft.request,
+  );
   controls.push(cancel);
   panel.append(cancel, notice);
   return panel;
@@ -1530,7 +1576,7 @@ function viewControls(list: TodoList) {
   info.setAttribute("role", "status");
   const syncers: (() => void)[] = [];
   const presets = element("select");
-  presets.setAttribute("aria-label", "Saved preset");
+  presets.setAttribute("aria-label", "Saved view");
   presets.className = "view-preset-picker";
   const starter = starterViews(viewerId, list.mode === "work");
   for (const p of [
@@ -1619,7 +1665,7 @@ function viewControls(list: TodoList) {
     sort = popover("Sort"),
     group = popover("Group"),
     display = popover("Display"),
-    manage = popover("Presets");
+    manage = popover("Saved views");
   function select(
     target: HTMLElement,
     label: string,
@@ -1815,17 +1861,17 @@ function viewControls(list: TodoList) {
     }),
   );
   const presetName = element("input");
-  presetName.setAttribute("aria-label", "Preset name");
-  presetName.placeholder = "Preset name";
+  presetName.setAttribute("aria-label", "View name");
+  presetName.placeholder = "View name";
   presetName.maxLength = 60;
-  const nameLabel = element("label", "Preset name");
+  const nameLabel = element("label", "View name");
   nameLabel.append(presetName);
   manage.append(nameLabel);
   const custom = () => draft.presets.find((p) => p.id === draft.activePresetId);
   function named(rename: boolean) {
     const name = presetName.value.trim();
     if (!name) {
-      notice.textContent = "Enter a preset name.";
+      notice.textContent = "Enter a view name.";
       return;
     }
     const id = rename ? custom()?.id : crypto.randomUUID();
@@ -1841,26 +1887,26 @@ function viewControls(list: TodoList) {
     const parsed = listViewSchema.safeParse(next);
     if (!parsed.success) {
       notice.textContent =
-        parsed.error.issues[0]?.message ?? "Check the preset name.";
+        parsed.error.issues[0]?.message ?? "Check the view name.";
       return;
     }
     draft = parsed.data;
     void persist();
   }
   manage.append(
-    button("Save as preset", () => named(false), draft.presets.length >= 20),
-    button("Rename selected preset", () => named(true), !custom()),
+    button("Save as new view", () => named(false), draft.presets.length >= 20),
+    button("Rename saved view", () => named(true), !custom()),
   );
   manage.append(
     button(
-      "Delete selected preset",
+      "Delete saved view",
       () => {
         const p = custom();
         if (!p) return;
         const confirmation = element("div");
         confirmation.append(
           element("p", `Delete “${p.name}”? Your tasks stay here.`),
-          button("Confirm delete preset", () => {
+          button("Confirm delete saved view", () => {
             draft = {
               ...draft,
               presets: draft.presets.filter((item) => item.id !== p.id),

@@ -23,7 +23,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   cues, direct archive restoration and safe recovery exits. See [Phase 4 evidence](verification.md#ux-improvement-phase-4--october-24-2026).
   Phase 5 is locally complete: reminder delivery/device status, staged GitHub
   setup and Cursor readiness/execution cues with exact retry recovery. See [Phase 5 evidence](verification.md#ux-improvement-phase-5--october-24-2026).
-  **Phase 6 (language, authentication and guide) is next**. Phases 1–5 still require production release. This authorised UX work runs alongside the native milestone.
+  Phase 6 is locally complete: Saved views language, code/password recovery,
+  compact public guide/resources/search and shared date draft controls. See
+  [Phase 6 evidence](verification.md#ux-improvement-phase-6--october-24-2026).
+  **All six UX implementation phases are locally complete**. Production release
+  and the documented device/accessibility/usability checks remain separate gates. This authorised UX work runs alongside the native milestone.
 
 - **Task-first phone lists (October 24):** compact sticky title/settings bar, on-demand list management and a phone View panel are implemented locally. See [design and verification scope](mobile-task-first.md); production release remains pending.
 

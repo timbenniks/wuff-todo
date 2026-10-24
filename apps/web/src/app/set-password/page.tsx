@@ -10,10 +10,10 @@ export default function SetPasswordPage() {
           <Corgi />
           <span className="wordmark text-2xl font-bold">Wuff Todo</span>
         </Link>
-        <h1 className="text-3xl font-bold mb-3">Welcome to the pack.</h1>
+        <h1 className="text-3xl font-bold mb-3">Set or reset your password</h1>
         <p className="text-muted-foreground mb-8">
-          New here or fur-got your password? Fetch a code from your email to set
-          or reset it.
+          Wuff is invite-only. Use your invited email to set your first password
+          or recover access to your account.
         </p>
         <SetPassword />
       </div>

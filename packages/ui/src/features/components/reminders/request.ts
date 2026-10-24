@@ -51,6 +51,7 @@ export function useReminderRequest(userId: string) {
   }
   return Object.assign(request, {
     uncertain,
+    pendingAction: pending.current?.action,
     retry: <T>() => {
       if (!pending.current)
         return Promise.reject<T>(Error("There is no request to retry."));

@@ -14,15 +14,22 @@ export async function api<T>(
   body?: unknown,
   userId?: string,
 ): Promise<T> {
-  const response = await fetch(path, {
-    method,
-    headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...(userId ? { "X-Wuff-User": userId } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(userId ? { "X-Wuff-User": userId } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error(
+      "We couldn’t confirm the request. Check your connection and retry the same request if offered.",
+    );
+  }
   const data = await response.json();
   if (!response.ok) {
     if (data.error?.code === "account_changed" && typeof window !== "undefined")

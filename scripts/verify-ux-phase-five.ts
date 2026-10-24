@@ -64,6 +64,8 @@ try {
     },
   };
   let loseReminder = true;
+  let rejectPreferences = false,
+    staleVersion = 0;
   const reminderBodies: string[] = [];
   await page.route("**/api/v1/reminders", async (route: any) => {
     if (route.request().method() === "GET")
@@ -71,6 +73,18 @@ try {
     const body = route.request().postDataJSON();
     reminderBodies.push(route.request().postData());
     assert.equal(body.action, "settings");
+    if (rejectPreferences) {
+      assert.equal(body.input.version, staleVersion);
+      return route.fulfill({
+        status: 409,
+        json: {
+          error: {
+            code: "conflict",
+            message: "Reminder preferences changed. Your draft is kept.",
+          },
+        },
+      });
+    }
     settings = {
       ...settings,
       version: settings.version + Number(loseReminder),
@@ -161,6 +175,32 @@ try {
       exact: true,
     }),
   ).toBeVisible();
+  staleVersion = settings.version;
+  settings = {
+    ...settings,
+    version: settings.version + 1,
+    preferences: { ...settings.preferences, dailyTime: "10:00" },
+  };
+  await page
+    .getByRole("button", { name: "Refresh delivery status", exact: true })
+    .click();
+  await expect(page.getByLabel("Send at", { exact: true })).toHaveValue(
+    "23:00",
+  );
+  rejectPreferences = true;
+  await page
+    .getByRole("button", { name: "Save reminder preferences", exact: true })
+    .click();
+  await expect(page.getByText(/Reminder preferences changed/)).toBeVisible();
+  await expect(page.getByLabel("Send at", { exact: true })).toHaveValue(
+    "23:00",
+  );
+  await page
+    .getByRole("button", { name: "Load latest preferences", exact: true })
+    .click();
+  await expect(page.getByLabel("Send at", { exact: true })).toHaveValue(
+    "10:00",
+  );
   let connected = false,
     bound = false,
     failRead = true,

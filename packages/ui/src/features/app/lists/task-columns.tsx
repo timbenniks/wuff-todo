@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   defaultListView,
   statusLabels,
@@ -11,10 +11,9 @@ import {
 } from "@wuff/contracts";
 import { ViewPopover } from "./view-popover";
 import { Button } from "../../../button";
-import { Input } from "../../../input";
 import { NativeSelect } from "../../../native-select";
 import { StatusTag } from "../../../status-tag";
-import { DueDateBadge } from "./task-due-date";
+import { TaskDueDate, type DueDateDraft, DueDateBadge } from "./task-due-date";
 import type { ListChange } from "./list-settings";
 type Column = (typeof viewColumns)[number];
 export type WorkCellDraft = { value: string; base: number };
@@ -39,7 +38,7 @@ function TaskCell({
   today,
   drafts,
 }: {
-  column: Column;
+  column: Exclude<Column, "due">;
   task: Task;
   list: TodoList;
   busy: boolean;
@@ -80,15 +79,11 @@ function TaskCell({
       <span className="capitalize">
         {task.priority === "none" ? "—" : task.priority}
       </span>
-    ) : column === "assignee" ? (
+    ) : (
       <span className="truncate">
         {list.assignees.find((a) => a.id === task.assigneeId)?.name ??
           "Unassigned"}
       </span>
-    ) : task.dueDate ? (
-      <DueDateBadge task={task} today={today} />
-    ) : (
-      <span className="text-muted-foreground">Set date</span>
     );
   return (
     <div
@@ -131,17 +126,7 @@ function TaskCell({
         >
           <label className="grid gap-1 text-sm">
             {labels[column]}
-            {column === "due" ? (
-              <Input
-                type="date"
-                aria-label={`Due date for ${task.title}`}
-                value={draft}
-                disabled={busy}
-                onChange={(e) => {
-                  edit(e.target.value);
-                }}
-              />
-            ) : (
+            {
               <NativeSelect
                 aria-label={`${labels[column]} for ${task.title}`}
                 value={draft}
@@ -175,20 +160,8 @@ function TaskCell({
                   </>
                 )}
               </NativeSelect>
-            )}
+            }
           </label>
-          {column === "due" && (
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                edit("");
-              }}
-            >
-              Clear date
-            </Button>
-          )}
           {stale && (
             <p role="alert" className="text-sm">
               The list changed. Your draft is kept. Reload field values before
@@ -224,6 +197,66 @@ function TaskCell({
     </div>
   );
 }
+function DueDateCell({
+  task,
+  list,
+  busy,
+  change,
+  today,
+  drafts,
+}: {
+  task: Task;
+  list: TodoList;
+  busy: boolean;
+  change: ListChange;
+  today: string | null;
+  drafts?: Map<string, DueDateDraft>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const localDrafts = useRef(new Map<string, DueDateDraft>());
+  const root = useRef<HTMLDivElement>(null);
+  return (
+    <div
+      ref={root}
+      className="work-cell work-cell-due"
+      data-visible={(
+        list.personalView?.view ?? defaultListView()
+      ).columns.includes("due")}
+    >
+      <ViewPopover
+        label={
+          task.dueDate ? (
+            <DueDateBadge task={task} today={today} />
+          ) : (
+            <span className="text-muted-foreground">Set date</span>
+          )
+        }
+        ariaLabel={`Edit due date for ${task.title}`}
+        disabled={busy || list.archived}
+        variant="ghost"
+        className="work-cell-trigger"
+        showDone={false}
+        onOpen={() => setEditing(true)}
+        onClose={() => setEditing(false)}
+      >
+        {editing && (
+          <TaskDueDate
+            task={task}
+            list={list}
+            busy={busy}
+            change={change}
+            drafts={drafts ?? localDrafts.current}
+            onClose={() =>
+              root.current
+                ?.querySelector<HTMLElement>("[popover]")
+                ?.hidePopover()
+            }
+          />
+        )}
+      </ViewPopover>
+    </div>
+  );
+}
 export function TaskColumns(props: {
   task: Task;
   list: TodoList;
@@ -231,13 +264,18 @@ export function TaskColumns(props: {
   change: ListChange;
   today: string | null;
   drafts?: Map<string, WorkCellDraft>;
+  dueDrafts?: Map<string, DueDateDraft>;
 }) {
   if (props.list.mode !== "work") return null;
   return (
     <>
-      {viewColumns.map((column) => (
-        <TaskCell key={column} column={column} {...props} />
-      ))}
+      {viewColumns.map((column) =>
+        column === "due" ? (
+          <DueDateCell key={column} {...props} drafts={props.dueDrafts} />
+        ) : (
+          <TaskCell key={column} column={column} {...props} />
+        ),
+      )}
     </>
   );
 }

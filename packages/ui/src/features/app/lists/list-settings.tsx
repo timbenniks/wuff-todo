@@ -456,7 +456,7 @@ export function ListSettings({
                     className="text-sm rounded-xl bg-amber-50 p-3"
                   >
                     <p>
-                      New de-tails arrived while you were editing. Your draft is
+                      The list changed while you were editing. Your draft is
                       still here.
                     </p>
                     <Button
@@ -471,8 +471,8 @@ export function ListSettings({
                 )}
                 {failed && (
                   <p role="alert" className="text-sm text-red-800">
-                    Ruff patch! Settings weren’t saved. Check the list’s error
-                    message or load its latest settings, then try again.
+                    Settings weren’t saved. Your draft is kept. Check the list’s
+                    error message or load its latest settings, then try again.
                   </p>
                 )}
                 {retry && (

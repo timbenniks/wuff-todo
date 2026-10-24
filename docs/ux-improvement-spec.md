@@ -227,6 +227,21 @@ named MCP hosts need their own evidence.
 | 1     | Locally complete; production pending | [Phase 1 evidence](verification.md#ux-improvement-phase-1--october-24-2026) |
 | 2     | Locally complete; production pending | [Phase 2 evidence](verification.md#ux-improvement-phase-2--october-24-2026) |
 | 3     | Locally complete; production pending | [Phase 3 evidence](verification.md#ux-improvement-phase-3--october-24-2026) |
-| 4 | Locally complete; production pending | [Phase 4 evidence](verification.md#ux-improvement-phase-4--october-24-2026) |
-| 5 | Locally complete; production pending | [Phase 5 evidence](verification.md#ux-improvement-phase-5--october-24-2026) |
-| 6 | Specified | Language, authentication and guide |
+| 4     | Locally complete; production pending | [Phase 4 evidence](verification.md#ux-improvement-phase-4--october-24-2026) |
+| 5     | Locally complete; production pending | [Phase 5 evidence](verification.md#ux-improvement-phase-5--october-24-2026) |
+| 6     | Locally complete; production pending | [Phase 6 evidence](verification.md#ux-improvement-phase-6--october-24-2026) |
+
+## Final implementation choices
+
+Phase 4 uses one management dialog with named pages rather than stacked sharing
+and settings dialogs. Phase 5 exposes setup evidence without claiming verified
+notification delivery or enabling a provider. Phase 6 keeps saved-view contracts
+compatible and reuses one date draft editor across surfaces. Authentication still
+uses invited-account code recovery and preserves generic admission responses.
+The guide remains public and synthetic; source hashes distinguish its actual
+build inputs from the source-base commit.
+
+Physical phone keyboards, screen readers, installed native packages, named MCP
+hosts, actual reminder delivery and participant usability comparisons remain
+separate verification work. Local implementation completion does not certify
+those checks. Production release/smoke evidence must be recorded separately.

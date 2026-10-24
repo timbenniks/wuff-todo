@@ -19,6 +19,7 @@ export function ViewPopover({
   children,
   disabled = false,
   onOpen,
+  onClose,
   className,
   ariaLabel,
   variant = "outline",
@@ -30,6 +31,7 @@ export function ViewPopover({
   children: ReactNode;
   disabled?: boolean;
   onOpen?: () => void;
+  onClose?: () => void;
   className?: string;
   ariaLabel?: string;
   variant?: "outline" | "ghost";
@@ -146,6 +148,7 @@ export function ViewPopover({
         className="view-popover"
         onToggle={(e) => {
           setOpen(e.newState === "open");
+          if (e.newState === "closed") onClose?.();
         }}
       >
         <div className="view-popover-content">{children}</div>

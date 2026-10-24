@@ -90,3 +90,8 @@ preference saves retain the original payload/operation ID for explicit retry;
 known conflicts retain drafts until the user chooses to load latest. Device
 registration does not claim delivery. Provider/device release evidence remains
 separate from this UI work; see verification.
+
+Final regression: delivery-status refresh preserves a dirty schedule’s original
+expected preference version. A remote schedule change still conflicts; only an
+explicit latest-preference load or an acknowledged schedule save adopts a new
+draft base. Device and status reads cannot silently rebase a schedule draft.

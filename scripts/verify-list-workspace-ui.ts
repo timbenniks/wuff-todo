@@ -106,7 +106,7 @@ try {
   const panel = (name: string) =>
     page.getByRole(
       page.viewportSize()!.width < 768 &&
-        ["Filter", "Sort", "Group", "Display", "Presets"].includes(name)
+        ["Filter", "Sort", "Group", "Display", "Saved views"].includes(name)
         ? "region"
         : "dialog",
       { name, exact: true },
@@ -187,10 +187,18 @@ try {
       await expect(
         settings.getByRole("textbox", { name: "List name", exact: true }),
       ).toBeVisible();
-      await settings.getByRole("button", {name:"Manage list",exact:true}).click();
-      await expect(settings.getByRole("button", { name: "Delete list", exact: true })).toBeVisible();
-      await settings.getByRole("button", {name:"People",exact:true}).click();
-      await expect(settings.getByRole("region", {name:"List people",exact:true})).toBeVisible();
+      await settings
+        .getByRole("button", { name: "Manage list", exact: true })
+        .click();
+      await expect(
+        settings.getByRole("button", { name: "Delete list", exact: true }),
+      ).toBeVisible();
+      await settings
+        .getByRole("button", { name: "People", exact: true })
+        .click();
+      await expect(
+        settings.getByRole("region", { name: "List people", exact: true }),
+      ).toBeVisible();
       assert.equal(await page.locator("dialog[open]").count(), 1);
       await expect(settings).toBeVisible();
       await tool("Close list settings").click();
@@ -229,11 +237,15 @@ try {
     assert.match(dialog.message(), /cannot be undone/);
     await dialog.dismiss();
   });
-  await settings.getByRole("button", {name:"Manage list",exact:true}).click();
+  await settings
+    .getByRole("button", { name: "Manage list", exact: true })
+    .click();
   await settings
     .getByRole("button", { name: "Delete list", exact: true })
     .click();
-  await settings.getByRole("button", {name:"List details",exact:true}).click();
+  await settings
+    .getByRole("button", { name: "List details", exact: true })
+    .click();
   assert.equal((await getList(actor, work.id)).title, longTitle);
   await settings
     .getByRole("textbox", { name: "List name", exact: true })
@@ -352,14 +364,16 @@ try {
   await page
     .getByRole("textbox", { name: "Search title or key", exact: true })
     .fill("sign-in");
-  p = await open("Presets");
-  await p.getByRole("button", { name: "Save as preset…", exact: true }).click();
+  p = await open("Saved views");
   await p
-    .getByRole("textbox", { name: "Preset name", exact: true })
+    .getByRole("button", { name: "Save as new view…", exact: true })
+    .click();
+  await p
+    .getByRole("textbox", { name: "View name", exact: true })
     .fill("Release focus");
-  await p.getByRole("button", { name: "Save preset", exact: true }).click();
+  await p.getByRole("button", { name: "Save new view", exact: true }).click();
   await expect(
-    p.getByRole("textbox", { name: "Preset name", exact: true }),
+    p.getByRole("textbox", { name: "View name", exact: true }),
   ).toHaveCount(0);
   await done(p);
   let stored = await getList(actor, work.id);
@@ -372,16 +386,18 @@ try {
   );
   await page.reload();
   await expect(
-    page.getByRole("combobox", { name: "Saved preset", exact: true }),
+    page.getByRole("combobox", { name: "Saved view", exact: true }),
   ).toHaveValue(preset.id);
-  p = await open("Presets");
-  await p.getByRole("button", { name: "Rename preset", exact: true }).click();
+  p = await open("Saved views");
   await p
-    .getByRole("textbox", { name: "Preset name", exact: true })
+    .getByRole("button", { name: "Rename saved view", exact: true })
+    .click();
+  await p
+    .getByRole("textbox", { name: "View name", exact: true })
     .fill("My release focus");
-  await p.getByRole("button", { name: "Save preset", exact: true }).click();
+  await p.getByRole("button", { name: "Save view name", exact: true }).click();
   await expect(
-    p.getByRole("textbox", { name: "Preset name", exact: true }),
+    p.getByRole("textbox", { name: "View name", exact: true }),
   ).toHaveCount(0);
   await done(p);
   p = await open("Display");
@@ -391,19 +407,19 @@ try {
   await done(p);
   await save();
   await page
-    .getByRole("combobox", { name: "Saved preset", exact: true })
+    .getByRole("combobox", { name: "Saved view", exact: true })
     .selectOption(preset.id);
   await expect(
     page.getByRole("textbox", { name: "Search title or key", exact: true }),
   ).toHaveValue("sign-in");
   await save();
   await page
-    .getByRole("combobox", { name: "Saved preset", exact: true })
+    .getByRole("combobox", { name: "Saved view", exact: true })
     .selectOption("default");
   await save();
   // Shared metadata cells have explicit saves; view configuration remains personal.
   await page
-    .getByRole("combobox", { name: "Saved preset", exact: true })
+    .getByRole("combobox", { name: "Saved view", exact: true })
     .selectOption("blocked");
   await save();
   for (const [field, value, server] of [
@@ -422,11 +438,14 @@ try {
     await expect(cell).toBeVisible();
     if (field === "due date")
       await cell
-        .getByLabel(`Due date for ${task.title}`, { exact: true })
+        .getByLabel(`Choose due date for ${task.title}`, { exact: true })
         .fill(value);
     else await cell.getByRole("combobox").selectOption(value);
     await cell
-      .getByRole("button", { name: `Save ${field}`, exact: true })
+      .getByRole("button", {
+        name: field === "due date" ? "Save date" : `Save ${field}`,
+        exact: true,
+      })
       .click();
     await expect(cell).not.toBeVisible();
     assert.equal(
@@ -438,7 +457,7 @@ try {
     if (field === "status") {
       await expect(row()).toHaveCount(0);
       await page
-        .getByRole("combobox", { name: "Saved preset", exact: true })
+        .getByRole("combobox", { name: "Saved view", exact: true })
         .selectOption("default");
       await save();
     }
@@ -586,19 +605,21 @@ try {
   if (await tool("Revert to saved view").isVisible())
     await tool("Revert to saved view").click();
   await page
-    .getByRole("combobox", { name: "Saved preset", exact: true })
+    .getByRole("combobox", { name: "Saved view", exact: true })
     .selectOption(preset.id);
   await save();
-  p = await open("Presets");
-  await p.getByRole("button", { name: "Delete preset", exact: true }).click();
+  p = await open("Saved views");
   await p
-    .getByRole("button", { name: "Confirm delete preset", exact: true })
+    .getByRole("button", { name: "Delete saved view", exact: true })
+    .click();
+  await p
+    .getByRole("button", { name: "Confirm delete saved view", exact: true })
     .click();
   await expect(
-    p.getByRole("button", { name: "Confirm delete preset", exact: true }),
+    p.getByRole("button", { name: "Confirm delete saved view", exact: true }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("combobox", { name: "Saved preset", exact: true }),
+    page.getByRole("combobox", { name: "Saved view", exact: true }),
   ).toBeEnabled();
   await expect(tool("Save view")).toHaveCount(0);
   await done(p);

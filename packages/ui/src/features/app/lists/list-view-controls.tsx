@@ -202,9 +202,9 @@ export function ListViewControls({
     });
   const presetPicker = (
     <label className="view-preset-picker">
-      <span className="sr-only">Saved preset</span>
+      <span className="sr-only">Saved view</span>
       <NativeSelect
-        aria-label="Saved preset"
+        aria-label="Saved view"
         disabled={busy || dirty}
         value={draft.activePresetId ?? "current"}
         onChange={(e) => {
@@ -223,7 +223,7 @@ export function ListViewControls({
             ))}
         </optgroup>
         {!!draft.presets.length && (
-          <optgroup label="Your presets">
+          <optgroup label="Your saved views">
             {draft.presets.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -485,9 +485,9 @@ export function ListViewControls({
           Reset to defaults
         </Button>
       </ViewPopover>
-      <ViewPopover sheet={sheet} label="Presets" disabled={busy}>
+      <ViewPopover sheet={sheet} label="Saved views" disabled={busy}>
         <p className="text-xs text-muted-foreground">
-          Personal presets for this list. Up to 20.
+          Saved views are just for you on this list. Save up to 20.
         </p>
         <Button
           type="button"
@@ -499,7 +499,7 @@ export function ListViewControls({
             setDeleting(false);
           }}
         >
-          Save as preset…
+          Save as new view…
         </Button>
         {!!custom && (
           <>
@@ -512,7 +512,7 @@ export function ListViewControls({
                 setDeleting(false);
               }}
             >
-              Rename preset
+              Rename saved view
             </Button>
             <Button
               type="button"
@@ -522,7 +522,7 @@ export function ListViewControls({
                 setNaming(null);
               }}
             >
-              Delete preset
+              Delete saved view
             </Button>
           </>
         )}
@@ -540,7 +540,7 @@ export function ListViewControls({
                     (naming !== "rename" || p.id !== custom?.id),
                 )
               ) {
-                setNotice("Choose a unique preset name.");
+                setNotice("Choose a unique saved view name.");
                 return;
               }
               const id =
@@ -556,9 +556,9 @@ export function ListViewControls({
             }}
           >
             <label className="grid gap-1 text-sm">
-              Preset name
+              View name
               <Input
-                aria-label="Preset name"
+                aria-label="View name"
                 value={name}
                 maxLength={60}
                 required
@@ -566,7 +566,7 @@ export function ListViewControls({
               />
             </label>
             <Button variant="primary" disabled={busy || conflict}>
-              Save preset
+              {naming === "rename" ? "Save view name" : "Save new view"}
             </Button>
             <Button
               type="button"
@@ -594,7 +594,7 @@ export function ListViewControls({
                 })
               }
             >
-              Confirm delete preset
+              Confirm delete saved view
             </Button>
             <Button
               type="button"
@@ -654,7 +654,7 @@ export function ListViewControls({
         {draft.sortBy === "manual"
           ? "Manual order"
           : "Sorted view · Dragging off"}
-        {modified ? " · Modified preset" : ""}
+        {modified ? " · Modified saved view" : ""}
         {dirty ? " · Unsaved changes" : ""}
       </p>
       {dirty && (

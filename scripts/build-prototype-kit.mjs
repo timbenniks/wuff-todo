@@ -8,6 +8,10 @@ import ts from "typescript";
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "apps/web/public/prototype-kit");
 await mkdir(output, { recursive: true });
+await writeFile(
+  resolve(output, "feature-brief.md"),
+  await readFile(resolve(root, "docs/prototyping/feature-brief-template.md")),
+);
 const pages = [];
 const paletteSource = await readFile(
   resolve(root, "packages/design/src/index.ts"),

@@ -595,3 +595,90 @@ Visually reviewed [reminders at 320px](screenshots/ux-phase-five-reminders-320.p
 browser/provider-mock evidence. Actual notification delivery, installed native
 clients, external GitHub/Cursor setup and paid runs remain separate checks.
 Phase 5 is locally complete; production release pending.
+
+## UX improvement Phase 6 — October 24, 2026
+
+Saved views is now the user-facing name for personal display presets. Save view
+updates the current view; Save as new view opens an explicit naming flow. The
+serialized preset contract and existing saved settings remain compatible.
+
+Shared web/native due-date surfaces now reuse TaskDueDate, including Work table cells. Today,
+Tomorrow and Clear date stage a draft; Save date commits it and Cancel discards.
+Empty saved drafts clear the date. Dirty drafts retain their expected list
+revision. Remote changes keep the draft and require explicit Load latest date;
+acknowledged/retried values reconcile without silently overriding other edits.
+
+Invited-account setup/recovery now separates Send code, Resend code and Change
+email. Code input supports one-time-code autofill and normalizes pasted spaces;
+password fields retain new-password semantics. Mismatch, expired/failed codes,
+connection errors and rate limits have clear feedback. Failed attempts retain the
+current form; changing email clears code/password drafts. Resend cooldowns use an
+absolute deadline so background timer throttling does not extend the wait. Login
+keeps username/current-password semantics and distinguishes rate limiting from
+credential/network failures. No managed-auth endpoint, admission rule or session
+behavior changed.
+
+The public guide uses compact phone page selection, palette controls on Design
+language only, early kit/copy/template actions, component name/path search and
+jump links, plus visible source-base and exact-build-hash provenance. The build
+exports a feature brief template alongside the existing kit/skill. Prototypes
+still use synthetic content and never grant access to private lists.
+
+Workspace/root TypeScript, all 91 unit tests, optimized web/MCP/prototype and
+native frontend builds passed. Existing docs CSS/native size advisories remain.
+The isolated-development due-date domain integration case passed permissions,
+versioning, exact retries, independent child dates and task lifecycle behavior.
+The updated `scripts/verify-list-workspace-ui.ts` passed responsive Basic/Work,
+Saved views create/rename/select/delete, personal isolation, metadata/date saves,
+note/conflict drafts and exact retry recovery. First phone task remains y=227px.
+
+`scripts/verify-ux-phase-six.ts` passed against the optimized local website:
+mocked code requests/resends/rate limits, invalid/expired reset responses,
+password mismatch without a request, retained inputs and success; normalized
+six-digit code entry/autocomplete attributes; sign-in rate-limit feedback and
+real synthetic-account website sign-in. Auth code/reset responses are mocked;
+no live mailbox or real account credential was changed. A deferred duplicate
+code-focus request was removed after it could interrupt entry under accelerated
+timers. Passwords use native form values so browser and password-manager input
+is retained through feedback and resends.
+
+The same browser harness verifies early resources, copied starter text using an
+in-memory clipboard stub, successful kit/skill/template/manifest/agent-reference
+requests, compact navigation, design-only palette controls, component search,
+empty search results, jump links and 320/390/1280px overflow. Real disposable Work
+tasks prove table/drawer shortcut drafts, Save date, staged Clear date, cancellation,
+remote revision/draft retention, explicit latest-date reload, and a committed then
+lost date response with identical retry body/operation ID. Recovery clears stale
+local error feedback after confirmation. Fixtures are deleted in finally and no
+captured page errors occurred.
+
+A final Phase 5 browser rerun also proves that refreshing delivery status retains
+a dirty schedule’s original expected version. A simulated remote change still
+conflicts; the draft remains until the explicit Load latest preferences action.
+Readiness refresh cannot silently rebase a schedule edit. Exact retry adopts a new
+preference revision only when the retried action was that schedule save.
+
+Phase 6 is locally complete. Screenshots include
+[auth feedback](screenshots/ux-phase-six-auth-390.png),
+[early guide resources](screenshots/ux-phase-six-guide-start-390.png),
+[component search](screenshots/ux-phase-six-guide-320.png) and
+[date recovery](screenshots/ux-phase-six-date-390.png).
+Production release, physical keyboard/autofill, screen readers, installed native
+clients, named MCP hosts, full browser zoom/text-scaling review and participant
+usability comparisons remain explicitly unverified. No provider activation or
+paid work was used to demonstrate the UI.
+
+Embedded MCP follows the same Saved views vocabulary and staged date shortcuts,
+Clear/Save/Cancel, original expected revision, explicit latest-date load and exact
+retry behavior. `scripts/verify-ux-phase-six-mcp.ts` uses the real local MCP Apps
+SDK host and authenticated server: it checks the labels, no mutation before Save,
+a committed date response lost at the host bridge and identical tool arguments/operation ID on retry (SDK progress metadata changes normally),
+actual saved/cleared dates, Cancel, and a bounded phone iframe. The fixture owns
+and deletes its list and revokes its OAuth grant on exit. This is local SDK-host
+proof, not certification of a named production ChatGPT/Codex client.
+
+Final SDK-host run exited successfully after fixture cleanup. Its SDK adds a new
+progress token for each call; the test compares the unchanged domain arguments
+and operation ID rather than unrelated transport metadata. Reviewed screenshots:
+[SDK host phone](screenshots/ux-phase-six-mcp-390.png) and
+[SDK host desktop](screenshots/ux-phase-six-mcp-1280.png).

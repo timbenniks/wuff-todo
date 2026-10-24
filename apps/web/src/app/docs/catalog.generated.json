@@ -129,7 +129,7 @@
     "components": [
       {
         "name": "TaskColumns",
-        "signature": "export function TaskColumns(props: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  today: string | null;\n  drafts?: Map<string, WorkCellDraft>;\n})"
+        "signature": "export function TaskColumns(props: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  today: string | null;\n  drafts?: Map<string, WorkCellDraft>;\n  dueDrafts?: Map<string, DueDateDraft>;\n})"
       }
     ]
   },
@@ -217,7 +217,7 @@
     "components": [
       {
         "name": "ViewPopover",
-        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n  sheet,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n  sheet?: ViewSheet;\n})"
+        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  onClose,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n  sheet,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  onClose?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n  sheet?: ViewSheet;\n})"
       }
     ]
   },

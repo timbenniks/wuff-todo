@@ -42,3 +42,10 @@ The responsive website and MCP tools use the same authorized backend; the MCP Ap
 No offline list cache or queued offline edits. No arbitrary palette colors, dark mode, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
 
 This is the prototyping baseline, not a restriction on useful ideas. Clearly mark proposed changes to existing rules so Tim can assess them.
+
+## Current interaction language
+
+Saved views are personal to each list. Save view updates the current view; Save as
+new view creates a named view. Shared list settings separate List details, People,
+Only for me and Manage list. Home completion and task-title navigation are separate.
+Date shortcuts and Clear date change a draft; Save date commits it.

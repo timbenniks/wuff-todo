@@ -200,7 +200,7 @@ export function TaskDetailDrawer({
         )}
         {retry && (
           <Button type="button" disabled={busy} onClick={retry}>
-            Retry previous change
+            Retry same request
           </Button>
         )}
         <p role="status" className="sr-only">
