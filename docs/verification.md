@@ -546,3 +546,52 @@ Disposable list/task/invitation/membership fixtures are deleted in finally. No
 production data, schema, provider connection or paid action was changed. Local
 browser/contract proof does not certify physical devices or screen readers.
 Production release remains pending.
+
+## UX improvement Phase 5 — October 24, 2026
+
+Reminder settings now lead with scheduling, delivery-service configuration,
+registered devices and this browser’s permission before schedule preferences.
+Delivery is explicitly unverified here; registering a device no longer claims
+successful delivery. Unavailable delivery uses Save preference. Quiet hours show
+the timezone and when the daily time moves. Task/list preferences use the same
+exact-request recovery hook: uncertain writes lock their draft and provide Retry
+same request; known failures retain editable drafts and explicit reload controls.
+
+GitHub setup stages personal account → Work list/repository → sharing consent →
+optional automatic issues. Destination/export scope is visible before saving;
+changing list/repository resets consent, and Stop synchronization appears only
+for an active binding. Reads have selection epochs; mutations are pinned to the
+rendered account and uncertain writes preserve their exact request.
+
+Cursor setup separates personal account, repository, environment, required
+secrets and paid execution. `cursorConnection` adds the read-only
+`executionEnabled` boolean from the existing operator gate; no execution behavior
+changes. The same domain result serves HTTP/MCP. Failed readiness reads have a
+retry; stale list reads cannot replace a later selection. Environment creation
+explicitly names its paid allowance. Saving setup does not start a run.
+
+Local checks: workspace/root `pnpm typecheck`, all 91 unit tests, optimized
+web/MCP/prototype build and native frontend build passed. Existing docs CSS and
+native size advisories remain. The real isolated-development reminder and Cursor
+integration suites passed both cases with provider fetches mocked and QStash
+delivery disabled. They cover isolation, version conflicts, retry receipts,
+reminder lifecycle/deduplication and agent ownership, secrets, reconciliation and
+execution gating. A final Cursor rerun also asserts the new execution flag.
+
+`scripts/verify-ux-phase-five.ts` passed on the optimized localhost website with
+all reminder/GitHub/Cursor provider requests intercepted. It checks unavailable
+and configured reminder/device status, explicit unverified delivery, quiet-hours
+adjustment, identical uncertain preference retries with locked retained drafts,
+320/390/1280px overflow; failed GitHub read/retry, disconnected account staging,
+repository consent/optional automation, identical bind retries and list-switch
+reset; failed/ready Cursor reads and disabled paid execution. No agent POST,
+notification permission prompt, device registration, GitHub publication or real
+provider mutation occurred. Original real reminder settings matched afterward;
+disposable lists were deleted. No captured page errors occurred.
+
+Visually reviewed [reminders at 320px](screenshots/ux-phase-five-reminders-320.png),
+[GitHub setup](screenshots/ux-phase-five-github-390.png) and
+[Cursor readiness](screenshots/ux-phase-five-cursor-390.png). This is local
+browser/provider-mock evidence. Actual notification delivery, installed native
+clients, external GitHub/Cursor setup and paid runs remain separate checks.
+Phase 5 is locally complete; production release pending.

@@ -108,13 +108,13 @@ export function TaskReminder({
         <>
           {reminder?.enabled && (
             <p>
-              Scheduled for{" "}
+              Saved time:{" "}
               {new Intl.DateTimeFormat(undefined, {
                 dateStyle: "medium",
                 timeStyle: "short",
                 timeZone: settings.preferences.timezone,
               }).format(new Date(reminder.runAt))}
-              .{" "}
+              · {settings.preferences.timezone}.{" "}
               {reminder.scheduling === "pending"
                 ? "Waiting for scheduling."
                 : ""}
@@ -124,13 +124,17 @@ export function TaskReminder({
             <p className="text-muted-foreground">No active reminder.</p>
           )}
           {(!settings.schedulerReady || !settings.devices.length) && (
-            <p className="text-xs text-muted-foreground">
+            <p role="status" className="text-xs text-muted-foreground">
               {!settings.schedulerReady ? "Scheduling setup is pending. " : ""}
               {!settings.devices.length
                 ? "Enable a notification device in Settings to receive reminders."
                 : ""}
             </p>
           )}
+          <p className="text-xs text-muted-foreground">
+            {settings.devices.length} registered device(s). Delivery has not
+            been verified here.
+          </p>
           {!inactive && (
             <form
               className="grid gap-3"
@@ -162,21 +166,31 @@ export function TaskReminder({
                   type="datetime-local"
                   required
                   value={local}
-                  disabled={busy}
+                  disabled={busy || request.uncertain}
                   onChange={(e) => setLocal(e.target.value)}
                 />
               </label>
               <p className="text-xs text-muted-foreground">
-                Quiet hours apply. Your due date stays the same.
+                {settings.preferences.quietEnabled
+                  ? `Quiet hours ${settings.preferences.quietStart}–${settings.preferences.quietEnd} apply; reminders inside them wait until quiet hours end.`
+                  : "Quiet hours are off."}{" "}
+                Your due date stays the same.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button variant="primary" type="submit" disabled={busy}>
-                  Save reminder
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={busy || request.uncertain}
+                >
+                  {settings.schedulerReady &&
+                  settings.devices.some((d) => settings.delivery[d.transport])
+                    ? "Save reminder"
+                    : "Save preference"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={busy}
+                  disabled={busy || request.uncertain}
                   onClick={() =>
                     save(new Date(Date.now() + 3600000).toISOString())
                   }
@@ -187,7 +201,7 @@ export function TaskReminder({
                   <Button
                     type="button"
                     variant="ghost"
-                    disabled={busy}
+                    disabled={busy || request.uncertain}
                     onClick={() => save(null)}
                   >
                     Remove reminder
@@ -209,6 +223,30 @@ export function TaskReminder({
           </a>
         </>
       )}
+      {request.uncertain && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const next = await request.retry<{
+                reminder: PersonalReminder;
+              }>();
+              setReminder(next.reminder);
+              setError("");
+              setStatus("Your reminder preference is confirmed saved.");
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Retry same request
+        </Button>
+      )}
       {status && <p role="status">{status}</p>}
       {error && (
         <div role="alert" className="text-red-800">
@@ -216,7 +254,7 @@ export function TaskReminder({
           <Button
             type="button"
             variant="ghost"
-            disabled={busy}
+            disabled={busy || request.uncertain}
             onClick={() =>
               load()
                 .then(() => setError(""))

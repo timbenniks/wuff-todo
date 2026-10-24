@@ -62,7 +62,7 @@ export function ListReminders({
             <input
               type="checkbox"
               className="size-5 shrink-0 mt-1 accent-primary"
-              disabled={busy}
+              disabled={busy || request.uncertain}
               checked={included}
               onChange={(e) => setIncluded(e.target.checked)}
             />
@@ -71,7 +71,7 @@ export function ListReminders({
           <Button
             type="button"
             variant="outline"
-            disabled={busy}
+            disabled={busy || request.uncertain}
             onClick={async () => {
               setBusy(true);
               setError("");
@@ -92,7 +92,7 @@ export function ListReminders({
               }
             }}
           >
-            Save my list reminders
+            Save list preference
           </Button>
         </>
       )}
@@ -104,10 +104,38 @@ export function ListReminders({
       {error && (
         <div role="alert" className="text-sm text-red-800 mt-3">
           <p>{error}</p>
-          <Button type="button" variant="ghost" onClick={load}>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={busy || request.uncertain}
+            onClick={load}
+          >
             Load latest preference
           </Button>
         </div>
+      )}
+      {request.uncertain && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const next = await request.retry<Setting>();
+              setSaved(next);
+              setIncluded(next.dailyIncluded);
+              setError("");
+              setStatus("Your list preference is confirmed saved.");
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Retry same request
+        </Button>
       )}
       {status && (
         <p role="status" className="text-sm mt-3">

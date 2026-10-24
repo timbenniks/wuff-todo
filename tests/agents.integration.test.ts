@@ -164,6 +164,7 @@ test("Cursor owner isolation, secrets, concurrent launches, lost responses, foll
       "insert into wuff_github_bindings(list_id,owner_id,installation_id,repository_id,repository) values($1,$2,'fake-install','fake-repo',$3)",
       [listId, owner.id, repo],
     );
+    assert.equal((await cursorConnection(owner)).executionEnabled, true);
     assert.equal((await cursorConnection(owner)).connected, false);
     assert.equal((await cursorConnection(stranger)).connected, false);
     assert.equal((await cursorConnection(stranger)).configured, true);

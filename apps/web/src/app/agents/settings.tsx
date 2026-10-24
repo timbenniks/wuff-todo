@@ -10,6 +10,7 @@ type Readiness = {
   binding: null | {
     environmentId: string;
     environmentName: string;
+    repository: string;
     requiredSecrets: string[];
   };
 };
@@ -29,6 +30,7 @@ export function AgentSettings({
   const [connection, setConnection] = useState<{
     connected: boolean;
     configured: boolean;
+    executionEnabled: boolean;
   } | null>(null);
   const [environments, setEnvironments] = useState<
       { id: string; name: string }[]
@@ -44,31 +46,48 @@ export function AgentSettings({
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false);
   const pending = useRef<Record<string, unknown> | null>(null);
+  const epoch = useRef(0);
+  const [loading, setLoading] = useState(true);
+  const locked = busy || !!pending.current;
   async function load() {
-    const c = await api<{
-      connected: boolean;
-      configured: boolean;
-    }>("/api/v1/agents", "GET", undefined, userId);
-    setConnection(c);
-    if (c.connected && listId) {
-      const r = await api<Readiness>(
-        `/api/v1/agents?listId=${listId}`,
+    const current = ++epoch.current;
+    setLoading(true);
+    setError("");
+    try {
+      const c = await api<NonNullable<typeof connection>>(
+        "/api/v1/agents",
         "GET",
         undefined,
         userId,
       );
-      setReadiness(r);
-      const e = await api<{ environments: typeof environments }>(
-        `/api/v1/agents?environments=1&listId=${listId}`,
-        "GET",
-        undefined,
-        userId,
-      );
-      setEnvironments(e.environments);
-      if (r.binding) {
-        setEnvironmentId(r.binding.environmentId);
-        setRequired(r.binding.requiredSecrets.join(", "));
+      if (epoch.current !== current) return;
+      setConnection(c);
+      if (c.connected && listId) {
+        const r = await api<Readiness>(
+          `/api/v1/agents?listId=${listId}`,
+          "GET",
+          undefined,
+          userId,
+        );
+        if (epoch.current !== current) return;
+        setReadiness(r);
+        const e = await api<{ environments: typeof environments }>(
+          `/api/v1/agents?environments=1&listId=${listId}`,
+          "GET",
+          undefined,
+          userId,
+        );
+        if (epoch.current !== current) return;
+        setEnvironments(e.environments);
+        if (r.binding) {
+          setEnvironmentId(r.binding.environmentId);
+          setRequired(r.binding.requiredSecrets.join(", "));
+        }
       }
+    } catch (e) {
+      if (epoch.current === current) setError((e as Error).message);
+    } finally {
+      if (epoch.current === current) setLoading(false);
     }
   }
   useEffect(() => {
@@ -76,7 +95,10 @@ export function AgentSettings({
     setEnvironments([]);
     setEnvironmentId("");
     setRequired("");
-    load().catch((e) => setError(e.message));
+    void load();
+    return () => {
+      epoch.current++;
+    };
   }, [listId]);
   async function act(
     action: string,
@@ -132,6 +154,47 @@ export function AgentSettings({
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
+      {loading && <p role="status">Checking Cursor readiness…</p>}
+      {error && !pending.current && (
+        <Button variant="outline" disabled={locked} onClick={() => void load()}>
+          Retry Cursor readiness
+        </Button>
+      )}
+      {connection && (
+        <section
+          aria-label="Cursor readiness"
+          className="rounded-xl border border-border p-4 grid gap-2 text-sm"
+        >
+          <h3 className="font-bold">Before starting paid work</h3>
+          <p>
+            Personal account:{" "}
+            {connection.connected ? "Connected" : "Not connected"}
+          </p>
+          <p>
+            Repository:{" "}
+            {readiness?.binding?.repository ??
+              "Configure this list’s GitHub repository before choosing an environment"}
+          </p>
+          <p>
+            Environment: {readiness?.binding?.environmentName ?? "Not selected"}
+          </p>
+          <p>
+            Required secrets:{" "}
+            {readiness?.binding
+              ? readiness.ready
+                ? "Configured"
+                : `Missing ${readiness.missingSecrets.join(", ")}`
+              : "Not checked"}
+          </p>
+          <p>
+            Paid execution:{" "}
+            {connection.executionEnabled
+              ? "Enabled; each run requires confirmation"
+              : "Disabled by the operator"}
+            . Saving setup does not start a run.
+          </p>
+        </section>
+      )}
       {connection && !connection.configured && (
         <p>
           Cursor connections are not available yet. An administrator needs to
@@ -172,7 +235,7 @@ export function AgentSettings({
             />
           </label>
           <Button
-            disabled={busy || !apiKey}
+            disabled={locked || !apiKey}
             onClick={() => act("connect", { apiKey })}
           >
             Connect personal Cursor account
@@ -184,6 +247,7 @@ export function AgentSettings({
         <select
           className="rounded-lg border border-border bg-background p-2"
           value={listId}
+          disabled={locked || loading}
           onChange={(e) => {
             setError("");
             setListId(e.target.value);
@@ -202,7 +266,7 @@ export function AgentSettings({
           Configure this list’s GitHub repository
         </a>
       )}
-      {connection?.connected && listId && (
+      {connection?.connected && listId && !loading && (
         <>
           <section className="grid gap-3 rounded-xl border border-border p-4">
             <h2 className="font-bold">Environment</h2>
@@ -235,7 +299,7 @@ export function AgentSettings({
               view live activity.
             </p>
             <Button
-              disabled={busy || !environmentId}
+              disabled={locked || !environmentId}
               onClick={() =>
                 act("bind", {
                   environmentId,
@@ -273,7 +337,7 @@ export function AgentSettings({
                   consume Cursor usage.
                 </p>
                 <Button
-                  disabled={busy || !environmentName}
+                  disabled={locked || !environmentName}
                   onClick={() =>
                     act("createEnvironment", {
                       name: environmentName,
@@ -282,7 +346,7 @@ export function AgentSettings({
                     })
                   }
                 >
-                  Create in Cursor
+                  Create environment in Cursor (uses paid allowance)
                 </Button>
               </div>
             </details>
@@ -317,7 +381,7 @@ export function AgentSettings({
                 updates that secret.
               </p>
               <Button
-                disabled={busy || !secretName || !secretValue}
+                disabled={locked || !secretName || !secretValue}
                 onClick={() =>
                   act("secret", { name: secretName, value: secretValue })
                 }

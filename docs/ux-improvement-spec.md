@@ -228,4 +228,5 @@ named MCP hosts need their own evidence.
 | 2     | Locally complete; production pending | [Phase 2 evidence](verification.md#ux-improvement-phase-2--october-24-2026) |
 | 3     | Locally complete; production pending | [Phase 3 evidence](verification.md#ux-improvement-phase-3--october-24-2026) |
 | 4 | Locally complete; production pending | [Phase 4 evidence](verification.md#ux-improvement-phase-4--october-24-2026) |
-| 5–6 | Specified | Phase 5: reminders and integration readiness |
+| 5 | Locally complete; production pending | [Phase 5 evidence](verification.md#ux-improvement-phase-5--october-24-2026) |
+| 6 | Specified | Language, authentication and guide |

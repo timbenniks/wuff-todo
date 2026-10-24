@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Smartphone, Monitor, X } from "lucide-react";
 import type { ReminderSettings } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,18 @@ export function ReminderSettingsForm({
     [error, setError] = useState(""),
     [status, setStatus] = useState("");
   const request = useReminderRequest(userId);
+  const [permission, setPermission] = useState("Checking browser permission");
+  useEffect(() => {
+    setPermission(
+      typeof Notification === "undefined"
+        ? "Unsupported"
+        : Notification.permission,
+    );
+  }, []);
+  const deliverable =
+    saved.schedulerReady &&
+    saved.devices.some((device) => saved.delivery[device.transport]);
+  const locked = busy || request.uncertain;
   async function action(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -37,6 +49,7 @@ export function ReminderSettingsForm({
         "This browser cannot receive push notifications. On iPhone, add Wuff to your Home Screen and open it there.",
       );
     const permission = await Notification.requestPermission();
+    setPermission(permission);
     if (permission !== "granted")
       throw Error(
         "Notifications are blocked. Allow them in your browser or device settings, then try again.",
@@ -60,7 +73,9 @@ export function ReminderSettingsForm({
       subscription: subscription.toJSON(),
     });
     setSaved(next);
-    setStatus("This browser can now receive reminders.");
+    setStatus(
+      "This browser is registered. Notification delivery has not been verified.",
+    );
   }
   return (
     <section>
@@ -72,6 +87,120 @@ export function ReminderSettingsForm({
         A gentle nudge for things still on your list. These settings are just
         for you.
       </p>
+      <section
+        aria-label="Reminder delivery status"
+        className="rounded-xl border border-border p-4 mb-6 grid gap-2 text-sm"
+      >
+        <h3 className="font-bold">Delivery status</h3>
+        <p>
+          Scheduling: {saved.schedulerReady ? "Configured" : "Setup needed"}
+        </p>
+        <p>
+          Devices:{" "}
+          {saved.devices.length
+            ? `${saved.devices.length} registered`
+            : "None registered"}
+        </p>
+        <p>
+          Delivery services:{" "}
+          {Object.entries(saved.delivery)
+            .filter(([, ready]) => ready)
+            .map(([transport]) => transport)
+            .join(", ") || "Setup needed"}
+        </p>
+        <p>This browser’s permission: {permission}</p>
+        <p>
+          Delivery: not verified here. Saving a preference or registering a
+          device does not confirm notification delivery.
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={locked}
+          onClick={() =>
+            void action(async () => {
+              const next = await api<ReminderSettings>(
+                "/api/v1/reminders",
+                "GET",
+                undefined,
+                userId,
+              );
+              setSaved(next);
+              setStatus(
+                "Delivery status refreshed. Your schedule draft is kept.",
+              );
+            })
+          }
+        >
+          Refresh delivery status
+        </Button>
+      </section>
+      <section className="mt-8 border-t border-border pt-6">
+        <h3 className="font-bold text-lg mb-2">Your devices</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Reminders go to the devices you enable. Permission is managed
+          separately on each device.
+        </p>
+        <Button
+          variant="outline"
+          disabled={locked || !saved.delivery.web || !saved.publicKey}
+          onClick={() => void action(enableBrowser)}
+        >
+          Enable this browser
+        </Button>
+        {!saved.delivery.web && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Web push setup is still needed before you can enable this browser.
+          </p>
+        )}
+        {saved.devices.length ? (
+          <ul className="mt-4 divide-y divide-border">
+            {saved.devices.map((device) => (
+              <li key={device.id} className="flex items-center gap-3 py-3">
+                <span aria-hidden="true">
+                  {["ios", "android"].includes(device.transport) ? (
+                    <Smartphone size={18} />
+                  ) : (
+                    <Monitor size={18} />
+                  )}
+                </span>
+                <span className="flex-1 min-w-0 break-words text-sm">
+                  {device.label}
+                  <span className="block text-xs text-muted-foreground">
+                    {device.transport}
+                  </span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remove ${device.label}`}
+                  disabled={locked}
+                  onClick={() =>
+                    void action(async () => {
+                      setSaved(
+                        await request<ReminderSettings>("removeDevice", {
+                          deviceId: device.id,
+                        }),
+                      );
+                      setStatus("Device removed.");
+                    })
+                  }
+                >
+                  <X size={18} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground mt-4">
+            No devices enabled yet.
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-4">
+          On iPhone, web notifications require opening Wuff from its Home Screen
+          icon. Native apps register from their own notification settings.
+        </p>
+      </section>
       {!saved.schedulerReady && (
         <p
           role="status"
@@ -97,7 +226,7 @@ export function ReminderSettingsForm({
         }}
       >
         <fieldset
-          disabled={busy}
+          disabled={locked}
           className="rounded-2xl border border-border p-5 grid gap-4"
         >
           <legend className="px-2 text-sm font-semibold">Daily nudge</legend>
@@ -171,7 +300,7 @@ export function ReminderSettingsForm({
           </Button>
         </fieldset>
         <fieldset
-          disabled={busy}
+          disabled={locked}
           className="rounded-2xl border border-border p-5 grid gap-4"
         >
           <legend className="px-2 text-sm font-semibold">
@@ -215,7 +344,15 @@ export function ReminderSettingsForm({
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Reminders during quiet hours wait until quiet hours end.
+            Reminders during quiet hours wait until quiet hours end. Times use{" "}
+            {draft.timezone}.
+            {draft.quietEnabled &&
+              (draft.quietStart < draft.quietEnd
+                ? draft.dailyTime >= draft.quietStart &&
+                  draft.dailyTime < draft.quietEnd
+                : draft.dailyTime >= draft.quietStart ||
+                  draft.dailyTime < draft.quietEnd) &&
+              ` Your daily nudge moves from ${draft.dailyTime} to ${draft.quietEnd} because of quiet hours.`}
           </p>
           <label className="flex items-start gap-3 text-sm">
             <input
@@ -235,84 +372,38 @@ export function ReminderSettingsForm({
           </label>
         </fieldset>
         <Button
-          disabled={busy}
+          disabled={locked}
           type="submit"
           variant="primary"
           className="justify-self-start"
         >
-          {busy ? "Saving…" : "Save reminder preferences"}
+          {busy
+            ? "Saving…"
+            : deliverable
+              ? "Save reminder preferences"
+              : "Save preference"}
         </Button>
       </form>
-      <section className="mt-8 border-t border-border pt-6">
-        <h3 className="font-bold text-lg mb-2">Your devices</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Reminders go to the devices you enable. Permission is managed
-          separately on each device.
-        </p>
-        <Button
-          variant="outline"
-          disabled={busy || !saved.delivery.web || !saved.publicKey}
-          onClick={() => void action(enableBrowser)}
-        >
-          Enable this browser
-        </Button>
-        {!saved.delivery.web && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Web push setup is still needed before you can enable this browser.
-          </p>
-        )}
-        {saved.devices.length ? (
-          <ul className="mt-4 divide-y divide-border">
-            {saved.devices.map((device) => (
-              <li key={device.id} className="flex items-center gap-3 py-3">
-                <span aria-hidden="true">
-                  {["ios", "android"].includes(device.transport) ? (
-                    <Smartphone size={18} />
-                  ) : (
-                    <Monitor size={18} />
-                  )}
-                </span>
-                <span className="flex-1 min-w-0 break-words text-sm">
-                  {device.label}
-                  <span className="block text-xs text-muted-foreground">
-                    {device.transport}
-                  </span>
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove ${device.label}`}
-                  disabled={busy}
-                  onClick={() =>
-                    void action(async () => {
-                      setSaved(
-                        await request<ReminderSettings>("removeDevice", {
-                          deviceId: device.id,
-                        }),
-                      );
-                      setStatus("Device removed.");
-                    })
-                  }
-                >
-                  <X size={18} />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground mt-4">
-            No devices enabled yet.
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-4">
-          On iPhone, web notifications require opening Wuff from its Home Screen
-          icon. Native apps register from their own notification settings.
-        </p>
-      </section>
       {status && (
         <p role="status" className="mt-5 text-sm text-primary">
           {status}
         </p>
+      )}
+      {request.uncertain && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() =>
+            void action(async () => {
+              const next = await request.retry<ReminderSettings>();
+              setSaved(next);
+              setStatus("The previous request is confirmed saved.");
+            })
+          }
+        >
+          Retry same request
+        </Button>
       )}
       {error && (
         <div
@@ -323,7 +414,7 @@ export function ReminderSettingsForm({
           <Button
             className="mt-3"
             variant="outline"
-            disabled={busy}
+            disabled={locked}
             onClick={() =>
               void action(async () => {
                 const next = await api<ReminderSettings>(

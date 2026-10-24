@@ -79,3 +79,14 @@ Reminder task/list editors now live in `packages/ui/src/features/components/remi
 Reconciliation verification: frozen-lockfile install, `pnpm check` (80 unit tests, workspace/root typecheck, optimized web/MCP builds), provider-mocked development reminder integration, `pnpm build:native:web`, and iOS/Android exports plus their existing bundle/secret scan all passed. Chrome repeated Settings/task save/reload/removal, independent owner/editor list settings, 320/390/1280px overflow checks, origin/signature guards and `/connections` query/fragment compatibility against the merged production build. Web and Tauri JavaScript scans found no reminder provider secret names or server device-table code. The lockfile preserves main's existing dependency graph and adds only reminder dependencies.
 
 Callbacks take list locks before personal actor/job locks on both task and digest paths to match shared-list mutation ordering. Actual installed Tauri notification registration, live QStash message delivery, push-provider delivery and production reminder migrations/deployment remain unverified/unperformed for this PR.
+
+## UX readiness — October 24
+
+Local UX Phase 5 leads with scheduling/service/device/permission status before
+schedule controls and explicitly distinguishes those states from verified
+notification delivery. Preferences can be saved while delivery is unavailable.
+Quiet-hours copy shows timezone and adjusted daily time. Uncertain task/list/daily
+preference saves retain the original payload/operation ID for explicit retry;
+known conflicts retain drafts until the user chooses to load latest. Device
+registration does not claim delivery. Provider/device release evidence remains
+separate from this UI work; see verification.

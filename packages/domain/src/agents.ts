@@ -193,6 +193,7 @@ export async function cursorConnection(actor: Actor) {
       ])
     ).rowCount,
     configured: (process.env.CURSOR_TOKEN_SECRET?.length ?? 0) >= 32,
+    executionEnabled: process.env.CURSOR_EXECUTION_ENABLED === "true",
     setupPath: "/connections#cursor",
   };
 }

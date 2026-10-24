@@ -33,7 +33,11 @@ export default async function Page({
           GitHub authorization could not be verified. Connect again.
         </p>
       )}
-      <GithubConnections lists={lists} initialId={params.listId} />
+      <GithubConnections
+        lists={lists}
+        initialId={params.listId}
+        userId={actor.id}
+      />
     </main>
   );
 }
