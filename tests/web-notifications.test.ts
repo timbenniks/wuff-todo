@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
+import { notificationWorker } from "./helpers/notification-worker";
 import { reminderDeviceSchema } from "@wuff/contracts";
 import {
   browserPushSupport,
@@ -229,54 +230,7 @@ test("signout unsubscribes before server cleanup even when the cleanup fails", a
     f.restore();
   }
 });
-function workerFixture() {
-  const handlers: Record<string, (event: any) => void> = {},
-    shown: any[] = [],
-    opened: string[] = [];
-  const clients = {
-    matchAll: async () => [] as any[],
-    openWindow: async (url: string) => {
-      opened.push(url);
-    },
-  };
-  runInNewContext(
-    readFileSync(
-      new URL("../apps/web/public/reminder-worker.js", import.meta.url),
-      "utf8",
-    ),
-    {
-      self: {
-        addEventListener: (name: string, handler: any) => {
-          handlers[name] = handler;
-        },
-        registration: {
-          showNotification: async (...args: any[]) => {
-            shown.push(args);
-          },
-        },
-        location: { origin: "https://wuff.example" },
-      },
-      clients,
-      URL,
-    },
-  );
-  return {
-    handlers,
-    shown,
-    opened,
-    clients,
-    dispatch: async (name: string, event: any) => {
-      let pending: Promise<any> | undefined;
-      handlers[name]({
-        ...event,
-        waitUntil: (p: Promise<any>) => {
-          pending = p;
-        },
-      });
-      await pending;
-    },
-  };
-}
+const workerFixture = notificationWorker;
 test("push worker shows Todo/Totake content and safe visible fallbacks for invalid payloads", async () => {
   const f = workerFixture(),
     id = crypto.randomUUID();
@@ -284,7 +238,7 @@ test("push worker shows Todo/Totake content and safe visible fallbacks for inval
     "/lists",
     `/tasks/${id}`,
     "/totake",
-    `/totake?reminder=${id}`,
+    `/totake?reminder=20751-480&account=${id}`,
   ]) {
     await f.dispatch("push", {
       data: {
@@ -351,9 +305,12 @@ test("notification clicks revalidate paths, reuse same-origin clients and recove
     },
   ];
   await f.dispatch("notificationclick", {
-    notification: notification("/totake"),
+    notification: notification("/tasks/11111111-1111-4111-8111-111111111111"),
   });
-  assert.equal(navigated, "https://wuff.example/totake");
+  assert.equal(
+    navigated,
+    "https://wuff.example/tasks/11111111-1111-4111-8111-111111111111",
+  );
   assert.equal(focused, 1);
   assert.equal(f.opened.length, 0);
   f.clients.matchAll = async () => [

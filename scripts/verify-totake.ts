@@ -25,6 +25,10 @@ if (
   process.env.WUFF_ORIGIN !== "http://localhost:3000"
 )
   throw Error("Development loopback only");
+const fixturePort = Number(process.env.WUFF_FIXTURE_PORT ?? 4173);
+if (!Number.isInteger(fixturePort) || fixturePort < 1024 || fixturePort > 65535)
+  throw Error("Choose a valid test host port");
+const fixtureOrigin = `http://127.0.0.1:${fixturePort}`;
 const require = createRequire(
   new URL("../apps/web/package.json", import.meta.url),
 );
@@ -394,7 +398,7 @@ try {
       reject(Error("MCP SDK host failed to start; logs withheld.")),
     );
   });
-  await page.goto("http://127.0.0.1:4173");
+  await page.goto(fixtureOrigin);
   const frame = page.frameLocator("iframe");
   await expect(
     frame.getByRole("heading", { name: "Wuff Totake", exact: true }),
@@ -406,7 +410,7 @@ try {
   });
   const toolBodies: string[] = [];
   let loseToolReply = true;
-  await page.route("http://127.0.0.1:4173/mcp", async (route: any) => {
+  await page.route(fixtureOrigin + "/mcp", async (route: any) => {
     const body = route.request().postDataJSON();
     if (body.name !== "update_totake") return route.continue();
     toolBodies.push(JSON.stringify(body.arguments));

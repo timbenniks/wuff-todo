@@ -7,6 +7,7 @@ export type PushPayload = {
   body: string;
   path: string;
   tag: string;
+  totake?: import("@wuff/contracts/modules/totake/notification").TotakeNotification;
 };
 export type PushTarget = ReminderDevice & {
   address: string;

@@ -8,6 +8,18 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **QStash scheduling incident (October 25, included in draft PR #35):** both
+  publishers now use a shared deterministic hex ID instead of rejected colon
+  separators. Failing-before/passing-after SDK/DB regression preserves retries,
+  six-day hops, policy and Totake gates. [Evidence and release checks](qstash-scheduling-fix.md).
+  No production retry/test send or manual preview deployment.
+
+- **Totake web notification actions (October 25, draft PR #35):** exact single-item
+  Taken/Done and labelled snooze, grouped/private review handoffs, current-state/
+  device/privacy guards and corrected calendar/account links are implemented and
+  locally verified (221 unit tests, real adapter/stock/replay and browser/SDK checks).
+  [Scope and evidence](totake-notification-actions.md). No production enablement.
+
 - **Web push notifications (October 25, draft PR #34):** browser subscription
   compatibility, explicit permission/reconnect/disconnect, safe Todo/Totake worker
   links and private VAPID generation are implemented and locally verified on latest main; production activation remains a gate. Native push

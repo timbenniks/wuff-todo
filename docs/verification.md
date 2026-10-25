@@ -2,6 +2,33 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## QStash publisher ID regression — October 25, 2026
+
+Included in [draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35) at
+Tim's request. [Failure/fix and evidence](qstash-scheduling-fix.md): the actual
+SDK publishing regression failed before the fix on colon-separated headers and
+passes with shared deterministic product/job/version/wake-minute hex IDs.
+Typecheck, 224 unit tests, optimized build and all five relevant real isolated
+integration cases passed. Rejection/unknown replies remain pending; identical
+retries deduplicate in the simulated provider, while gates/pauses/six-day hops and
+stale-version protection remain intact. No production retry/test send or manual
+preview deployment. Live acceptance and browser receipt require distinct,
+explicitly authorized checks after merge/deployment.
+
+## Totake guarded web notification actions — October 25, 2026
+
+[Draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35),
+[contract and full evidence](totake-notification-actions.md). Local TypeScript,
+221 unit tests, optimized guide/MCP/web build and native frontend build passed.
+Real isolated-development HTTP/MCP/native tests passed selected record/stock,
+Undo, stale/expired/device/privacy/account guards, races and receipt replay.
+The callback-payload case was repeated with a real callback and mocked sender.
+Optimized Chrome proves four snooze durations, partial selection, exact retries,
+Skip/Undo and narrow layouts; the existing Totake browser/actual MCP SDK host
+regression also passed on a dedicated loopback port. No real push/provider or
+physical phone/watch support is claimed. No schema or production configuration
+changed. Hosted checks remain blocked by account billing, so the PR stays draft.
+
 ## Web push browser lifecycle — October 25, 2026
 
 [Draft PR #34](https://github.com/timbenniks/wuff-todo/pull/34) and

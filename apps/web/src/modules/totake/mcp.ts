@@ -56,7 +56,7 @@ export function registerTotakeMcp({
     "update_totake",
     {
       description:
-        "Change personal Totake data. Requires totake:read and totake:write. Read get_totake first; supply current version and a fresh operationId. Retry uncertain outcomes with IDENTICAL arguments. change.action selects save_treatment, record, snooze, undo, record_intake, undo_intake, adjust_stock, move_reminder or settings. Record/skip/snooze only explicit unresolved itemIds. Never infer medication doses or mark taken without the user saying they took it. Moving dates requires explicit one/future scope. Count-only stock; no liquid/drop tracking. Existing grants do not acquire Totake permissions.",
+        "Change personal Totake data. Requires totake:read and totake:write. Read get_totake first; supply current version and a fresh operationId. Retry uncertain outcomes with IDENTICAL arguments. change.action selects save_treatment, record, snooze, undo, record_intake, undo_intake, adjust_stock, move_reminder or settings. Record/skip/snooze only explicit unresolved itemIds. Never infer medication doses or mark taken without the user saying they took it. Moving dates requires explicit one/future scope. Optional notification context adds device/account/expiry/unchanged-single-item checks; never fabricate it or infer selections from notifications. Count-only stock; no liquid/drop tracking. Existing grants do not acquire Totake permissions.",
       inputSchema: totakeMutationSchema.shape,
       annotations: write,
     },

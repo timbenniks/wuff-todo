@@ -1,4 +1,11 @@
-import { reminderSchedulerReady } from "../../platform/scheduler";
+import {
+  makeTotakeNotification,
+  totakeReminderPath,
+} from "@wuff/contracts/modules/totake/notification";
+import {
+  reminderSchedulerReady,
+  schedulerDeduplicationId,
+} from "../../platform/scheduler";
 import { Client } from "@upstash/qstash";
 import { z } from "zod";
 import { and, eq, sql, lt } from "drizzle-orm";
@@ -59,7 +66,12 @@ export async function schedulePendingTotake(userId?: string) {
         url: new URL("/api/internal/totake", process.env.WUFF_ORIGIN!).href,
         body: { id: job.id, version: job.version },
         notBefore: Math.ceil(wake / 1000),
-        deduplicationId: `totake:${job.id}:${job.version}:${Math.floor(wake / 60000)}`,
+        deduplicationId: schedulerDeduplicationId(
+          "totake",
+          job.id,
+          job.version,
+          wake,
+        ),
         retries: 5,
       });
       await db
@@ -154,7 +166,7 @@ export async function deliverTotake(
             ),
           );
         if (sent) continue;
-        const path = `/totake?reminder=${encodeURIComponent(g.id)}`;
+        const path = totakeReminderPath(g.id, initial.userId);
         try {
           await send(device, {
             title: "Wuff Totake reminder",
@@ -166,6 +178,18 @@ export async function deliverTotake(
               : "Open Wuff to view your reminder.",
             path,
             tag: `totake:${job.id}:${g.id}`,
+            ...(device.transport === "web"
+              ? {
+                  totake: makeTotakeNotification(
+                    s,
+                    g,
+                    initial.userId,
+                    device.id,
+                    policy.showContent,
+                    now,
+                  ),
+                }
+              : {}),
           });
         } catch (error) {
           if (error instanceof PushTransportError && error.permanent) {

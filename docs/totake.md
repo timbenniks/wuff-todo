@@ -61,3 +61,15 @@ Release gates: native Totake navigation and explicit optional-scope consent; nat
 ## Verification
 
 Current evidence is recorded in docs/verification.md and the PR. Core integration tests and optimized browser checks use synthetic development data; callbacks use mocked senders and publish no real messages. Screenshots under docs/screenshots/totake-* contain fictional examples only. Required checks that are blocked/unrun keep the PR a draft.
+
+## Web notification action follow-up — October 25
+
+[Draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35) adds guarded
+single-item Taken/Done and Snooze 15 min, with the existing checklist for grouped
+selection, Skip, all four snooze durations, Undo and scoped time changes. It fixes
+calendar/DST occurrence links and account/expired-login handoff. Exact policy,
+contract, current tests and remaining real-device/release gates are recorded in
+[notification actions](totake-notification-actions.md). Earlier lack-of-Web-Push-key
+inventory above is historical: VAPID was subsequently configured in the separately
+authorized setup recorded in [web notifications](web-notifications.md). Totake's
+production delivery gate remains separate; this branch does not enable it.
