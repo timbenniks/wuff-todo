@@ -27,7 +27,7 @@ import { OneTimeFlow, IntakeHistory } from "./OneTimeFlow";
 import { StockSummary, StockAdjustment } from "./StockControls";
 import { RecordedGroups, ItemName, SnoozeControls } from "./components";
 import { ReminderTimeEditor } from "./ReminderTimeEditor";
-import { acceptTotakeRead } from "./request";
+import { acceptTotakeRead, createTotakeReadGate } from "./request";
 import { Modal, TotakeSaveContext } from "./Modal";
 import {
   CalendarDays,
@@ -105,7 +105,7 @@ export function TotakeApp({
     group = s.groups.find((g) => g.id === active);
   const warnings = useMemo(() => e.lowStockWarnings(s), [s]),
     strip = e.warningStrip(warnings);
-  const readGeneration = useRef(0);
+  const readGate = useRef(createTotakeReadGate());
   const selection = useRef(new Map<string, string[]>());
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("reminder");
@@ -125,9 +125,10 @@ export function TotakeApp({
       );
   }, []);
 
-  async function refresh(through?: number) {
+  async function refresh(through?: number, explicit = false) {
     if (inFlight.current || pending.current) return null;
-    const generation = ++readGeneration.current;
+    const generation = readGate.current.begin(explicit);
+    if (generation === null) return null;
     try {
       const next = await api<TotakeSnapshot>(
         "/api/v1/totake" + (through !== undefined ? "?day=" + through : ""),
@@ -135,7 +136,7 @@ export function TotakeApp({
       if (next.userId !== userId)
         throw Error("Your account changed. Reload Wuff.");
       if (
-        generation !== readGeneration.current ||
+        !readGate.current.current(generation) ||
         !acceptTotakeRead(live.current, next)
       )
         return null;
@@ -148,13 +149,15 @@ export function TotakeApp({
       }
       return next;
     } catch (err) {
-      if (generation !== readGeneration.current) return null;
+      if (!readGate.current.current(generation)) return null;
       readFailed.current = true;
       setOffline(true);
       setError(
         err instanceof Error ? err.message : "Could not refresh Totake.",
       );
       return null;
+    } finally {
+      readGate.current.finish(generation);
     }
   }
   useEffect(() => {
@@ -171,7 +174,7 @@ export function TotakeApp({
   async function send(request: TotakeMutation): Promise<string | null> {
     if (inFlight.current) return "A change is already saving.";
     inFlight.current = true;
-    ++readGeneration.current;
+    readGate.current.invalidate();
     setBusy(true);
     setError("");
     try {
@@ -294,7 +297,7 @@ export function TotakeApp({
     }
   }
   async function loadLatest() {
-    const next = await refresh();
+    const next = await refresh(undefined, true);
     if (next) {
       draftVersion.current = next.version;
       setConflict(false);
@@ -372,7 +375,9 @@ export function TotakeApp({
                   Totake could not refresh. The displayed snapshot may be out of
                   date. Your draft is kept.
                 </p>
-                <Button onClick={() => void refresh()}>Refresh Totake</Button>
+                <Button onClick={() => void refresh(undefined, true)}>
+                  Refresh Totake
+                </Button>
               </div>
             )}
             {uncertain && (
@@ -525,6 +530,7 @@ export function TotakeApp({
                               <li key={i.id}>
                                 <ItemName item={i} />
                                 <Button
+                                  aria-label={`Mark ${i.name} as ${i.kind === "equipment" ? "done" : "taken"}`}
                                   onClick={() => record(g, [i.id], "taken")}
                                 >
                                   {i.kind === "equipment" ? "Done" : "Taken"}
@@ -614,6 +620,7 @@ export function TotakeApp({
                             <p>{e.scheduleLabel(t)}</p>
                           </div>
                           <Button
+                            aria-label={`Edit ${t.name}`}
                             onClick={() => (
                               (draftVersion.current = live.current.version),
                               setWizard({

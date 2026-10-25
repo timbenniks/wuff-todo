@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, mkdir } from "node:fs/promises";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
@@ -159,7 +159,9 @@ try {
   await expect(
     dialog.getByRole("button", { name: /Snooze selected/ }),
   ).toBeDisabled();
-  await dialog.getByRole("checkbox").last().uncheck();
+  await dialog
+    .getByRole("checkbox", { name: /Fictional count capsule/ })
+    .uncheck();
   await dialog
     .getByRole("button", { name: /Mark selected as taken\/done/ })
     .click();
@@ -197,7 +199,10 @@ try {
     } else await route.fulfill({ response });
   });
   await page
-    .getByRole("button", { name: "Taken", exact: true })
+    .getByRole("button", {
+      name: "Mark Fictional morning tablet as taken",
+      exact: true,
+    })
     .first()
     .click();
   await expect(
@@ -275,7 +280,10 @@ try {
     path: "docs/screenshots/totake-items-1280.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Edit", exact: true }).first().click();
+  await page
+    .getByRole("button", { name: "Edit Fictional morning tablet", exact: true })
+    .first()
+    .click();
   await page
     .getByLabel("Name", { exact: true })
     .fill("Edited fictional tablet");
@@ -422,7 +430,7 @@ try {
   await frame
     .getByRole("button", { name: "Retry same request", exact: true })
     .click();
-  assert.equal(toolBodies.length, 2);
+  await expect.poll(() => toolBodies.length).toBe(2);
   assert.equal(toolBodies[0], toolBodies[1]);
   await expect(
     frame.getByText("Totake change saved.", { exact: true }),
@@ -436,10 +444,35 @@ try {
     path: "docs/screenshots/totake-mcp-390.png",
     fullPage: true,
   });
+  const finalState = await getTotake(actor);
+  assert.equal(
+    finalState.state.treatments!.find(
+      (t) => t.name === "Edited fictional tablet",
+    )!.inventory.current,
+    "9",
+  );
+  assert.equal(
+    finalState.state.treatments!.find(
+      (t) => t.name === "Fictional count capsule",
+    )!.inventory.current,
+    "10",
+  );
   assert.deepEqual(errors, []);
   console.log(
     "PASS Totake real browser: selected records, Undo, lost-response exact retry, Cancel, conflict draft/load-latest, stock, 320/390/1280 layout, actual MCP Apps SDK controls.",
   );
+} catch (error) {
+  try {
+    await page.screenshot({
+      path: ".vercel/totake-browser-failure.png",
+      fullPage: true,
+    });
+    await writeFile(
+      ".vercel/totake-browser-failure.txt",
+      await page.locator("body").innerText(),
+    );
+  } catch {}
+  throw error;
 } finally {
   await cleanup();
 }

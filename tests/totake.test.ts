@@ -1,4 +1,7 @@
-import { acceptTotakeRead } from "../packages/ui/src/features/totake/request";
+import {
+  acceptTotakeRead,
+  createTotakeReadGate,
+} from "../packages/ui/src/features/totake/request";
 import { notificationDeliveryPolicy } from "../packages/domain/src/notification-policy";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -541,4 +544,21 @@ test("a delayed read cannot undo an acknowledged save or show another account sn
     acceptTotakeRead(current, { userId: "actor", version: 5 }),
     true,
   );
+});
+
+test("explicit latest-load cannot be canceled by periodic reads; saving invalidates all earlier read tickets", () => {
+  const gate = createTotakeReadGate(),
+    background = gate.begin()!,
+    explicit = gate.begin(true)!;
+  assert.equal(gate.current(background), false);
+  assert.equal(gate.begin(), null);
+  assert.equal(gate.current(explicit), true);
+  gate.finish(background);
+  assert.equal(gate.begin(), null);
+  gate.finish(explicit);
+  const next = gate.begin()!;
+  assert.equal(gate.current(next), true);
+  gate.invalidate();
+  assert.equal(gate.current(next), false);
+  assert.notEqual(gate.begin(), null);
 });
