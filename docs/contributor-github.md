@@ -1,6 +1,6 @@
 # Contributor GitHub safeguards
 
-October 24, 2026. This is the GitHub foundation for contributors implementing real
+Updated October 25, 2026. This is the GitHub foundation for contributors implementing real
 features. `/docs` is the implementation guide and `wuff-contributor` is the single
 feature skill; the old standalone prototype workflow is retired.
 
@@ -41,65 +41,66 @@ on main still builds all platforms and publishes a complete test prerelease afte
 the jobs pass. It is not a required PR check. Only the lightweight Verify and
 metadata-only policy checks are required; removed native jobs cannot block PRs.
 
-## Scope and evidence policy
+## Independent contribution and delivery policy
 
-The canonical [contributor workflow](contributor-workflow.md) defines the brief,
-technical approvals, coding rules, verification matrix and review handoff. It is
-published at `/docs/build`, included in the raw agent reference and downloadable
-with the `wuff-contributor` skill under `/contributor-kit/`. Product, design,
-component and accessibility pages are maintained in `docs/guide/`.
+The canonical [contributor workflow](contributor-workflow.md) lets contributors
+implement and iterate without preliminary approval of briefs, files or technical
+choices. No scope hash, path allowlist, exact-file approval or diff-size exception
+is required. Keep a proportional brief and actual verification evidence in the PR.
+Tim reviews and merges. See [the October 25 decision](contributor-autonomy.md).
 
 `contributor-policy.yml` executes only the policy script checked out from main.
 It never checks out PR code, installs dependencies or evaluates content as code.
-Its pinned checkout/setup actions and token can read PR metadata and write checks;
-no production credentials are provided. `pull_request_target` evaluates PR updates;
-`issue_comment` reevaluates on scope approval edits/deletions. Tim's approval is
-identified by immutable numeric user ID, not an agent-written label or PR field.
+Pinned checkout/setup actions and its token read PR metadata and write checks;
+no production credentials are provided. `pull_request_target` evaluates PR changes.
+The job no longer reads comments or requires issue-comment permissions/events.
+Existing scope-approval comments have no effect on the new policy.
 
-The policy binds approval to the brief plus surface scope (domain/API/MCP mappings,
-MCP UI decision and connection impact), checks changed/renamed paths against
-the approved allowlist, requires separate exact-file approval for sensitive paths,
-rejects common credential filenames, and requires current-head evidence. It fails
-closed on missing scope, incomplete inventories or API errors. Diffs over 800
-changed lines require an explicit large-diff exception. It does not scan arbitrary
-file contents for secrets, assess evidence truth or understand every semantic risk.
+The policy checks the feature branch/target, concrete PR sections, acceptance
+criteria, surface/test declarations, changed-file inventory and current-head
+verification evidence. It rejects common credential filenames and invalid paths,
+including rename sources, and fails closed on incomplete inventories or API
+errors. It does not scan arbitrary contents for secrets or establish evidence
+truth. Large diffs can pass without special approval; reviewers can still ask for
+a smaller change when that improves review.
 
-Every PR also supplies a JSON surface contract: persisted-data classification,
-domain/API/MCP operation mappings, an MCP UI decision and connection impact/review.
-Data-changing operations must declare implemented adapters and verification;
-implemented MCP UI and affected connections require their own verification.
-Missing/malformed contracts, web-only mappings and unresolved UI decisions fail
-the policy. Scope approvals bind the intended mappings and decisions; status and
-test results may evolve without changing approved capability scope. This remains
-declaration validation; actual adapter/connection tests and owner review prove behavior.
+Likely high-risk paths (safeguards/instructions, schema/migrations, key access/auth
+services, production configuration and native permission declarations) appear as
+informational review hints. They do not block implementation or require approval
+comments. Ordinary UI, CSS, design tokens, dependencies and contracts have no
+path-based gate. Path hints cannot identify every semantic risk: the PR must also
+explain changes to admission, authorization, sharing/privacy and consent.
 
-Every PR includes a Unit tests JSON declaration with changed test files and actual
-cases/commands/results. The policy rejects missing files, deleted or integration-only
-tests, unexplained exceptions and waived unit coverage for data changes. JS/TS
-tests are discovered automatically by `pnpm test`; new files cannot be silently
-omitted from a manual list. Native/Python unit execution remains a documented local
-gate. File presence and self-reported results do not prove meaningful assertions;
-review still checks behavior coverage and test quality.
+Every PR retains the API/MCP/connection JSON declaration and Unit tests declaration.
+Data-changing capabilities need implemented shared-domain/API/MCP mappings and
+actual adapter evidence; MCP UI and affected connections need appropriate checks.
+Unit coverage must name added/updated unit files and actual cases/results; data
+changes cannot waive it. Policy validates declarations and file presence, while
+passing tests and human review assess actual quality.
+
+Writing code is distinct from executing operations. Migration execution,
+provisioning, production changes/deployments, release publication, destructive
+operations on real accounts/data and paid execution need Tim's explicit operational
+authorization. Confirm isolated synthetic backends before integration or preview
+writes. Never borrow Tim's credentials or weaken safeguards to pass checks.
 
 Use upstream read access plus private forks where supported. A collaborator with
-upstream write access can create other branch workflows and similarly named
-Actions checks. Binding a check to the Actions app does not uniquely identify its
-workflow. Owner review is mandatory; a separate externally hosted policy GitHub
-App would be needed for stronger check-source isolation against adversarial
-collaborators. This metadata check is a guardrail for the cooperative contributor
-workflow, not a substitute for permissions or owner review.
+upstream write access can create other workflows and similarly named Actions
+checks. Binding a check to the Actions app does not uniquely identify its workflow.
+Owner review and restricted credentials remain essential; the metadata policy is
+a guardrail for cooperative contributors, not an adversarial security boundary.
 
-Only Tim (GitHub user ID 121096) has a PR-only bypass. This preserves his ability
-to merge his own PRs, which he cannot approve himself; it also lets him override
-failed checks through a PR. Contributors receive no bypass. Even Tim must use a
-PR for normal changes under this ruleset. The owner can still administer rules;
-do not expose the owner's GitHub credentials to contributor agents.
+The prepared ruleset gives only Tim (GitHub user ID 121096) a PR-only bypass, so
+he can merge his own PRs, including overriding failed checks through a PR.
+Contributors have no bypass. It remains an activation payload, not evidence of
+active protection. Do not expose the owner's credentials to contributor agents.
 
-Bootstrap: Tim reviews and merges this safeguards PR, including CODEOWNERS and
-the trusted workflow/script. The workflow cannot validate itself from an unmerged
-feature branch. Restore Actions availability and exercise a synthetic PR with
-passing scope, rejected paths, revoked approval and stale evidence. Do not onboard
-contributors until those checks are proven and protection read-back is verified.
+Bootstrap: Tim reviews/merges the trusted workflow/script and CODEOWNERS. The
+workflow cannot validate its new implementation from an unmerged feature branch.
+Restore Actions availability and exercise a synthetic PR with no approval comment,
+review hints, rejected credential paths, incomplete inventories and stale evidence.
+Verify branch-protection read-back before onboarding. This is a one-time setup
+requirement, not a per-feature permission loop.
 
 After upgrading, inspect existing rulesets to avoid duplicates, then activate
 through `gh` from the repository root:
@@ -123,8 +124,8 @@ run 40093282223 failed before job steps; its check annotations identify the acco
 billing/spending-limit block. Required checks must remain required on failure;
 restore runner availability before onboarding contributors.
 
-Scope matching and trusted-base policy code are implemented but not live until
-merged and exercised. Isolated contributor credentials/workspaces, Vercel preview
+The independent-contribution policy is implemented on the feature branch and must
+be merged and exercised before its live behavior is established. Isolated contributor credentials/workspaces, Vercel preview
 data isolation and controlled migration execution remain onboarding gates.
 CODEOWNERS routes review; it is not a database permission boundary.
 

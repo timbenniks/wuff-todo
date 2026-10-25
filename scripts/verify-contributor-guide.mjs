@@ -20,7 +20,8 @@ for (const file of [
   assert.ok((await response.arrayBuffer()).byteLength > 100, file);
 }
 const reference = await (await fetch(`${origin}/docs/agent-context.md`)).text();
-assert.ok(reference.includes("/wuff-scope"));
+assert.ok(!reference.includes("/wuff-scope"));
+assert.ok(reference.includes("Build and iterate independently"));
 assert.ok(reference.includes("Evidence commit:"));
 assert.ok(reference.includes("implementation reference"));
 assert.ok(
@@ -93,7 +94,7 @@ try {
       .click();
     assert.match(
       await page.evaluate(() => window.__copied),
-      /request Tim's scope approval/,
+      /Build and iterate independently/,
     );
     assert.match(await page.getByRole("status").innerText(), /copied/);
     assert.ok(

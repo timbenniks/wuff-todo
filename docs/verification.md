@@ -1,6 +1,24 @@
 # Implementation verification
 
-Updated: October 24, 2026. Older sections retain their milestone-specific evidence and test counts.
+Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
+
+## Contributor autonomy — October 25, 2026
+
+Tim requested removing repeated contributor approvals while safeguarding dangerous
+operations. Root instructions, contributor skill/workflow, guide, copied starter,
+PR template and metadata policy now permit independent iteration without hashed
+briefs, approved file lists or size exceptions. Risky paths are review hints; Tim
+retains final merge/release review and explicit operational authorization. See
+[decision, test cases and remaining gates](contributor-autonomy.md).
+
+Local typecheck, all 117 unit tests (including 25 policy cases), guide/MCP/web build
+and contributor browser checks at 320/390/1280px passed. Three new autonomy cases
+fail against the original policy. Generated downloads/hash manifests, clipboard,
+keyboard/navigation and zero app API requests were verified. There were no product
+data writes or changes to API/MCP/auth contracts. The GitHub runner was tested with
+synthetic responses; hosted jobs remain blocked before steps by account billing.
+The PR remains draft. No live activation, preview-backend isolation or production
+release is claimed; earlier scope-approval protocol evidence below is historical.
 
 ## Tauri migration cleanup — October 24, 2026
 

@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  briefHash,
   evaluate,
-  MAINTAINER_ID,
   sensitive,
   run,
   surfaceContractErrors,
@@ -67,21 +65,9 @@ Tim must verify installed native behavior before the native release.
       deletions: 2,
     },
   ];
-  const approval = {
-    briefSha256: briefHash(body),
-    allowedPaths: [files[0].filename],
-    sensitivePaths: [],
-  };
-  const comments = [
-    {
-      id: 1,
-      user: { id: MAINTAINER_ID },
-      body: `/wuff-scope\n${JSON.stringify(approval)}`,
-    },
-  ];
-  return { pr, files, comments, approval, surface, unit };
+  return { pr, files, surface, unit, comments: [] };
 }
-function setSurface(f, patch, approve = true) {
+function setSurface(f, patch) {
   Object.assign(f.surface, patch);
   if (patch.dataChanges === true && !f.unit.required) {
     f.unit = {
@@ -92,7 +78,6 @@ function setSurface(f, patch, approve = true) {
     };
     f.files.push({ filename: f.unit.files[0], additions: 1, deletions: 0 });
     f.pr.changed_files = f.files.length;
-    f.approval.allowedPaths.push(f.unit.files[0]);
     f.pr.body = f.pr.body.replace(
       /(## Unit tests\n```json\n)[\s\S]*?(\n```)/,
       (_match, start, end) => start + JSON.stringify(f.unit) + end,
@@ -102,8 +87,8 @@ function setSurface(f, patch, approve = true) {
     /```json\n[\s\S]*?\n```/,
     "```json\n" + JSON.stringify(f.surface) + "\n```",
   );
-  if (approve) setApproval(f, { briefSha256: briefHash(f.pr.body) });
 }
+
 function mutation() {
   return {
     action: "Save a task preference",
@@ -238,25 +223,14 @@ test("affected connections cannot omit recovery/privacy verification", () => {
   setSurface(f, {});
   assert.deepEqual(evaluate(f).errors, []);
 });
-test("surface declaration changes invalidate maintainer scope approval", () => {
-  const f = fixture();
-  setSurface(f, { dataChanges: true, operations: [mutation()] }, false);
-  assert.match(evaluate(f).errors.join(" "), /brief changed/);
-});
-test("verification updates preserve approved capabilities but mapping changes need reapproval", () => {
+test("contributors can evolve complete capability mappings without approval", () => {
   const f = fixture();
   setSurface(f, { dataChanges: true, operations: [mutation()] });
-  const hash = briefHash(f.pr.body);
-  const op = {
-    ...mutation(),
-    verification:
-      "Additional actual API/MCP retry and conflict checks passed on isolated synthetic data.",
-  };
-  setSurface(f, { operations: [op] }, false);
-  assert.equal(briefHash(f.pr.body), hash);
   assert.deepEqual(evaluate(f).errors, []);
-  setSurface(f, { operations: [{ ...op, mcp: "another_mutation" }] }, false);
-  assert.match(evaluate(f).errors.join(" "), /brief changed/);
+  setSurface(f, { operations: [{ ...mutation(), mcp: "another_mutation" }] });
+  assert.deepEqual(evaluate(f).errors, []);
+  setSurface(f, { operations: [{ ...mutation(), verification: "Pending" }] });
+  assert.match(evaluate(f).errors.join(" "), /actual adapter verification/);
 });
 
 test("no-data claims require an explanation and cannot contain mutations", () => {
@@ -279,22 +253,12 @@ test("missing, malformed and non-object surface contracts fail closed", () => {
     /JSON object/,
   );
 });
-function setApproval(f, patch) {
-  Object.assign(f.approval, patch);
-  f.comments[0].body = `/wuff-scope\n${JSON.stringify(f.approval)}`;
-}
-
-function apiFixture({
-  failInventory = false,
-  moveHead = false,
-  revokeDuringRun = false,
-  missingScope = false,
-} = {}) {
+function apiFixture({ failInventory = false, change = null } = {}) {
   const f = fixture();
   f.pr.state = "open";
+  f.pr.base.sha = "b".repeat(40);
   const calls = [];
-  let prReads = 0,
-    commentReads = 0;
+  let prReads = 0;
   const request = async (url, options) => {
     const path = new URL(url).pathname.replace(
       "/repos/timbenniks/wuff-todo/",
@@ -308,18 +272,16 @@ function apiFixture({
     let data;
     if (path === "pulls/22") {
       data = structuredClone(f.pr);
-      if (++prReads > 1 && moveHead) data.head.sha = "c".repeat(40);
+      if (++prReads > 1) {
+        if (change === "head") data.head.sha = "c".repeat(40);
+        if (change === "body") data.body += "Updated during evaluation.";
+        if (change === "base") data.base.sha = "c".repeat(40);
+        if (change === "target") data.base.ref = "another-branch";
+        if (change === "closed") data.state = "closed";
+      }
     } else if (path === "pulls/22/files") {
       if (failInventory) return Response.json({}, { status: 403 });
       data = f.files;
-    } else if (path === "issues/22/comments") {
-      data = structuredClone(missingScope ? [] : f.comments);
-      if (++commentReads > 1 && revokeDuringRun)
-        data.push({
-          id: 2,
-          user: { id: MAINTAINER_ID },
-          body: '/wuff-scope\n{"revoke":true}',
-        });
     } else if (path === "check-runs" && options.method === "POST")
       data = { id: 45 };
     else if (path === "check-runs/45" && options.method === "PATCH")
@@ -327,15 +289,18 @@ function apiFixture({
     else throw new Error("Unexpected policy API request");
     return Response.json(data);
   };
-  const args = {
-    event: { pull_request: { number: 22 } },
-    request,
-    env: {
-      GITHUB_REPOSITORY: "timbenniks/wuff-todo",
-      GITHUB_TOKEN: "synthetic-test-token",
+  return {
+    args: {
+      event: { pull_request: { number: 22 } },
+      request,
+      env: {
+        GITHUB_REPOSITORY: "timbenniks/wuff-todo",
+        GITHUB_TOKEN: "synthetic-test-token",
+      },
     },
+    calls,
+    fixture: f,
   };
-  return { args, calls };
 }
 
 test("trusted runner posts a successful check on the exact evaluated commit", async () => {
@@ -359,116 +324,128 @@ test("API failure never produces a passing policy check", async () => {
   assert.equal(f.calls.at(-1).body.conclusion, "failure");
 });
 
-test("head changes and scope revocation during evaluation fail closed", async () => {
-  for (const options of [
-    { moveHead: true },
-    { revokeDuringRun: true },
-    { missingScope: true },
-  ]) {
-    const f = apiFixture(options);
-    assert.equal(await run(f.args), false);
-    assert.equal(f.calls.at(-1).body.conclusion, "failure");
+test("head, body, base, target and state changes during evaluation fail closed", async () => {
+  for (const change of ["head", "body", "base", "target", "closed"]) {
+    const f = apiFixture({ change });
+    assert.equal(await run(f.args), false, change);
+    assert.equal(f.calls.at(-1).body.conclusion, "failure", change);
   }
 });
 
-test("issue-comment reevaluation works without running code from the PR", async () => {
+test("unrelated comment events do not run policy or require comment access", async () => {
   const f = apiFixture();
   f.args.event = { issue: { number: 22, pull_request: {} } };
-  assert.equal(await run(f.args), true);
+  assert.equal(await run(f.args), undefined);
+  assert.deepEqual(f.calls, []);
 });
 
-test("a scoped feature with current-commit evidence passes", () => {
+test("an ordinary feature passes without approval comments or scope lists", () => {
   assert.deepEqual(evaluate(fixture()).errors, []);
 });
-test("contributor comments cannot grant or revoke maintainer scope", () => {
+
+test("legacy approval and revocation comments cannot restrict contributor iteration", () => {
   const f = fixture();
-  f.comments.push({
-    id: 2,
-    user: { id: 999 },
-    body: '/wuff-scope\n{"revoke":true}',
-  });
-  assert.deepEqual(evaluate(f).errors, []);
-  f.comments[0].user.id = 999;
-  assert.match(evaluate(f).errors.join(" "), /missing or revoked/);
+  for (const body of [
+    '/wuff-scope\n{"revoke":true}',
+    '/wuff-scope\n{"broken"',
+  ]) {
+    f.comments = [{ id: 1, user: { id: 121096 }, body }];
+    assert.deepEqual(evaluate(f).errors, []);
+  }
 });
-test("latest maintainer revocation fails closed even when comments are unsorted", () => {
+
+test("brief and routine file changes need no renewed approval", () => {
   const f = fixture();
-  f.comments.unshift({
-    id: 2,
-    user: { id: MAINTAINER_ID },
-    body: '/wuff-scope\n{"revoke":true}',
-  });
-  assert.match(evaluate(f).errors.join(" "), /missing or revoked/);
-});
-test("malformed or missing approvals fail closed", () => {
-  const f = fixture();
-  f.comments[0].body = '/wuff-scope\n{"broken"';
-  assert.match(evaluate(f).errors.join(" "), /invalid JSON/);
-  setApproval(f, { allowedPaths: [12], sensitivePaths: null });
-  assert.match(evaluate(f).errors.join(" "), /Approved paths/);
-});
-test("scope hash binds the brief but permits new evidence", () => {
-  const f = fixture();
-  f.pr.body = f.pr.body.replace("phone, desktop", "phone, wide desktop");
-  assert.deepEqual(evaluate(f).errors, []);
   f.pr.body = f.pr.body.replace(
     "Exclude backend changes.",
-    "Include backend changes.",
+    "Reuse existing backend capabilities.",
   );
-  assert.match(evaluate(f).errors.join(" "), /brief changed/);
+  for (const filename of [
+    "packages/ui/src/features/app/lists/new-control.tsx",
+    "packages/ui/src/theme.css",
+    "packages/design/src/index.ts",
+    "packages/contracts/src/index.ts",
+    "package.json",
+    "pnpm-lock.yaml",
+  ]) {
+    f.files[0].filename = filename;
+    assert.deepEqual(evaluate(f).errors, [], filename);
+    assert.deepEqual(evaluate(f).reviewPaths, [], filename);
+  }
 });
-test("renames cannot move unapproved code into an approved path", () => {
+
+test("high-risk edits and renames are visible for review without preliminary approval", () => {
   const f = fixture();
   f.files[0].previous_filename = "packages/domain/src/index.ts";
-  assert.match(evaluate(f).errors.join(" "), /Outside approved scope/);
-  assert.match(evaluate(f).errors.join(" "), /sensitive-file approval/);
-});
-test("directory scopes do not grant sensitive-file permissions", () => {
-  const f = fixture();
-  f.files[0].filename = "packages/db/src/schema.ts";
-  setApproval(f, { allowedPaths: ["packages/db/**"] });
-  assert.match(evaluate(f).errors.join(" "), /sensitive-file approval/);
-  setApproval(f, { sensitivePaths: [f.files[0].filename] });
   assert.deepEqual(evaluate(f).errors, []);
+  assert.deepEqual(evaluate(f).reviewPaths, ["packages/domain/src/index.ts"]);
+  f.files[0].filename = "packages/db/src/schema.ts";
+  assert.deepEqual(evaluate(f).errors, []);
+  assert.deepEqual(evaluate(f).reviewPaths, [
+    "packages/db/src/schema.ts",
+    "packages/domain/src/index.ts",
+  ]);
 });
-test("wildcards are bounded and directory names cannot match siblings", () => {
-  for (const pattern of [
-    "**",
-    "../packages/**",
-    "/packages/**",
-    "packages/*",
-    "packages/../**",
+
+test("invalid paths fail closed for current and renamed files", () => {
+  for (const path of [
+    "../packages/task.ts",
+    "/packages/task.ts",
+    "packages/../task.ts",
+    "packages//task.ts",
+    "bad\\path.ts",
+    "bad\u0000path.ts",
   ]) {
-    const f = fixture();
-    setApproval(f, { allowedPaths: [pattern] });
-    assert.match(evaluate(f).errors.join(" "), /Approved paths/);
+    for (const field of ["filename", "previous_filename"]) {
+      const f = fixture();
+      f.files[0][field] = path;
+      assert.match(
+        evaluate(f).errors.join(" "),
+        /path is invalid/,
+        `${field}: ${path}`,
+      );
+    }
   }
-  const f = fixture();
-  setApproval(f, { allowedPaths: ["packages/ui/src/features/app/list/**"] });
-  assert.match(evaluate(f).errors.join(" "), /Outside approved scope/);
 });
-test("credentials remain forbidden even with explicit maintainer scope", () => {
+
+test("credentials and generated dependency files remain forbidden, including rename sources", () => {
   for (const path of [
     ".env.local",
     "apps/web/.env.production",
     "secret.pem",
+    "secret.p12",
+    "secret.pfx",
+    "secret.key",
+    "id_ed25519",
     ".vercel/project.json",
+    "node_modules/example/index.js",
   ]) {
-    const f = fixture();
-    f.files[0].filename = path;
-    setApproval(f, { allowedPaths: [path], sensitivePaths: [path] });
-    assert.match(evaluate(f).errors.join(" "), /cannot be submitted/);
+    for (const field of ["filename", "previous_filename"]) {
+      const f = fixture();
+      f.files[0][field] = path;
+      assert.match(
+        evaluate(f).errors.join(" "),
+        /cannot be submitted/,
+        `${field}: ${path}`,
+      );
+    }
   }
+  const f = fixture();
+  f.files[0].filename = ".env.example";
+  assert.deepEqual(evaluate(f).errors, []);
 });
-test("large and incomplete diffs require resolution", () => {
+
+test("large diffs need no size exception but incomplete inventories still fail", () => {
   const f = fixture();
   f.files[0].additions = 801;
-  assert.match(evaluate(f).errors.join(" "), /800/);
-  setApproval(f, { allowLargeDiff: true });
   assert.deepEqual(evaluate(f).errors, []);
   f.pr.changed_files = 2;
   assert.match(evaluate(f).errors.join(" "), /Incomplete/);
+  f.files = [];
+  f.pr.changed_files = 0;
+  assert.match(evaluate(f).errors.join(" "), /No changed files/);
 });
+
 test("stale evidence, missing acceptance and template-only sections cannot pass", () => {
   const f = fixture();
   f.pr.head.sha = "b".repeat(40);
@@ -477,43 +454,64 @@ test("stale evidence, missing acceptance and template-only sections cannot pass"
   assert.match(evaluate(f).errors.join(" "), /acceptance criteria/);
   assert.match(evaluate(f).errors.join(" "), /Complete the/);
 });
-test("line endings and explanatory comments do not change brief approval", () => {
+test("line endings and explanatory comments do not block delivery", () => {
   const f = fixture();
-  assert.equal(
-    briefHash(f.pr.body.replaceAll("\n", "\r\n")),
-    briefHash(f.pr.body),
+  f.pr.body = f.pr.body.replaceAll("\n", "\r\n");
+  assert.deepEqual(evaluate(f).errors, []);
+  f.pr.body = f.pr.body.replace(
+    "## Feature brief",
+    "## Feature brief\n<!-- instructions -->",
   );
-  assert.equal(
-    briefHash(
-      f.pr.body.replace(
-        "## Feature brief",
-        "## Feature brief\n<!-- instructions -->",
-      ),
-    ),
-    briefHash(f.pr.body),
-  );
+  assert.deepEqual(evaluate(f).errors, []);
 });
-test("high-risk boundaries include workflows, migration, auth, dependencies and global styles", () => {
+
+test("review hints focus on safeguards, schema, access and operational permissions", () => {
   for (const path of [
     ".github/workflows/ci.yml",
-    "docs/guide/product.md",
     ".agents/skills/wuff-contributor/SKILL.md",
     "AGENTS.md",
     "AGENTS.override.md",
     "apps/web/AGENTS.override.md",
     "packages/db/migrations/a.sql",
     "packages/domain/src/index.ts",
-    "packages/contracts/src/index.ts",
-    "packages/design/src/index.ts",
-    "pnpm-lock.yaml",
-    "apps/web/src/app/api/v1/route.ts",
-    "apps/web/src/lib/auth.ts",
-    "packages/ui/src/theme.css",
+    "apps/web/src/lib/auth/server.ts",
+    "apps/web/src/lib/oauth.ts",
     "apps/native/src-tauri/tauri.conf.json",
+    "apps/native/src-tauri/capabilities/default.json",
+    "scripts/contributor-policy.mjs",
+    "scripts/migrate.ts",
+    "vercel.json",
   ])
     assert.equal(sensitive(path), true, path);
-  assert.equal(
-    sensitive("packages/ui/src/features/app/lists/task-row.tsx"),
-    false,
+  for (const path of [
+    "docs/guide/product.md",
+    "packages/ui/src/features/app/lists/task-row.tsx",
+    "packages/ui/src/theme.css",
+    "packages/design/src/index.ts",
+    "pnpm-lock.yaml",
+  ])
+    assert.equal(sensitive(path), false, path);
+});
+
+test("trusted runner reports review hints without making them an approval gate", async () => {
+  const f = apiFixture();
+  f.fixture.files[0].filename = "packages/db/src/schema.ts";
+  assert.equal(await run(f.args), true);
+  assert.match(
+    f.calls.at(-1).body.output.summary,
+    /packages\/db\/src\/schema.ts/,
   );
+  assert.match(
+    f.calls.at(-1).body.output.summary,
+    /no preliminary approval required/,
+  );
+  assert.ok(f.calls.every((c) => !c.path.includes("comments")));
+});
+
+test("feature branches and the main target remain required", () => {
+  const f = fixture();
+  f.pr.head.ref = "main";
+  f.pr.base.ref = "other";
+  assert.match(evaluate(f).errors.join(" "), /codex\//);
+  assert.match(evaluate(f).errors.join(" "), /target main/);
 });

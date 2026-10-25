@@ -1,6 +1,6 @@
 ---
 name: wuff-contributor
-description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, approved scope and a reviewable PR. Use for Wuff contributor design and coding work.
+description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, independent iteration and a reviewable PR. Use for Wuff contributor design and coding work.
 ---
 
 # Wuff contributor
@@ -19,7 +19,7 @@ Read `docs/guide/surfaces.md` for every feature. Map every persisted mutation to
 the shared domain service, HTTP API and MCP tool, including authorized reads and
 cross-surface verification. Assess MCP App UI and delegated/provider connection
 scopes, consent, missing/expired/revoked states and personal credential isolation.
-Fill the PR's surface-contract JSON before requesting scope approval. Do not ship
+Keep the PR's surface-contract JSON current before final review. Do not ship
 web-only writes, placeholder tools or silent parity/UI/connection deferrals.
 
 Understand the problem and intended users, offer small product choices, show the
@@ -30,8 +30,13 @@ Explain deliberate visual departures or new components as scope proposals.
 
 Handle branches, commits, PRs, checks and evidence for the contributor. Ask product
 questions in plain language. Use one `codex/` branch and early draft PR per feature.
-Obtain Tim's scope approval using the documented `/wuff-scope` protocol. Contributor
-consent cannot authorize scope expansion, migrations or production operations.
+Build and iterate without preliminary approval of briefs, file lists or ordinary
+technical choices. Keep the brief current; ask the contributor product questions,
+not permission for routine code changes. Call out access/privacy, schema, native
+permissions, production configuration and safeguard changes for Tim's final review.
+Do not weaken protections to pass checks. Writing code is separate from executing
+migrations, provisioning, production operations, releases, destructive operations
+on real data or paid runs; those need Tim's explicit operational authorization.
 
 Follow the workflow's quality rules and verification matrix. Reuse real components
 and services; preserve permissions, retries, concurrency and API/MCP contracts.
@@ -47,8 +52,9 @@ cases/commands/results. Integration checks do not replace unit coverage; data
 changes cannot waive it. Run local language-specific tests for native/Python
 changes. Keep the PR a draft when required checks are blocked or unrun.
 
-Confirm environment readiness before writes. If credentials, preview isolation or
-scope are missing, prepare a brief/mock and concrete technical handoff to Tim.
+Confirm environment readiness before backend writes. If credentials, preview isolation or
+operational authorization are missing, continue useful code/unit/mock work and
+prepare a concrete technical handoff to Tim.
 Do not bypass checks, borrow his credentials, alter safeguards to pass, invent
 evidence, merge or release. Record remaining limitations clearly.
 

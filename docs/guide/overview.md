@@ -2,7 +2,7 @@
 
 This is Wuff's implementation guide for contributors and their coding agents.
 You describe the behavior and try the result. Your agent handles the code, Git,
-checks and PR. Tim approves technical scope, reviews and merges.
+checks and PR. You can build and iterate independently; Tim reviews and merges.
 
 ## Start with your idea
 
@@ -11,7 +11,7 @@ problem, who benefits and what should become easier. Your agent should offer
 small product choices, show the main interaction early and keep a short record of
 agreed decisions. You do not need to choose libraries or manage Git yourself.
 
-Describe → agree the brief → Tim approves scope → implement → try the preview →
+Describe → write a brief → implement → try the preview →
 refine → verify → Tim reviews → Tim merges/releases.
 
 Start at [Build a feature](/docs/build), then use [Review and delivery](/docs/review)
@@ -20,16 +20,16 @@ reference and accessibility requirements while building.
 
 Read [API, MCP and connections](/docs/surfaces) before defining the feature. Every
 persisted-data action needs API/MCP capability parity, an MCP UI decision and a
-connection/consent/revocation review; these are part of the approved scope.
+connection/consent/revocation review; keep these current as the feature develops.
 
 ## Which instructions do what?
 
-| Layer                                       | Job                                                                                       |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Root and nearby AGENTS.md                   | Repository entry point, architecture boundaries and links to the workflow                 |
-| This implementation guide                   | Product rules, real components, design decisions and quality requirements                 |
-| wuff-contributor skill                      | Walk the agent through discovery, scope approval, iteration, verification and PR delivery |
-| GitHub policy, permissions and owner review | Check declared scope/evidence and control what can reach main                             |
+| Layer                                       | Job                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Root and nearby AGENTS.md                   | Repository entry point, architecture boundaries and links to the workflow             |
+| This implementation guide                   | Product rules, real components, design decisions and quality requirements             |
+| wuff-contributor skill                      | Walk the agent through discovery, independent iteration, verification and PR delivery |
+| GitHub policy, permissions and owner review | Check delivery evidence and control what can reach main                               |
 
 Your current checkout is authoritative. Hosted documentation and downloads may lag
 unmerged changes. A skill helps the agent follow the rules; it cannot grant tools,

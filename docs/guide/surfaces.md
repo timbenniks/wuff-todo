@@ -55,7 +55,8 @@ and never appear in MCP output, client bundles, logs or screenshots.
 API/MCP equivalents expose authorized capabilities and status, never raw tokens
 or privileged internal callbacks. Use the existing browser consent/sign-in handoff
 when secrets or provider policy require it, with an agent-usable status/recovery
-path. New scopes or changes to consent/auth need Tim's explicit technical approval.
+path. Call out new scopes or changes to consent/auth for Tim's review before merge;
+preparing and testing code does not require preliminary approval.
 
 ## Evidence required before review
 
@@ -108,11 +109,10 @@ For documentation/visual changes with no persisted-data behavior, use
 `dataChanges: false`, `operations: []` and a `noDataChangesReason` explaining why.
 Connection/UI decisions still need explicit reasoning.
 
-The capability mappings and UI/connection decisions are included in Tim's scope
-hash; changing them requires renewed approval. Status and verification fields may
-evolve without changing that scope. A draft can contain planned operations, but
-its policy check stays red until implementation and verification are complete.
-Policy checks reject
-missing declarations, unmapped writes, unimplemented operations, missing connection
-evidence or an unresolved MCP UI decision. They validate declarations, not their
-truth; Tim reviews the code and actual adapter evidence.
+Keep capability mappings and UI/connection decisions current as implementation
+evolves; changing them does not require preliminary approval. A draft can contain
+planned operations, but its delivery check stays red until implementation and
+verification are complete. Policy checks reject missing declarations, unmapped
+writes, unimplemented operations, missing connection evidence or an unresolved
+MCP UI decision. They validate declarations, not their truth; Tim reviews the code
+and actual adapter evidence before merge.
