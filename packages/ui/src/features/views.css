@@ -1357,3 +1357,69 @@ button:focus-visible {
 .settings-content > section {
   max-width: 1000px;
 }
+
+/* Todo borrows Totake's quiet cards and dialog rhythm; task rows stay compact. */
+.todo-workspace .home-cards {
+  gap: 20px;
+}
+.todo-workspace .home-card {
+  border-radius: 12px;
+}
+.todo-workspace .home-card > div:first-child {
+  border-bottom: 0;
+  padding: 20px 20px 12px;
+}
+.todo-workspace .home-card h2 {
+  font-size: 20px;
+  line-height: 26px;
+  letter-spacing: -0.4px;
+}
+.todo-workspace .home-daily-header p {
+  font-size: 12px;
+  font-weight: 600;
+}
+.todo-workspace .home-daily-header h1 {
+  margin-top: 6px;
+  letter-spacing: -0.8px;
+}
+.todo-workspace .list-heading h1 {
+  font-weight: 700;
+}
+.todo-workspace .todo-settings-dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+.todo-settings-dialog::backdrop {
+  background: rgb(16 30 45 / 44%);
+}
+.todo-settings-dialog .todo-dialog-heading {
+  align-items: center;
+  margin: -20px -20px 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wuff-border);
+}
+.todo-settings-dialog .todo-dialog-heading h2 {
+  font-size: 18px;
+  line-height: 26px;
+  letter-spacing: -0.025em;
+}
+.todo-settings-dialog .management-pages > button[aria-current="page"] {
+  background: var(--wuff-accent);
+  color: var(--wuff-foreground);
+  border-color: transparent;
+}
+@media (min-width: 768px) {
+  .todo-workspace .home-daily-header {
+    margin-block: 24px;
+  }
+  .todo-workspace .home-daily-header h1,
+  .todo-workspace .list-heading h1 {
+    font-size: 30px;
+    line-height: 36px;
+    letter-spacing: -0.8px;
+  }
+}

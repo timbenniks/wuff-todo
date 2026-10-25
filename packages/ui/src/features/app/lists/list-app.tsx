@@ -740,7 +740,7 @@ export function ListApp({
   );
   return (
     <div
-      className="workspace-shell bg-background text-foreground"
+      className="workspace-shell todo-workspace bg-background text-foreground"
       style={listThemeVariables(list?.color ?? "blue")}
     >
       <ListTheme color={list?.color ?? "blue"} />
