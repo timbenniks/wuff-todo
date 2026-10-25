@@ -6,8 +6,27 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import { TableKit } from "@tiptap/extension-table";
 import { TaskList, TaskItem } from "@tiptap/extension-list";
-import { Bold, Italic, Strikethrough, Heading2, List, ListOrdered, Quote, Code, Undo2, Redo2, Link2, Unlink, ImagePlus, Trash2 } from "lucide-react";
-import { needsPreservedNote, renderTaskMarkdown, safeNoteLink } from "../../lib/task-markdown";
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading2,
+  List,
+  ListOrdered,
+  Quote,
+  Code,
+  Undo2,
+  Redo2,
+  Link2,
+  Unlink,
+  ImagePlus,
+  Trash2,
+} from "lucide-react";
+import {
+  needsPreservedNote,
+  renderTaskMarkdown,
+  safeNoteLink,
+} from "../../lib/task-markdown";
 import { PreservedNote, preservedNoteDocument } from "../../lib/preserved-note";
 import { Button } from "../../../../button";
 import { TaskImageNode } from "../../lib/task-image-node";

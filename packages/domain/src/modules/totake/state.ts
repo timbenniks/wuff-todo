@@ -1,5 +1,9 @@
-
-import { totakeEngine as e, type TotakeAction, type TotakeState, AppError } from "@wuff/contracts";
+import {
+  totakeEngine as e,
+  type TotakeAction,
+  type TotakeState,
+  AppError,
+} from "@wuff/contracts";
 const fail = (message: string): never => {
   throw new AppError("invalid_totake_action", message, 400);
 };

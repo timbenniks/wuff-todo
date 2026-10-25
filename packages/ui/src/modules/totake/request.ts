@@ -1,4 +1,3 @@
-
 import type { TotakeSnapshot } from "@wuff/contracts";
 export function acceptTotakeRead(
   current: Pick<TotakeSnapshot, "userId" | "version">,

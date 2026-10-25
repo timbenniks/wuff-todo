@@ -1,10 +1,14 @@
-
 import { moduleServices } from "./module-services";
 import { notificationDeliveryPolicy } from "./notification-policy";
 import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { database, users, notificationPreferences, receipts } from "@wuff/db";
-import { AppError, notificationSettingsSchema, type Actor, type NotificationSettings } from "@wuff/contracts";
+import {
+  AppError,
+  notificationSettingsSchema,
+  type Actor,
+  type NotificationSettings,
+} from "@wuff/contracts";
 type Db = ReturnType<typeof database>["db"];
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 async function admitted(tx: Db | Tx, actor: Actor, write = false) {
@@ -106,7 +110,8 @@ export async function updateNotificationSettings(actor: Actor, data: unknown) {
         target: notificationPreferences.userId,
         set: values,
       });
-    for (const module of moduleServices) await module.reconcileNotificationPause(tx, actor.id, previous, input);
+    for (const module of moduleServices)
+      await module.reconcileNotificationPause(tx, actor.id, previous, input);
     await tx.insert(receipts).values({
       actorId: actor.id,
       operationId: input.operationId,

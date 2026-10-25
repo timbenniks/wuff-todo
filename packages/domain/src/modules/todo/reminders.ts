@@ -1,16 +1,56 @@
-
-import { saveReminderDevice, deleteReminderDevice } from "../../platform/reminder-devices";
-import { type Db, type Tx, fail, admitted, notificationWrite } from "../../platform/notification-write";
+import {
+  saveReminderDevice,
+  deleteReminderDevice,
+} from "../../platform/reminder-devices";
+import {
+  type Db,
+  type Tx,
+  fail,
+  admitted,
+  notificationWrite,
+} from "../../platform/notification-write";
 import { reminderSchedulerReady } from "../../platform/scheduler";
 export { reminderSchedulerReady } from "../../platform/scheduler";
 import { notificationPolicy } from "../../platform/notification-settings";
 import { and, eq, or, sql, lte, inArray } from "drizzle-orm";
 import { Client, Receiver } from "@upstash/qstash";
 import { z } from "zod";
-import { database, users, lists, members, tasks, reminderPreferences, reminderLists, reminderJobs, reminderDevices, reminderDeliveries } from "@wuff/db";
-import { AppError, type Actor, type ReminderSettings, type PersonalReminder, reminderTimezoneSchema, reminderPreferencesSchema, updateReminderPreferencesSchema, updateListReminderSchema, listReminderSchema, taskReminderQuerySchema, setTaskReminderSchema } from "@wuff/contracts";
-import { nextDailyReminder, respectQuietHours, reminderLocalDay } from "../../platform/reminder-time";
-import { reminderDeliveryStatus, sendReminderPush, PushTransportError, type PushPayload } from "../../platform/reminder-transport";
+import {
+  database,
+  users,
+  lists,
+  members,
+  tasks,
+  reminderPreferences,
+  reminderLists,
+  reminderJobs,
+  reminderDevices,
+  reminderDeliveries,
+} from "@wuff/db";
+import {
+  AppError,
+  type Actor,
+  type ReminderSettings,
+  type PersonalReminder,
+  reminderTimezoneSchema,
+  reminderPreferencesSchema,
+  updateReminderPreferencesSchema,
+  updateListReminderSchema,
+  listReminderSchema,
+  taskReminderQuerySchema,
+  setTaskReminderSchema,
+} from "@wuff/contracts";
+import {
+  nextDailyReminder,
+  respectQuietHours,
+  reminderLocalDay,
+} from "../../platform/reminder-time";
+import {
+  reminderDeliveryStatus,
+  sendReminderPush,
+  PushTransportError,
+  type PushPayload,
+} from "../../platform/reminder-transport";
 export { reminderDeliveryStatus } from "../../platform/reminder-transport";
 export { localReminderInstant } from "../../platform/reminder-time";
 async function access(tx: Tx | Db, actor: Actor, listId: string) {
@@ -25,8 +65,12 @@ async function access(tx: Tx | Db, actor: Actor, listId: string) {
   if (!list || !member) fail("not_found", "List not found.", 404);
   return list;
 }
-async function personalWrite(actor: Actor, input: {operationId: string}, fn: (tx: Tx) => Promise<unknown>) {
-return notificationWrite(actor, input, fn, async tx => {
+async function personalWrite(
+  actor: Actor,
+  input: { operationId: string },
+  fn: (tx: Tx) => Promise<unknown>,
+) {
+  return notificationWrite(actor, input, fn, async (tx) => {
     // Match list mutations/callbacks: lock list before the personal actor lock.
     const listId = (input as { listId?: string }).listId;
     if (listId)
@@ -35,7 +79,7 @@ return notificationWrite(actor, input, fn, async tx => {
         .from(lists)
         .where(eq(lists.id, listId))
         .for("share");
- });
+  });
 }
 async function preferences(tx: Tx | Db, userId: string) {
   const [saved] = await tx
@@ -261,8 +305,14 @@ export async function setTaskReminder(actor: Actor, data: unknown) {
   await schedulePendingReminders(actor.id);
   return getTaskReminder(actor, input);
 }
-export async function registerReminderDevice(actor: Actor, data: unknown) { await saveReminderDevice(actor, data); return getReminderSettings(actor); }
-export async function removeReminderDevice(actor: Actor, data: unknown) { await deleteReminderDevice(actor, data); return getReminderSettings(actor); }
+export async function registerReminderDevice(actor: Actor, data: unknown) {
+  await saveReminderDevice(actor, data);
+  return getReminderSettings(actor);
+}
+export async function removeReminderDevice(actor: Actor, data: unknown) {
+  await deleteReminderDevice(actor, data);
+  return getReminderSettings(actor);
+}
 export async function schedulePendingReminders(userId?: string) {
   if (!reminderSchedulerReady()) return;
   const db = database().db;

@@ -1,8 +1,24 @@
 "use client";
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
 import { wuffCopy, wuffError } from "../../../../features/lib/copy";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Archive, ArrowLeft, X, House, ListTodo, LogOut, Plus, Settings2, Trash2 } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  Archive,
+  ArrowLeft,
+  X,
+  House,
+  ListTodo,
+  LogOut,
+  Plus,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../../button";
 import { Corgi } from "../../../../features/components/corgi";

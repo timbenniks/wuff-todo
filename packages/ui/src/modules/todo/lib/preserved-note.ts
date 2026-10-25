@@ -1,4 +1,3 @@
-
 import { Node } from "@tiptap/core";
 import { renderTaskMarkdown } from "./task-markdown";
 // Keep syntax outside the visual editor's schema as a rendered, selectable

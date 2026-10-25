@@ -1,8 +1,24 @@
-
 import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
-import { database, users, oauthClients, oauthTokens, mcpToolPreferences, receipts } from "@wuff/db";
-import { AppError, mcpToolQuerySchema, mcpToolSelectionAllowed, updateMcpToolsSchema, optionalMcpToolIds, mcpToolCatalog, mcpToolGroups, type Actor, type McpToolPreferences } from "@wuff/contracts";
+import {
+  database,
+  users,
+  oauthClients,
+  oauthTokens,
+  mcpToolPreferences,
+  receipts,
+} from "@wuff/db";
+import {
+  AppError,
+  mcpToolQuerySchema,
+  mcpToolSelectionAllowed,
+  updateMcpToolsSchema,
+  optionalMcpToolIds,
+  mcpToolCatalog,
+  mcpToolGroups,
+  type Actor,
+  type McpToolPreferences,
+} from "@wuff/contracts";
 type Db = ReturnType<typeof database>["db"];
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 async function admit(

@@ -1,9 +1,31 @@
 "use client";
-import { useId, useRef, useState, type CSSProperties, type ReactNode, type HTMLAttributes } from "react";
-import { CalendarDays, Bell, Check, FileText, ListTree, Pencil, Plus, Trash2, ExternalLink } from "lucide-react";
+import {
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type HTMLAttributes,
+} from "react";
+import {
+  CalendarDays,
+  Bell,
+  Check,
+  FileText,
+  ListTree,
+  Pencil,
+  Plus,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 import { defaultListView, type Task, type TodoList } from "@wuff/contracts";
 import { NativeSelect } from "../../../../native-select";
-import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "../../../../input-group";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "../../../../input-group";
 import { Button } from "../../../../button";
 import { InlineName } from "./inline-name";
 import { TaskNotes, type NoteDraft } from "./task-notes";

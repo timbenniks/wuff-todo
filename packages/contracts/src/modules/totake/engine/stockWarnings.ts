@@ -1,4 +1,3 @@
-
 import type { State } from "./model";
 import type { Treatment } from "./treatments";
 import { forecast, type Forecast } from "./stock";

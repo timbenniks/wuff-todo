@@ -1,4 +1,3 @@
-
 import type { Occurrence, State } from "./model";
 import { type Treatment, type TimeMove } from "./treatments";
 import { resolveWall, wallAt, type Clock } from "./timeZone";

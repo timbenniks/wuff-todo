@@ -9,7 +9,11 @@ import { TaskMarkdown } from "../../../components/task-markdown";
 import { useCalendarDay } from "../../../lib/use-calendar-day";
 import { InlineName } from "../../lists/inline-name";
 import { TaskNotes, type NoteDraft } from "../../lists/task-notes";
-import { TaskDueDate, DueDateBadge, type DueDateDraft } from "../../lists/task-due-date";
+import {
+  TaskDueDate,
+  DueDateBadge,
+  type DueDateDraft,
+} from "../../lists/task-due-date";
 import { Subtasks } from "../../lists/task-row";
 import type { ListChange } from "../../lists/list-settings";
 import { GithubTask } from "./github-task";

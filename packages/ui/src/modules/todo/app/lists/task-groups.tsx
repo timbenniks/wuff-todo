@@ -1,9 +1,21 @@
 "use client";
-import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "../../../../input-group";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "../../../../input-group";
 import { wuffCopy } from "../../../../features/lib/copy";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
-import { defaultListView, projectListView, type TodoList, type ViewGroup, type ListView, viewColumns } from "@wuff/contracts";
+import {
+  defaultListView,
+  projectListView,
+  type TodoList,
+  type ViewGroup,
+  type ListView,
+  viewColumns,
+} from "@wuff/contracts";
 import { ListViewControls } from "./list-view-controls";
 import { Button } from "../../../../button";
 import type { ListChange } from "./list-settings";

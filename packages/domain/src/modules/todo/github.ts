@@ -1,9 +1,29 @@
-
 import { reviewState, checkState } from "./github-pr-policy";
-import { createCipheriv, createDecipheriv, createHash, randomBytes, createSign } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  createSign,
+} from "node:crypto";
 import { database } from "@wuff/db";
-import { AppError, githubBindingSchema, githubLinkSchema, githubResolveSchema, githubTaskSchema, scopes, type Actor, type GithubSyncFields, type GithubPullRequest } from "@wuff/contracts";
-import { githubSafeFields, mergeGithub, sameGithubFields, verifyGithubSignature } from "./github-policy";
+import {
+  AppError,
+  githubBindingSchema,
+  githubLinkSchema,
+  githubResolveSchema,
+  githubTaskSchema,
+  scopes,
+  type Actor,
+  type GithubSyncFields,
+  type GithubPullRequest,
+} from "@wuff/contracts";
+import {
+  githubSafeFields,
+  mergeGithub,
+  sameGithubFields,
+  verifyGithubSignature,
+} from "./github-policy";
 
 type Client = Pick<ReturnType<typeof database>["pool"], "query">;
 const db = () => database().pool;

@@ -1,4 +1,3 @@
-
 import type { ListColor } from "@wuff/contracts";
 import { listThemeVariables } from "@wuff/design";
 export { listThemeVariables } from "@wuff/design";

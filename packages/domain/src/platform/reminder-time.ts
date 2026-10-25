@@ -1,4 +1,3 @@
-
 import { Temporal } from "@js-temporal/polyfill";
 import type { ReminderPreferences } from "@wuff/contracts";
 export function reminderLocalDay(now: Date, timezone: string) {

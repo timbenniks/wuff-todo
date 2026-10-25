@@ -1,4 +1,3 @@
-
 import type { GithubPullRequest } from "@wuff/contracts";
 
 // Aggregate the latest review from each reviewer; old approvals must not hide

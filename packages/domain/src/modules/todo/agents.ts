@@ -1,9 +1,29 @@
-
 import { createHash, randomUUID } from "node:crypto";
 import { database } from "@wuff/db";
-import { AppError, agentBindingSchema, agentEnvironmentSchema, agentLaunchSchema, agentMessageSchema, agentCancelSchema, agentRecoverSchema, scopes, type Actor, type AgentTaskState } from "@wuff/contracts";
+import {
+  AppError,
+  agentBindingSchema,
+  agentEnvironmentSchema,
+  agentLaunchSchema,
+  agentMessageSchema,
+  agentCancelSchema,
+  agentRecoverSchema,
+  scopes,
+  type Actor,
+  type AgentTaskState,
+} from "@wuff/contracts";
 import { githubSafeFields } from "./github-policy";
-import { cursorJson, cursorRequest, CursorError, environmentMatches, openCursorKey, sealCursorKey, terminalRun, publicAgentEvent, agentPullRequestUrls } from "./cursor-provider";
+import {
+  cursorJson,
+  cursorRequest,
+  CursorError,
+  environmentMatches,
+  openCursorKey,
+  sealCursorKey,
+  terminalRun,
+  publicAgentEvent,
+  agentPullRequestUrls,
+} from "./cursor-provider";
 
 type Client = Pick<ReturnType<typeof database>["pool"], "query">;
 const db = () => database().pool;

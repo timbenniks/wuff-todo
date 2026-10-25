@@ -1,4 +1,3 @@
-
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { TaskImageView } from "../components/task-image-view";
 import { Node } from "@tiptap/core";

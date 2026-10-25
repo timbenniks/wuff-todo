@@ -1,4 +1,3 @@
-
 import type { State, Item, AuditEntry } from "./model";
 import { newTreatment, type SetupDraft } from "./treatments";
 import { amount, deduct, restore } from "./stock";

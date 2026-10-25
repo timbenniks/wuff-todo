@@ -1,4 +1,3 @@
-
 import { displayISO } from "./dateFormat";
 export const epoch = Date.UTC(1970, 0, 1);
 export const dayDate = (day: number) => new Date(epoch + day * 86400000);

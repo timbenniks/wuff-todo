@@ -1,10 +1,34 @@
-
 import { createHash } from "node:crypto";
 import { and, eq, sql, inArray, asc } from "drizzle-orm";
-import { database, users, receipts, totakeAccounts, totakeTreatments, totakeSchedules, totakeOccurrences, totakeRecords, totakeAudit, totakeStockMovements, totakeJobs } from "@wuff/db";
-import { AppError, totakeQuerySchema, totakeMutationSchema, totakeEngine as e, type Actor, type TotakeState, type TotakeSnapshot } from "@wuff/contracts";
+import {
+  database,
+  users,
+  receipts,
+  totakeAccounts,
+  totakeTreatments,
+  totakeSchedules,
+  totakeOccurrences,
+  totakeRecords,
+  totakeAudit,
+  totakeStockMovements,
+  totakeJobs,
+} from "@wuff/db";
+import {
+  AppError,
+  totakeQuerySchema,
+  totakeMutationSchema,
+  totakeEngine as e,
+  type Actor,
+  type TotakeState,
+  type TotakeSnapshot,
+} from "@wuff/contracts";
 import { schedulePendingTotake } from "./delivery";
-import { emptyTotake, refreshTotake, applyTotakeAction, totakeNeedsScheduler } from "./state";
+import {
+  emptyTotake,
+  refreshTotake,
+  applyTotakeAction,
+  totakeNeedsScheduler,
+} from "./state";
 type Db = ReturnType<typeof database>["db"];
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 async function admitted(tx: Db | Tx, actor: Actor, write = false) {

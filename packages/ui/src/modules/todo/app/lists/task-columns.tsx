@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { defaultListView, statusLabels, taskStatuses, taskPriorities, viewColumns, type Task, type TodoList } from "@wuff/contracts";
+import {
+  defaultListView,
+  statusLabels,
+  taskStatuses,
+  taskPriorities,
+  viewColumns,
+  type Task,
+  type TodoList,
+} from "@wuff/contracts";
 import { ViewPopover } from "./view-popover";
 import { Button } from "../../../../button";
 import { NativeSelect } from "../../../../native-select";

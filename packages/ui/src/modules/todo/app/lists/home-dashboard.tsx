@@ -1,7 +1,25 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowRight, CalendarDays, Check, Settings2, Star, Users, X } from "lucide-react";
-import { defaultDashboardSettings, type Dashboard, type DashboardPreferences, type DashboardSettings, type DashboardSection, type ListSummary, type DashboardTask } from "@wuff/contracts";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  Settings2,
+  Star,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  defaultDashboardSettings,
+  type Dashboard,
+  type DashboardPreferences,
+  type DashboardSettings,
+  type DashboardSection,
+  type ListSummary,
+  type DashboardTask,
+} from "@wuff/contracts";
 import { useActorApi } from "../../../../features/actor-api";
 import { ApiError } from "../../../../features/api";
 import { useCalendarDay } from "../../lib/use-calendar-day";

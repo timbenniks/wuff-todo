@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../../../features/api";
 import { Button } from "../../../../../button";
 import { Input } from "../../../../../input";
-import type { GithubTaskState, GithubPullRequest, Task, TodoList } from "@wuff/contracts";
+import type {
+  GithubTaskState,
+  GithubPullRequest,
+  Task,
+  TodoList,
+} from "@wuff/contracts";
 import { useActorApi } from "../../../../../features/actor-api";
 export function GithubTask({
   task,

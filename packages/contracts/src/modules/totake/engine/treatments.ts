@@ -1,6 +1,9 @@
-
 import { stockEligible } from "./inventory";
-import { projectGroups, reconcileClock, moveZonedHourly } from "./zonedScheduler";
+import {
+  projectGroups,
+  reconcileClock,
+  moveZonedHourly,
+} from "./zonedScheduler";
 import { resolveWall, type Clock } from "./timeZone";
 import { stockSetup } from "./stock";
 import type { Item, Occurrence, State } from "./model";

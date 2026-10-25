@@ -1,4 +1,3 @@
-
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { AppError, type GithubSyncFields } from "@wuff/contracts";
 export function verifyGithubSignature(

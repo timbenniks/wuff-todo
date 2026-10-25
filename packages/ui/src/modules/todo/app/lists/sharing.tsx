@@ -4,7 +4,11 @@ import { Input } from "../../../../input";
 import { wuffCopy, wuffError } from "../../../../features/lib/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Users, X } from "lucide-react";
-import type { IncomingInvitation, ListSharing, TodoList } from "@wuff/contracts";
+import type {
+  IncomingInvitation,
+  ListSharing,
+  TodoList,
+} from "@wuff/contracts";
 import { Button } from "../../../../button";
 import { ApiError } from "../../../../features/api";
 import { useActorApi } from "../../../../features/actor-api";
@@ -473,7 +477,12 @@ export function SharingDialog({
       </div>
     </>
   );
-  if (embedded) return <section aria-label="List people" className="list-people">{content}</section>;
+  if (embedded)
+    return (
+      <section aria-label="List people" className="list-people">
+        {content}
+      </section>
+    );
   return (
     <>
       <Button

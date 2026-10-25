@@ -1,4 +1,3 @@
-
 import { githubSyncLabel, type Task, type TodoList } from "@wuff/contracts";
 import { dueDatePresentation } from "./due-date";
 

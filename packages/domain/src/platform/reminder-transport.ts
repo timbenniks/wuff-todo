@@ -1,4 +1,3 @@
-
 import webpush from "web-push";
 import { createPrivateKey, createSign } from "node:crypto";
 import { connect } from "node:http2";

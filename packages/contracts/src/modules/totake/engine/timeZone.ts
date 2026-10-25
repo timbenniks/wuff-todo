@@ -1,4 +1,3 @@
-
 import { epoch } from "./calendar";
 export type Clock = {
   zone: string;

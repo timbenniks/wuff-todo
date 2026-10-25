@@ -5,8 +5,21 @@ import { Textarea } from "../../../../textarea";
 import { NativeSelect } from "../../../../native-select";
 import { useRef, useState, type ReactNode } from "react";
 import { Input } from "../../../../input";
-import { Archive, ArchiveRestore, Check, Settings, Star, X, Users } from "lucide-react";
-import { listColors, type ListColor, type TodoList, type ListSummary } from "@wuff/contracts";
+import {
+  Archive,
+  ArchiveRestore,
+  Check,
+  Settings,
+  Star,
+  X,
+  Users,
+} from "lucide-react";
+import {
+  listColors,
+  type ListColor,
+  type TodoList,
+  type ListSummary,
+} from "@wuff/contracts";
 import { Button } from "../../../../button";
 import { listPalette } from "../../lib/list-colors";
 

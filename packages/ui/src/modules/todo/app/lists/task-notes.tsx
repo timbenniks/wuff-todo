@@ -4,7 +4,13 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { useRuntime } from "../../../../features/runtime";
-import { taskContentLimit, taskImageLimit, taskImagePath, type Task, type TodoList } from "@wuff/contracts";
+import {
+  taskContentLimit,
+  taskImageLimit,
+  taskImagePath,
+  type Task,
+  type TodoList,
+} from "@wuff/contracts";
 import { TaskMarkdown } from "../../components/task-markdown";
 import { Button } from "../../../../button";
 import type { ListChange } from "./list-settings";

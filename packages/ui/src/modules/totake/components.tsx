@@ -3,7 +3,14 @@ import type { StockMovement } from "@wuff/contracts/totake/stock";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@wuff/ui/button";
 import { NativeSelect } from "@wuff/ui/native-select";
-import { date, time, reminderTiming, type State, type Item, type Occurrence } from "@wuff/contracts/totake/model";
+import {
+  date,
+  time,
+  reminderTiming,
+  type State,
+  type Item,
+  type Occurrence,
+} from "@wuff/contracts/totake/model";
 export function OverdueLabel({
   state,
   group,

@@ -1,4 +1,3 @@
-
 import { taskImageId, taskImagePath } from "@wuff/contracts";
 import MarkdownIt from "markdown-it";
 import { wuffCopy } from "../../../features/lib/copy";

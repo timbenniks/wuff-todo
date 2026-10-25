@@ -3,7 +3,10 @@ import { useMemo } from "react";
 import { api } from "@/lib/api";
 import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
 import { authClient } from "@/lib/auth/client";
-import { EmpireActor, useEmpirePreferences } from "@/components/empire-preferences";
+import {
+  EmpireActor,
+  useEmpirePreferences,
+} from "@/components/empire-preferences";
 import { clearAfterEmpireSignOut } from "@/lib/empire-preferences-store";
 import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
 export { useActorApi } from "@wuff/ui/features/actor-api";

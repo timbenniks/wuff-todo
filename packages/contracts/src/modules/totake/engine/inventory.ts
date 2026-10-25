@@ -1,4 +1,3 @@
-
 import type { Treatment } from "./treatments";
 const counts = new Set([
   "tablet",

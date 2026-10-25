@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { type McpToolPreferences, type McpToolsUpdate, selectMcpToolGroup } from "@wuff/contracts";
+import {
+  type McpToolPreferences,
+  type McpToolsUpdate,
+  selectMcpToolGroup,
+} from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { useActorApi } from "@wuff/ui/features/actor-api";

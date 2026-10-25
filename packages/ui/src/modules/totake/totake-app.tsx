@@ -5,8 +5,23 @@ import { NativeSelect } from "../../native-select";
 import { Input } from "../../input";
 import { useActorApi } from "../../features/actor-api";
 import { ApiError } from "../../features/api";
-import { totakeEngine as e, type TotakeSnapshot, type TotakeAction, type TotakeMutation, type SetupDraft, type Treatment } from "@wuff/contracts";
-import { dayDate, weekStart, monthStart, monthGrid, monthLabel, monthShift, fullDate } from "@wuff/contracts/totake/calendar";
+import {
+  totakeEngine as e,
+  type TotakeSnapshot,
+  type TotakeAction,
+  type TotakeMutation,
+  type SetupDraft,
+  type Treatment,
+} from "@wuff/contracts";
+import {
+  dayDate,
+  weekStart,
+  monthStart,
+  monthGrid,
+  monthLabel,
+  monthShift,
+  fullDate,
+} from "@wuff/contracts/totake/calendar";
 import { SetupWizard } from "./SetupWizard";
 import { OneTimeFlow, IntakeHistory } from "./OneTimeFlow";
 import { StockSummary, StockAdjustment } from "./StockControls";
@@ -14,7 +29,16 @@ import { RecordedGroups, ItemName, SnoozeControls } from "./components";
 import { ReminderTimeEditor } from "./ReminderTimeEditor";
 import { acceptTotakeRead, createTotakeReadGate } from "./request";
 import { Modal, TotakeSaveContext } from "./Modal";
-import { CalendarDays, ChevronLeft, ChevronRight, Menu, Plus, Pill, Bell, Settings2 } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Plus,
+  Pill,
+  Bell,
+  Settings2,
+} from "lucide-react";
 
 type Page = "daily" | "items" | "settings";
 export function TotakeApp({

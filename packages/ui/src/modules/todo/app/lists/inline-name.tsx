@@ -1,6 +1,18 @@
 "use client";
-import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "../../../../input-group";
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "../../../../input-group";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Check, Pencil, X } from "lucide-react";
 
 export function InlineName({

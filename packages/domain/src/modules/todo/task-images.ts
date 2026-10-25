@@ -1,4 +1,3 @@
-
 import MarkdownIt from "markdown-it";
 import { taskImageId } from "@wuff/contracts";
 const parser = new MarkdownIt({ html: false });

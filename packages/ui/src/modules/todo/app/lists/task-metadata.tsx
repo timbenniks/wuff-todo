@@ -1,5 +1,13 @@
 "use client";
-import { FileText, Flag, GitPullRequest, Link2, ListTree, UserRound, AlertCircle } from "lucide-react";
+import {
+  FileText,
+  Flag,
+  GitPullRequest,
+  Link2,
+  ListTree,
+  UserRound,
+  AlertCircle,
+} from "lucide-react";
 import type { Task, TodoList } from "@wuff/contracts";
 import { taskMetadata } from "../../lib/task-metadata";
 import { DueDateBadge } from "./task-due-date";

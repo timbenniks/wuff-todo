@@ -7,7 +7,20 @@ import { Button } from "@wuff/ui/button";
 import { Input } from "@wuff/ui/input";
 import { NativeSelect } from "@wuff/ui/native-select";
 import { Modal } from "./Modal";
-import { actualGroupTimes, setupGroupTimes, clock, fromISO, scheduleLabel, startDate, treatmentTimes, validateTreatment, type SetupDraft, type Treatment, type ScheduleKind, type Slot } from "@wuff/contracts/totake/treatments";
+import {
+  actualGroupTimes,
+  setupGroupTimes,
+  clock,
+  fromISO,
+  scheduleLabel,
+  startDate,
+  treatmentTimes,
+  validateTreatment,
+  type SetupDraft,
+  type Treatment,
+  type ScheduleKind,
+  type Slot,
+} from "@wuff/contracts/totake/treatments";
 import type { State } from "@wuff/contracts/totake/model";
 const steps = [
   "Name and unit",

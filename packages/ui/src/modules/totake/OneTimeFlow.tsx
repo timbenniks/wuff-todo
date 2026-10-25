@@ -11,7 +11,13 @@ import { ChoiceField } from "./SetupWizard";
 import { date, time, type State } from "@wuff/contracts/totake/model";
 import { resolveWall } from "@wuff/contracts/totake/timeZone";
 import { amount } from "@wuff/contracts/totake/stock";
-import { intakeWall, intakeInstant, validateIntakeDetails, type IntakeDraft, type Intake } from "@wuff/contracts/totake/oneTime";
+import {
+  intakeWall,
+  intakeInstant,
+  validateIntakeDetails,
+  type IntakeDraft,
+  type Intake,
+} from "@wuff/contracts/totake/oneTime";
 
 export function OneTimeFlow({
   initial,

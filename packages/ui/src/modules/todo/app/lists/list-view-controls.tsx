@@ -1,8 +1,27 @@
 "use client";
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
 import { useEffect, useState, useLayoutEffect, useRef } from "react";
-import { Search, SlidersHorizontal, ArrowDownWideNarrow, Layers, Columns3, X } from "lucide-react";
-import { defaultListView, listViewSchema, starterViews, viewSettings, statusLabels, taskStatuses, taskPriorities, viewSorts, viewColumns, type ListView, type TodoList } from "@wuff/contracts";
+import {
+  Search,
+  SlidersHorizontal,
+  ArrowDownWideNarrow,
+  Layers,
+  Columns3,
+  X,
+} from "lucide-react";
+import {
+  defaultListView,
+  listViewSchema,
+  starterViews,
+  viewSettings,
+  statusLabels,
+  taskStatuses,
+  taskPriorities,
+  viewSorts,
+  viewColumns,
+  type ListView,
+  type TodoList,
+} from "@wuff/contracts";
 import { Input } from "../../../../input";
 import { NativeSelect } from "../../../../native-select";
 import { Button } from "../../../../button";
