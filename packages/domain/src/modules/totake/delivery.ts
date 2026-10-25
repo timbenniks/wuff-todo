@@ -2,7 +2,10 @@ import {
   makeTotakeNotification,
   totakeReminderPath,
 } from "@wuff/contracts/modules/totake/notification";
-import { reminderSchedulerReady } from "../../platform/scheduler";
+import {
+  reminderSchedulerReady,
+  schedulerDeduplicationId,
+} from "../../platform/scheduler";
 import { Client } from "@upstash/qstash";
 import { z } from "zod";
 import { and, eq, sql, lt } from "drizzle-orm";
@@ -63,7 +66,12 @@ export async function schedulePendingTotake(userId?: string) {
         url: new URL("/api/internal/totake", process.env.WUFF_ORIGIN!).href,
         body: { id: job.id, version: job.version },
         notBefore: Math.ceil(wake / 1000),
-        deduplicationId: `totake:${job.id}:${job.version}:${Math.floor(wake / 60000)}`,
+        deduplicationId: schedulerDeduplicationId(
+          "totake",
+          job.id,
+          job.version,
+          wake,
+        ),
         retries: 5,
       });
       await db

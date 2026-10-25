@@ -165,3 +165,11 @@ GitHub Verify run 40231995256 did not start because account payments/spending
 limits blocked runners. Hosted verification is incomplete; keep PR #35 draft
 until Tim resolves the runner gate and reviews. Release and installed phone/watch
 acceptance remain separate. Garmin custom buttons are not promised.
+
+## Scheduling incident included in this PR
+
+Tim requested including the confirmed Todo/Totake QStash colon-ID rejection fix
+in PR #35. The shared helper, failing-before/passing-after publisher regression,
+permission/pause/gate preservation and separate production authorization gates
+are documented in [the scheduling fix](qstash-scheduling-fix.md). No preview or
+production send/deployment is authorized by that addition.

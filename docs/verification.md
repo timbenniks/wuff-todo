@@ -2,6 +2,19 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## QStash publisher ID regression — October 25, 2026
+
+Included in [draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35) at
+Tim's request. [Failure/fix and evidence](qstash-scheduling-fix.md): the actual
+SDK publishing regression failed before the fix on colon-separated headers and
+passes with shared deterministic product/job/version/wake-minute hex IDs.
+Typecheck, 224 unit tests, optimized build and all five relevant real isolated
+integration cases passed. Rejection/unknown replies remain pending; identical
+retries deduplicate in the simulated provider, while gates/pauses/six-day hops and
+stale-version protection remain intact. No production retry/test send or manual
+preview deployment. Live acceptance and browser receipt require distinct,
+explicitly authorized checks after merge/deployment.
+
 ## Totake guarded web notification actions — October 25, 2026
 
 [Draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35),

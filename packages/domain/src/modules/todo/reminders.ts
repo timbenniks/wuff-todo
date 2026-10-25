@@ -9,7 +9,10 @@ import {
   admitted,
   notificationWrite,
 } from "../../platform/notification-write";
-import { reminderSchedulerReady } from "../../platform/scheduler";
+import {
+  reminderSchedulerReady,
+  schedulerDeduplicationId,
+} from "../../platform/scheduler";
 export { reminderSchedulerReady } from "../../platform/scheduler";
 import { notificationPolicy } from "../../platform/notification-settings";
 import { and, eq, or, sql, lte, inArray } from "drizzle-orm";
@@ -341,7 +344,12 @@ export async function schedulePendingReminders(userId?: string) {
         url: new URL("/api/internal/reminders", process.env.WUFF_ORIGIN!).href,
         body: { id: job.id, version: job.version },
         notBefore: Math.ceil(wakeAt / 1000),
-        deduplicationId: `${job.id}:${job.version}:${Math.floor(wakeAt / 60000)}`,
+        deduplicationId: schedulerDeduplicationId(
+          "todo",
+          job.id,
+          job.version,
+          wakeAt,
+        ),
         retries: 5,
       });
       await db
