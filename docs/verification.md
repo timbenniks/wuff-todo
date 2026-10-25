@@ -2,6 +2,17 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Web push browser lifecycle — October 25, 2026
+
+[Draft PR #34](https://github.com/timbenniks/wuff-todo/pull/34) and
+[feature evidence](web-notifications.md) record standard subscription compatibility,
+permission/reconnect/disconnect, safe Todo/Totake push/click handlers and private
+key generation. Local typecheck, 207 unit tests, optimized build, two real
+isolated-development integration cases and responsive Chrome checks passed.
+OS PushManager/provider delivery is mocked; no real push receipt or production
+configuration/release is claimed. Preview isolation and installed devices remain
+separate gates. No schema, native permission, dependency or consent expansion.
+
 ## Empire Settings foundation — October 25, 2026
 
 [Feature contract](empire-settings.md), [PR #25](https://github.com/timbenniks/wuff-todo/pull/25).

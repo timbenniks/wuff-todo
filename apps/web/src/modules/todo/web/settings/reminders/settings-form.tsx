@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useReminderRequest } from "@/components/reminders/request";
 import { api } from "@/lib/api";
+import {
+  browserPushSupport,
+  currentBrowserSubscription,
+  enableBrowserPush,
+  unsubscribeBrowserPush,
+} from "@/lib/browser-push";
 export function ReminderSettingsForm({
   initial,
   userId,
@@ -22,13 +28,20 @@ export function ReminderSettingsForm({
     [status, setStatus] = useState("");
   const [draftVersion, setDraftVersion] = useState(initial.version);
   const request = useReminderRequest(userId);
+  const [subscribed, setSubscribed] = useState(false);
+  const [supported, setSupported] = useState(false);
   const [permission, setPermission] = useState("Checking browser permission");
-  useEffect(() => {
+  async function refreshBrowser() {
+    setSupported(browserPushSupport());
     setPermission(
       typeof Notification === "undefined"
         ? "Unsupported"
         : Notification.permission,
     );
+    setSubscribed(!!(await currentBrowserSubscription()));
+  }
+  useEffect(() => {
+    void refreshBrowser().catch(() => setSubscribed(false));
   }, []);
   const deliverable =
     saved.schedulerReady &&
@@ -47,38 +60,44 @@ export function ReminderSettingsForm({
     }
   }
   async function enableBrowser() {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window))
-      throw Error(
-        "This browser cannot receive push notifications. On iPhone, add Wuff to your Home Screen and open it there.",
+    try {
+      const subscription = await enableBrowserPush(saved.publicKey!);
+      const next = await request<ReminderSettings>("device", {
+        label: "This browser",
+        transport: "web",
+        address: subscription.endpoint,
+        subscription: subscription.toJSON(),
+      });
+      setSaved(next);
+      setStatus(
+        "This browser is registered. Your saved reminders will use it when delivery is ready.",
       );
-    const permission = await Notification.requestPermission();
-    setPermission(permission);
-    if (permission !== "granted")
-      throw Error(
-        "Notifications are blocked. Allow them in your browser or device settings, then try again.",
+    } finally {
+      await refreshBrowser();
+    }
+  }
+  async function disableBrowser() {
+    // Retain the endpoint if server removal fails after local unsubscribe.
+    const subscription = await currentBrowserSubscription();
+    if (!subscription) {
+      setSubscribed(false);
+      setStatus(
+        "This browser has no active subscription. Remove any old device entries below to tidy your list.",
       );
-    await navigator.serviceWorker.register("/reminder-worker.js");
-    const registration = await navigator.serviceWorker.ready;
-    const key = Uint8Array.from(
-      atob(saved.publicKey!.replace(/-/g, "+").replace(/_/g, "/")),
-      (c) => c.charCodeAt(0),
+      return;
+    }
+    await unsubscribeBrowserPush();
+    setSubscribed(false);
+    await request("disableBrowser", { endpoint: subscription.endpoint });
+    setSaved(
+      await api<ReminderSettings>(
+        "/api/v1/reminders",
+        "GET",
+        undefined,
+        userId,
+      ),
     );
-    const subscription =
-      (await registration.pushManager.getSubscription()) ??
-      (await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: key,
-      }));
-    const next = await request<ReminderSettings>("device", {
-      label: "This browser",
-      transport: "web",
-      address: subscription.endpoint,
-      subscription: subscription.toJSON(),
-    });
-    setSaved(next);
-    setStatus(
-      "This browser is registered. Notification delivery has not been verified.",
-    );
+    setStatus("Notifications are turned off for this browser.");
   }
   return (
     <section>
@@ -95,11 +114,11 @@ export function ReminderSettingsForm({
       </p>
       {mode === "delivery" && (
         <p className="settings-note">
-          Todo currently supplies reminders.{" "}
+          These devices receive reminders from your enabled apps.{" "}
           <a href="/settings/reminders">
             Manage Todo schedules and quiet hours
           </a>
-          . Totake has no notification delivery yet.
+          . Totake schedules are managed in Totake.
         </p>
       )}
       <section
@@ -141,6 +160,7 @@ export function ReminderSettingsForm({
                 userId,
               );
               setSaved(next);
+              await refreshBrowser();
               setStatus(
                 mode === "delivery"
                   ? "Delivery status refreshed."
@@ -159,13 +179,37 @@ export function ReminderSettingsForm({
             Reminders go to the devices you enable. Permission is managed
             separately on each device.
           </p>
-          <Button
-            variant="outline"
-            disabled={locked || !saved.delivery.web || !saved.publicKey}
-            onClick={() => void action(enableBrowser)}
-          >
-            Enable this browser
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={
+                locked ||
+                !saved.delivery.web ||
+                !saved.publicKey ||
+                !supported ||
+                permission === "denied"
+              }
+              onClick={() => void action(enableBrowser)}
+            >
+              {subscribed ? "Reconnect this browser" : "Enable this browser"}
+            </Button>
+            {subscribed && (
+              <Button
+                variant="outline"
+                disabled={locked}
+                onClick={() => void action(disableBrowser)}
+              >
+                Turn off this browser
+              </Button>
+            )}
+          </div>
+          {(!supported || permission === "denied") && (
+            <p className="text-sm text-muted-foreground mt-3">
+              {permission === "denied"
+                ? "Notifications are blocked. Allow Wuff in your browser or device settings, then refresh delivery status."
+                : "This browser cannot receive web push here. On iPhone, open Wuff in Safari, choose Share → Add to Home Screen, then open Wuff from that icon."}
+            </p>
+          )}
           {!saved.delivery.web && (
             <p className="text-xs text-muted-foreground mt-2">
               Web push setup is still needed before you can enable this browser.
@@ -426,8 +470,18 @@ export function ReminderSettingsForm({
           onClick={() =>
             void action(async () => {
               const action = request.pendingAction;
-              const next = await request.retry<ReminderSettings>();
+              const result = await request.retry<ReminderSettings>();
+              const next =
+                action === "disableBrowser"
+                  ? await api<ReminderSettings>(
+                      "/api/v1/reminders",
+                      "GET",
+                      undefined,
+                      userId,
+                    )
+                  : result;
               setSaved(next);
+              await refreshBrowser();
               if (action === "settings") {
                 setDraftVersion(next.version);
                 setDraft(next.preferences);
