@@ -7,7 +7,7 @@ import {
   sealCursorKey,
   openCursorKey,
   agentPullRequestUrls,
-} from "../packages/domain/src/cursor-provider";
+} from "../packages/domain/src/modules/todo/cursor-provider";
 test("agent PR references remain in the authorized GitHub repository", () => {
   assert.deepEqual(
     agentPullRequestUrls(
@@ -35,7 +35,7 @@ test("agent PR references remain in the authorized GitHub repository", () => {
 import {
   reviewState,
   checkState,
-} from "../packages/domain/src/github-pr-policy";
+} from "../packages/domain/src/modules/todo/github-pr-policy";
 import { agentLaunchSchema } from "@wuff/contracts";
 test("agent launch requires explicit confirmation and defaults to planning", () => {
   const input = {

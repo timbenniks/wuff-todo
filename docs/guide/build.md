@@ -1,5 +1,8 @@
 # Build a feature
 
+New products are Empire modules. Read [Product modules](/docs/modules) for source
+ownership, contribution points and the Todo/Totake reference implementations.
+
 Work in the actual Wuff repository, using its components, contracts and authorized
 services. You choose the behavior; your agent manages implementation and delivery.
 

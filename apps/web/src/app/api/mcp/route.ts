@@ -1,10 +1,7 @@
+import { moduleBackgroundJobs } from "@/modules/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { after } from "next/server";
-import {
-  processGithubJobs,
-  processAgentJobs,
-  getEffectiveMcpToolSelection,
-} from "@wuff/domain";
+import { getEffectiveMcpToolSelection } from "@wuff/domain";
 import { createMcpServer } from "@/lib/mcp";
 import { bearerActor, unauthorizedMcp } from "@/lib/oauth";
 import { boundedBody } from "@/lib/bounded-body";
@@ -49,8 +46,10 @@ async function handle(request: Request) {
   try {
     const response = await transport.handleRequest(request);
     const body = await response.text();
-    after(() => processGithubJobs());
-    after(() => processAgentJobs());
+    for (const job of moduleBackgroundJobs)
+      after(async () => {
+        await job();
+      });
     return new Response(body, {
       status: response.status,
       headers: {

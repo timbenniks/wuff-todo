@@ -6,7 +6,7 @@ import { signInReturnPath } from "../apps/web/src/lib/auth/return-path";
 import {
   portalDashboardLoader,
   type PortalDashboardState,
-} from "../apps/web/src/lib/portal-dashboard";
+} from "../apps/web/src/modules/todo/dashboard-loader";
 
 function dashboard(today = "2026-10-25"): Dashboard {
   return {

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppError } from "@wuff/contracts";
 import { pageActor } from "@/lib/auth/server";
-import { ActorApiProvider } from "@/app/lists/actor-api";
+import { ActorApiProvider } from "@/platform/actor-api";
 
 export async function PortalPage({
   destination,

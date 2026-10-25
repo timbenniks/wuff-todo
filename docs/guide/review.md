@@ -47,3 +47,10 @@ by itself authorizes paid agent execution, a migration, merge or production rele
 
 Give a plain-language description of what changed, how to try it, what was tested
 and what still needs Tim. Tim owns final review, merge and production release.
+
+## Module review
+
+Confirm product code lives in its module and shell changes use typed contributions.
+Check route/tool ownership, schema identities, module registration failures and
+client bundles. New products need real UI/server/notification adapters, deliberate
+MCP App UI and consent decisions, and the same surface verification as existing apps.

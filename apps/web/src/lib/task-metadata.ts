@@ -1,1 +1,1 @@
-export { TaskCue, taskMetadata } from "@wuff/ui/features/lib/task-metadata";
+export { TaskCue, taskMetadata } from "@wuff/ui/modules/todo/lib/task-metadata";

@@ -1,6 +1,6 @@
 ---
 name: wuff-contributor
-description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, independent iteration and a reviewable PR. Use for Wuff contributor design and coding work.
+description: Explore, implement and verify Wuff Todo features in an authorized repository checkout using the implementation guide, independent iteration and a reviewable PR. Use for Wuff Empire contributor module design and coding work.
 ---
 
 # Wuff contributor
@@ -14,6 +14,17 @@ The raw reference is https://wuff-todo.vercel.app/docs/agent-context.md and exac
 component inventory is https://wuff-todo.vercel.app/contributor-kit/components.json.
 Check actual props/event behavior in repository source. Do not initialize shadcn
 defaults over Wuff's components or build a separate copied application.
+
+Read `docs/guide/modules.md` for product work. Todo and Totake are modules;
+new products belong in the same manifest/contracts/domain/schema/UI/adapter
+structure. Identify the owning module and platform contributions in the brief.
+Use the typed registries for navigation, settings, dashboard, MCP and notification
+hooks. Preserve public URLs/tool IDs and shared account, design and consent
+boundaries. Keep client metadata/UI separate from server implementations; do not
+create a copied app, plugin loader or per-module authentication/database service.
+Visibility, dashboard choices, MCP permissions and notification pauses are
+independent. Never run migrations or side effects from a module visibility switch.
+Update the module guide and register actual HTTP/MCP/native capabilities together.
 
 Read `docs/guide/surfaces.md` for every feature. Map every persisted mutation to
 the shared domain service, HTTP API and MCP tool, including authorized reads and

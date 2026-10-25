@@ -31,6 +31,7 @@ const pages = [];
 for (const slug of [
   "overview",
   "product",
+  "modules",
   "design",
   "components",
   "accessibility",

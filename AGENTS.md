@@ -15,6 +15,18 @@ Start with `docs/implementation-plan.md` for current status and the next planned
 - Test permissions, idempotency, concurrent updates, and OAuth flows with synthetic data. Distinguish builds from live integration proof.
 - Keep the UI concise, accessible, and consistent. Do not add scheduling or other deferred features without a request.
 
+## Product modules
+
+- Read `docs/guide/modules.md` for product work. Todo and Totake are modules with
+  product-owned contracts, domain, schema, UI and adapters. Empire owns shared
+  account, shell, design primitives, transport and contribution composition.
+- Add products through the typed manifest/UI/server/notification registries;
+  preserve client/server separation and independent visibility, dashboard,
+  connection tool choices and notification pauses. Keep docs and skill current.
+- Preserve existing public routes, tools, scopes and database identities during
+  refactors. Use the shared migration chain, never migrations or side effects
+  from a visibility toggle. New products still require full surface parity.
+
 ## Testing and completion requirements
 
 - Every new or changed behavior needs meaningful unit coverage, including relevant

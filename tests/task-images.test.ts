@@ -5,8 +5,8 @@ import { taskImageLimit, taskImageId, taskImagePath } from "@wuff/contracts";
 import {
   normalizeTaskImage,
   decodeTaskImage,
-} from "../packages/domain/src/image-storage";
-import { taskImageReferences } from "../packages/domain/src/task-images";
+} from "../packages/domain/src/modules/todo/image-storage";
+import { taskImageReferences } from "../packages/domain/src/modules/todo/task-images";
 import {
   renderTaskMarkdown,
   needsPreservedNote,

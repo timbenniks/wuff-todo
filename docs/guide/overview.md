@@ -1,5 +1,8 @@
 # Build features that belong in Wuff
 
+New products are Empire modules. Read [Product modules](/docs/modules) for source
+ownership, contribution points and the Todo/Totake reference implementations.
+
 This is Wuff's implementation guide for contributors and their coding agents.
 You describe the behavior and try the result. Your agent handles the code, Git,
 checks and PR. You can build and iterate independently; Tim reviews and merges.

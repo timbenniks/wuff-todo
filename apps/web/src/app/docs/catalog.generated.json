@@ -10,446 +10,12 @@
     ]
   },
   {
-    "source": "packages/ui/src/features/app/lists/completed-tasks.tsx",
-    "module": "@wuff/ui/features/app/lists/completed-tasks.tsx",
-    "components": [
-      {
-        "name": "CompletedTasks",
-        "signature": "export function CompletedTasks({\n  list,\n  groups,\n  ids,\n  busy,\n  change,\n  openTask,\n}: {\n  list: TodoList;\n  groups: ViewGroup[];\n  ids: Set<string>;\n  busy: boolean;\n  change: ListChange;\n  openTask: (id: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/create-list-form.tsx",
-    "module": "@wuff/ui/features/app/lists/create-list-form.tsx",
-    "components": [
-      {
-        "name": "CreateListForm",
-        "signature": "export function CreateListForm({\n  busy,\n  create,\n  cancel,\n  draft,\n  onChange,\n}: {\n  busy: boolean;\n  create: (title: string, mode: \"simple\" | \"work\") => Promise<void>;\n  cancel: () => void;\n  draft: { title: string; mode: \"simple\" | \"work\" };\n  onChange: (draft: { title: string; mode: \"simple\" | \"work\" }) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/home-dashboard.tsx",
-    "module": "@wuff/ui/features/app/lists/home-dashboard.tsx",
-    "components": [
-      {
-        "name": "HomeDashboard",
-        "signature": "export function HomeDashboard({\n  userId,\n  name,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  name: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/inline-name.tsx",
-    "module": "@wuff/ui/features/app/lists/inline-name.tsx",
-    "components": [
-      {
-        "name": "InlineName",
-        "signature": "export function InlineName({\n  value,\n  label,\n  editLabel,\n  editable = true,\n  disabled = false,\n  heading,\n  completed = false,\n  onSave,\n  renderActions,\n  additionalFields,\n  afterName,\n  additionalDirty = false,\n  className = \"\",\n  compact = false,\n  focusFallback,\n  readHref,\n  onOpen,\n}: {\n  value: string;\n  label: string;\n  editLabel: string;\n  editable?: boolean;\n  disabled?: boolean;\n  heading?: \"h1\" | \"h2\";\n  completed?: boolean;\n  onSave: (name: string) => Promise<boolean>;\n  additionalFields?: ReactNode;\n  afterName?: ReactNode;\n  additionalDirty?: boolean;\n  className?: string;\n  compact?: boolean;\n  focusFallback?: RefObject<HTMLButtonElement | null>;\n  readHref?: string;\n  onOpen?: React.MouseEventHandler<HTMLAnchorElement>;\n  renderActions?: (props: {\n    edit: () => void;\n    editing: boolean;\n    trigger: RefObject<HTMLButtonElement | null>;\n  }) => ReactNode;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/list-app.tsx",
-    "module": "@wuff/ui/features/app/lists/list-app.tsx",
-    "components": [
-      {
-        "name": "ListApp",
-        "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n  workspace,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n  workspace?: { navigation: ReactNode; content: ReactNode };\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/list-settings.tsx",
-    "module": "@wuff/ui/features/app/lists/list-settings.tsx",
-    "components": [
-      {
-        "name": "ListSettings",
-        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy: writing,\n  change,\n  retry,\n  sidebar,\n  actions,\n  people,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/list-view-controls.tsx",
-    "module": "@wuff/ui/features/app/lists/list-view-controls.tsx",
-    "components": [
-      {
-        "name": "ListViewControls",
-        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n  retry,\n  error = \"\",\n  onCreated,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n  retry?: () => Promise<boolean>;\n  error?: string;\n  onCreated: (title: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/sharing.tsx",
-    "module": "@wuff/ui/features/app/lists/sharing.tsx",
-    "components": [
-      {
-        "name": "InvitationInbox",
-        "signature": "export function InvitationInbox({\n  initial,\n  onJoined,\n}: {\n  initial: IncomingInvitation[];\n  onJoined: (id: string) => Promise<void>;\n})"
-      },
-      {
-        "name": "SharingDialog",
-        "signature": "export function SharingDialog({\n  list,\n  userId,\n  disabled,\n  onChanged,\n  embedded = false,\n  active = true,\n  onBusyChange,\n}: {\n  list: TodoList;\n  userId: string;\n  disabled: boolean;\n  embedded?: boolean;\n  active?: boolean;\n  onBusyChange?: (busy: boolean) => void;\n  onChanged: (id: string, left?: boolean) => Promise<void>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/sidebar-lists.tsx",
-    "module": "@wuff/ui/features/app/lists/sidebar-lists.tsx",
-    "components": [
-      {
-        "name": "SidebarLists",
-        "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-actions.tsx",
-    "module": "@wuff/ui/features/app/lists/task-actions.tsx",
-    "components": [
-      {
-        "name": "TaskActions",
-        "signature": "export function TaskActions({\n  title,\n  disabled,\n  trigger,\n  children,\n}: {\n  title: string;\n  disabled: boolean;\n  trigger: RefObject<HTMLButtonElement | null>;\n  children: (close: () => void) => ReactNode;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-capture.tsx",
-    "module": "@wuff/ui/features/app/lists/task-capture.tsx",
-    "components": [
-      {
-        "name": "TaskCapture",
-        "signature": "export function TaskCapture({\n  list,\n  busy,\n  change,\n  error,\n  retry,\n  onCreated,\n  destinations,\n  destinationId = \"\",\n  onDestinationChange,\n  destinationLoading = false,\n}: {\n  list: TodoList | null;\n  busy: boolean;\n  change: ListChange;\n  error: string;\n  retry?: () => Promise<boolean>;\n  onCreated: (title: string) => void;\n  destinations?: ListSummary[];\n  destinationId?: string;\n  onDestinationChange?: (id: string) => void;\n  destinationLoading?: boolean;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-columns.tsx",
-    "module": "@wuff/ui/features/app/lists/task-columns.tsx",
-    "components": [
-      {
-        "name": "TaskColumns",
-        "signature": "export function TaskColumns(props: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  today: string | null;\n  drafts?: Map<string, WorkCellDraft>;\n  dueDrafts?: Map<string, DueDateDraft>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-detail-drawer.tsx",
-    "module": "@wuff/ui/features/app/lists/task-detail-drawer.tsx",
-    "components": [
-      {
-        "name": "TaskDetailDrawer",
-        "signature": "export function TaskDetailDrawer({\n  taskId,\n  list,\n  userId,\n  busy,\n  error,\n  retry,\n  change,\n  refresh,\n  navigate,\n}: {\n  taskId: string;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  error: string;\n  retry?: () => Promise<boolean>;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  navigate: (taskId: string | null) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-due-date.tsx",
-    "module": "@wuff/ui/features/app/lists/task-due-date.tsx",
-    "components": [
-      {
-        "name": "DueDateBadge",
-        "signature": "export function DueDateBadge({\n  task,\n  today,\n}: {\n  task: Task;\n  today: string | null;\n})"
-      },
-      {
-        "name": "TaskDueDate",
-        "signature": "export function TaskDueDate({\n  task,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, DueDateDraft>;\n  onClose: () => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-groups.tsx",
-    "module": "@wuff/ui/features/app/lists/task-groups.tsx",
-    "components": [
-      {
-        "name": "TaskGroups",
-        "signature": "export function TaskGroups({\n  list,\n  userId,\n  busy,\n  change,\n  error = \"\",\n  retry,\n  refresh,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  error?: string;\n  retry?: () => Promise<boolean>;\n  refresh: () => Promise<void>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-metadata.tsx",
-    "module": "@wuff/ui/features/app/lists/task-metadata.tsx",
-    "components": [
-      {
-        "name": "TaskMetadata",
-        "signature": "export function TaskMetadata({\n  task,\n  list,\n  today,\n  comfortable,\n  onNotes,\n  onSubtasks,\n  onDetails,\n  excludeKinds = [],\n  className = \"\",\n}: {\n  task: Task;\n  list: TodoList;\n  today: string | null;\n  comfortable: boolean;\n  onNotes: () => void;\n  onSubtasks: () => void;\n  onDetails?: () => void;\n  excludeKinds?: string[];\n  className?: string;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-note-editor.tsx",
-    "module": "@wuff/ui/features/app/lists/task-note-editor.tsx",
-    "components": [
-      {
-        "name": "TaskNoteEditor",
-        "signature": "export default function TaskNoteEditor({\n  value,\n  onChange,\n  disabled,\n  onUpload,\n}: {\n  value: string;\n  onChange: (content: string) => void;\n  disabled: boolean;\n  onUpload: (file: File) => Promise<string>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-notes.tsx",
-    "module": "@wuff/ui/features/app/lists/task-notes.tsx",
-    "components": [
-      {
-        "name": "TaskNotes",
-        "signature": "export function TaskNotes({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  onClose: () => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/task-row.tsx",
-    "module": "@wuff/ui/features/app/lists/task-row.tsx",
-    "components": [
-      {
-        "name": "TaskRow",
-        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n  hidden = false,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  hidden?: boolean;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
-      },
-      {
-        "name": "Subtasks",
-        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/lists/view-popover.tsx",
-    "module": "@wuff/ui/features/app/lists/view-popover.tsx",
-    "components": [
-      {
-        "name": "ViewPopover",
-        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  onClose,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n  sheet,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  onClose?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n  sheet?: ViewSheet;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/tasks/[id]/agent-task.tsx",
-    "module": "@wuff/ui/features/app/tasks/[id]/agent-task.tsx",
-    "components": [
-      {
-        "name": "AgentTask",
-        "signature": "export function AgentTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/tasks/[id]/github-task.tsx",
-    "module": "@wuff/ui/features/app/tasks/[id]/github-task.tsx",
-    "components": [
-      {
-        "name": "GithubTask",
-        "signature": "export function GithubTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/tasks/[id]/task-detail-content.tsx",
-    "module": "@wuff/ui/features/app/tasks/[id]/task-detail-content.tsx",
-    "components": [
-      {
-        "name": "TaskDetailContent",
-        "signature": "export function TaskDetailContent({\n  task,\n  list,\n  userId,\n  busy,\n  change,\n  refresh,\n  onNotice,\n  onError,\n  onOpenTask,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  onNotice: (message: string) => void;\n  onError: (message: string) => void;\n  onOpenTask?: (id: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/app/tasks/[id]/work-metadata.tsx",
-    "module": "@wuff/ui/features/app/tasks/[id]/work-metadata.tsx",
-    "components": [
-      {
-        "name": "WorkMetadata",
-        "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n  editing,\n  onEditingChange,\n  returnFocus,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  editing: boolean;\n  onEditingChange: (editing: boolean) => void;\n  returnFocus?: RefObject<HTMLButtonElement | null>;\n})"
-      }
-    ]
-  },
-  {
     "source": "packages/ui/src/features/components/corgi.tsx",
     "module": "@wuff/ui/features/components/corgi.tsx",
     "components": [
       {
         "name": "Corgi",
         "signature": "export function Corgi({ size = 64 }: { size?: number })"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/list-theme.tsx",
-    "module": "@wuff/ui/features/components/list-theme.tsx",
-    "components": [
-      {
-        "name": "ListTheme",
-        "signature": "export function ListTheme({ color }: { color: ListColor })"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/reminders/list-reminders.tsx",
-    "module": "@wuff/ui/features/components/reminders/list-reminders.tsx",
-    "components": [
-      {
-        "name": "ListReminders",
-        "signature": "export function ListReminders({\n  listId,\n  userId,\n}: {\n  listId: string;\n  userId: string;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/reminders/task-reminder.tsx",
-    "module": "@wuff/ui/features/components/reminders/task-reminder.tsx",
-    "components": [
-      {
-        "name": "TaskReminder",
-        "signature": "export function TaskReminder({\n  listId,\n  taskId,\n  userId,\n  inactive,\n  onClose,\n}: {\n  listId: string;\n  taskId: string;\n  userId: string;\n  inactive: boolean;\n  onClose?: () => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/sortable.tsx",
-    "module": "@wuff/ui/features/components/sortable.tsx",
-    "components": [
-      {
-        "name": "SortableList",
-        "signature": "export function SortableList<T extends { id: string; title: string }>({\n  items,\n  disabled,\n  onReorder,\n  children,\n}: {\n  items: T[];\n  disabled: boolean;\n  onReorder: (ids: string[], before: string[]) => Promise<unknown>;\n  children: ReactNode | ((items: T[]) => ReactNode);\n})"
-      },
-      {
-        "name": "SortableItem",
-        "signature": "export function SortableItem({\n  id,\n  title,\n  disabled,\n  entireRow = false,\n  children,\n}: {\n  id: string;\n  title: string;\n  disabled: boolean;\n  entireRow?: boolean;\n  children: (props: {\n    ref: (node: HTMLElement | null) => void;\n    style: CSSProperties;\n    handle: ReactNode;\n    rowProps?: HTMLAttributes<HTMLElement> & {\n      \"data-sort-id\"?: string;\n      \"data-row-draggable\"?: boolean;\n    };\n    moveControl?: ReactNode;\n  }) => ReactNode;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/task-image-view.tsx",
-    "module": "@wuff/ui/features/components/task-image-view.tsx",
-    "components": [
-      {
-        "name": "TaskImageView",
-        "signature": "export function TaskImageView({ node }: NodeViewProps)"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/components/task-markdown.tsx",
-    "module": "@wuff/ui/features/components/task-markdown.tsx",
-    "components": [
-      {
-        "name": "TaskMarkdown",
-        "signature": "export function TaskMarkdown({ content }: { content: string })"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/live-updates.tsx",
-    "module": "@wuff/ui/features/live-updates.tsx",
-    "components": [
-      {
-        "name": "LiveUpdates",
-        "signature": "export function LiveUpdates(props: {\n  config: LiveLists | null;\n  userId: string;\n  onChange: () => void;\n  onStatus: (status: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/components.tsx",
-    "module": "@wuff/ui/features/totake/components.tsx",
-    "components": [
-      {
-        "name": "OverdueLabel",
-        "signature": "export function OverdueLabel({\n  state,\n  group,\n}: {\n  state: State;\n  group: Occurrence;\n})"
-      },
-      {
-        "name": "ItemName",
-        "signature": "export function ItemName({ item }: { item: Item })"
-      },
-      {
-        "name": "SnoozeControls",
-        "signature": "export function SnoozeControls({\n  id,\n  count,\n  minutes,\n  onMinutes,\n  onSnooze,\n  showExplanation = false,\n  disabled = false,\n}: {\n  disabled?: boolean;\n  showExplanation?: boolean;\n  id: string;\n  count: number;\n  minutes: number;\n  onMinutes: (minutes: number) => void;\n  onSnooze: () => void;\n})"
-      },
-      {
-        "name": "RecordedGroups",
-        "signature": "export function RecordedGroups({\n  groups,\n  onUndo,\n  stockMovements = [],\n}: {\n  stockMovements?: StockMovement[];\n  groups: Occurrence[];\n  onUndo: (g: Occurrence, recordId: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/DateInput.tsx",
-    "module": "@wuff/ui/features/totake/DateInput.tsx",
-    "components": [
-      {
-        "name": "DateInput",
-        "signature": "export function DateInput({\n  id,\n  value,\n  draftText,\n  onChange,\n}: {\n  id: string;\n  value: string;\n  draftText?: string;\n  onChange: (iso: string, text: string) => void;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/Modal.tsx",
-    "module": "@wuff/ui/features/totake/Modal.tsx",
-    "components": [
-      {
-        "name": "Modal",
-        "signature": "export function Modal({\n  title,\n  children,\n  onClose,\n  className = \"\",\n  dirty = false,\n  open = true,\n}: {\n  title: string;\n  children: ReactNode;\n  onClose: () => void;\n  className?: string;\n  dirty?: boolean;\n  open?: boolean;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/OneTimeFlow.tsx",
-    "module": "@wuff/ui/features/totake/OneTimeFlow.tsx",
-    "components": [
-      {
-        "name": "OneTimeFlow",
-        "signature": "export function OneTimeFlow({\n  initial,\n  state,\n  onBack,\n  onCancel,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: IntakeDraft;\n  state: State;\n  initialDirty?: boolean;\n  onBack: (d: IntakeDraft, dirty: boolean) => void;\n  onCancel: () => void;\n  onSave: (d: IntakeDraft, fail: boolean) => Promise<string | null>;\n})"
-      },
-      {
-        "name": "IntakeHistory",
-        "signature": "export function IntakeHistory({\n  intakes,\n  onUndo,\n  state,\n}: {\n  intakes: Intake[];\n  onUndo: (id: string) => void;\n  state: State;\n})"
-      },
-      {
-        "name": "IntakeAudit",
-        "signature": "export function IntakeAudit({ state, day }: { state: State; day: number })"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/ReminderTimeEditor.tsx",
-    "module": "@wuff/ui/features/totake/ReminderTimeEditor.tsx",
-    "components": [
-      {
-        "name": "ReminderTimeEditor",
-        "signature": "export function ReminderTimeEditor({\n  group,\n  item,\n  state,\n  onCancel,\n  onSave,\n}: {\n  group: Occurrence;\n  item: Item;\n  state: State;\n  onCancel: () => void;\n  onSave: (\n    due: number,\n    scope: \"one\" | \"future\",\n    proposal: boolean,\n  ) => Promise<string | null>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/SetupWizard.tsx",
-    "module": "@wuff/ui/features/totake/SetupWizard.tsx",
-    "components": [
-      {
-        "name": "ChoiceField",
-        "signature": "export function ChoiceField({\n  id,\n  label,\n  value,\n  options,\n  onChange,\n}: {\n  id: string;\n  label: string;\n  value: string;\n  options: string[];\n  onChange: (v: string) => void;\n})"
-      },
-      {
-        "name": "SetupWizard",
-        "signature": "export function SetupWizard({\n  initial,\n  state,\n  original,\n  onCancel,\n  onFirstBack,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: SetupDraft;\n  state: State;\n  initialDirty?: boolean;\n  original?: Treatment;\n  onCancel: () => void;\n  onFirstBack: (draft: SetupDraft, dirty: boolean) => void;\n  onSave: (draft: SetupDraft) => Promise<string | null>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/StockControls.tsx",
-    "module": "@wuff/ui/features/totake/StockControls.tsx",
-    "components": [
-      {
-        "name": "StockSummary",
-        "signature": "export function StockSummary({\n  state,\n  treatment: t,\n  onAdjust,\n}: {\n  state: State;\n  treatment: Treatment;\n  onAdjust: (kind: \"add\" | \"correct\") => void;\n})"
-      },
-      {
-        "name": "StockAdjustment",
-        "signature": "export function StockAdjustment({\n  treatment: t,\n  kind,\n  onCancel,\n  onSave,\n}: {\n  treatment: Treatment;\n  kind: \"add\" | \"correct\";\n  onCancel: () => void;\n  onSave: (value: string, id: string, fail: boolean) => Promise<string | null>;\n})"
-      }
-    ]
-  },
-  {
-    "source": "packages/ui/src/features/totake/totake-app.tsx",
-    "module": "@wuff/ui/features/totake/totake-app.tsx",
-    "components": [
-      {
-        "name": "TotakeApp",
-        "signature": "export function TotakeApp({\n  initial,\n  userId,\n  initialPage = \"daily\",\n}: {\n  initial: TotakeSnapshot;\n  userId: string;\n  initialPage?: Page;\n})"
       }
     ]
   },
@@ -500,6 +66,440 @@
       {
         "name": "LiveUpdates",
         "signature": "export function LiveUpdates(props: Props)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/completed-tasks.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/completed-tasks",
+    "components": [
+      {
+        "name": "CompletedTasks",
+        "signature": "export function CompletedTasks({\n  list,\n  groups,\n  ids,\n  busy,\n  change,\n  openTask,\n}: {\n  list: TodoList;\n  groups: ViewGroup[];\n  ids: Set<string>;\n  busy: boolean;\n  change: ListChange;\n  openTask: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/create-list-form.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/create-list-form",
+    "components": [
+      {
+        "name": "CreateListForm",
+        "signature": "export function CreateListForm({\n  busy,\n  create,\n  cancel,\n  draft,\n  onChange,\n}: {\n  busy: boolean;\n  create: (title: string, mode: \"simple\" | \"work\") => Promise<void>;\n  cancel: () => void;\n  draft: { title: string; mode: \"simple\" | \"work\" };\n  onChange: (draft: { title: string; mode: \"simple\" | \"work\" }) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/home-dashboard.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/home-dashboard",
+    "components": [
+      {
+        "name": "HomeDashboard",
+        "signature": "export function HomeDashboard({\n  userId,\n  name,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  name: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/inline-name.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/inline-name",
+    "components": [
+      {
+        "name": "InlineName",
+        "signature": "export function InlineName({\n  value,\n  label,\n  editLabel,\n  editable = true,\n  disabled = false,\n  heading,\n  completed = false,\n  onSave,\n  renderActions,\n  additionalFields,\n  afterName,\n  additionalDirty = false,\n  className = \"\",\n  compact = false,\n  focusFallback,\n  readHref,\n  onOpen,\n}: {\n  value: string;\n  label: string;\n  editLabel: string;\n  editable?: boolean;\n  disabled?: boolean;\n  heading?: \"h1\" | \"h2\";\n  completed?: boolean;\n  onSave: (name: string) => Promise<boolean>;\n  additionalFields?: ReactNode;\n  afterName?: ReactNode;\n  additionalDirty?: boolean;\n  className?: string;\n  compact?: boolean;\n  focusFallback?: RefObject<HTMLButtonElement | null>;\n  readHref?: string;\n  onOpen?: React.MouseEventHandler<HTMLAnchorElement>;\n  renderActions?: (props: {\n    edit: () => void;\n    editing: boolean;\n    trigger: RefObject<HTMLButtonElement | null>;\n  }) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-app.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-app",
+    "components": [
+      {
+        "name": "ListApp",
+        "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n  workspace,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n  workspace?: { navigation: ReactNode; content: ReactNode };\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-settings.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-settings",
+    "components": [
+      {
+        "name": "ListSettings",
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy: writing,\n  change,\n  retry,\n  sidebar,\n  actions,\n  people,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-view-controls.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-view-controls",
+    "components": [
+      {
+        "name": "ListViewControls",
+        "signature": "export function ListViewControls({\n  list,\n  userId,\n  busy,\n  change,\n  onPreview,\n  shown,\n  total,\n  retry,\n  error = \"\",\n  onCreated,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  onPreview: (view: ListView | null) => void;\n  shown: number;\n  total: number;\n  retry?: () => Promise<boolean>;\n  error?: string;\n  onCreated: (title: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/sharing.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/sharing",
+    "components": [
+      {
+        "name": "InvitationInbox",
+        "signature": "export function InvitationInbox({\n  initial,\n  onJoined,\n}: {\n  initial: IncomingInvitation[];\n  onJoined: (id: string) => Promise<void>;\n})"
+      },
+      {
+        "name": "SharingDialog",
+        "signature": "export function SharingDialog({\n  list,\n  userId,\n  disabled,\n  onChanged,\n  embedded = false,\n  active = true,\n  onBusyChange,\n}: {\n  list: TodoList;\n  userId: string;\n  disabled: boolean;\n  embedded?: boolean;\n  active?: boolean;\n  onBusyChange?: (busy: boolean) => void;\n  onChanged: (id: string, left?: boolean) => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/sidebar-lists.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/sidebar-lists",
+    "components": [
+      {
+        "name": "SidebarLists",
+        "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-actions.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-actions",
+    "components": [
+      {
+        "name": "TaskActions",
+        "signature": "export function TaskActions({\n  title,\n  disabled,\n  trigger,\n  children,\n}: {\n  title: string;\n  disabled: boolean;\n  trigger: RefObject<HTMLButtonElement | null>;\n  children: (close: () => void) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-capture.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-capture",
+    "components": [
+      {
+        "name": "TaskCapture",
+        "signature": "export function TaskCapture({\n  list,\n  busy,\n  change,\n  error,\n  retry,\n  onCreated,\n  destinations,\n  destinationId = \"\",\n  onDestinationChange,\n  destinationLoading = false,\n}: {\n  list: TodoList | null;\n  busy: boolean;\n  change: ListChange;\n  error: string;\n  retry?: () => Promise<boolean>;\n  onCreated: (title: string) => void;\n  destinations?: ListSummary[];\n  destinationId?: string;\n  onDestinationChange?: (id: string) => void;\n  destinationLoading?: boolean;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-columns.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-columns",
+    "components": [
+      {
+        "name": "TaskColumns",
+        "signature": "export function TaskColumns(props: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  today: string | null;\n  drafts?: Map<string, WorkCellDraft>;\n  dueDrafts?: Map<string, DueDateDraft>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-detail-drawer.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-detail-drawer",
+    "components": [
+      {
+        "name": "TaskDetailDrawer",
+        "signature": "export function TaskDetailDrawer({\n  taskId,\n  list,\n  userId,\n  busy,\n  error,\n  retry,\n  change,\n  refresh,\n  navigate,\n}: {\n  taskId: string;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  error: string;\n  retry?: () => Promise<boolean>;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  navigate: (taskId: string | null) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-due-date.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-due-date",
+    "components": [
+      {
+        "name": "DueDateBadge",
+        "signature": "export function DueDateBadge({\n  task,\n  today,\n}: {\n  task: Task;\n  today: string | null;\n})"
+      },
+      {
+        "name": "TaskDueDate",
+        "signature": "export function TaskDueDate({\n  task,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, DueDateDraft>;\n  onClose: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-groups.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-groups",
+    "components": [
+      {
+        "name": "TaskGroups",
+        "signature": "export function TaskGroups({\n  list,\n  userId,\n  busy,\n  change,\n  error = \"\",\n  retry,\n  refresh,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  error?: string;\n  retry?: () => Promise<boolean>;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-metadata.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-metadata",
+    "components": [
+      {
+        "name": "TaskMetadata",
+        "signature": "export function TaskMetadata({\n  task,\n  list,\n  today,\n  comfortable,\n  onNotes,\n  onSubtasks,\n  onDetails,\n  excludeKinds = [],\n  className = \"\",\n}: {\n  task: Task;\n  list: TodoList;\n  today: string | null;\n  comfortable: boolean;\n  onNotes: () => void;\n  onSubtasks: () => void;\n  onDetails?: () => void;\n  excludeKinds?: string[];\n  className?: string;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-note-editor.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-note-editor",
+    "components": [
+      {
+        "name": "TaskNoteEditor",
+        "signature": "export default function TaskNoteEditor({\n  value,\n  onChange,\n  disabled,\n  onUpload,\n}: {\n  value: string;\n  onChange: (content: string) => void;\n  disabled: boolean;\n  onUpload: (file: File) => Promise<string>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-notes.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-notes",
+    "components": [
+      {
+        "name": "TaskNotes",
+        "signature": "export function TaskNotes({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  onClose,\n}: {\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  onClose: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/task-row.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/task-row",
+    "components": [
+      {
+        "name": "TaskRow",
+        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n  hidden = false,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  hidden?: boolean;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+      },
+      {
+        "name": "Subtasks",
+        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/view-popover.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/view-popover",
+    "components": [
+      {
+        "name": "ViewPopover",
+        "signature": "export function ViewPopover({\n  label,\n  children,\n  disabled = false,\n  onOpen,\n  onClose,\n  className,\n  ariaLabel,\n  variant = \"outline\",\n  panelLabel,\n  showDone = true,\n  sheet,\n}: {\n  label: ReactNode;\n  children: ReactNode;\n  disabled?: boolean;\n  onOpen?: () => void;\n  onClose?: () => void;\n  className?: string;\n  ariaLabel?: string;\n  variant?: \"outline\" | \"ghost\";\n  panelLabel?: string;\n  showDone?: boolean;\n  sheet?: ViewSheet;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/tasks/[id]/agent-task.tsx",
+    "module": "@wuff/ui/modules/todo/app/tasks/[id]/agent-task",
+    "components": [
+      {
+        "name": "AgentTask",
+        "signature": "export function AgentTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/tasks/[id]/github-task.tsx",
+    "module": "@wuff/ui/modules/todo/app/tasks/[id]/github-task",
+    "components": [
+      {
+        "name": "GithubTask",
+        "signature": "export function GithubTask({\n  task,\n  list,\n  userId,\n  refresh,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  refresh: () => Promise<void>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/tasks/[id]/task-detail-content.tsx",
+    "module": "@wuff/ui/modules/todo/app/tasks/[id]/task-detail-content",
+    "components": [
+      {
+        "name": "TaskDetailContent",
+        "signature": "export function TaskDetailContent({\n  task,\n  list,\n  userId,\n  busy,\n  change,\n  refresh,\n  onNotice,\n  onError,\n  onOpenTask,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  onNotice: (message: string) => void;\n  onError: (message: string) => void;\n  onOpenTask?: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/tasks/[id]/work-metadata.tsx",
+    "module": "@wuff/ui/modules/todo/app/tasks/[id]/work-metadata",
+    "components": [
+      {
+        "name": "WorkMetadata",
+        "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n  editing,\n  onEditingChange,\n  returnFocus,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  editing: boolean;\n  onEditingChange: (editing: boolean) => void;\n  returnFocus?: RefObject<HTMLButtonElement | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/list-theme.tsx",
+    "module": "@wuff/ui/modules/todo/components/list-theme",
+    "components": [
+      {
+        "name": "ListTheme",
+        "signature": "export function ListTheme({ color }: { color: ListColor })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/reminders/list-reminders.tsx",
+    "module": "@wuff/ui/modules/todo/components/reminders/list-reminders",
+    "components": [
+      {
+        "name": "ListReminders",
+        "signature": "export function ListReminders({\n  listId,\n  userId,\n}: {\n  listId: string;\n  userId: string;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/reminders/task-reminder.tsx",
+    "module": "@wuff/ui/modules/todo/components/reminders/task-reminder",
+    "components": [
+      {
+        "name": "TaskReminder",
+        "signature": "export function TaskReminder({\n  listId,\n  taskId,\n  userId,\n  inactive,\n  onClose,\n}: {\n  listId: string;\n  taskId: string;\n  userId: string;\n  inactive: boolean;\n  onClose?: () => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/sortable.tsx",
+    "module": "@wuff/ui/modules/todo/components/sortable",
+    "components": [
+      {
+        "name": "SortableList",
+        "signature": "export function SortableList<T extends { id: string; title: string }>({\n  items,\n  disabled,\n  onReorder,\n  children,\n}: {\n  items: T[];\n  disabled: boolean;\n  onReorder: (ids: string[], before: string[]) => Promise<unknown>;\n  children: ReactNode | ((items: T[]) => ReactNode);\n})"
+      },
+      {
+        "name": "SortableItem",
+        "signature": "export function SortableItem({\n  id,\n  title,\n  disabled,\n  entireRow = false,\n  children,\n}: {\n  id: string;\n  title: string;\n  disabled: boolean;\n  entireRow?: boolean;\n  children: (props: {\n    ref: (node: HTMLElement | null) => void;\n    style: CSSProperties;\n    handle: ReactNode;\n    rowProps?: HTMLAttributes<HTMLElement> & {\n      \"data-sort-id\"?: string;\n      \"data-row-draggable\"?: boolean;\n    };\n    moveControl?: ReactNode;\n  }) => ReactNode;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/task-image-view.tsx",
+    "module": "@wuff/ui/modules/todo/components/task-image-view",
+    "components": [
+      {
+        "name": "TaskImageView",
+        "signature": "export function TaskImageView({ node }: NodeViewProps)"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/task-markdown.tsx",
+    "module": "@wuff/ui/modules/todo/components/task-markdown",
+    "components": [
+      {
+        "name": "TaskMarkdown",
+        "signature": "export function TaskMarkdown({ content }: { content: string })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/live-updates.tsx",
+    "module": "@wuff/ui/modules/todo/live-updates",
+    "components": [
+      {
+        "name": "LiveUpdates",
+        "signature": "export function LiveUpdates(props: {\n  config: LiveLists | null;\n  userId: string;\n  onChange: () => void;\n  onStatus: (status: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/components.tsx",
+    "module": "@wuff/ui/modules/totake/components",
+    "components": [
+      {
+        "name": "OverdueLabel",
+        "signature": "export function OverdueLabel({\n  state,\n  group,\n}: {\n  state: State;\n  group: Occurrence;\n})"
+      },
+      {
+        "name": "ItemName",
+        "signature": "export function ItemName({ item }: { item: Item })"
+      },
+      {
+        "name": "SnoozeControls",
+        "signature": "export function SnoozeControls({\n  id,\n  count,\n  minutes,\n  onMinutes,\n  onSnooze,\n  showExplanation = false,\n  disabled = false,\n}: {\n  disabled?: boolean;\n  showExplanation?: boolean;\n  id: string;\n  count: number;\n  minutes: number;\n  onMinutes: (minutes: number) => void;\n  onSnooze: () => void;\n})"
+      },
+      {
+        "name": "RecordedGroups",
+        "signature": "export function RecordedGroups({\n  groups,\n  onUndo,\n  stockMovements = [],\n}: {\n  stockMovements?: StockMovement[];\n  groups: Occurrence[];\n  onUndo: (g: Occurrence, recordId: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/DateInput.tsx",
+    "module": "@wuff/ui/modules/totake/DateInput",
+    "components": [
+      {
+        "name": "DateInput",
+        "signature": "export function DateInput({\n  id,\n  value,\n  draftText,\n  onChange,\n}: {\n  id: string;\n  value: string;\n  draftText?: string;\n  onChange: (iso: string, text: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/Modal.tsx",
+    "module": "@wuff/ui/modules/totake/Modal",
+    "components": [
+      {
+        "name": "Modal",
+        "signature": "export function Modal({\n  title,\n  children,\n  onClose,\n  className = \"\",\n  dirty = false,\n  open = true,\n}: {\n  title: string;\n  children: ReactNode;\n  onClose: () => void;\n  className?: string;\n  dirty?: boolean;\n  open?: boolean;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/OneTimeFlow.tsx",
+    "module": "@wuff/ui/modules/totake/OneTimeFlow",
+    "components": [
+      {
+        "name": "OneTimeFlow",
+        "signature": "export function OneTimeFlow({\n  initial,\n  state,\n  onBack,\n  onCancel,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: IntakeDraft;\n  state: State;\n  initialDirty?: boolean;\n  onBack: (d: IntakeDraft, dirty: boolean) => void;\n  onCancel: () => void;\n  onSave: (d: IntakeDraft, fail: boolean) => Promise<string | null>;\n})"
+      },
+      {
+        "name": "IntakeHistory",
+        "signature": "export function IntakeHistory({\n  intakes,\n  onUndo,\n  state,\n}: {\n  intakes: Intake[];\n  onUndo: (id: string) => void;\n  state: State;\n})"
+      },
+      {
+        "name": "IntakeAudit",
+        "signature": "export function IntakeAudit({ state, day }: { state: State; day: number })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/ReminderTimeEditor.tsx",
+    "module": "@wuff/ui/modules/totake/ReminderTimeEditor",
+    "components": [
+      {
+        "name": "ReminderTimeEditor",
+        "signature": "export function ReminderTimeEditor({\n  group,\n  item,\n  state,\n  onCancel,\n  onSave,\n}: {\n  group: Occurrence;\n  item: Item;\n  state: State;\n  onCancel: () => void;\n  onSave: (\n    due: number,\n    scope: \"one\" | \"future\",\n    proposal: boolean,\n  ) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/SetupWizard.tsx",
+    "module": "@wuff/ui/modules/totake/SetupWizard",
+    "components": [
+      {
+        "name": "ChoiceField",
+        "signature": "export function ChoiceField({\n  id,\n  label,\n  value,\n  options,\n  onChange,\n}: {\n  id: string;\n  label: string;\n  value: string;\n  options: string[];\n  onChange: (v: string) => void;\n})"
+      },
+      {
+        "name": "SetupWizard",
+        "signature": "export function SetupWizard({\n  initial,\n  state,\n  original,\n  onCancel,\n  onFirstBack,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: SetupDraft;\n  state: State;\n  initialDirty?: boolean;\n  original?: Treatment;\n  onCancel: () => void;\n  onFirstBack: (draft: SetupDraft, dirty: boolean) => void;\n  onSave: (draft: SetupDraft) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/StockControls.tsx",
+    "module": "@wuff/ui/modules/totake/StockControls",
+    "components": [
+      {
+        "name": "StockSummary",
+        "signature": "export function StockSummary({\n  state,\n  treatment: t,\n  onAdjust,\n}: {\n  state: State;\n  treatment: Treatment;\n  onAdjust: (kind: \"add\" | \"correct\") => void;\n})"
+      },
+      {
+        "name": "StockAdjustment",
+        "signature": "export function StockAdjustment({\n  treatment: t,\n  kind,\n  onCancel,\n  onSave,\n}: {\n  treatment: Treatment;\n  kind: \"add\" | \"correct\";\n  onCancel: () => void;\n  onSave: (value: string, id: string, fail: boolean) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/totake/totake-app.tsx",
+    "module": "@wuff/ui/modules/totake/totake-app",
+    "components": [
+      {
+        "name": "TotakeApp",
+        "signature": "export function TotakeApp({\n  initial,\n  userId,\n  initialPage = \"daily\",\n}: {\n  initial: TotakeSnapshot;\n  userId: string;\n  initialPage?: Page;\n})"
       }
     ]
   },

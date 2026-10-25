@@ -4,10 +4,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ListColor } from "@wuff/contracts";
 import { listPalette } from "@wuff/design";
-import { ListTheme } from "@wuff/ui/features/components/list-theme";
+import { ListTheme } from "@wuff/ui/modules/todo/components/list-theme";
 const links = [
   ["", "Start here"],
   ["product", "Product rules"],
+  ["modules", "Product modules"],
   ["design", "Design language"],
   ["components", "Components"],
   ["accessibility", "Responsive & accessible"],

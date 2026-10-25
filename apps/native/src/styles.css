@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "@wuff/ui/design-system.css";
 @import "@wuff/ui/theme.css";
-@import "@wuff/ui/features/views.css";
-@import "@wuff/ui/features/task-prose.css";
+@import "@wuff/ui/modules/todo/views.css";
+@import "@wuff/ui/modules/todo/task-prose.css";
 @source "../../../packages/ui/src";
 
 @font-face {
@@ -73,5 +73,10 @@ body {
   color: #922138;
 }
 
-.native-workspace { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-:root { --font-sans: "DM Sans", system-ui, sans-serif; }
+.native-workspace {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+:root {
+  --font-sans: "DM Sans", system-ui, sans-serif;
+}

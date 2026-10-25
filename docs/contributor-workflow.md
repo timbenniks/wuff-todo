@@ -92,6 +92,15 @@ If an operation or environment is unavailable, continue useful implementation,
 unit tests or clearly labeled mocks and record the concrete handoff. Do not turn
 an operational blocker into a blanket stop on feature development.
 
+## Product module ownership
+
+Read [the module guide](guide/modules.md) before adding or changing a product.
+The brief names its owning module and platform contributions. Todo and Totake own
+contracts, domain, schema, UI and adapters; Empire composes typed registrations.
+New modules use this structure, shared authentication/design/transport and the
+same API/MCP contract. Keep settings visibility, dashboard preferences, MCP consent
+and notification delivery separate. Do not copy the app or add runtime plugins.
+
 ## 3. Implement within Wuff's boundaries
 
 - Reuse components, tokens, typography and interactions from `@wuff/ui`. Preserve

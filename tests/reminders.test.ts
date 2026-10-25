@@ -11,12 +11,12 @@ import {
   nextDailyReminder,
   respectQuietHours,
   localReminderInstant,
-} from "../packages/domain/src/reminder-time";
+} from "../packages/domain/src/platform/reminder-time";
 import {
   allowedPushEndpoint,
   sendReminderPush,
   PushTransportError,
-} from "../packages/domain/src/reminder-transport";
+} from "../packages/domain/src/platform/reminder-transport";
 const p = reminderPreferencesSchema.parse({});
 test("reminder defaults are opt-in and validate timezone/quiet hours", () => {
   assert.equal(p.dailyEnabled, false);
@@ -250,7 +250,7 @@ test("all transport adapters build provider-specific payloads and distinguish re
 test("scheduler signatures bind callback URL, body, expiry and both rotation keys", async () => {
   const { createHash, createHmac } = await import("node:crypto");
   const { verifyReminderCallback } =
-    await import("../packages/domain/src/reminders");
+    await import("../packages/domain/src/modules/todo/reminders");
   const oldCurrent = process.env.QSTASH_CURRENT_SIGNING_KEY,
     oldNext = process.env.QSTASH_NEXT_SIGNING_KEY;
   process.env.QSTASH_CURRENT_SIGNING_KEY = "synthetic-current";

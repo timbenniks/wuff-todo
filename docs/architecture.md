@@ -6,6 +6,15 @@ Updated: October 25, 2026
 
 The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication and the shared Tauri workspace are implemented; installed-platform/signing acceptance and new-account invitation delivery remain separate gates.
 
+## Empire product modules
+
+Todo and Totake are product-owned modules in the existing deployment. The
+[modules guide](guide/modules.md) defines manifests, contracts, domain/schema/UI
+ownership and typed web/MCP/notification composition. Account, consent, transport
+and design primitives remain shared. Existing routes, tool IDs, data ownership,
+reminder rules and native navigation are preserved. [Refactor evidence](empire-modules.md)
+distinguishes local implementation from release. No database migration is needed.
+
 ## Stack and deployment
 
 Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzle ORM, Neon Postgres, Neon Auth, and Vercel hosting. Provision Neon through the Vercel integration. Use the GitHub CLI and Vercel CLI in the development and delivery workflow.
@@ -13,8 +22,7 @@ Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzl
 The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. The Tauri application has its own native build/release pipeline in the same repository.
 
 Wuff Empire adds a web-only frame around private app routes and a personal portal
-at `/`; Todo retains `/lists` and `/tasks/:id`, and `/totake` is a protected
-coming-soon page. An explicit app registry supplies app-card/menu destinations.
+at `/`; Todo retains `/lists` and `/tasks/:id`, and `/totake` opens the protected Totake module. An explicit app registry supplies app-card/menu destinations.
 Public docs, sign-in, password setup and OAuth authorization retain their own
 layouts. The portal calls the existing account-pinned dashboard API with the
 browser's local calendar date and five-item task previews, refreshing on focus,
@@ -41,11 +49,11 @@ apps/
   web/                 Next.js website, API routes, MCP transport
   native/              React/Vite frontend and Tauri shell for desktop and phones
 packages/
-  contracts/           Shared validation schemas, DTOs, error contracts
-  domain/              Server-side list/task operations and permissions
-  db/                  Drizzle schema, database access, migrations
+  contracts/           Platform contracts + modules/<id> schemas, rules and manifests
+  domain/              Platform services + modules/<id> authorized operations
+  db/                  Platform/module table composition, connection, migrations
   client/              Native HTTP transport, session lifecycle and refresh helpers
-  ui/                  Shared browser-compatible React controls and feature screens
+  ui/                  Shared primitives/runtime + modules/<id> React screens
   design/              Shared client-safe palettes and theme derivation
 docs/
 ```

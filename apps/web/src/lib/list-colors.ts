@@ -1,1 +1,1 @@
-export { listPalette } from "@wuff/ui/features/lib/list-colors";
+export { listPalette } from "@wuff/ui/modules/todo/lib/list-colors";

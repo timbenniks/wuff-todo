@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { listSelectionHref } from "../packages/ui/src/features/lib/list-navigation";
+import { listSelectionHref } from "../packages/ui/src/modules/todo/lib/list-navigation";
 test("unconfirmed list previews have no history destination; confirmed retries produce real links", () => {
   assert.equal(
     listSelectionHref("https://wuff.example/lists?home=1", "pending-operation"),
