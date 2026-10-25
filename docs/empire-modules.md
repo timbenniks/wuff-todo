@@ -46,7 +46,7 @@ product-owned implementations.
 The client-safe registry validates module IDs, owned routes, widget names, settings
 paths, tool groups/IDs and declared scopes. Manifest permissions compose the known
 OAuth permission catalog and labels; consent defaults and native grants remain
-unchanged. Typed UI/server/embedded registries require actual product entries.
+unchanged. Typed UI/server/native/embedded registries require actual product entries.
 The MCP platform supplies each registrar only its declared tools, with no raw
 server access; existing scope ceilings, saved allowlists, mandatory platform
 controls and cached-call denial still apply.
@@ -69,12 +69,12 @@ now require module ownership and contribution review.
 ## Delivery evidence
 
 - `pnpm typecheck`: workspace packages, web/native and root checks pass.
-- `pnpm test`: **180 tests in 32 files, no skips**. Eight new module cases cover
+- `pnpm test`: **181 tests in 32 files, no skips**. Nine new module cases cover
   third-product composition/nested routes/prefix lookalikes; invalid/duplicate
   declarations; independent visibility/defaults/scopes; actual scoped registration
   and disabled tools; complete schema equivalence; client metadata and real
   dashboard browser bundles without domain/database drivers; and visible isolated
-  widget recovery. Existing permission, OAuth, retry, stock/calendar and native
+  widget recovery; and native dispatch ownership/prototype isolation/background hooks. Existing permission, OAuth, retry, stock/calendar and native
   policy suites remain enabled.
 - `pnpm build`: optimized website, nine-page guide and standalone MCP App pass.
 - `pnpm build:native:web`: frontend passes; existing >500kB chunk warning remains.

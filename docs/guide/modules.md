@@ -40,7 +40,10 @@ server registry or database package. Product UI imports real `@wuff/ui` primitiv
 4. Add thin filesystem routes for Next.js and preserve explicit framework exports.
    Settings panels belong to the product; the global navigation discovers their
    manifest links. Implement the HTTP/native adapters and MCP tools against the
-   same domain services. Register embedded renderers in `modules/mcp-ui.ts` when an
+   same domain services. Register native action adapters in `apps/web/src/modules/native.ts`. The
+   bearer-only native transport checks identity/audience/account pinning before
+   dispatch; duplicate actions are rejected. Register embedded renderers in
+   `modules/mcp-ui.ts` when an
    interactive MCP view is appropriate; complete tools remain available without it.
 5. If the product schedules notifications, contribute reconciliation and scheduling
    through `packages/domain/src/platform/module-services.ts`. Product code owns
