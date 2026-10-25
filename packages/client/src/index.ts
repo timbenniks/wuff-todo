@@ -55,6 +55,36 @@ export function serverOrigin(value: string) {
 }
 
 export class NativeClient {
+  totake(day?: number) {
+    return this.call<import("@wuff/contracts").TotakeSnapshot>(
+      "getTotake",
+      day === undefined ? {} : { day },
+    );
+  }
+  totakeSummary() {
+    return this.call<import("@wuff/contracts").TotakeSummary>(
+      "getTotakeSummary",
+    );
+  }
+  updateTotake(input: import("@wuff/contracts").TotakeMutation) {
+    return this.call<import("@wuff/contracts").TotakeSnapshot>(
+      "updateTotake",
+      input,
+    );
+  }
+  notificationSettings() {
+    return this.call<import("@wuff/contracts").NotificationSettings>(
+      "getNotificationSettings",
+    );
+  }
+  updateNotificationSettings(
+    input: import("@wuff/contracts").NotificationSettingsUpdate,
+  ) {
+    return this.call<import("@wuff/contracts").NotificationSettings>(
+      "updateNotificationSettings",
+      input,
+    );
+  }
   empireSettings() {
     return this.call<import("@wuff/contracts").EmpireSettings>(
       "getEmpireSettings",

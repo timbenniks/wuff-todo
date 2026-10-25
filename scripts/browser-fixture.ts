@@ -8,6 +8,7 @@ import { scopes } from "@wuff/contracts";
 import { database } from "@wuff/db";
 
 const origin = "http://localhost:3000";
+const totakeView = process.env.WUFF_FIXTURE_VIEW === "totake";
 const empireView = process.env.WUFF_FIXTURE_VIEW === "empire";
 if (process.env.WUFF_ORIGIN !== origin)
   throw new Error("This fixture only runs against local development.");
@@ -125,8 +126,12 @@ const server = createServer(async (req, res) => {
       res.end(
         JSON.stringify(
           await rpc("tools/call", {
-            name: empireView ? "show_empire_settings" : "show_list",
-            arguments: empireView ? {} : { listId: list.id },
+            name: totakeView
+              ? "show_totake"
+              : empireView
+                ? "show_empire_settings"
+                : "show_list",
+            arguments: empireView || totakeView ? {} : { listId: list.id },
           }),
         ),
       );

@@ -326,6 +326,10 @@ export function sidebarGroups(lists: ListSummary[], archived: boolean) {
 }
 
 export const scopes = [
+  "totake:read",
+  "totake:write",
+  "notifications:read",
+  "notifications:manage",
   "empire:read",
   "empire:manage",
   "lists:read",
@@ -702,6 +706,10 @@ export const nativeScopes = [
 ] as const;
 // Optional privileges require a new interactive authorization, never refresh.
 export const nativeAllowedScopes = [
+  "totake:read",
+  "totake:write",
+  "notifications:read",
+  "notifications:manage",
   ...nativeScopes,
   "github:manage",
   "empire:read",
@@ -821,3 +829,5 @@ export function dashboardThrough(today: string) {
     .toISOString()
     .slice(0, 10);
 }
+
+export * from "./totake";

@@ -1,3 +1,4 @@
+import { notificationPolicy } from "./notification-settings";
 import { createHash } from "node:crypto";
 import { and, eq, or, sql, lte, inArray } from "drizzle-orm";
 import { Client, Receiver } from "@upstash/qstash";
@@ -410,6 +411,8 @@ export async function registerReminderDevice(actor: Actor, data: unknown) {
       });
     }
   });
+  const { schedulePendingTotake } = await import("./totake-delivery");
+  await schedulePendingTotake(actor.id);
   return getReminderSettings(actor);
 }
 export async function removeReminderDevice(actor: Actor, data: unknown) {
@@ -442,6 +445,7 @@ export async function schedulePendingReminders(userId?: string) {
     .limit(100);
   const client = new Client({ token: process.env.QSTASH_TOKEN! });
   for (const job of pending) {
+    if ((await notificationPolicy(db, job.userId, "todo")).paused) continue;
     try {
       // Six-day hops stay below the free seven-day delay limit. Only jobs with
       // a real future deadline wake; there is no periodic minute poll.
@@ -600,6 +604,8 @@ export async function deliverReminder(
         .where(eq(reminderJobs.id, input.id))
         .for("update");
       if (!job?.enabled || job.version !== input.version) return;
+      const policy = await notificationPolicy(tx, job.userId, "todo");
+      if (policy.paused) return;
       const p = (await preferences(tx, job.userId)).preferences;
       const effective = respectQuietHours(job.runAt > now ? job.runAt : now, p);
       if (effective.getTime() > now.getTime() + 1000) {
@@ -639,7 +645,16 @@ export async function deliverReminder(
         );
       if (sent) return;
       try {
-        await send(device, payload);
+        await send(
+          device,
+          policy.showContent
+            ? payload
+            : {
+                ...payload,
+                title: "Wuff Todo reminder",
+                body: "Open Wuff to view your reminder.",
+              },
+        );
       } catch (e) {
         if (e instanceof PushTransportError && e.permanent) {
           await tx
@@ -669,6 +684,8 @@ export async function deliverReminder(
       .where(eq(reminderJobs.id, input.id))
       .for("update");
     if (!job?.enabled || job.version !== input.version) return;
+    const policy = await notificationPolicy(tx, job.userId, "todo");
+    if (policy.paused) return;
     const p = (await preferences(tx, job.userId)).preferences;
     const effective = respectQuietHours(job.runAt > now ? job.runAt : now, p);
     if (effective.getTime() > now.getTime() + 1000) {

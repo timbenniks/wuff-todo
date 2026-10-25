@@ -237,30 +237,30 @@ try {
       await page.keyboard.press("Enter");
       await expect(page.locator(".empire-mobile-nav nav")).toBeVisible();
       await page
-        .getByRole("link", { name: "Wuff Totake Soon", exact: true })
+        .getByRole("link", { name: "Wuff Totake", exact: true })
         .focus();
       await page.keyboard.press("Escape");
       await expect(summary).toBeFocused();
       await expect(page.locator(".empire-mobile-nav nav")).not.toBeVisible();
       await summary.click();
       await page
-        .getByRole("link", { name: "Wuff Totake Soon", exact: true })
+        .getByRole("link", { name: "Wuff Totake", exact: true })
         .click();
     } else {
       await page
         .getByRole("navigation", { name: "Apps", exact: true })
-        .getByRole("link", { name: "Wuff Totake Soon" })
+        .getByRole("link", { name: "Wuff Totake" })
         .click();
     }
     await expect(
-      page.getByRole("heading", { name: "Wuff Totake", exact: true }),
+      page.getByRole("heading", { name: "Daily overview", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(
-        "Coming soon. Medicine tracking and reminders aren’t available yet.",
-      ),
+      page.getByRole("heading", { name: "Daily overview", exact: true }),
     ).toBeVisible();
-    assert.equal(await page.locator("input, form").count(), 0);
+    await expect(
+      page.getByRole("button", { name: "Add", exact: true }),
+    ).toBeVisible();
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

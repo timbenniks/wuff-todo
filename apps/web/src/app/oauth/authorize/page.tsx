@@ -54,6 +54,14 @@ export default async function AuthorizePage({
   }
   const native = details.client.id === nativeClientId;
   const labels: Record<string, string> = {
+    "totake:read":
+      "Read your private medications, equipment, schedules, intake history and stock",
+    "totake:write":
+      "Change your private Totake schedules, record or undo intakes, snooze reminders and adjust stock",
+    "notifications:read":
+      "Read your global and per-app notification pause and privacy settings",
+    "notifications:manage":
+      "Change your global and per-app notification pause and privacy settings",
     "empire:read":
       "Read your Wuff Empire app choices and AI-client connection permissions",
     "empire:manage":

@@ -1,8 +1,7 @@
 # Shared Empire settings and personal app choices
 
 October 25, 2026. Phase 1 is implemented and verified locally before Totake in PR #25; see
-[implementation and delivery boundaries](empire-settings.md). Phases 2 and 3
-remain planned. This document retains the full staged design.
+[implementation and delivery boundaries](empire-settings.md). PR #26 now implements the phase 2 pause/privacy controls and phase 3 Totake data/UI registration; native device delivery remains a release gate. This document retains the full staged design.
 
 ## Goal and navigation
 

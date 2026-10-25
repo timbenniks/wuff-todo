@@ -245,3 +245,22 @@ Additive migration `0017_tiresome_dreadnoughts.sql` creates app-owned `wuff_dash
 ## List workspace and named presets — October 24
 
 The existing personal-view JSON stores the additive preset/display fields; no SQL migration is required. Read [the contract](list-workspace.md). Use `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/list-view.integration.test.ts`, then the optimized local website and `node --env-file=.env.local --import tsx scripts/verify-list-workspace-ui.ts` separately. Both are development-only and clean up their synthetic fixtures. Preserve extension fields on legacy writes and maintain the independent personal view revision. Native frontend builds do not publish updated installed clients.
+
+## Totake schema and notification gate — October 25
+
+Migration `0019_totake_and_notifications.sql` was explicitly authorized and applied
+to isolated development and production. Ten new app-owned tables were verified;
+production user/list/task/member row counts and fingerprints were preserved.
+Do not rerun it as an application build step. No auth-managed changes.
+
+`WUFF_TOTAKE_DELIVERY_ENABLED` remains absent/false in production. It is a release
+gate, not proof of provider configuration or delivery. Reuse existing QStash/push
+credentials through secure environment configuration. No real send is authorized
+by this implementation PR. The signed callback is `/api/internal/totake`; existing
+daily recovery retries pending Totake publications. Local tests keep loopback
+WUFF_ORIGIN and synthetic accounts, with mocked senders and no publication.
+
+Run `tests/totake.integration.test.ts` serially against the optimized loopback app,
+then `scripts/verify-totake.ts`; never overlap their fixture ownership. No preview
+writes until backend isolation is confirmed. Installed native Totake/push work and
+watch validation remain explicit release steps; see [contracts](totake.md).

@@ -134,6 +134,13 @@
       "when": 1792920926999,
       "tag": "0018_empire_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792924918649,
+      "tag": "0019_totake_and_notifications",
+      "breakpoints": true
     }
   ]
 }

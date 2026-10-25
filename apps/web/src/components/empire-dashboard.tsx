@@ -1,4 +1,5 @@
 "use client";
+import { TotakeSummaryCard } from "./totake-summary";
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarDays, CheckCheck, Pill, Star } from "lucide-react";
@@ -182,6 +183,11 @@ export function EmpireDashboard() {
             </p>
           )}
       </section>
+      {preferences.settings &&
+        empireAppPreference(preferences.settings.apps, "totake").visible &&
+        empireAppPreference(preferences.settings.apps, "totake").dashboard && (
+          <TotakeSummaryCard userId={preferences.settings.userId} />
+        )}
       {showTodo && (
         <section aria-labelledby="empire-todo-title" className="empire-todo">
           <header className="empire-section-heading">

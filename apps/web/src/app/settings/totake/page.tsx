@@ -1,14 +1,15 @@
-export default function TotakeSettingsPage() {
+import { pageActor } from "@/lib/auth/server";
+import { getTotake } from "@wuff/domain";
+import { TotakeApp } from "@wuff/ui/features/totake/totake-app";
+import "@wuff/ui/features/totake/totake.css";
+export default async function TotakeSettingsPage() {
+  const actor = await pageActor();
   return (
-    <section>
-      <h2>Wuff Totake</h2>
-      <p className="settings-description">
-        Coming soon. Medicine tracking, reminders and app permissions aren’t
-        available yet.
-      </p>
-      <a className="empire-text-link" href="/settings/apps">
-        Choose which apps appear
-      </a>
-    </section>
+    <TotakeApp
+      key={actor.id}
+      userId={actor.id}
+      initial={await getTotake(actor)}
+      initialPage="settings"
+    />
   );
 }

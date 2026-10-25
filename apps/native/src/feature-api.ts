@@ -129,7 +129,22 @@ export function featureApi(
           : method === "PUT"
             ? "reorderLists"
             : undefined;
-    else if (kind === "empire") {
+    else if (kind === "totake" && id === "summary" && method === "GET")
+      action = "getTotakeSummary";
+    else if ((kind === "totake" || kind === "notifications") && !id) {
+      action =
+        method === "GET"
+          ? kind === "totake"
+            ? "getTotake"
+            : "getNotificationSettings"
+          : method === "PUT"
+            ? kind === "totake"
+              ? "updateTotake"
+              : "updateNotificationSettings"
+            : undefined;
+      if (kind === "totake" && method === "GET" && url.searchParams.has("day"))
+        input = { day: Number(url.searchParams.get("day")) };
+    } else if (kind === "empire") {
       action =
         method === "GET"
           ? "getEmpireSettings"
