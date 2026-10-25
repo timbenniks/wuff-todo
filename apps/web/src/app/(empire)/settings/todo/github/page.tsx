@@ -1,6 +1,6 @@
 import { pageActor } from "@/lib/auth/server";
 import { listLists } from "@wuff/domain";
-import { GithubConnections } from "../../../github/connections";
+import { GithubConnections } from "@/app/github/connections";
 export default async function GithubSettings({
   searchParams,
 }: {

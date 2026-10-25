@@ -35,7 +35,7 @@
     "components": [
       {
         "name": "HomeDashboard",
-        "signature": "export function HomeDashboard({\n  userId,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
+        "signature": "export function HomeDashboard({\n  userId,\n  name,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  name: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
       }
     ]
   },

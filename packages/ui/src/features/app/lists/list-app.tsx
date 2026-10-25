@@ -985,6 +985,7 @@ export function ListApp({
             )}
             {!selectedId && !showArchive && (
               <HomeDashboard
+                name={name}
                 lists={summaries}
                 busy={busy}
                 change={change}

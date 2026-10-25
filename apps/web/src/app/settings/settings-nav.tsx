@@ -1,5 +1,6 @@
 "use client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { NativeSelect } from "@wuff/ui/native-select";
 const sections = [
   {
@@ -25,6 +26,7 @@ const sections = [
   { title: "Help", links: [["/settings/docs", "Docs"]] },
 ];
 export function SettingsNav() {
+  const router = useRouter();
   const path = usePathname();
   const active =
     sections
@@ -33,15 +35,15 @@ export function SettingsNav() {
       .sort((a, b) => b[0].length - a[0].length)[0]?.[0] ?? "/settings/apps";
   return (
     <aside className="empire-settings-navigation">
-      <a className="empire-text-link" href="/">
+      <Link prefetch={false} className="empire-text-link" href="/">
         ← Dashboard
-      </a>
+      </Link>
       <label className="empire-settings-mobile">
         Settings page
         <NativeSelect
           aria-label="Settings page"
           value={active}
-          onChange={(event) => window.location.assign(event.target.value)}
+          onChange={(event) => router.push(event.target.value)}
         >
           {sections.map((section) => (
             <optgroup key={section.title} label={section.title}>
@@ -59,13 +61,14 @@ export function SettingsNav() {
           <section key={section.title}>
             <h2>{section.title}</h2>
             {section.links.map(([href, label]) => (
-              <a
+              <Link
+                prefetch={false}
                 key={href}
                 href={href}
                 aria-current={active === href ? "page" : undefined}
               >
                 {label}
-              </a>
+              </Link>
             ))}
           </section>
         ))}

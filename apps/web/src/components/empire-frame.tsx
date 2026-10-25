@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
 import { Button } from "@wuff/ui/button";
@@ -13,11 +14,20 @@ import {
   useEmpirePreferences,
 } from "./empire-preferences";
 import { empireAppPreference } from "@wuff/contracts";
+import {
+  clearAfterEmpireSignOut,
+  type EmpireBootstrap,
+} from "@/lib/empire-preferences-store";
 
-export function EmpireFrame({ children }: { children: React.ReactNode }) {
-  const active = empireDestination(usePathname()) !== null;
+export function EmpireFrame({
+  children,
+  initial,
+}: {
+  children: React.ReactNode;
+  initial: EmpireBootstrap | null;
+}) {
   return (
-    <EmpirePreferencesProvider active={active}>
+    <EmpirePreferencesProvider initial={initial}>
       <EmpireChrome>{children}</EmpireChrome>
     </EmpirePreferencesProvider>
   );
@@ -38,12 +48,13 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
 
   const links = (
     <>
-      <a
+      <Link
+        prefetch={false}
         href="/"
         aria-current={destination === "dashboard" ? "page" : undefined}
       >
         Dashboard
-      </a>
+      </Link>
       {empireApps
         .filter(
           (app) =>
@@ -51,7 +62,8 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
             empireAppPreference(preferences.settings.apps, app.id).visible,
         )
         .map((app) => (
-          <a
+          <Link
+            prefetch={false}
             key={app.id}
             href={app.href}
             aria-current={destination === app.id ? "page" : undefined}
@@ -60,9 +72,11 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
             {app.status === "coming-soon" && (
               <span className="empire-soon">Soon</span>
             )}
-          </a>
+          </Link>
         ))}
-      <a href="/settings/apps">Manage apps</a>
+      <Link prefetch={false} href="/settings/apps">
+        Manage apps
+      </Link>
     </>
   );
   return (
@@ -96,10 +110,15 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
             details.open = false;
         }}
       >
-        <a href="/" className="empire-brand" aria-label="Wuff Empire dashboard">
+        <Link
+          prefetch={false}
+          href="/"
+          className="empire-brand"
+          aria-label="Wuff Empire dashboard"
+        >
           <Corgi size={40} />
           <span className="wordmark">Wuff Empire</span>
-        </a>
+        </Link>
         <nav className="empire-desktop-nav" aria-label="Apps">
           {links}
         </nav>
@@ -117,12 +136,13 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
             <span>Account</span>
           </summary>
           <div className="empire-popover">
-            <a
+            <Link
+              prefetch={false}
               href="/settings"
               aria-current={destination === "account" ? "page" : undefined}
             >
               <Settings size={18} aria-hidden="true" /> Settings
-            </a>
+            </Link>
             <Button
               variant="ghost"
               disabled={busy}
@@ -131,8 +151,10 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
                 setError("");
                 try {
                   await disableBrowserOnSignOut();
-                  const result = await authClient.signOut();
-                  if (result.error) throw new Error("Sign-out failed");
+                  await clearAfterEmpireSignOut(
+                    () => authClient.signOut(),
+                    preferences.clear,
+                  );
                   window.location.assign("/sign-in");
                 } catch {
                   setError("Couldn’t sign out. Try again.");

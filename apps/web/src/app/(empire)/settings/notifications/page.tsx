@@ -1,7 +1,7 @@
-import { GlobalNotificationControls } from "./global-controls";
+import { GlobalNotificationControls } from "@/app/settings/notifications/global-controls";
 import { pageActor } from "@/lib/auth/server";
 import { getReminderSettings, getNotificationSettings } from "@wuff/domain";
-import { ReminderSettingsForm } from "../reminders/settings-form";
+import { ReminderSettingsForm } from "@/app/settings/reminders/settings-form";
 export default async function NotificationsPage() {
   const actor = await pageActor();
   return (

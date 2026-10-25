@@ -4,91 +4,79 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
-  useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import type { EmpireSettings } from "@wuff/contracts";
 import { api } from "@/lib/api";
+import {
+  createEmpirePreferencesStore,
+  type EmpireBootstrap,
+} from "@/lib/empire-preferences-store";
 
 type PreferencesContext = {
   settings: EmpireSettings | null;
+  name: string;
   error: string;
   register: (userId: string) => void;
   refresh: () => Promise<void>;
   accept: (settings: EmpireSettings) => void;
+  clear: () => void;
 };
 const Context = createContext<PreferencesContext | null>(null);
 export function EmpirePreferencesProvider({
   children,
-  active,
+  initial,
 }: {
   children: React.ReactNode;
-  active: boolean;
+  initial: EmpireBootstrap | null;
 }) {
-  const [userId, setUserId] = useState("");
-  const [settings, setSettings] = useState<EmpireSettings | null>(null);
-  const [error, setError] = useState("");
-  const generation = useRef(0);
-  const register = useCallback((id: string) => setUserId(id), []);
-  const accept = useCallback(
-    (next: EmpireSettings) => {
-      if (next.userId !== userId) return;
-      generation.current++;
-      setSettings((old) => (old && old.version > next.version ? old : next));
-      setError("");
-    },
-    [userId],
+  const [store] = useState(() =>
+    createEmpirePreferencesStore(initial, (userId) =>
+      api<EmpireSettings>("/api/v1/empire", "GET", undefined, userId),
+    ),
   );
-  const refresh = useCallback(async () => {
-    if (!userId || !active) return;
-    const request = ++generation.current;
-    try {
-      const next = await api<EmpireSettings>(
-        "/api/v1/empire",
-        "GET",
-        undefined,
-        userId,
-      );
-      if (request === generation.current) accept(next);
-    } catch {
-      if (request === generation.current) {
-        setError("We couldn’t load your Empire settings. Try again.");
-      }
-    }
-  }, [userId, accept, active]);
+  const snapshot = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot,
+  );
+  const register = useCallback(
+    (userId: string) => {
+      if (store.register(userId)) window.location.reload();
+    },
+    [store],
+  );
   useEffect(() => {
-    setSettings(null);
-    setError("");
-    if (!active) {
-      setUserId("");
-      return;
-    }
     const read = () => {
-      if (!document.hidden) void refresh();
+      if (!document.hidden) void store.refresh();
     };
-    read();
+    if (!store.getSnapshot().settings) read();
     const timer = window.setInterval(read, 10_000);
     window.addEventListener("focus", read);
     window.addEventListener("online", read);
     document.addEventListener("visibilitychange", read);
     return () => {
-      generation.current++;
+      store.cancelPending();
       window.clearInterval(timer);
       window.removeEventListener("focus", read);
       window.removeEventListener("online", read);
       document.removeEventListener("visibilitychange", read);
     };
-  }, [refresh, active]);
+  }, [store]);
   const value = useMemo(
     () => ({
-      settings: settings?.userId === userId ? settings : null,
-      error,
+      settings: snapshot.settings,
+      name: snapshot.name,
+      error: snapshot.error,
       register,
-      refresh,
-      accept,
+      refresh: store.refresh,
+      accept: store.accept,
+      clear: store.clear,
     }),
-    [settings, userId, error, register, refresh, accept],
+    [snapshot, register, store],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
@@ -100,7 +88,7 @@ export function useEmpirePreferences() {
 export function EmpireActor({ userId }: { userId: string }) {
   const value = useContext(Context);
   const register = value?.register;
-  useEffect(() => {
+  useLayoutEffect(() => {
     register?.(userId);
   }, [register, userId]);
   return null;

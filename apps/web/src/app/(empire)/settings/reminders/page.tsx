@@ -1,6 +1,6 @@
 import { pageActor } from "@/lib/auth/server";
 import { getReminderSettings } from "@wuff/domain";
-import { ReminderSettingsForm } from "./settings-form";
+import { ReminderSettingsForm } from "@/app/settings/reminders/settings-form";
 export default async function Page() {
   const actor = await pageActor();
   return (

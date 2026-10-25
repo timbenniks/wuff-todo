@@ -3,8 +3,8 @@ import { getTask } from "@wuff/domain";
 import { AppError, taskLookupSchema } from "@wuff/contracts";
 import { pageActor, webIdentity } from "@/lib/auth/server";
 import { sealLiveLists } from "@/lib/live-server";
-import { ActorApiProvider } from "../../lists/actor-api";
-import { TaskDetailApp } from "./task-detail-app";
+import { ActorApiProvider } from "@/app/lists/actor-api";
+import { TaskDetailApp } from "@/app/tasks/[id]/task-detail-app";
 
 export const dynamic = "force-dynamic";
 export default async function TaskPage({

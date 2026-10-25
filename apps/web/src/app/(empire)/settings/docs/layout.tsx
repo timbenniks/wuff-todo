@@ -1,5 +1,5 @@
-import { DocsControls } from "../../docs/controls";
-import "../../docs/docs.css";
+import { DocsControls } from "@/app/docs/controls";
+import "@/app/docs/docs.css";
 export default function SettingsDocsLayout({
   children,
 }: {

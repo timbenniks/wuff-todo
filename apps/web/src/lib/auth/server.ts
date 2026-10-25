@@ -39,9 +39,9 @@ const routeIdentity = cache(async () => {
 export async function webActor(): Promise<Actor> {
   return actorForIdentity(await routeIdentity());
 }
-export async function pageActor(): Promise<Actor> {
+export const pageActor = cache(async (): Promise<Actor> => {
   return actorForIdentity(await webIdentity());
-}
+});
 async function actorForIdentity(
   identity: { id: string } | null,
 ): Promise<Actor> {

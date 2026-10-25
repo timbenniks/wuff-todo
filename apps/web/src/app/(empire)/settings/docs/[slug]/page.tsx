@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import pages from "../../../docs/content.generated.json";
-import { Article } from "../../../docs/article";
+import pages from "@/app/docs/content.generated.json";
+import { Article } from "@/app/docs/article";
 export default async function SettingsGuideArticle({
   params,
 }: {
