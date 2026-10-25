@@ -11,7 +11,7 @@ Build the approved Totake experience inside Empire using the current contributor
 - [x] Dedicated Totake read/write consent; complete shared-domain HTTP/MCP/native capabilities, explicit browser handoffs and actual adapter parity.
 - [x] Global and per-app notification pause/status/device controls with callback enforcement and no repeat backlog on resume. Todo keeps its delivery rules; Totake has no silent missed completion, expiry or inherited quiet-hour delay.
 - [x] Durable scheduling/current-state checks; secure actions cannot double-record or deduct; provider acceptance is distinct from user acknowledgement.
-- [ ] Meaningful unit coverage, isolated integration, OAuth/revocation, browser 320/390/1280 and actual MCP controls. Real installed phone/watch delivery remains a release gate.
+- [x] Meaningful unit coverage, isolated integration, OAuth/revocation, browser 320/390/1280 and actual MCP controls. Real installed phone/watch delivery remains a release gate.
 
 ## Delivery and review
 
