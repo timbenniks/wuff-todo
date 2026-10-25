@@ -1,3 +1,4 @@
+import { safeNotificationPath } from "@wuff/contracts/modules/totake/notification";
 // Accept only local routes that we explicitly support after sign-in.
 export function signInReturnPath(value?: string) {
   if (
@@ -42,6 +43,8 @@ export function signInReturnPath(value?: string) {
   )
     return value;
   if (/^\/tasks\/(?:[a-f0-9-]{36}|WUFF-[1-9][0-9]{0,9})$/i.test(value))
+    return value;
+  if (value.startsWith("/totake?") && safeNotificationPath(value) === value)
     return value;
   return value.startsWith("/oauth/authorize?") ? value : "/";
 }

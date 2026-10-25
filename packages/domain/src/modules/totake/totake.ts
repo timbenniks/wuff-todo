@@ -1,3 +1,5 @@
+import { validateNotificationAction } from "@wuff/contracts/modules/totake/notification";
+import { notificationPolicy } from "../../platform/notification-settings";
 import { createHash } from "node:crypto";
 import { and, eq, sql, inArray, asc } from "drizzle-orm";
 import {
@@ -12,6 +14,7 @@ import {
   totakeAudit,
   totakeStockMovements,
   totakeJobs,
+  reminderDevices,
 } from "@wuff/db";
 import {
   AppError,
@@ -155,6 +158,38 @@ export async function updateTotake(actor: Actor, data: unknown) {
     now = Date.now();
   const result = await database().db.transaction(async (tx) => {
     await admitted(tx, actor, true);
+    if (input.notification) {
+      // Same lock order as delivery/pause/device revocation: platform then product.
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`reminders:${actor.id}`},0))`,
+      );
+      const context = input.notification;
+      const [device] = await tx
+        .select()
+        .from(reminderDevices)
+        .where(
+          and(
+            eq(reminderDevices.id, context.deviceId),
+            eq(reminderDevices.userId, actor.id),
+            eq(reminderDevices.transport, "web"),
+          ),
+        );
+      const policy = await notificationPolicy(tx, actor.id, "totake");
+      const at = Date.now();
+      if (
+        context.userId !== actor.id ||
+        !device ||
+        policy.paused ||
+        !policy.showContent ||
+        context.issuedAt > at ||
+        context.expiresAt <= at
+      )
+        throw new AppError(
+          "stale_notification",
+          "Open Totake to review this reminder. Notification permission, privacy or device access changed.",
+          409,
+        );
+    }
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`totake:${actor.id}`},0))`,
     );
@@ -199,6 +234,23 @@ export async function updateTotake(actor: Actor, data: unknown) {
       const prepared = Number.isFinite(groupDay)
         ? refreshTotake(current.state, now, groupDay)
         : current.state;
+      if (input.notification) {
+        try {
+          validateNotificationAction(
+            refreshTotake(prepared, now),
+            input.change,
+            input.notification,
+            actor.id,
+            Date.now(),
+          );
+        } catch {
+          throw new AppError(
+            "stale_notification",
+            "This notification changed. Open Totake to review before recording.",
+            409,
+          );
+        }
+      }
       next = applyTotakeAction(prepared, input.change, input.operationId, now);
     } catch (error) {
       if (error instanceof AppError) throw error;

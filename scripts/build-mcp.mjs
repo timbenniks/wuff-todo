@@ -1,5 +1,13 @@
 import { build } from "esbuild";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+// Bundle the push-only worker from typed client-safe Totake policy.
+await build({
+  entryPoints: ["apps/web/src/workers/reminder-worker.ts"],
+  outfile: "apps/web/public/reminder-worker.js",
+  bundle: true,
+  format: "iife",
+  target: "es2022",
+});
 const result = await build({
   entryPoints: ["apps/web/src/mcp-app/main.ts"],
   bundle: true,

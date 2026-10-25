@@ -164,11 +164,31 @@ export const totakeActionSchema = z.discriminatedUnion("action", [
     })
     .strict(),
 ]);
+export const totakeNotificationContextSchema = z
+  .object({
+    userId: z.uuid(),
+    deviceId: z.uuid(),
+    groupId: boundedText,
+    itemId: boundedText,
+    identity: z.string().min(1).max(4096),
+    lastAuditId: boundedText.nullable(),
+    issuedAt: z.number().int().nonnegative().safe(),
+    expiresAt: z.number().int().nonnegative().safe(),
+  })
+  .strict()
+  .refine(
+    (v) => v.expiresAt > v.issuedAt && v.expiresAt - v.issuedAt <= 3600000,
+    "Invalid notification lifetime",
+  );
+export type TotakeNotificationContext = z.infer<
+  typeof totakeNotificationContextSchema
+>;
 export const totakeMutationSchema = z
   .object({
     operationId: z.uuid(),
     version: z.number().int().nonnegative(),
     change: totakeActionSchema,
+    notification: totakeNotificationContextSchema.optional(),
   })
   .strict();
 export type TotakeAction = z.infer<typeof totakeActionSchema>;

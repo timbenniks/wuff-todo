@@ -1,4 +1,5 @@
 "use client";
+import { notificationLink } from "@wuff/contracts/modules/totake/notification";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "../../button";
 import { NativeSelect } from "../../native-select";
@@ -109,7 +110,12 @@ export function TotakeApp({
   const readGate = useRef(createTotakeReadGate());
   const selection = useRef(new Map<string, string[]>());
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("reminder");
+    const link = notificationLink(window.location.search, userId);
+    if (link.error) {
+      setNotice(link.error);
+      return;
+    }
+    const id = link.groupId;
     if (!id) return;
     const g = initial.state.groups.find((g) => g.id === id);
     if (g) {
@@ -125,6 +131,16 @@ export function TotakeApp({
         "This reminder is no longer available. The latest overview is shown.",
       );
   }, []);
+
+  useEffect(() => {
+    if (!active || !notificationLink(window.location.search, userId).snooze)
+      return;
+    // Wait until the child dialog's showModal effect has run.
+    const frame = requestAnimationFrame(() =>
+      document.getElementById("totake-snooze")?.focus(),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [active, userId]);
 
   async function refresh(through?: number, explicit = false) {
     if (inFlight.current || pending.current) return null;

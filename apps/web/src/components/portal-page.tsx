@@ -1,3 +1,4 @@
+import { signInReturnPath } from "@/lib/auth/return-path";
 import { redirect } from "next/navigation";
 import { AppError, type empireModules } from "@wuff/contracts";
 import { pageActor } from "@/lib/auth/server";
@@ -5,11 +6,14 @@ import { ActorApiProvider } from "@/platform/actor-api";
 
 export async function PortalPage({
   destination,
+  returnPath,
   children,
 }: {
   destination: "/" | "/settings" | (typeof empireModules)[number]["href"];
+  returnPath?: string;
   children: React.ReactNode;
 }) {
+  const safeReturn = signInReturnPath(returnPath ?? destination);
   try {
     const actor = await pageActor();
     return (
@@ -19,7 +23,7 @@ export async function PortalPage({
     );
   } catch (error) {
     if (error instanceof AppError && error.status === 401)
-      redirect(`/sign-in?next=${encodeURIComponent(destination)}`);
+      redirect(`/sign-in?next=${encodeURIComponent(safeReturn)}`);
     if (error instanceof AppError && [403, 429, 503].includes(error.status))
       return (
         <main className="empire-page">
@@ -33,7 +37,7 @@ export async function PortalPage({
               ? "This account needs an active Wuff invitation. Ask the person who invited you to finish setting up your access."
               : "We couldn’t check your session. Try again shortly."}
           </p>
-          <a className="empire-text-link" href={destination}>
+          <a className="empire-text-link" href={safeReturn}>
             Try again
           </a>
         </main>
