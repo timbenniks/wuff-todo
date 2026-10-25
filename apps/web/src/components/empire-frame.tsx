@@ -80,7 +80,7 @@ function EmpireChrome({ children }: { children: React.ReactNode }) {
   );
   return (
     <div className="empire-frame">
-      {(destination === "dashboard" || destination === "totake") && (
+      {destination !== "todo" && destination !== "account" && (
         <a className="skip-link" href="#empire-content">
           Skip to content
         </a>

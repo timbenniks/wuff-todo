@@ -200,3 +200,23 @@ advice. Dedicated Totake consent is required; old Todo grants do not expand.
 The portal summary is opt-in and omits medicine names. Global notification settings
 now have real account/app pauses and content privacy; Totake keeps its own repeat
 rules. Actual native delivery and watch interactions remain release gates.
+
+## Wuff Notes
+
+Notes is an Empire module at `/notes` with personal settings at `/settings/notes`.
+Private titled rich-text notes reuse Todo's editor. Tags/search and personal
+pin/archive choices coexist with owner-controlled direct Viewer/Editor sharing.
+Links/backlinks reveal only accessible targets. Moodboards retain ordered text,
+private image, safe external link and linked-note cards across format changes,
+with seven shared approved themes. The dashboard is opt-in and bounded.
+
+Eight Notes-owned tables extend the shared Drizzle migration chain (0021), without
+auth-table changes. Shared domain services enforce admission, roles, scopes,
+versions, operation receipts and image access for HTTP/MCP/native adapters. New
+Notes scopes need explicit consent; existing defaults/grants remain unchanged.
+Todo task export requires explicit destination confirmation and both products'
+permissions; its transaction creates exactly one task and source reference, with
+optional text copying. Linked-note content/private images are never copied.
+Trash is reversible; physical image purge/permanent deletion, public sharing,
+collaborative live editing and native product navigation are outside this scope.
+See [Notes delivery evidence](wuff-notes.md) and [module guide](guide/modules.md).

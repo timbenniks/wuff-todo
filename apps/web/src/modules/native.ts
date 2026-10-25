@@ -1,3 +1,5 @@
+import { processGithubJobs } from "@wuff/domain/modules/todo";
+import { notesNativeOperations } from "./notes/native";
 import {
   empireModules,
   AppError,
@@ -21,6 +23,11 @@ export function composeNativeOperations(
   return operations;
 }
 const modules = {
+  notes: {
+    operations: notesNativeOperations,
+    afterAction: (action: string) =>
+      action === "createNoteTask" ? [processGithubJobs] : [],
+  },
   todo: {
     operations: todoNativeOperations,
     afterAction: afterTodoNativeAction,

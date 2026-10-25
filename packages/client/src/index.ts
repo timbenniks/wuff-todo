@@ -55,6 +55,50 @@ export function serverOrigin(value: string) {
 }
 
 export class NativeClient {
+  noteImage(assetId: string) {
+    return this.call<{ imageBase64: string }>("getNoteImage", { assetId });
+  }
+  searchNotes(input: unknown = {}) {
+    return this.call<import("@wuff/contracts").NotesResult>(
+      "searchNotes",
+      input,
+    );
+  }
+  note(id: string) {
+    return this.call<import("@wuff/contracts").NoteDetail>("getNote", id);
+  }
+  createNote(input: unknown) {
+    return this.call<import("@wuff/contracts").NoteDetail>("createNote", input);
+  }
+  updateNote(input: unknown) {
+    return this.call<import("@wuff/contracts").NoteDetail | { left: true }>(
+      "updateNote",
+      input,
+    );
+  }
+  notesSettings() {
+    return this.call<import("@wuff/contracts").NotesSettings>(
+      "getNotesSettings",
+    );
+  }
+  updateNotesSettings(input: unknown) {
+    return this.call<import("@wuff/contracts").NotesSettings>(
+      "updateNotesSettings",
+      input,
+    );
+  }
+  notesDashboard() {
+    return this.call<import("@wuff/contracts").NotesDashboard>(
+      "getNotesDashboard",
+    );
+  }
+  uploadNoteImage(input: unknown) {
+    return this.call("uploadNoteImage", input);
+  }
+  createNoteTask(input: unknown) {
+    return this.call("createNoteTask", input);
+  }
+
   mcpToolPreferences(clientId: string) {
     return this.call<import("@wuff/contracts").McpToolPreferences>(
       "getMcpToolPreferences",

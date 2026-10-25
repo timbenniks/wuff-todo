@@ -1,3 +1,4 @@
+import { registerNotesMcp } from "./notes/mcp";
 import { processGithubJobs, processAgentJobs } from "@wuff/domain/modules/todo";
 import { empireModules } from "@wuff/contracts";
 import { registerTodoMcp } from "./todo/mcp";
@@ -5,6 +6,7 @@ import { registerTotakeMcp } from "./totake/mcp";
 import type { EmpireAppId } from "@wuff/contracts";
 import type { ModuleMcpContext } from "@/lib/mcp-context";
 export const moduleServers = {
+  notes: { registerMcp: registerNotesMcp, background: [] },
   todo: {
     registerMcp: registerTodoMcp,
     background: [processGithubJobs, processAgentJobs],

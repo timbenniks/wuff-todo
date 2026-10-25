@@ -1,3 +1,4 @@
+import { renderNotesMcp } from "./notes/mcp-app";
 import { createTodoMcpView } from "./todo/mcp-app";
 import { renderTotake } from "./totake/mcp-app";
 import { empireModules } from "@wuff/contracts";
@@ -5,6 +6,10 @@ import type { EmpireAppId, TotakeSnapshot } from "@wuff/contracts";
 import type { McpViewRuntime, McpView } from "@/mcp-app/runtime";
 export function createModuleMcpViews(runtime: McpViewRuntime): McpView[] {
   const views = {
+    notes: {
+      matches: (data) => Boolean(data.notes || data.note || data.notesSettings),
+      render: (data) => renderNotesMcp(runtime, data),
+    },
     todo: createTodoMcpView(runtime),
     totake: {
       matches: (data) => Boolean(data.totake),

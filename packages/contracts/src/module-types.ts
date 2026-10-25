@@ -4,6 +4,10 @@ export type EmpireModule = {
     readonly scope: string;
     readonly label: string;
   }[];
+  readonly integrations?: readonly {
+    readonly moduleId: string;
+    readonly scopes: readonly string[];
+  }[];
   readonly id: string;
   readonly name: string;
   readonly href: string;
@@ -90,6 +94,22 @@ export function createModuleRegistry<const T extends readonly EmpireModule[]>(
         throw new Error("Invalid or duplicate permission: " + permission.scope);
       permissions.add(permission.scope);
     }
+    for (const integration of module.integrations ?? []) {
+      const target = modules.find(
+        (candidate) => candidate.id === integration.moduleId,
+      );
+      if (
+        !target ||
+        target.id === module.id ||
+        integration.scopes.some(
+          (scope) =>
+            !target.permissions.some(
+              (permission) => permission.scope === scope,
+            ),
+        )
+      )
+        throw new Error("Invalid module integration: " + integration.moduleId);
+    }
     for (const tool of module.mcpTools) {
       if (
         tools.has(tool.id) ||
@@ -100,6 +120,9 @@ export function createModuleRegistry<const T extends readonly EmpireModule[]>(
           (scope) =>
             !module.permissions.some(
               (permission) => permission.scope === scope,
+            ) &&
+            !(module.integrations ?? []).some((integration) =>
+              integration.scopes.includes(scope),
             ),
         )
       )

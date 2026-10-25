@@ -6,6 +6,11 @@ import { schedulePendingTotake } from "../modules/totake/delivery";
 import { reconcileTodoNotificationPause } from "../modules/todo/notifications";
 import { reconcileTotakeNotificationPause } from "../modules/totake/notifications";
 const services = {
+  notes: {
+    schedulePending: async (_userId?: string) => {},
+    afterDeviceRegistration: async (_userId: string) => {},
+    reconcileNotificationPause: async () => {},
+  },
   todo: {
     schedulePending: schedulePendingReminders,
     afterDeviceRegistration: async (_userId: string) => {},

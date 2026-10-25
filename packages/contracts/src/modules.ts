@@ -1,3 +1,5 @@
+import { notesModule } from "./modules/notes/manifest";
+import { notesMcpTools } from "./modules/notes/mcp-catalog";
 import { todoMcpTools } from "./modules/todo/mcp-catalog";
 import { totakeMcpTools } from "./modules/totake/mcp-catalog";
 import { createModuleRegistry } from "./module-types";
@@ -12,4 +14,5 @@ export {
 export const empireModules = createModuleRegistry([
   { ...todoModule, mcpTools: todoMcpTools },
   { ...totakeModule, mcpTools: totakeMcpTools },
+  { ...notesModule, mcpTools: notesMcpTools },
 ] as const);

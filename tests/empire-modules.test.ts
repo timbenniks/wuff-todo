@@ -192,9 +192,16 @@ test("module MCP registrars cannot inject tools outside their declared ownership
     await server.close();
   }
 });
-test("the composed module database schema generates no migration from the existing 0020 snapshot", async () => {
+test("the composed module database schema matches the latest committed migration snapshot", async () => {
+  const journal = JSON.parse(
+    await readFile("packages/db/migrations/meta/_journal.json", "utf8"),
+  );
+  const latest = String(journal.entries.at(-1).idx).padStart(4, "0");
   const previous = JSON.parse(
-    await readFile("packages/db/migrations/meta/0020_snapshot.json", "utf8"),
+    await readFile(
+      `packages/db/migrations/meta/${latest}_snapshot.json`,
+      "utf8",
+    ),
   );
   const current = generateDrizzleJson(schema, previous.id);
   assert.deepEqual(await generateMigration(previous, current), []);
@@ -302,4 +309,33 @@ test("native module dispatch composes products without prototype fallthrough or 
   assert.equal(nativeBackgroundJobs("getTotake").length, 0);
   assert.equal(nativeBackgroundJobs("createTask").length, 1);
   assert.equal(nativeBackgroundJobs("getList").length, 0);
+});
+
+test("cross-module tools require explicit integrations without creating new permission grants", () => {
+  const product = sample(),
+    tool = { ...product.mcpTools[0], scopes: ["lists:read"] };
+  assert.throws(() =>
+    createModuleRegistry([...empireModules, { ...product, mcpTools: [tool] }]),
+  );
+  assert.doesNotThrow(() =>
+    createModuleRegistry([
+      ...empireModules,
+      {
+        ...product,
+        mcpTools: [tool],
+        integrations: [{ moduleId: "todo", scopes: ["lists:read"] }],
+      },
+    ]),
+  );
+  for (const integration of [
+    { moduleId: "absent", scopes: ["lists:read"] },
+    { moduleId: "todo", scopes: ["notes:manage"] },
+    { moduleId: "sample", scopes: ["sample:read"] },
+  ])
+    assert.throws(() =>
+      createModuleRegistry([
+        ...empireModules,
+        { ...product, integrations: [integration] },
+      ]),
+    );
 });

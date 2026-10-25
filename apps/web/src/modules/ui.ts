@@ -1,6 +1,6 @@
 "use client";
 import { lazy, type ComponentType } from "react";
-import { CheckCheck, Pill, type LucideIcon } from "lucide-react";
+import { CheckCheck, Pill, FileText, type LucideIcon } from "lucide-react";
 import type { empireModules } from "@wuff/contracts";
 export type ModuleDashboardProps = { userId: string };
 export type ModuleUi = {
@@ -8,6 +8,16 @@ export type ModuleUi = {
   dashboard: Record<string, ComponentType<ModuleDashboardProps>>;
 };
 export const moduleUi = {
+  notes: {
+    icon: FileText,
+    dashboard: {
+      "notes.summary": lazy(() =>
+        import("./notes/dashboard").then((m) => ({
+          default: m.NotesSummaryCard,
+        })),
+      ),
+    },
+  },
   todo: {
     icon: CheckCheck,
     dashboard: {

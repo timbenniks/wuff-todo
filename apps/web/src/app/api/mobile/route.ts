@@ -2,9 +2,10 @@ import { after } from "next/server";
 import { AppError } from "@wuff/contracts";
 import { bearerActor } from "@/lib/oauth";
 import { nativeResource } from "@/lib/config";
-import { failure, jsonInput, privateJson } from "@/lib/http";
+import { failure, privateJson } from "@/lib/http";
 import { nativeOperation, nativeBackgroundJobs } from "@/modules/native";
 import { z } from "zod";
+import { nativeInput } from "@/lib/native-input";
 // Bearer-only transport: admission, account pinning and audience checks precede product dispatch.
 const envelope = z
   .object({
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       throw new AppError("unauthorized", "Please sign in again.", 401);
     }
     const { action, input, userId } = envelope.parse(
-      await jsonInput(request, 131_072),
+      await nativeInput(request),
     );
     if (userId && userId !== actor.id)
       throw new AppError(

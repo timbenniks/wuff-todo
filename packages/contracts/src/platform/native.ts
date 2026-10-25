@@ -11,6 +11,9 @@ export const nativeScopes = [
 ] as const;
 // Optional privileges require a new interactive authorization, never refresh.
 export const nativeAllowedScopes = [
+  "notes:read",
+  "notes:write",
+  "notes:manage",
   "totake:read",
   "totake:write",
   "notifications:read",

@@ -810,3 +810,16 @@ summary {
   max-width: 100%;
   white-space: normal;
 }
+
+.notes-mcp-card {
+  padding: 18px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 10px;
+  margin: 16px 0;
+  background: var(--wuff-surface);
+}
+.notes-mcp-card img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}

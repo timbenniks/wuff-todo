@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AppError } from "@wuff/contracts";
+import { AppError, type empireModules } from "@wuff/contracts";
 import { pageActor } from "@/lib/auth/server";
 import { ActorApiProvider } from "@/platform/actor-api";
 
@@ -7,7 +7,7 @@ export async function PortalPage({
   destination,
   children,
 }: {
-  destination: "/" | "/totake" | "/settings";
+  destination: "/" | "/settings" | (typeof empireModules)[number]["href"];
   children: React.ReactNode;
 }) {
   try {

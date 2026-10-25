@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Wuff Notes (October 25, draft PR #33):** private rich notes, search/tags,
+  personal pin/archive, owner-controlled Viewer/Editor sharing, linked notes and
+  themed moodboards, settings/dashboard, authorized HTTP/MCP/native capabilities
+  and atomic Todo export. Migration 0021 is explicitly authorized for development
+  and production. Verification and release status: [Notes](wuff-notes.md).
+
 - **Empire product modules (October 25, draft PR #32):** refactoring Todo and
   Totake into product-owned contracts/domain/schema/UI/adapters and typed
   navigation/settings/dashboard/MCP/notification contributions. Public contracts
