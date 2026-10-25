@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { appOrigin } from "@/lib/config";
 import "./globals.css";
+import { EmpireFrame } from "@/components/empire-frame";
 const dmSans = localFont({
   src: [
     { path: "../fonts/dm-sans.ttf", weight: "100 1000", style: "normal" },
@@ -16,10 +17,9 @@ const dmSans = localFont({
 });
 export const metadata: Metadata = {
   metadataBase: new URL(appOrigin()),
-  applicationName: "Wuff Todo",
-  title: "Wuff Todo",
-  description:
-    "Less to remember. More tail wags. Private lists for you and your pack.",
+  applicationName: "Wuff Empire",
+  title: "Wuff Empire",
+  description: "Your pack of apps, together in one private place.",
   robots: { index: false, follow: false },
   icons: {
     icon: [
@@ -28,27 +28,29 @@ export const metadata: Metadata = {
     ],
     apple: { url: "/icons/app-180.png", sizes: "180x180", type: "image/png" },
   },
-  appleWebApp: { capable: true, title: "Wuff Todo", statusBarStyle: "default" },
+  appleWebApp: {
+    capable: true,
+    title: "Wuff Empire",
+    statusBarStyle: "default",
+  },
   openGraph: {
     type: "website",
-    siteName: "Wuff Todo",
-    title: "Wuff Todo",
-    description:
-      "Less to remember. More tail wags. Private lists for you and your pack.",
+    siteName: "Wuff Empire",
+    title: "Wuff Empire",
+    description: "Your pack of apps, together in one private place.",
     images: [
       {
         url: "/icons/share.png",
         width: 1200,
         height: 630,
-        alt: "Waffles the corgi — Wuff Todo",
+        alt: "Waffles the corgi — Wuff Empire",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Wuff Todo",
-    description:
-      "Less to remember. More tail wags. Private lists for you and your pack.",
+    title: "Wuff Empire",
+    description: "Your pack of apps, together in one private place.",
     images: ["/icons/share.png"],
   },
 };
@@ -57,7 +59,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={dmSans.variable}>
-      <body>{children}</body>
+      <body>
+        <EmpireFrame>{children}</EmpireFrame>
+      </body>
     </html>
   );
 }

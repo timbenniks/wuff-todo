@@ -104,7 +104,9 @@ try {
     });
   }
   // Home uses existing cached list state instead of unmounting the workspace.
-  await page.getByRole("link", { name: "Wuff Todo Home", exact: true }).focus();
+  await page
+    .getByRole("link", { name: "Wuff Todo overview", exact: true })
+    .focus();
   await page.keyboard.press("Enter");
   await expect(
     page.getByRole("heading", { name: "Your day", exact: true }),
@@ -141,7 +143,9 @@ try {
     await page
       .locator(".workspace-sidebar")
       .evaluate((el: HTMLElement) => el.getBoundingClientRect().top),
-    0,
+    await page
+      .locator(".empire-header")
+      .evaluate((el: HTMLElement) => el.getBoundingClientRect().height),
   );
   await main.evaluate((el: HTMLElement) => {
     el.scrollTop = 0;

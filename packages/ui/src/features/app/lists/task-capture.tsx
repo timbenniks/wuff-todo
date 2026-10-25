@@ -262,7 +262,7 @@ export function TaskCapture({
           </div>
           <p className="text-xs text-muted-foreground">
             {destinations
-              ? "Closing keeps your draft while Home stays open."
+              ? "Closing keeps your draft while this view stays open."
               : "Closing keeps your draft while this list stays open."}
           </p>
         </form>

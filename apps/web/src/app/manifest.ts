@@ -2,12 +2,11 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Wuff Todo",
+    name: "Wuff Empire",
     short_name: "Wuff",
-    description:
-      "Less to remember. More tail wags. Private lists for you and your pack.",
+    description: "Your pack of apps, together in one private place.",
     id: "/",
-    start_url: "/lists",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: "#f7fafc",

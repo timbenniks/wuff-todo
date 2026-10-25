@@ -609,7 +609,7 @@ export function ListApp({
         }}
       >
         <House size={18} />
-        Home
+        {runtime.native ? "Home" : "Overview"}
       </Button>
       <div className="workspace-list-nav">
         <SidebarLists
@@ -766,7 +766,9 @@ export function ListApp({
           <a
             className="workspace-brand-link flex gap-2.5 items-center"
             href={runtime.webOrigin + "/lists?home=1"}
-            aria-label="Wuff Todo Home"
+            aria-label={
+              runtime.native ? "Wuff Todo Home" : "Wuff Todo overview"
+            }
             onClick={(event) => {
               if (
                 event.button !== 0 ||

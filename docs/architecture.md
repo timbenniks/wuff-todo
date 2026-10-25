@@ -2,7 +2,7 @@
 
 Status: implemented web/API/MCP architecture with explicitly marked future scope
 
-Updated: October 24, 2026
+Updated: October 25, 2026
 
 The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication and the shared Tauri workspace are implemented; installed-platform/signing acceptance and new-account invitation delivery remain separate gates.
 
@@ -11,6 +11,18 @@ The implemented foundation uses managed Neon Auth for login and `@node-oauth/oau
 Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzle ORM, Neon Postgres, Neon Auth, and Vercel hosting. Provision Neon through the Vercel integration. Use the GitHub CLI and Vercel CLI in the development and delivery workflow.
 
 The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. The Tauri application has its own native build/release pipeline in the same repository.
+
+Wuff Empire adds a web-only frame around private app routes and a personal portal
+at `/`; Todo retains `/lists` and `/tasks/:id`, and `/totake` is a protected
+coming-soon page. An explicit app registry supplies app-card/menu destinations.
+Public docs, sign-in, password setup and OAuth authorization retain their own
+layouts. The portal calls the existing account-pinned dashboard API with the
+browser's local calendar date and five-item task previews, refreshing on focus,
+visibility, reconnect and a ten-second fallback. Latest-request arbitration and
+failure clearing prevent stale responses restoring a revoked preview. No new
+schema, data mutation, OAuth scope or provider is introduced. The shared Tauri
+workspace retains its existing Home wording/navigation; web Todo calls that view
+Overview. See [portal decisions](wuff-empire.md).
 
 Private task-note images use Vercel Blob for bytes and Neon for task-bound attachment records. Current admission/list permissions authorize each delivery; Markdown uses stable application attachment references. Development and production use separate private Frankfurt stores. See [private task images](task-images.md) for lifecycle, APIs, MCP and verification status.
 

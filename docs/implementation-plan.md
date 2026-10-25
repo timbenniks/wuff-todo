@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Wuff Empire portal (October 25):** authorized expansion to a shared app entry
+  point, personal dashboard and global navigation. Todo retains its routes and
+  workspace; Totake is coming soon. Implementation and verification are tracked in
+  [portal scope and evidence](wuff-empire.md). No Totake medicine functionality,
+  production release or native installer update is implied by this milestone.
+
 - **Contributor autonomy (October 25):** Tim requested independent iteration for
   contributors. Brief/path preapproval, scope hashes, exact-file gates and diff-size
   exceptions are removed in the feature implementation. Tim retains final PR
