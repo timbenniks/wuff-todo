@@ -781,7 +781,7 @@ export function ListApp({
               setNavigationOpen(false);
             }}
           >
-            <Corgi size={48} />
+            {runtime.native && <Corgi size={48} />}
             <span className="wordmark text-xl font-bold">Wuff Todo</span>
           </a>
           <Button

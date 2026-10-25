@@ -29,7 +29,6 @@ import { RecordedGroups, ItemName, SnoozeControls } from "./components";
 import { ReminderTimeEditor } from "./ReminderTimeEditor";
 import { acceptTotakeRead, createTotakeReadGate } from "./request";
 import { Modal, TotakeSaveContext } from "./Modal";
-import { Corgi } from "../components/corgi";
 import {
   CalendarDays,
   ChevronLeft,
@@ -327,7 +326,6 @@ export function TotakeApp({
                 href="/"
                 aria-label="Wuff Totake · Empire dashboard"
               >
-                <Corgi size={48} />
                 <span className="wordmark text-xl font-bold">Wuff Totake</span>
               </a>
               <Button
