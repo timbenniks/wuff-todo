@@ -2,6 +2,69 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Wuff Empire portal — October 25, 2026
+
+[Scope and decisions](wuff-empire.md), [draft PR #25](https://github.com/timbenniks/wuff-todo/pull/25).
+Verified implementation source: `a684145f822fd53027d75e3749bff1b25ccfaa62`.
+This is local development evidence, not production or installed-client acceptance.
+
+- `pnpm typecheck` passed all workspaces and root scripts/tests. `pnpm test`
+  passed **125 tests in 26 files**, with no skips. New
+  `tests/empire-portal.test.ts` covers eight outcomes: route boundaries, safe
+  sign-in destinations/default, section order/visibility without preference writes,
+  explicit-date loading/success, failure clearing/retry, stale success after
+  revocation, calendar rollover/late failures, and disposed account/page reads.
+  `tests/work-tasks.test.ts` keeps redirect-attack regression coverage with the
+  new portal fallback. Targeted Prettier checks and `git diff --check` passed.
+- `pnpm build` passed guide generation, MCP bundle and optimized Next.js web.
+  `pnpm build:native:web` passed TypeScript/Vite; its existing >500kB chunk advisory
+  remains. No new dependency, schema, native permission or deployment setting was
+  introduced. Pre-existing local dependency-file edits were excluded from the PR.
+- Readiness checks confirmed the configured development database endpoint,
+  synthetic fixture users, and distinct development/production database, auth and
+  Blob credentials without printing their values. No preview isolation is assumed.
+- `node --env-file=.env.local --import tsx scripts/verify-empire-portal.ts` passed
+  against the optimized localhost app with real synthetic sessions/data. It checks
+  anonymous root/Totake/list/task redirects, public guide independence, cross-account
+  exclusion, account-pinned 409, five-task bounded previews/exact totals and local
+  calendar date, real shared-list membership revocation, explicit portal versus
+  last-list startup, task/favorite/Overview/history navigation, Totake coming soon,
+  menu keyboard/Escape/focus return, Settings, sign-out failure/retry/success, and
+  320/390/1280px overflow/desktop workspace geometry. The request-failure and empty
+  responses were deliberately mocked; successful reads and access revocation used
+  actual development services. Initial loading was checked with a delayed real read.
+  No browser page errors were captured. Pending sign-out blur previously hid Retry;
+  the harness reproduced that bug and now passes with the menu kept open.
+- `node --env-file=.env.local --import tsx scripts/verify-app-workspace-shell.ts`
+  passed existing overview/history, desktop brand/title alignment, Settings/Docs
+  active navigation, independent scrolling, 320/390px focus/Escape and overflow,
+  public/private boundaries, and exact create-response-loss recovery. Its existing
+  screenshot files were restored to preserve the earlier milestone's evidence.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1
+  tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts`
+  passed all **3 integration tests**: actual web/MCP/native adapters, scope/origin/
+  account/audience boundaries, shared preferences, authorized dated task/subtask
+  projection/counts/favorites, independent preference revisions, retries and
+  first-write concurrency. Disposable data/grants were cleaned and synthetic
+  preferences restored by the harnesses.
+
+Reviewed screenshots: [desktop portal](screenshots/empire-dashboard-1280.png),
+[320px portal](screenshots/empire-dashboard-320.png),
+[390px portal](screenshots/empire-dashboard-390.png),
+[read recovery](screenshots/empire-retry-1280.png),
+[desktop Todo](screenshots/empire-todo-1280.png),
+[320px Todo](screenshots/empire-todo-320.png), and
+[390px Todo](screenshots/empire-todo-390.png). All content is synthetic.
+
+GitHub's `check` and `policy` runs for the initial draft did not start: run
+annotations report failed account payments or a spending limit needing increase
+([Verify](https://github.com/timbenniks/wuff-todo/actions/runs/40179356032),
+[policy](https://github.com/timbenniks/wuff-todo/actions/runs/40179356017)). These
+are incomplete remote verification, not passing CI. Keep the PR draft. Vercel Git
+previews do not establish backend isolation; no preview data writes, production
+release, installed native/device run, screen-reader review or named MCP-host UI
+certification is claimed.
+
 ## Contributor autonomy — October 25, 2026
 
 Tim requested removing repeated contributor approvals while safeguarding dangerous
