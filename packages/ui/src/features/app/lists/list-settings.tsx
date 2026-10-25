@@ -278,9 +278,9 @@ export function ListSettings({
         onCancel={(e) => {
           if (busy) e.preventDefault();
         }}
-        className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
+        className="todo-settings-dialog fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface text-foreground p-6 shadow-xl backdrop:bg-slate-900/30"
       >
-        <div className="flex justify-between items-start gap-3 mb-5">
+        <div className="todo-dialog-heading flex justify-between items-start gap-3 mb-5">
           <div>
             <h2 id={`settings-${list.id}`} className="text-2xl font-bold">
               List settings

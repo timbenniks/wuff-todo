@@ -252,7 +252,7 @@ export function HomeDashboard({
     <div className="home-dashboard home-actionable">
       <header className="home-daily-header">
         <div className="flex min-w-0 max-w-full items-center gap-3">
-          <Corgi size={40} />
+          {native && <Corgi size={40} />}
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground break-words">
               {greeting}
@@ -632,7 +632,7 @@ export function HomeDashboard({
       <dialog
         onKeyDown={containDialogFocus}
         ref={dialog}
-        className="m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-foreground/20"
+        className="todo-settings-dialog m-auto w-[calc(100%-2rem)] max-w-lg max-h-[85dvh] overflow-y-auto rounded-2xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-foreground/20"
         aria-labelledby="customize-home-heading"
         onCancel={(e) => {
           if (saving || retry) e.preventDefault();
@@ -644,7 +644,7 @@ export function HomeDashboard({
             void save(!!retry);
           }}
         >
-          <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="todo-dialog-heading flex items-center justify-between gap-3 mb-2">
             <h2 id="customize-home-heading" className="text-xl font-bold">
               Customize {viewName}
             </h2>
