@@ -18,6 +18,8 @@ import {
   updateNotificationSettings,
   getEmpireSettings,
   getAiConnections,
+  getMcpToolPreferences,
+  updateMcpToolPreferences,
   disconnectAiClient,
   updateEmpireSettings,
   updateDashboard,
@@ -66,6 +68,8 @@ import { sealLiveLists } from "@/lib/live-server";
 // A bearer-only native adapter: cookies and Origin headers never grant access.
 // All permissions, versions, receipts and validation stay in domain services.
 const operations = {
+  getMcpToolPreferences,
+  updateMcpToolPreferences,
   getAiConnections,
   disconnectAiClient,
   getTotakeSummary,

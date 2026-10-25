@@ -581,6 +581,7 @@ export async function getAiConnections(actor: Actor) {
       name: oauthClients.name,
       scopes: oauthTokens.scope,
       expiresAt: oauthTokens.refreshExpiresAt,
+      resource: oauthTokens.resource,
     })
     .from(oauthTokens)
     .innerJoin(oauthClients, eq(oauthClients.id, oauthTokens.clientId))
@@ -590,7 +591,12 @@ export async function getAiConnections(actor: Actor) {
   return summarizeAiConnections(
     rows.map((row) => ({ ...row, expiresAt: row.expiresAt.getTime() })),
     Date.now(),
-  );
+  ).map((client) => ({
+    ...client,
+    mcp: rows.some(
+      (row) => row.id === client.id && row.resource.endsWith("/api/mcp"),
+    ),
+  }));
 }
 export async function disconnectAiClient(actor: Actor, data: unknown) {
   requireScope(actor, "empire:manage");
@@ -1951,3 +1957,4 @@ export {
   deliverTotake,
   totakeDeliveryStatus,
 } from "./totake-delivery";
+export * from "./mcp-tools";

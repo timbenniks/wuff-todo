@@ -65,7 +65,7 @@ export default async function AuthorizePage({
     "empire:read":
       "Read your Wuff Empire app choices and AI-client connection permissions",
     "empire:manage":
-      "Change your Wuff Empire app choices and disconnect your AI clients",
+      "Change your Wuff Empire app choices and manage MCP tool choices and disconnect your AI clients",
     "lists:read": "Read your accessible lists and tasks",
     "tasks:write": "Add, edit, complete, delete, and reorder tasks",
     "lists:manage": "Create lists and manage lists you own",

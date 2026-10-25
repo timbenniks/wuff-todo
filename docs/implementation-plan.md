@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Personal MCP tool choices (October 25, draft PR #31):** per-connection app/service
+  switches and advanced tools, scope-filtered discovery and cached-call denial,
+  with shared HTTP/MCP/native services. Migration 0020 was explicitly authorized
+  and applied to development and production; application release remains separate.
+  See [contract and verification](mcp-tool-choices.md).
+
 - **Stable Empire shell (October 25, PR #30):** private pages seed account name
   and app choices on the server, retaining the shell during client navigation.
   Regression, first-HTML isolation, adapter and browser checks pass locally;

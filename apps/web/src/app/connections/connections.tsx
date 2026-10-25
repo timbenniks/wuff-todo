@@ -1,4 +1,5 @@
 "use client";
+import { ToolChoices } from "./tool-choices";
 import { wuffError } from "@/lib/copy";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
@@ -10,6 +11,10 @@ export function Connections() {
     null,
   );
   const actorApi = useActorApi();
+  const [editing, setEditing] = useState<string | null>(null);
+  useEffect(() => {
+    setEditing(new URLSearchParams(window.location.search).get("clientId"));
+  }, []);
   const [clients, setClients] = useState<AiConnection[] | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -60,9 +65,9 @@ export function Connections() {
             <li
               key={client.id}
               data-client-id={client.id}
-              className="flex items-center justify-between gap-4 py-4"
+              className="flex flex-wrap items-center justify-between gap-4 py-4"
             >
-              <span className="min-w-0 break-words">
+              <span className="min-w-0 flex-1 basis-48 break-words">
                 {client.name}
                 <span className="block text-sm text-muted-foreground">
                   {client.state === "authorized"
@@ -79,10 +84,21 @@ export function Connections() {
                     : "No active permissions"}
                 </span>
               </span>
+              {client.mcp && (
+                <Button
+                  variant="outline"
+                  aria-expanded={editing === client.id}
+                  disabled={busy || !!pending.current || editing === client.id}
+                  onClick={() => setEditing(client.id)}
+                >
+                  Choose tools
+                </Button>
+              )}
               <Button
                 variant="danger"
                 disabled={
                   busy ||
+                  !!editing ||
                   (!!pending.current && pending.current.clientId !== client.id)
                 }
                 onClick={async () => {
@@ -100,6 +116,7 @@ export function Connections() {
                     );
                     pending.current = null;
                     setClients(clients.filter((c) => c.id !== client.id));
+                    if (editing === client.id) setEditing(null);
                   } catch (e) {
                     if (e instanceof ApiError && e.status < 500)
                       pending.current = null;
@@ -115,6 +132,15 @@ export function Connections() {
                     ? "Retry disconnect"
                     : "Disconnect"}
               </Button>
+              {editing === client.id && client.mcp && (
+                <div className="basis-full min-w-0">
+                  <ToolChoices
+                    key={editing}
+                    clientId={editing}
+                    onClose={() => setEditing(null)}
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>

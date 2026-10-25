@@ -9,6 +9,10 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  mcpToolCatalog,
+  mcpToolAllowed,
+  mcpToolQuerySchema,
+  updateMcpToolsSchema,
   totakeQuerySchema,
   totakeMutationSchema,
   notificationSettingsSchema,
@@ -60,8 +64,22 @@ import {
 import * as domain from "@wuff/domain";
 import { appOrigin } from "./config";
 
-export function createMcpServer(actor: Actor) {
+export function createMcpServer(
+  actor: Actor,
+  enabledTools: readonly string[] | null = null,
+) {
   const server = new McpServer({ name: "Wuff Empire", version: "0.2.0" });
+  const registerTool: typeof server.registerTool = (name, config, callback) => {
+    const policy = mcpToolCatalog.find((tool) => tool.id === name);
+    if (!policy) throw new Error(`Missing MCP tool policy: ${name}`);
+    const tool = server.registerTool(
+      name,
+      { ...config, title: config.title ?? policy.title },
+      callback,
+    );
+    if (!mcpToolAllowed(name, actor.scopes, enabledTools)) tool.disable();
+    return tool;
+  };
   const uri = "ui://wuff/lists.html";
   const read = {
     readOnlyHint: true,
@@ -188,7 +206,7 @@ export function createMcpServer(actor: Actor) {
     ],
   ] as const;
   for (const [name, description, schema, action] of agentReads)
-    server.registerTool(
+    registerTool(
       name,
       {
         description,
@@ -236,7 +254,7 @@ export function createMcpServer(actor: Actor) {
     ],
   ] as const;
   for (const [name, description, schema, action] of agentWrites)
-    server.registerTool(
+    registerTool(
       name,
       {
         description,
@@ -247,7 +265,7 @@ export function createMcpServer(actor: Actor) {
         result(async () => ({ agents: await action(actor, data) })),
     );
   for (const [name, description, schema, action] of githubReads)
-    server.registerTool(
+    registerTool(
       name,
       {
         description,
@@ -295,7 +313,7 @@ export function createMcpServer(actor: Actor) {
     ],
   ] as const;
   for (const [name, description, schema, action] of githubWrites)
-    server.registerTool(
+    registerTool(
       name,
       {
         description,
@@ -306,7 +324,7 @@ export function createMcpServer(actor: Actor) {
         result(async () => ({ github: await action(actor, data) })),
     );
   registerAppTool(
-    server,
+    { registerTool },
     "show_lists",
     {
       title: "Show your Wuff lists",
@@ -318,7 +336,7 @@ export function createMcpServer(actor: Actor) {
     async () => result(async () => ({ lists: await domain.listLists(actor) })),
   );
   registerAppTool(
-    server,
+    { registerTool },
     "show_list",
     {
       title: "Show a Wuff list",
@@ -331,7 +349,7 @@ export function createMcpServer(actor: Actor) {
     async ({ listId }) =>
       result(async () => ({ list: await domain.getList(actor, listId) })),
   );
-  server.registerTool(
+  registerTool(
     "list_lists",
     {
       description: "Find lists you own or can edit.",
@@ -340,7 +358,7 @@ export function createMcpServer(actor: Actor) {
     },
     async () => result(async () => ({ lists: await domain.listLists(actor) })),
   );
-  server.registerTool(
+  registerTool(
     "get_list",
     {
       description:
@@ -351,7 +369,7 @@ export function createMcpServer(actor: Actor) {
     async ({ listId }) =>
       result(async () => ({ list: await domain.getList(actor, listId) })),
   );
-  server.registerTool(
+  registerTool(
     "get_task",
     {
       description:
@@ -362,7 +380,7 @@ export function createMcpServer(actor: Actor) {
     async ({ task }) =>
       result(async () => ({ ...(await domain.getTask(actor, task)) })),
   );
-  server.registerTool(
+  registerTool(
     "get_ai_connections",
     {
       description:
@@ -375,7 +393,7 @@ export function createMcpServer(actor: Actor) {
         connections: await domain.getAiConnections(actor),
       })),
   );
-  server.registerTool(
+  registerTool(
     "disconnect_ai_client",
     {
       description:
@@ -389,7 +407,7 @@ export function createMcpServer(actor: Actor) {
       })),
   );
   registerAppTool(
-    server,
+    { registerTool },
     "show_empire_settings",
     {
       title: "Choose your Wuff apps",
@@ -405,7 +423,7 @@ export function createMcpServer(actor: Actor) {
         empireCanManage: actor.scopes.includes("empire:manage"),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_empire_settings",
     {
       description:
@@ -419,7 +437,7 @@ export function createMcpServer(actor: Actor) {
         empireCanManage: actor.scopes.includes("empire:manage"),
       })),
   );
-  server.registerTool(
+  registerTool(
     "update_empire_settings",
     {
       description:
@@ -433,7 +451,7 @@ export function createMcpServer(actor: Actor) {
       })),
   );
   registerAppTool(
-    server,
+    { registerTool },
     "show_dashboard",
     {
       title: "Show Wuff Home",
@@ -448,7 +466,7 @@ export function createMcpServer(actor: Actor) {
         dashboard: await domain.getDashboard(actor, input),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_dashboard",
     {
       description:
@@ -461,7 +479,7 @@ export function createMcpServer(actor: Actor) {
         dashboard: await domain.getDashboard(actor, input),
       })),
   );
-  server.registerTool(
+  registerTool(
     "update_dashboard",
     {
       description:
@@ -474,7 +492,7 @@ export function createMcpServer(actor: Actor) {
         dashboardPreferences: await domain.updateDashboard(actor, input),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_list_order",
     {
       description:
@@ -485,7 +503,7 @@ export function createMcpServer(actor: Actor) {
     async () =>
       result(async () => ({ order: await domain.getListOrder(actor) })),
   );
-  server.registerTool(
+  registerTool(
     "reorder_lists",
     {
       description:
@@ -496,7 +514,7 @@ export function createMcpServer(actor: Actor) {
     async (data) =>
       result(async () => ({ order: await domain.reorderLists(actor, data) })),
   );
-  server.registerTool(
+  registerTool(
     "get_list_view",
     {
       description:
@@ -507,7 +525,7 @@ export function createMcpServer(actor: Actor) {
     async (data) =>
       result(async () => ({ ...(await domain.queryListView(actor, data)) })),
   );
-  server.registerTool(
+  registerTool(
     "update_list_view",
     {
       description:
@@ -518,7 +536,7 @@ export function createMcpServer(actor: Actor) {
     async (data) =>
       result(async () => ({ list: await domain.updateListView(actor, data) })),
   );
-  server.registerTool(
+  registerTool(
     "get_reminder_settings",
     {
       description:
@@ -532,7 +550,7 @@ export function createMcpServer(actor: Actor) {
         setupPath: "/settings/notifications",
       })),
   );
-  server.registerTool(
+  registerTool(
     "remove_reminder_device",
     {
       description:
@@ -546,7 +564,7 @@ export function createMcpServer(actor: Actor) {
         setupPath: "/settings/notifications",
       })),
   );
-  server.registerTool(
+  registerTool(
     "update_reminder_settings",
     {
       description:
@@ -559,7 +577,7 @@ export function createMcpServer(actor: Actor) {
         settings: await domain.updateReminderSettings(actor, data),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_list_reminders",
     {
       description:
@@ -570,7 +588,7 @@ export function createMcpServer(actor: Actor) {
     async (data) =>
       result(async () => ({ ...(await domain.getListReminders(actor, data)) })),
   );
-  server.registerTool(
+  registerTool(
     "update_list_reminders",
     {
       description:
@@ -583,7 +601,7 @@ export function createMcpServer(actor: Actor) {
         ...(await domain.updateListReminders(actor, data)),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_task_reminder",
     {
       description:
@@ -594,7 +612,7 @@ export function createMcpServer(actor: Actor) {
     async (data) =>
       result(async () => ({ ...(await domain.getTaskReminder(actor, data)) })),
   );
-  server.registerTool(
+  registerTool(
     "set_task_reminder",
     {
       description:
@@ -693,7 +711,7 @@ export function createMcpServer(actor: Actor) {
   ] as const;
   for (const [name, description, schema, action, annotations] of operations)
     registerAppTool(
-      server,
+      { registerTool },
       name,
       {
         description,
@@ -707,7 +725,7 @@ export function createMcpServer(actor: Actor) {
           return name === "delete_list" ? { deleted: value } : { list: value };
         }),
     );
-  server.registerTool(
+  registerTool(
     "get_list_sharing",
     {
       description:
@@ -720,7 +738,7 @@ export function createMcpServer(actor: Actor) {
         sharing: await domain.getListSharing(actor, listId),
       })),
   );
-  server.registerTool(
+  registerTool(
     "list_invitations",
     {
       description:
@@ -777,13 +795,13 @@ export function createMcpServer(actor: Actor) {
     action,
     annotations,
   ] of sharingOperations)
-    server.registerTool(
+    registerTool(
       name,
       { description, inputSchema: schema, annotations },
       async (data: unknown) =>
         result(async () => ({ sharing: await action(actor, data) })),
     );
-  server.registerTool(
+  registerTool(
     "upload_task_image",
     {
       description:
@@ -800,7 +818,7 @@ export function createMcpServer(actor: Actor) {
         ),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_task_image",
     {
       description:
@@ -852,7 +870,7 @@ export function createMcpServer(actor: Actor) {
     }),
   );
   registerAppTool(
-    server,
+    { registerTool },
     "show_totake",
     {
       title: "Wuff Totake",
@@ -868,7 +886,7 @@ export function createMcpServer(actor: Actor) {
         totakeCanWrite: actor.scopes.includes("totake:write"),
       })),
   );
-  server.registerTool(
+  registerTool(
     "get_totake_summary",
     {
       description:
@@ -879,7 +897,7 @@ export function createMcpServer(actor: Actor) {
     async () =>
       result(async () => ({ summary: await domain.getTotakeSummary(actor) })),
   );
-  server.registerTool(
+  registerTool(
     "get_totake",
     {
       description:
@@ -893,7 +911,7 @@ export function createMcpServer(actor: Actor) {
         totakeCanWrite: actor.scopes.includes("totake:write"),
       })),
   );
-  server.registerTool(
+  registerTool(
     "update_totake",
     {
       description:
@@ -904,7 +922,7 @@ export function createMcpServer(actor: Actor) {
     async (input) =>
       result(async () => ({ totake: await domain.updateTotake(actor, input) })),
   );
-  server.registerTool(
+  registerTool(
     "get_notification_settings",
     {
       description:
@@ -917,7 +935,7 @@ export function createMcpServer(actor: Actor) {
         notifications: await domain.getNotificationSettings(actor),
       })),
   );
-  server.registerTool(
+  registerTool(
     "update_notification_settings",
     {
       description:
@@ -928,6 +946,32 @@ export function createMcpServer(actor: Actor) {
     async (input) =>
       result(async () => ({
         notifications: await domain.updateNotificationSettings(actor, input),
+      })),
+  );
+  registerTool(
+    "get_mcp_tool_preferences",
+    {
+      description:
+        "Read a named MCP connection's tool choices/catalog and secure settings URL. Requires empire:read. Tool choices never grant OAuth permissions.",
+      inputSchema: mcpToolQuerySchema.shape,
+      annotations: read,
+    },
+    async (input) =>
+      result(async () => ({
+        toolPreferences: await domain.getMcpToolPreferences(actor, input),
+      })),
+  );
+  registerTool(
+    "update_mcp_tool_preferences",
+    {
+      description:
+        "Save tool choices for an owned MCP connection. Read get_mcp_tool_preferences first; use current version and fresh operationId, retry uncertain requests identically. Requires empire:read/manage. AI connections may only turn tools off; re-enable through Wuff Settings. Never change choices without explicit user intent. Refresh the client tool catalog after saving.",
+      inputSchema: updateMcpToolsSchema,
+      annotations: write,
+    },
+    async (input) =>
+      result(async () => ({
+        toolPreferences: await domain.updateMcpToolPreferences(actor, input),
       })),
   );
   return server;

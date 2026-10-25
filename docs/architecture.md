@@ -251,3 +251,9 @@ boundary. The shared notification lock precedes the Totake lock in callbacks and
 shared pause changes. Per-device/group acceptance receipts survive partial failure.
 Totake uses a separate durable next-job table with the existing signed QStash and
 push transports. Its production delivery flag stays off pending platform proof.
+
+Personal [MCP tool choices](mcp-tool-choices.md) are keyed by admitted user and
+OAuth client in `wuff_mcp_tool_preferences`. The per-request catalog intersects
+existing OAuth scopes with the owner allowlist before registering enabled tools.
+MCP actors may narrow selections; re-enabling tools requires owner Settings or
+the native bearer adapter. This policy does not change app visibility or consent.

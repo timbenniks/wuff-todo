@@ -212,7 +212,13 @@ export async function bearerActor(request: Request, resource = mcpResource()) {
     oauthRequest(request),
     new OAuth2Server.Response(),
   );
-  return { id: token.user.id as string, scopes: token.scope ?? [] };
+  return {
+    id: token.user.id as string,
+    scopes: token.scope ?? [],
+    ...(resource === mcpResource()
+      ? { mcpClientId: token.client.id as string }
+      : {}),
+  };
 }
 export async function authorizationDetails(params: URLSearchParams) {
   for (const key of new Set(params.keys()))
