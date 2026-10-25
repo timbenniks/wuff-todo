@@ -63,7 +63,7 @@ HTTP/MCP/native consent and parity; browser draft/retry/conflict recovery and
 ## Delivery evidence
 
 - `pnpm typecheck`: all packages, applications and root scripts/tests passed.
-- `pnpm test`: 198 unit tests, no skips. Notes covers strict content/action
+- `pnpm test`: 199 unit tests, no skips. Notes covers strict content/action
   contracts, normalized tags, safe links, bounded pagination/images, scope/tool
   choices, role capabilities, link-card privacy, recovery, native adapter mapping,
   native upload limits, stable SSR/browser dates and Notes-only consent. Registry
@@ -72,7 +72,7 @@ HTTP/MCP/native consent and parity; browser draft/retry/conflict recovery and
   `pnpm build:native:web` passed with existing chunk-size advisory; no installer
   or physical device proof is implied.
 - `node --env-file=.env.local --import tsx --test --test-concurrency=1
-tests/notes.integration.test.ts`: both real development cases passed. Domain
+tests/notes.integration.test.ts`: all three real development cases passed. Domain
   proof includes private/Viewer/Editor/owner boundaries, revocation, hidden linked
   IDs/titles, pin/archive isolation, stale/concurrent edits, exact/changed receipts,
   card updates/order, settings defaults/dashboard, atomic Todo creation/rollback
@@ -129,4 +129,17 @@ remains the extension-permission gap described above.
 GitHub Verify run `40227666600` and policy run `40227665046` did not start because
 recent account payments failed or the spending limit needs increasing. They are
 incomplete hosted verification, not passing or failing code proof. Keep PR #33
-a draft. A clean-checkout preview and final evidence commit are recorded in the PR.
+a draft. Clean-checkout verification and the final evidence commit are recorded in the PR.
+
+Self-removal recovery regression: leaving removes membership, so an identical
+retry must acknowledge the actor's committed leave without returning the private
+note. It still requires current admission/read/write scopes and an exact actor-owned
+receipt; changed payloads, fresh outsider attempts and owner self-removal fail.
+All other note mutations still require current note access before replay. A real
+development regression failed before the fix and passes after it; the HTTP test
+also repeats the same leave and confirms note reads remain denied. This is a
+status acknowledgement, not restored content access.
+
+At Tim's request, all 57 Wuff preview deployments were removed. Read-back showed
+zero previews and the existing production deployment remained READY. No replacement
+preview is requested; review uses local evidence and the committed screenshots.

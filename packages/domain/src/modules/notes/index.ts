@@ -31,6 +31,7 @@ import {
 import {
   AppError,
   noteCapabilities,
+  noteMutationReceiptPolicy,
   noteRoleCanEdit,
   noteRoleCanManage,
   projectNoteCards,
@@ -541,11 +542,46 @@ async function validateCard(
       fail("invalid_image", "Choose an uploaded image from this board.");
   }
 }
+async function removeNoteMembership(tx: Tx, noteId: string, userId: string) {
+  await tx
+    .delete(noteMembers)
+    .where(and(eq(noteMembers.noteId, noteId), eq(noteMembers.userId, userId)));
+  await tx
+    .delete(notePreferences)
+    .where(
+      and(
+        eq(notePreferences.noteId, noteId),
+        eq(notePreferences.userId, userId),
+      ),
+    );
+}
 export async function updateNote(actor: Actor, data: unknown) {
   const input = noteMutationSchema.parse(data),
     change = input.change,
     db = database().db;
-  const left = change.action === "leave";
+  if (noteMutationReceiptPolicy(change.action) === "acknowledgement") {
+    await db.transaction(async (tx) => {
+      await admitted(tx, actor, "notes:write");
+      // Keep note-before-receipt lock ordering. An existing receipt can acknowledge
+      // self-removal without granting access to the note that was left.
+      await tx
+        .select({ id: notes.id })
+        .from(notes)
+        .where(eq(notes.id, input.noteId))
+        .for("update");
+      await receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
+        const { row, role } = await access(tx, actor, input.noteId);
+        active(row);
+        version(row, input.version);
+        if (role === "owner")
+          fail("owner_required", "The owner cannot leave their own note.", 403);
+        await removeNoteMembership(tx, row.id, actor.id);
+        await bump(tx, row.id);
+        return { id: row.id };
+      });
+    });
+    return { left: true as const };
+  }
   await db.transaction(async (tx) => {
     const { row, role } = await access(tx, actor, input.noteId, true);
     const management = ["share", "unshare", "trash", "restore"].includes(
@@ -558,8 +594,7 @@ export async function updateNote(actor: Actor, data: unknown) {
         "Only the owner can manage sharing or trash.",
         403,
       );
-    if (!["preference", "leave"].includes(change.action) && !management)
-      editor(role);
+    if (change.action !== "preference" && !management) editor(role);
     if (change.action !== "restore" && change.action !== "trash") active(row);
     await receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
       if (change.action !== "preference") version(row, input.version);
@@ -611,23 +646,10 @@ export async function updateNote(actor: Actor, data: unknown) {
             set: { role: change.role },
           });
         await bump(tx, row.id);
-      } else if (change.action === "unshare" || change.action === "leave") {
-        const userId = change.action === "leave" ? actor.id : change.userId;
-        if (userId === row.ownerId)
+      } else if (change.action === "unshare") {
+        if (change.userId === row.ownerId)
           fail("owner_required", "The owner cannot leave their own note.", 403);
-        await tx
-          .delete(noteMembers)
-          .where(
-            and(eq(noteMembers.noteId, row.id), eq(noteMembers.userId, userId)),
-          );
-        await tx
-          .delete(notePreferences)
-          .where(
-            and(
-              eq(notePreferences.noteId, row.id),
-              eq(notePreferences.userId, userId),
-            ),
-          );
+        await removeNoteMembership(tx, row.id, change.userId);
         await bump(tx, row.id);
       } else if (change.action === "trash" || change.action === "restore") {
         await tx
@@ -716,7 +738,7 @@ export async function updateNote(actor: Actor, data: unknown) {
       return { id: row.id };
     });
   });
-  return left ? { left: true as const } : getNote(actor, input.noteId);
+  return getNote(actor, input.noteId);
 }
 export async function getNotesSettings(actor: Actor): Promise<NotesSettings> {
   const db = database().db;

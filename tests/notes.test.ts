@@ -479,3 +479,25 @@ test("Notes dates stay stable between server and browser locales/timezones", asy
   assert.equal(noteDateLabel("2026-10-25T23:59:59.000Z"), "25/10/2026");
   assert.equal(noteDateLabel("2026-10-26T00:15:00+02:00"), "25/10/2026");
 });
+
+test("only a committed self-removal can acknowledge a retry without current-note content access", async () => {
+  const { noteMutationReceiptPolicy } = await import("@wuff/contracts");
+  assert.equal(noteMutationReceiptPolicy("leave"), "acknowledgement");
+  for (const action of [
+    "save",
+    "preference",
+    "share",
+    "unshare",
+    "trash",
+    "restore",
+    "link",
+    "unlink",
+    "add_card",
+    "update_card",
+    "remove_card",
+    "reorder_cards",
+    "unknown",
+    "",
+  ])
+    assert.equal(noteMutationReceiptPolicy(action), "current-note");
+});

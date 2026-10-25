@@ -57,3 +57,8 @@ export function projectNoteCards(
     };
   });
 }
+
+/** Self-removal retries return only an acknowledgement, never protected content. */
+export function noteMutationReceiptPolicy(action: string) {
+  return action === "leave" ? "acknowledgement" : "current-note";
+}

@@ -833,3 +833,88 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
         );
   }
 });
+
+test("Notes leave retries acknowledge only the actor's committed self-removal without recovering note access", async () => {
+  const db = database().db,
+    operations: string[] = [],
+    op = () => {
+      const id = crypto.randomUUID();
+      operations.push(id);
+      return id;
+    };
+  let noteId: string | undefined;
+  try {
+    let n = await createNote(a, {
+      title: "Notes leave regression",
+      operationId: op(),
+    });
+    noteId = n.id;
+    n = (await updateNote(a, {
+      noteId: n.id,
+      version: n.version,
+      operationId: op(),
+      change: { action: "share", email: second.email, role: "viewer" },
+    })) as NoteDetail;
+    const input = {
+      noteId: n.id,
+      version: n.version,
+      operationId: op(),
+      change: { action: "leave" },
+    };
+    const cookie = await loginFixture(second);
+    const leaveRequest = () =>
+      fetch(origin + "/api/v1/notes/" + n.id, {
+        method: "PUT",
+        headers: {
+          Cookie: cookie,
+          Origin: origin,
+          "Content-Type": "application/json",
+          "X-Wuff-User": b.id,
+        },
+        body: JSON.stringify(input),
+      });
+    const firstReply = await leaveRequest();
+    assert.equal(firstReply.status, 200);
+    assert.deepEqual(await firstReply.json(), { left: true });
+    const retriedReply = await leaveRequest();
+    assert.equal(retriedReply.status, 200);
+    assert.deepEqual(await retriedReply.json(), { left: true });
+    assert.deepEqual(await updateNote(b, input), { left: true });
+    assert.deepEqual(await updateNote(b, input), { left: true });
+    await assert.rejects(() => getNote(b, n.id), { code: "not_found" });
+    await assert.rejects(
+      () => updateNote(b, { ...input, version: input.version + 1 }),
+      { code: "idempotency_conflict" },
+    );
+    await assert.rejects(
+      () => updateNote({ ...b, scopes: ["notes:read"] }, input),
+      { code: "forbidden" },
+    );
+    await assert.rejects(() => updateNote(b, { ...input, operationId: op() }), {
+      code: "not_found",
+    });
+    n = await getNote(a, n.id);
+    assert.equal(n.members?.length, 0);
+    await assert.rejects(
+      () =>
+        updateNote(a, {
+          noteId: n.id,
+          version: n.version,
+          operationId: op(),
+          change: { action: "leave" },
+        }),
+      { code: "owner_required" },
+    );
+  } finally {
+    if (noteId) await db.delete(notes).where(eq(notes.id, noteId));
+    if (operations.length)
+      await db
+        .delete(receipts)
+        .where(
+          and(
+            inArray(receipts.actorId, [a.id, b.id]),
+            inArray(receipts.operationId, operations),
+          ),
+        );
+  }
+});
