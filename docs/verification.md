@@ -2,6 +2,87 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Empire Settings foundation — October 25, 2026
+
+[Feature contract](empire-settings.md), [PR #25](https://github.com/timbenniks/wuff-todo/pull/25).
+Verified implementation source: `10c91d074cac94a42f2e4ba44947e66f99cf1757`.
+Local optimized app, real isolated-development services and synthetic accounts;
+no production application release or installed-device acceptance is claimed.
+
+- `pnpm typecheck` passed all workspaces and root scripts/tests. `pnpm test`
+  passed **134 tests in 28 discovered files**, no skips. Six new settings unit
+  cases cover defaults/unavailable summaries, patch omission/future preservation,
+  invalid/duplicate/unknown inputs, explicit OAuth consent and unchanged defaults,
+  expiry-aware grant summaries, and fixed/dynamic client revocation contracts.
+  Three list-navigation cases cover unconfirmed versus confirmed destinations,
+  history/query preservation and parameter injection. Existing portal and auth
+  regression coverage remains. Targeted Prettier and `git diff --check` passed.
+- `pnpm build` passed guide generation, MCP bundling and optimized web compilation.
+  `pnpm build:native:web` passed the shared frontend; the existing >500kB chunk
+  advisory remains. No dependency or native permission was added. Existing local
+  root package/lock/workspace edits are excluded from the feature commits.
+- `node --env-file=.env.local --import tsx scripts/verify-empire-settings.ts`
+  passed global Settings without Todo catalogue requests, per-account app choices,
+  all-hidden recovery, direct access to hidden Todo, independent dashboard choices,
+  Cancel, conflict drafts, exact request/operation-ID retry after committed response
+  loss, AI disconnect retry and actual subsequent revoked-token rejection. Legacy
+  `/connections`/`#cursor`/listId and `/github` links, separate global device controls
+  and Todo schedules, and 320/390/1280px layouts/overflow passed. An actual Next.js
+  client transition from public Docs to Todo and Back proved private preference
+  polling stops on the public guide, including focus refresh. No page errors.
+- The same harness exercised the **actual MCP App in the local MCP Apps SDK host**:
+  checkbox drafts do not write before Save, the server committed a response that
+  was deliberately lost, retry used identical domain arguments/operationId, the
+  UI acknowledged success and the database read matched the chosen value. The
+  host-safe form handler is required because sandboxed hosts block native form
+  submission. Screenshot was taken after confirmed success, not a pending state.
+  This is not named ChatGPT/Codex-host certification.
+- `scripts/verify-app-workspace-shell.ts` passed preserved Todo logo/history and
+  desktop alignment, the new Settings/Docs shell and sticky navigation, phone
+  selector/Lists Escape/focus, public/private boundaries and exact list-create
+  response-loss retry inside Todo. The test exposed temporary list IDs entering
+  history; the fix now keeps previews local until acknowledgement, with dedicated
+  unit and browser regressions. Original earlier-milestone screenshots were restored.
+- `scripts/verify-empire-portal.ts` passed existing authorized/anonymous/account
+  isolation, real shared access revocation, bounded local-date previews, portal
+  versus last-list startup, task/favorite/Overview/history navigation, menu keyboard
+  behavior, account sign-out recovery and 320/390/1280px layouts. Its mocked
+  empty/error responses remain clearly distinct from real successful reads.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1
+  tests/empire-settings.integration.test.ts tests/empire-adapters.integration.test.ts
+  tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts
+  tests/reminders.integration.test.ts` passed **all 6 integration tests**, no skips.
+  New cases call real HTTP, MCP and native bearer adapters in both write/read
+  directions, read actual consent pages, test Empire-only/read-only/legacy grants,
+  unchanged refresh authority, account/origin/audience rejection, stale/concurrent
+  settings writes, idempotent retries and admission rejection on replay. AI clients
+  are actor-private; attempting to revoke another actor's grant leaves it usable.
+  Replaying an acknowledged disconnect does not revoke a newer explicit consent.
+  Device removal was verified MCP-write/API-read and API-write/MCP-read; setup uses
+  synthetic native addresses with no provider delivery. Existing dashboard and
+  reminder authorization, lifecycle, scheduling and receipt regressions also pass.
+  Harnesses restore preferences and clean fixture lists/devices/grants.
+
+Migration execution was separately authorized by Tim's “just apply everywhere”
+reply. Generated Drizzle `0018_empire_preferences.sql` was applied on the existing
+isolated development **direct** connection, then domain retry/concurrency/isolation
+tests passed. Production preflight confirmed a distinct direct connection and
+that only 0018 was pending, with applied hashes matching local migration history.
+Applied 0018 there, read back `user_id`, `version`, `apps`, and confirmed existing
+account/list/task counts were unchanged. No auth-managed tables, provider setup,
+production app-data fixtures or production app deployment were involved.
+
+Reviewed screenshots: [desktop Settings](screenshots/empire-settings-1280.png),
+[320px](screenshots/empire-settings-320.png), [390px](screenshots/empire-settings-390.png),
+[current portal](screenshots/empire-settings-dashboard-1280.png), and
+[confirmed MCP save](screenshots/empire-settings-mcp-390.png). Synthetic data only.
+
+Required remote CI remains a separate gate; preceding runs did not start because
+of GitHub account billing/spending limits. Keep the PR draft while those checks
+are blocked. Preview backend isolation is unconfirmed, so no preview data writes
+are claimed. Physical devices, installed native Settings handoff/delivery, screen
+readers, live notification providers and named MCP hosts remain unverified.
+
 ## Wuff Empire portal — October 25, 2026
 
 [Scope and decisions](wuff-empire.md), [draft PR #25](https://github.com/timbenniks/wuff-todo/pull/25).
