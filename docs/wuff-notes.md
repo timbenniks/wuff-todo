@@ -112,3 +112,21 @@ provider configuration is included.
 
 Unrelated local root package/pnpm edits remain excluded. Keep the PR draft while
 required hosted checks are blocked. Tim owns merge and application release.
+
+## Review artifacts
+
+- [Desktop moodboard](screenshots/notes-moodboard-1280.jpg)
+- [Phone moodboard](screenshots/notes-moodboard-390.jpg)
+- [Opt-in Empire dashboard](screenshots/notes-dashboard-1280.jpg)
+- [Embedded MCP desktop](screenshots/notes-mcp-1280.jpg)
+- [Embedded MCP phone](screenshots/notes-mcp-390.jpg)
+
+The final browser pass also created a private note, moved it to reversible Trash,
+restored it, saved module preferences and enabled/read back the Notes dashboard
+widget. Synthetic settings are restored after testing. Browser file selection
+remains the extension-permission gap described above.
+
+GitHub Verify run `40227666600` and policy run `40227665046` did not start because
+recent account payments failed or the spending limit needs increasing. They are
+incomplete hosted verification, not passing or failing code proof. Keep PR #33
+a draft. A clean-checkout preview and final evidence commit are recorded in the PR.

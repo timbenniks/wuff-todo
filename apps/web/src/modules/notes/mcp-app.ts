@@ -13,7 +13,10 @@ export function renderNotesMcp(
   runtime: McpViewRuntime,
   value: Record<string, unknown>,
 ) {
-  const { root, status, request, show, call } = runtime;
+  const { root: hostRoot, status, request, show, call } = runtime;
+  const root = element("section");
+  root.className = "notes-mcp-view";
+  hostRoot.append(root);
   const data = value.note as NoteDetail | undefined,
     collection = value.notes as NotesResult | undefined,
     prefs = value.notesSettings as NotesSettings | undefined;

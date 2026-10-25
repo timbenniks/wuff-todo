@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { setTimeout as delay } from "node:timers/promises";
 import { createHash, randomBytes } from "node:crypto";
 import { tauriClientId, tauriRedirectUri } from "@wuff/contracts";
 export const fixtureOrigin = "http://localhost:3000";
@@ -56,15 +57,30 @@ export async function empireGrant(
     );
     assert(!html.includes("Read your accessible lists and tasks"));
   }
-  const decision = await fetch(origin + "/oauth/authorize/decision", {
-    method: "POST",
-    headers: {
-      Origin: origin,
-      Cookie: cookie,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: query.toString(), accept: true }),
-  });
+  let decision: Response | undefined;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    decision = await fetch(origin + "/oauth/authorize/decision", {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        Cookie: cookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: query.toString(), accept: true }),
+    });
+    if (decision.status !== 429 || attempt === 3) break;
+    const retryAfter = Number(decision.headers.get("Retry-After"));
+    await delay(
+      Math.max(
+        5,
+        Math.min(
+          30,
+          Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 15,
+        ),
+      ) * 1000,
+    );
+  }
+  assert(decision);
   assert.equal(decision.status, 200);
   const redirect = new URL((await decision.json()).redirect);
   const response = await fetch(origin + "/oauth/token", {

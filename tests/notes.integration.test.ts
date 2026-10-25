@@ -528,14 +528,19 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       change: NoteMutation["change"],
       tool = "update_note",
     ) => {
-      n = (
-        await invoke(tool, {
-          noteId: n.id,
-          version: n.version,
-          operationId: op(),
-          change,
-        })
-      ).note;
+      const input = {
+        noteId: n.id,
+        version: n.version,
+        operationId: op(),
+        change,
+      };
+      n = (await invoke(tool, input)).note;
+      assert.deepEqual(await (await api("/" + n.id)).json(), n);
+      // The HTTP adapter accepts the identical committed write and MCP reads it back.
+      const replay = await api("/" + n.id, "PUT", input);
+      assert.equal(replay.status, 200);
+      assert.deepEqual(await replay.json(), n);
+      assert.deepEqual((await invoke("get_note", { noteId: n.id })).note, n);
       return n;
     };
     await mutation({
@@ -642,6 +647,17 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       (await invoke("get_notes_settings")).notesSettings,
       updated,
     );
+    const apiSettingsInput = {
+      version: updated.version,
+      settings: updated.settings,
+      operationId: op(),
+    };
+    const apiSettings = await api("/settings", "PUT", apiSettingsInput);
+    assert.equal(apiSettings.status, 200);
+    assert.deepEqual(
+      (await invoke("get_notes_settings")).notesSettings,
+      await apiSettings.json(),
+    );
     const nativeInput = {
       noteId: n.id,
       version: n.version,
@@ -738,6 +754,24 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       ),
     );
     await mutation({ action: "restore" }, "manage_note");
+    assert.equal(
+      (await empireMcp("", "get_note", { noteId: n.id })).status,
+      401,
+    );
+    await db
+      .update(oauthTokens)
+      .set({ accessExpiresAt: new Date(0) })
+      .where(
+        eq(
+          oauthTokens.accessHash,
+          createHash("sha256").update(readonly.access_token).digest("hex"),
+        ),
+      );
+    assert.equal(
+      (await empireMcp(readonly.access_token, "get_note", { noteId: n.id }))
+        .status,
+      401,
+    );
     const revoke = await fetch(origin + "/oauth/revoke", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
