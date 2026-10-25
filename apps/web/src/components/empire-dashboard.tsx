@@ -120,7 +120,7 @@ export function EmpireDashboard() {
   const data = state.data;
   const sections = data ? portalSections(data) : [];
   return (
-    <main id="empire-content" className="empire-page">
+    <main id="empire-content" className="empire-page empire-dashboard">
       <header className="empire-welcome">
         <div>
           <p className="empire-eyebrow">Your pack. One place.</p>

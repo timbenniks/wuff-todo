@@ -254,6 +254,25 @@
   padding: 40px 32px 64px;
   min-width: 0;
 }
+.empire-dashboard {
+  max-width: none;
+  margin: 0;
+  padding-inline: 28px;
+}
+.empire-dashboard .empire-app-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.empire-dashboard .empire-preview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.empire-dashboard .empire-favorites {
+  grid-column: auto;
+}
+@media (min-width: 1440px) {
+  .empire-dashboard {
+    padding-inline: 36px;
+  }
+}
 .empire-page h1 {
   font-size: clamp(28px, 3.5vw, 40px);
   line-height: 1.15;
@@ -532,7 +551,8 @@
   }
 }
 @media (max-width: 767px) {
-  .empire-page {
+  .empire-page,
+  .empire-dashboard {
     padding: 28px 16px 48px;
   }
   .empire-welcome {
@@ -548,7 +568,9 @@
     line-height: 1.6;
   }
   .empire-app-grid,
-  .empire-preview-grid {
+  .empire-preview-grid,
+  .empire-dashboard .empire-app-grid,
+  .empire-dashboard .empire-preview-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .empire-app-card {

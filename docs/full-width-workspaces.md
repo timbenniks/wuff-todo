@@ -10,6 +10,8 @@ Acceptance:
 - [x] Totake fills the desktop canvas with Todo's 28px gutters, 36px on wide screens.
 - [x] 320/390px phone menus, keyboard dismissal and focus recovery still work.
 - [x] Native Todo keeps its own logo because it has no Empire header.
+- [x] Empire dashboard fills desktop width with matching gutters; summary cards
+      use the extra columns, while phones remain single-column.
 
 Presentation only: preserve destinations, app functions, independent scrolling,
 the 260px navigation rail, selected states and standalone Settings. No persisted
@@ -39,3 +41,23 @@ No production or unverified-preview writes. Tim reviews and merges the draft PR.
 
 Remote checks/preview status are recorded in the PR. Existing GitHub billing
 limits may block runners; blocked checks are not passing code verification.
+
+## Dashboard extension
+
+Tim also requested a full-width dashboard. Scope its width/gutters to the dashboard
+so loading/admission and standalone Settings layouts remain as designed. App
+launchers use automatic columns with a 280px minimum; Todo preview cards use 320px
+minimum columns, including Favorites without a full-row span. Phones retain one
+column. No new data or settings; existing authorized preview content is unchanged.
+Dashboard-specific verification:
+
+- Reran `pnpm typecheck`, `pnpm test` (156 passed, zero skips) and `pnpm build`;
+  all passed after the dashboard changes. Prettier and diff whitespace checks pass.
+- Actual Chrome using the existing synthetic session on optimized local app:
+  dashboard spans x=0..1920 with 36px gutters; all three Todo cards share a row.
+  At 1280px gutters are 28px and all three cards remain side by side.
+- At 320/390px, app and summary grids are single columns of 288/358px with 16px
+  gutters and no horizontal overflow. Captured console errors: none.
+- Screenshots `docs/screenshots/full-width-dashboard-{1280,390}.png` contain only
+  development fixtures. No new fixture/auth writes were needed. No production or
+  preview writes, named device or screen-reader verification claimed.
