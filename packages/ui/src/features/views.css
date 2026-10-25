@@ -647,6 +647,7 @@ button:focus-visible {
 }
 .sidebar-brand {
   padding-inline: 4px;
+  min-height: 48px;
 }
 .sidebar-home {
   padding-inline: 11px;
@@ -1021,6 +1022,9 @@ button:focus-visible {
   .workspace-brand-link > svg {
     width: 40px;
     height: 40px;
+  }
+  .sidebar-brand {
+    min-height: 44px;
   }
   .list-heading {
     top: 0;
