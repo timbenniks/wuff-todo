@@ -20,3 +20,5 @@ export * from "./platform/notification-settings";
 export * from "./platform/mcp-tools";
 
 export { scheduleModuleNotifications } from "./platform/module-services";
+
+export * from "./modules/notes";

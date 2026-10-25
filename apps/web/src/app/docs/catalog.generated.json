@@ -70,6 +70,26 @@
     ]
   },
   {
+    "source": "packages/ui/src/modules/notes/notes-app.tsx",
+    "module": "@wuff/ui/modules/notes/notes-app",
+    "components": [
+      {
+        "name": "NotesApp",
+        "signature": "export function NotesApp({\n  userId,\n  initial,\n  initialNote,\n  settings,\n  initialFilter = \"all\",\n}: {\n  userId: string;\n  initial: NotesResult;\n  initialNote: NoteDetail | null;\n  settings: NotesSettings;\n  initialFilter?: string;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/notes/settings.tsx",
+    "module": "@wuff/ui/modules/notes/settings",
+    "components": [
+      {
+        "name": "NotesSettingsPanel",
+        "signature": "export function NotesSettingsPanel({ initial }: { initial: NotesSettings })"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/modules/todo/app/lists/completed-tasks.tsx",
     "module": "@wuff/ui/modules/todo/app/lists/completed-tasks",
     "components": [
@@ -243,7 +263,7 @@
     "components": [
       {
         "name": "TaskNoteEditor",
-        "signature": "export default function TaskNoteEditor({\n  value,\n  onChange,\n  disabled,\n  onUpload,\n}: {\n  value: string;\n  onChange: (content: string) => void;\n  disabled: boolean;\n  onUpload: (file: File) => Promise<string>;\n})"
+        "signature": "export default function TaskNoteEditor({\n  value,\n  onChange,\n  disabled,\n  onUpload,\n  label = \"Task notes\",\n  allowImages = true,\n}: {\n  label?: string;\n  allowImages?: boolean;\n  value: string;\n  onChange: (content: string) => void;\n  disabled: boolean;\n  onUpload: (file: File) => Promise<string>;\n})"
       }
     ]
   },

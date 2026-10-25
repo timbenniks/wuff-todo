@@ -25,7 +25,52 @@ export function featureApi(
     if (parts[0] !== "api" || parts[1] !== "v1")
       throw new ApiError("Unsupported app operation.", 400);
     const [, , kind, id, sub, subId] = parts;
-    if (kind === "reminders" && !id) {
+    if (kind === "notes") {
+      if (!id) {
+        action =
+          method === "GET"
+            ? "searchNotes"
+            : method === "POST"
+              ? "createNote"
+              : undefined;
+        if (method === "GET")
+          input = {
+            search: url.searchParams.get("search") ?? "",
+            filter: url.searchParams.get("filter") ?? "all",
+            ...(url.searchParams.has("tag")
+              ? { tag: url.searchParams.get("tag") }
+              : {}),
+            limit: Number(url.searchParams.get("limit") ?? 50),
+            offset: Number(url.searchParams.get("offset") ?? 0),
+          };
+      } else if (id === "settings")
+        action =
+          method === "GET"
+            ? "getNotesSettings"
+            : method === "PUT"
+              ? "updateNotesSettings"
+              : undefined;
+      else if (id === "dashboard" && method === "GET")
+        action = "getNotesDashboard";
+      else if (id === "export" && method === "POST") action = "createNoteTask";
+      else if (id === "images") {
+        action =
+          method === "POST" && !sub
+            ? "uploadNoteImage"
+            : method === "GET" && sub
+              ? "getNoteImage"
+              : undefined;
+        if (method === "GET") input = { assetId: sub };
+      } else {
+        action =
+          method === "GET"
+            ? "getNote"
+            : method === "PUT"
+              ? "updateNote"
+              : undefined;
+        input = method === "GET" ? id : { ...data, noteId: id };
+      }
+    } else if (kind === "reminders" && !id) {
       if (method === "GET") {
         action = url.searchParams.has("taskId")
           ? "getTaskReminder"

@@ -2,3 +2,5 @@
 export * from "./platform/schema";
 export * from "./modules/todo/schema";
 export * from "./modules/totake/schema";
+
+export * from "./modules/notes/schema";

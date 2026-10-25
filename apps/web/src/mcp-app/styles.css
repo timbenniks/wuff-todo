@@ -810,3 +810,58 @@ summary {
   max-width: 100%;
   white-space: normal;
 }
+
+.notes-mcp-card {
+  padding: 18px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 10px;
+  margin: 16px 0;
+  background: var(--wuff-surface);
+}
+.notes-mcp-card img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.notes-mcp-view {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.notes-mcp-view > label {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.notes-mcp-view label > input,
+.notes-mcp-view label > textarea,
+.notes-mcp-view label > select {
+  width: 100%;
+  font-weight: 400;
+}
+.notes-mcp-view label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.notes-mcp-view input[type="checkbox"] {
+  flex: 0 0 20px;
+  width: 20px;
+  min-height: 20px;
+}
+.notes-mcp-view > button {
+  margin: 4px 6px 4px 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.notes-mcp-view > h2 {
+  border-top: 1px solid var(--wuff-border);
+  margin-top: 28px;
+  padding-top: 20px;
+}
+.notes-mcp-view > section {
+  margin: 12px 0;
+}

@@ -1,7 +1,7 @@
 # Build a Wuff Empire module
 
-A product is a module inside the existing monorepo and deployment. Todo and
-Totake are the reference implementations. Start with the nearest module rather
+A product is a module inside the existing monorepo and deployment. Todo, Totake and
+Notes are the reference implementations. Start with the nearest module rather
 than copying an entire app or adding a plugin loader.
 
 ## Ownership and entry points
@@ -28,7 +28,11 @@ server registry or database package. Product UI imports real `@wuff/ui` primitiv
    policy. Declare navigation, settings links, dashboard widget IDs/defaults,
    approved theme, permission labels and tool groups. Registration rejects
    duplicate ownership and reserved routes. Module tools cannot become mandatory
-   platform controls or request undeclared scopes.
+   platform controls or request undeclared scopes. For a deliberate cross-product
+   capability, declare `integrations: [{ moduleId: "todo", scopes: ["lists:read",
+"tasks:write"] }]` as Notes does for task creation. Registry validation checks
+   the target owns those permissions. This declaration does not grant scopes;
+   the actor still needs explicit OAuth consent and destination access.
 2. Add the product to `packages/contracts/src/modules.ts`. Register actual UI
    components in `apps/web/src/modules/ui.ts` and server MCP registration in
    `apps/web/src/modules/server.ts`. The typed registries require an entry for
@@ -85,3 +89,24 @@ HTTP capabilities remain available; installing a web module does not automatical
 add a native navigation destination or prove device behavior. Cross-product
 features call a deliberate platform orchestrator or public service, never reach
 into another product's private UI or data internals.
+
+## Notes as a new-product example
+
+Notes adds `/notes`, `/settings/notes`, an opt-in `notes.summary` widget and twelve
+MCP tools. Its manifest is `packages/contracts/src/modules/notes/manifest.ts`;
+the adjacent catalog declares actual tool permissions. Notes owns eight additive
+tables under `packages/db/src/modules/notes/`, using the same account and migration
+chain. Domain services in `packages/domain/src/modules/notes/` enforce private
+ownership, direct Viewer/Editor membership, versioned edits, personal pin/archive
+and operation receipts before any adapter returns content.
+
+Its Todo integration calls Todo's authorized transaction service to create a task
+and source reference atomically. It does not copy Todo implementation, access list
+tables to bypass its service, or share linked notes implicitly. Shared private-image
+normalization/storage lives in `domain/src/platform/image-storage.ts`; reads remain
+owned by the product's access boundary. See [Notes scope and evidence](../wuff-notes.md).
+
+When adding a product read scope, update and test both consent validation and the
+OAuth server's scope validation. Keep omitted-scope defaults and existing refresh
+grants unchanged. A manifest does not itself authorize new scopes. First-party
+native optional scopes are explicit; native navigation/release remain separate.

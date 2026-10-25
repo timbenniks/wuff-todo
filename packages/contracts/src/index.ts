@@ -9,3 +9,5 @@ export * from "./modules";
 export * from "./platform/notifications";
 export * from "./platform/native";
 export * from "./platform/design";
+
+export * from "./modules/notes";

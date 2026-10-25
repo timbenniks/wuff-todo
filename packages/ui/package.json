@@ -108,7 +108,10 @@
     "./modules/totake/request": "./src/modules/totake/request.ts",
     "./modules/totake/totake.css": "./src/modules/totake/totake.css",
     "./features/views.css": "./src/modules/todo/views.css",
-    "./features/task-prose.css": "./src/modules/todo/task-prose.css"
+    "./features/task-prose.css": "./src/modules/todo/task-prose.css",
+    "./modules/notes/notes-app": "./src/modules/notes/notes-app.tsx",
+    "./modules/notes/notes.css": "./src/modules/notes/notes.css",
+    "./modules/notes/settings": "./src/modules/notes/settings.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -949,94 +949,98 @@ async function clearDepartedAssignee(tx: Tx, listId: string, userId: string) {
       ),
     );
 }
+/** Internal composition hook: caller supplies an authorized transaction and receipt. */
+export async function createTaskInTransaction(
+  tx: Tx,
+  actor: Actor,
+  data: unknown,
+) {
+  requireScope(actor, "tasks:write");
+  const input = createTaskSchema.parse(data);
+  const list = await locked(tx, actor, input, false, true);
+  await validWorkFields(tx, list, input);
+  await validParent(tx, input.listId, input.parentTaskId);
+  if (input.parentTaskId && input.sectionId)
+    fail(
+      "invalid_section",
+      "Subtasks follow their parent’s section. Move the parent to corg-anize them together.",
+      400,
+    );
+  await validSection(tx, input.listId, input.sectionId);
+  const existing = await tx
+    .select()
+    .from(tasks)
+    .where(eq(tasks.listId, input.listId));
+  if (existing.length >= 1000)
+    fail("limit_reached", "A list can contain up to 1,000 tasks.", 400);
+  if (taskImageReferences(input.content ?? "").length)
+    fail("invalid_attachment", "Create the task before adding images.", 400);
+  const [binding] =
+    !input.parentTaskId &&
+    list.mode === "work" &&
+    actor.scopes.includes("github:manage")
+      ? await tx
+          .select()
+          .from(githubBindings)
+          .where(
+            and(
+              eq(githubBindings.listId, input.listId),
+              eq(githubBindings.active, true),
+              eq(githubBindings.autoCreateIssues, true),
+            ),
+          )
+      : [];
+  if (binding) {
+    githubSafeFields({
+      title: input.title,
+      body: input.content ?? "",
+      closed: input.status === "done",
+    });
+  }
+  const [created] = await tx
+    .insert(tasks)
+    .values({
+      listId: input.listId,
+      parentTaskId: input.parentTaskId ?? null,
+      title: input.title,
+      status: input.status ?? "todo",
+      completed: input.status === "done",
+      completedAt: input.status === "done" ? new Date() : null,
+      priority: input.priority ?? "none",
+      assigneeId: input.assigneeId ?? null,
+      references: input.references ?? [],
+      dueDate: input.dueDate ?? null,
+      sectionId: input.sectionId ?? null,
+      content: input.content ?? "",
+      position:
+        Math.max(
+          -1,
+          ...existing
+            .filter((t) => t.parentTaskId === (input.parentTaskId ?? null))
+            .map((t) => t.position),
+        ) + 1,
+    })
+    .returning({ id: tasks.id });
+  if (binding) {
+    await tx.insert(githubLinks).values({
+      taskId: created.id,
+      listId: input.listId,
+      repositoryId: binding.repositoryId,
+      operationId: input.operationId,
+    });
+    await tx
+      .insert(githubJobs)
+      .values({ id: `task:${created.id}`, taskId: created.id });
+  }
+  return { id: input.listId, taskId: created.id };
+}
 export async function createTask(actor: Actor, data: unknown) {
   requireScope(actor, "tasks:write");
   const input = createTaskSchema.parse(data);
   await mutate(
     actor,
     { ...input, kind: "create_task" } as typeof input,
-    async (tx) => {
-      const list = await locked(tx, actor, input, false, true);
-      await validWorkFields(tx, list, input);
-      await validParent(tx, input.listId, input.parentTaskId);
-      if (input.parentTaskId && input.sectionId)
-        fail(
-          "invalid_section",
-          "Subtasks follow their parent’s section. Move the parent to corg-anize them together.",
-          400,
-        );
-      await validSection(tx, input.listId, input.sectionId);
-      const existing = await tx
-        .select()
-        .from(tasks)
-        .where(eq(tasks.listId, input.listId));
-      if (existing.length >= 1000)
-        fail("limit_reached", "A list can contain up to 1,000 tasks.", 400);
-      if (taskImageReferences(input.content ?? "").length)
-        fail(
-          "invalid_attachment",
-          "Create the task before adding images.",
-          400,
-        );
-      const [binding] =
-        !input.parentTaskId &&
-        list.mode === "work" &&
-        actor.scopes.includes("github:manage")
-          ? await tx
-              .select()
-              .from(githubBindings)
-              .where(
-                and(
-                  eq(githubBindings.listId, input.listId),
-                  eq(githubBindings.active, true),
-                  eq(githubBindings.autoCreateIssues, true),
-                ),
-              )
-          : [];
-      if (binding) {
-        githubSafeFields({
-          title: input.title,
-          body: input.content ?? "",
-          closed: input.status === "done",
-        });
-      }
-      const [created] = await tx
-        .insert(tasks)
-        .values({
-          listId: input.listId,
-          parentTaskId: input.parentTaskId ?? null,
-          title: input.title,
-          status: input.status ?? "todo",
-          completed: input.status === "done",
-          completedAt: input.status === "done" ? new Date() : null,
-          priority: input.priority ?? "none",
-          assigneeId: input.assigneeId ?? null,
-          references: input.references ?? [],
-          dueDate: input.dueDate ?? null,
-          sectionId: input.sectionId ?? null,
-          content: input.content ?? "",
-          position:
-            Math.max(
-              -1,
-              ...existing
-                .filter((t) => t.parentTaskId === (input.parentTaskId ?? null))
-                .map((t) => t.position),
-            ) + 1,
-        })
-        .returning({ id: tasks.id });
-      if (binding) {
-        await tx.insert(githubLinks).values({
-          taskId: created.id,
-          listId: input.listId,
-          repositoryId: binding.repositoryId,
-          operationId: input.operationId,
-        });
-        await tx
-          .insert(githubJobs)
-          .values({ id: `task:${created.id}`, taskId: created.id });
-      }
-      return { id: input.listId };
-    },
+    async (tx) => createTaskInTransaction(tx, actor, input),
   );
   return getList(actor, input.listId);
 }

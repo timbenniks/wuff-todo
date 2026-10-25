@@ -37,7 +37,11 @@ export default function TaskNoteEditor({
   onChange,
   disabled,
   onUpload,
+  label = "Task notes",
+  allowImages = true,
 }: {
+  label?: string;
+  allowImages?: boolean;
   value: string;
   onChange: (content: string) => void;
   disabled: boolean;
@@ -49,7 +53,7 @@ export default function TaskNoteEditor({
   const disabledRef = useRef(disabled);
   disabledRef.current = disabled;
   async function insertImage(file: File) {
-    if (disabledRef.current || !editor) return;
+    if (disabledRef.current || !editor || !allowImages) return;
     try {
       const src = await uploadRef.current(file);
       if (!editor.isDestroyed)
@@ -113,7 +117,7 @@ export default function TaskNoteEditor({
       attributes: {
         class: "task-prose task-editor",
         role: "textbox",
-        "aria-label": "Task notes",
+        "aria-label": label,
         "aria-multiline": "true",
       },
     },
@@ -264,6 +268,7 @@ export default function TaskNoteEditor({
           type="button"
           variant="ghost"
           size="icon"
+          style={allowImages ? undefined : { display: "none" }}
           title="Add image"
           aria-label="Add image"
           disabled={disabled}
