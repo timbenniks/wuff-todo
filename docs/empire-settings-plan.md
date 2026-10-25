@@ -1,7 +1,8 @@
 # Shared Empire settings and personal app choices
 
-October 25, 2026. Proposed next milestone, before Totake integration. This is a
-plan; no settings, notification or connection behavior is implemented by this doc.
+October 25, 2026. Phase 1 is implemented and verified locally before Totake in PR #25; see
+[implementation and delivery boundaries](empire-settings.md). Phases 2 and 3
+remain planned. This document retains the full staged design.
 
 ## Goal and navigation
 

@@ -60,7 +60,8 @@ export function oauthServer(resource = mcpResource()) {
             (allowed) => allowed === s,
           ),
         ) &&
-        requested.includes("lists:read")
+        (requested.includes("lists:read") ||
+          (resource === mcpResource() && requested.includes("empire:read")))
         ? requested
         : false;
     },
@@ -259,7 +260,11 @@ export function authorizationScopes(scope: string | null, clientId: string) {
       ? ["lists:read", "tasks:write", "lists:manage"]
       : (scope ?? "").split(" ").filter(Boolean);
   if (
-    !requested.includes("lists:read") ||
+    !(
+      requested.includes("lists:read") ||
+      (firstPartyRedirect(clientId) === null &&
+        requested.includes("empire:read"))
+    ) ||
     requested.some(
       (s) =>
         !(

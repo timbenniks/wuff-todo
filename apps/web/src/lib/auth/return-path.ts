@@ -16,6 +16,14 @@ export function signInReturnPath(value?: string) {
       "/settings/reminders",
       "/settings/connections",
       "/settings/docs",
+      "/settings/apps",
+      "/settings/dashboard",
+      "/settings/notifications",
+      "/settings/account",
+      "/settings/todo",
+      "/settings/todo/github",
+      "/settings/todo/cursor",
+      "/settings/totake",
     ].includes(value)
   )
     return value;

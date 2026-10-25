@@ -1,0 +1,136 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  applyEmpireChanges,
+  empireAppPreference,
+  updateEmpireSettingsSchema,
+  disconnectAiClientSchema,
+  summarizeAiConnections,
+} from "@wuff/contracts";
+import { authorizationScopes } from "../apps/web/src/lib/oauth";
+import { tauriClientId } from "@wuff/contracts";
+
+test("Empire defaults preserve Todo and the upcoming app while summaries require a real app contribution", () => {
+  assert.deepEqual(empireAppPreference({}, "todo"), {
+    visible: true,
+    dashboard: true,
+  });
+  assert.deepEqual(empireAppPreference({}, "totake"), {
+    visible: true,
+    dashboard: false,
+  });
+  assert.equal(
+    updateEmpireSettingsSchema.safeParse({
+      version: 0,
+      operationId: crypto.randomUUID(),
+      changes: [{ appId: "totake", dashboard: true }],
+    }).success,
+    false,
+  );
+});
+test("personal patches preserve omitted fields, other apps and unknown future settings without mutating the source", () => {
+  const apps = {
+    todo: { visible: true, dashboard: false },
+    future: { visible: false, dashboard: false },
+  };
+  const before = structuredClone(apps);
+  assert.deepEqual(
+    applyEmpireChanges(apps, [
+      { appId: "todo", visible: false, dashboard: undefined },
+    ]),
+    { todo: { visible: false, dashboard: false }, future: apps.future },
+  );
+  assert.deepEqual(apps, before);
+  assert.deepEqual(
+    applyEmpireChanges({}, [{ appId: "todo", visible: false }]).todo,
+    { visible: false, dashboard: true },
+  );
+});
+test("visibility writes reject unknown IDs, duplicate app changes, empty writes, invalid versions and unexpected permissions", () => {
+  for (const change of [
+    [],
+    [{ appId: "unknown", visible: false }],
+    [{ appId: "todo" }],
+    [
+      { appId: "todo", visible: false },
+      { appId: "todo", dashboard: false },
+    ],
+    [{ appId: "todo", visible: "yes" }],
+    [{ appId: "todo", enabled: true }],
+    [{ appId: "todo", visible: false, scopes: ["totake:read"] }],
+  ])
+    assert.equal(
+      updateEmpireSettingsSchema.safeParse({
+        version: 0,
+        operationId: crypto.randomUUID(),
+        changes: change,
+      }).success,
+      false,
+    );
+  for (const version of [-1, 0.5, "1"])
+    assert.equal(
+      updateEmpireSettingsSchema.safeParse({
+        version,
+        operationId: crypto.randomUUID(),
+        changes: [{ appId: "todo", visible: false }],
+      }).success,
+      false,
+    );
+});
+test("new Empire permissions require explicit OAuth consent; old defaults and native basic grants remain unchanged", () => {
+  const client = crypto.randomUUID();
+  assert.deepEqual(authorizationScopes(null, client), [
+    "lists:read",
+    "tasks:write",
+    "lists:manage",
+  ]);
+  assert.deepEqual(authorizationScopes("empire:read empire:manage", client), [
+    "empire:read",
+    "empire:manage",
+  ]);
+  assert.throws(() => authorizationScopes("empire:manage", client));
+  assert.throws(() => authorizationScopes("empire:read totake:read", client));
+  assert.throws(() => authorizationScopes("empire:read", tauriClientId));
+  assert.deepEqual(
+    authorizationScopes("lists:read empire:read empire:manage", tauriClientId),
+    ["lists:read", "empire:read", "empire:manage"],
+  );
+});
+test("AI connection summaries deduplicate live grants and do not present expired scopes as active authority", () => {
+  const rows = [
+    { id: "a", name: "Alpha", scopes: ["lists:read"], expiresAt: 200 },
+    {
+      id: "a",
+      name: "Alpha",
+      scopes: ["empire:read", "lists:read"],
+      expiresAt: 300,
+    },
+    { id: "a", name: "Alpha", scopes: ["github:manage"], expiresAt: 99 },
+    { id: "b", name: "Beta", scopes: ["tasks:write"], expiresAt: 100 },
+  ];
+  assert.deepEqual(summarizeAiConnections(rows, 100), [
+    {
+      id: "a",
+      name: "Alpha",
+      scopes: ["empire:read", "lists:read"],
+      state: "authorized",
+    },
+    { id: "b", name: "Beta", scopes: [], state: "expired" },
+  ]);
+  assert.deepEqual(summarizeAiConnections([], 100), []);
+});
+test("connection revocation supports fixed native client IDs as well as dynamic UUID clients", () => {
+  for (const clientId of [tauriClientId, crypto.randomUUID()])
+    assert(
+      disconnectAiClientSchema.safeParse({
+        clientId,
+        operationId: crypto.randomUUID(),
+      }).success,
+    );
+  for (const value of [
+    { clientId: "" },
+    { clientId: "x", operationId: "bad" },
+    { clientId: "x", userId: "another-account" },
+  ])
+    assert(!disconnectAiClientSchema.safeParse(value).success);
+});

@@ -42,7 +42,10 @@ dependency, database or separate deployment is needed.
 
 ## API, MCP, connections and privacy
 
-No persisted-data changes. Read-only portal sections consume existing
+The initial portal had no persisted-data changes. The follow-up
+[Empire Settings foundation](empire-settings.md) now adds personal app/summary
+choices, shared settings navigation and explicit connection-management scopes.
+The statements below describe the initial portal milestone. Read-only Todo sections consume existing
 `getDashboard` / `GET /api/v1/dashboard` / MCP `get_dashboard` and `show_dashboard`.
 Existing Todo preferences and mutation surfaces are unchanged. The portal adds
 navigation rather than a new MCP workflow; the existing MCP dashboard remains the
@@ -53,8 +56,9 @@ Todo connection. No auth schema, native permissions or infrastructure changes.
 
 ## Delivery
 
-Proposed follow-up before Totake: [shared Empire settings and personal app choices](empire-settings-plan.md).
-That plan is not part of the portal's implemented behavior or verification claims.
+Follow-up before Totake: [shared Empire settings and personal app choices](empire-settings-plan.md),
+with [phase 1 implementation](empire-settings.md) tracked in the same PR. Its data,
+consent and migration evidence is separate from the initial portal checks below.
 
 Branch `codex/wuff-empire-portal`; [draft PR #25](https://github.com/timbenniks/wuff-todo/pull/25).
 Verification commands and limits are recorded in `docs/verification.md`. Existing local

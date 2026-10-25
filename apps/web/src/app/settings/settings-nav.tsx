@@ -1,24 +1,75 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { NativeSelect } from "@wuff/ui/native-select";
+const sections = [
+  {
+    title: "Your Empire",
+    links: [
+      ["/settings/apps", "Your apps"],
+      ["/settings/dashboard", "Dashboard"],
+      ["/settings/notifications", "Notifications"],
+      ["/settings/connections", "AI & MCP connections"],
+      ["/settings/account", "Account"],
+    ],
+  },
+  {
+    title: "Wuff Todo",
+    links: [
+      ["/settings/todo", "Overview"],
+      ["/settings/reminders", "Reminders"],
+      ["/settings/todo/github", "GitHub"],
+      ["/settings/todo/cursor", "Cursor"],
+    ],
+  },
+  { title: "Wuff Totake", links: [["/settings/totake", "Coming soon"]] },
+  { title: "Help", links: [["/settings/docs", "Docs"]] },
+];
 export function SettingsNav() {
   const path = usePathname();
+  const active =
+    sections
+      .flatMap((s) => s.links)
+      .filter(([href]) => path === href || path.startsWith(href + "/"))
+      .sort((a, b) => b[0].length - a[0].length)[0]?.[0] ?? "/settings/apps";
   return (
-    <nav aria-label="Settings" className="workspace-settings-nav">
-      {[
-        ["/settings/reminders", "Reminders"],
-        ["/settings/connections", "Connections"],
-        ["/settings/docs", "Docs"],
-      ].map(([href, label]) => (
-        <a
-          key={href}
-          href={href}
-          aria-current={
-            path === href || path.startsWith(href + "/") ? "page" : undefined
-          }
+    <aside className="empire-settings-navigation">
+      <a className="empire-text-link" href="/">
+        ← Dashboard
+      </a>
+      <label className="empire-settings-mobile">
+        Settings page
+        <NativeSelect
+          aria-label="Settings page"
+          value={active}
+          onChange={(event) => window.location.assign(event.target.value)}
         >
-          {label}
-        </a>
-      ))}
-    </nav>
+          {sections.map((section) => (
+            <optgroup key={section.title} label={section.title}>
+              {section.links.map(([href, label]) => (
+                <option key={href} value={href}>
+                  {label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </NativeSelect>
+      </label>
+      <nav aria-label="Settings" className="empire-settings-nav">
+        {sections.map((section) => (
+          <section key={section.title}>
+            <h2>{section.title}</h2>
+            {section.links.map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                aria-current={active === href ? "page" : undefined}
+              >
+                {label}
+              </a>
+            ))}
+          </section>
+        ))}
+      </nav>
+    </aside>
   );
 }

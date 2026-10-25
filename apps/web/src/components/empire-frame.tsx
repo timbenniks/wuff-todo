@@ -8,8 +8,22 @@ import { Corgi } from "./corgi";
 import { empireApps, empireDestination } from "@/lib/empire";
 import { authClient } from "@/lib/auth/client";
 import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
+import {
+  EmpirePreferencesProvider,
+  useEmpirePreferences,
+} from "./empire-preferences";
+import { empireAppPreference } from "@wuff/contracts";
 
 export function EmpireFrame({ children }: { children: React.ReactNode }) {
+  const active = empireDestination(usePathname()) !== null;
+  return (
+    <EmpirePreferencesProvider active={active}>
+      <EmpireChrome>{children}</EmpireChrome>
+    </EmpirePreferencesProvider>
+  );
+}
+function EmpireChrome({ children }: { children: React.ReactNode }) {
+  const preferences = useEmpirePreferences();
   const pathname = usePathname();
   const destination = empireDestination(pathname);
   const header = useRef<HTMLElement>(null);
@@ -30,18 +44,25 @@ export function EmpireFrame({ children }: { children: React.ReactNode }) {
       >
         Dashboard
       </a>
-      {empireApps.map((app) => (
-        <a
-          key={app.id}
-          href={app.href}
-          aria-current={destination === app.id ? "page" : undefined}
-        >
-          {app.name}
-          {app.status === "coming-soon" && (
-            <span className="empire-soon">Soon</span>
-          )}
-        </a>
-      ))}
+      {empireApps
+        .filter(
+          (app) =>
+            preferences.settings &&
+            empireAppPreference(preferences.settings.apps, app.id).visible,
+        )
+        .map((app) => (
+          <a
+            key={app.id}
+            href={app.href}
+            aria-current={destination === app.id ? "page" : undefined}
+          >
+            {app.name}
+            {app.status === "coming-soon" && (
+              <span className="empire-soon">Soon</span>
+            )}
+          </a>
+        ))}
+      <a href="/settings/apps">Manage apps</a>
     </>
   );
   return (

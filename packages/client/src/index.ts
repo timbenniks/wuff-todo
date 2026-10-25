@@ -55,6 +55,17 @@ export function serverOrigin(value: string) {
 }
 
 export class NativeClient {
+  empireSettings() {
+    return this.call<import("@wuff/contracts").EmpireSettings>(
+      "getEmpireSettings",
+    );
+  }
+  updateEmpireSettings(input: import("@wuff/contracts").EmpireSettingsUpdate) {
+    return this.call<import("@wuff/contracts").EmpireSettings>(
+      "updateEmpireSettings",
+      input,
+    );
+  }
   readonly origin: string;
   private tokens: NativeTokens | null = null;
   private refresh: Promise<NativeTokens> | null = null;

@@ -115,13 +115,13 @@ try {
   await page.goBack();
   await expect(page.locator(".list-heading h1")).toHaveText(list.title);
   await page.locator(".sidebar-settings").click();
-  await expect(page).toHaveURL(/\/settings\/reminders/);
-  await expect(page.locator(".workspace-main h1").first()).toHaveText(
+  await expect(page).toHaveURL(/\/settings\/apps/);
+  await expect(page.locator(".empire-settings-content h1").first()).toHaveText(
     "Settings",
   );
   await expect(
-    page.locator('.workspace-settings-nav a[aria-current="page"]'),
-  ).toHaveText("Reminders");
+    page.locator('.empire-settings-nav a[aria-current="page"]'),
+  ).toHaveText("Your apps");
   assert.equal(await page.locator(".sidebar-home[aria-current]").count(), 0);
   await page
     .getByRole("navigation", { name: "Settings", exact: true })
@@ -132,24 +132,19 @@ try {
     page.getByRole("heading", { name: "Build features that belong in Wuff" }),
   ).toBeVisible();
   await expect(
-    page.locator('.workspace-settings-nav a[aria-current="page"]'),
+    page.locator('.empire-settings-nav a[aria-current="page"]'),
   ).toHaveText("Docs");
   assert(!(await page.content()).includes(privateList.id));
-  const main = page.locator(".workspace-main");
-  await main.evaluate((el: HTMLElement) => {
-    el.scrollTop = 400;
-  });
+  await page.evaluate(() => window.scrollTo(0, 400));
   assert.equal(
     await page
-      .locator(".workspace-sidebar")
+      .locator(".empire-settings-navigation")
       .evaluate((el: HTMLElement) => el.getBoundingClientRect().top),
     await page
       .locator(".empire-header")
       .evaluate((el: HTMLElement) => el.getBoundingClientRect().height),
   );
-  await main.evaluate((el: HTMLElement) => {
-    el.scrollTop = 0;
-  });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "docs/screenshots/app-shell-docs-1920.png" });
   await page
     .getByRole("navigation", { name: "Guide pages" })
@@ -162,17 +157,19 @@ try {
   ).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expect(
-    page.locator('.workspace-settings-nav a[aria-current="page"]'),
+    page.locator('.empire-settings-nav a[aria-current="page"]'),
   ).toHaveText("Docs");
-  await page.locator(".workspace-brand-link").click();
+  await page
+    .getByRole("link", { name: "Wuff Empire dashboard", exact: true })
+    .click();
   await expect(
-    page.getByRole("heading", { name: "Your day", exact: true }),
+    page.getByRole("heading", { name: /Welcome back/ }),
   ).toBeVisible();
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("http://localhost:3000/settings/docs");
     await expect(
-      page.getByRole("button", { name: "Lists", exact: true }),
+      page.getByLabel("Settings page", { exact: true }),
     ).toBeVisible();
     assert(
       await page.evaluate(
@@ -189,12 +186,15 @@ try {
     await expect(
       page.getByRole("heading", { name: "Find a component", exact: true }),
     ).toBeVisible();
+    assert.equal(await page.locator(".workspace-sidebar").count(), 0);
+    await page.locator(".empire-mobile-nav summary").click();
+    await page
+      .locator(".empire-mobile-nav")
+      .getByRole("link", { name: "Wuff Todo", exact: true })
+      .click();
     await page.getByRole("button", { name: "Lists", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Lists", exact: true });
     await expect(dialog).toBeVisible();
-    await expect(
-      dialog.locator('.workspace-settings-nav a[aria-current="page"]'),
-    ).toHaveText("Docs");
     await page.screenshot({
       path: `docs/screenshots/app-shell-navigation-${width}.png`,
     });
@@ -210,9 +210,9 @@ try {
       .click();
     await expect(page.locator(".list-heading h1")).toHaveText(list.title);
   }
-  // Creation from Settings stays in the modal through an uncertain committed save.
+  // Creation belongs in Todo; preserve its uncertain committed-save recovery.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("http://localhost:3000/settings/connections");
+  await page.goto("http://localhost:3000/lists?home=1");
   const bodies: string[] = [];
   await page.route("**/api/v1/lists", async (route: any) => {
     if (route.request().method() !== "POST") return route.continue();
@@ -230,20 +230,26 @@ try {
   await createDialog
     .getByRole("button", { name: "Create list", exact: true })
     .click();
+  // Todo keeps an uncertain creation in its workspace recovery banner; Settings
+  // no longer owns a list-creation modal.
+  await expect(createDialog).not.toBeVisible();
   await expect(
-    createDialog.getByRole("button", {
-      name: "Retry saving list",
-      exact: true,
-    }),
+    page
+      .locator(".workspace-main")
+      .getByRole("button", { name: "Retry saving list", exact: true }),
   ).toBeVisible();
   assert(!page.url().includes("pending-"));
-  await page.keyboard.press("Escape");
-  await expect(createDialog).not.toBeVisible();
   await page
     .locator(".workspace-main")
     .getByRole("button", { name: "Retry saving list", exact: true })
     .click();
   await expect(page.locator(".list-heading h1")).toHaveText(createdTitle);
+  await expect(page).toHaveURL(/listId=[a-f0-9-]{36}/);
+  await expect(
+    page
+      .locator(".workspace-main")
+      .getByRole("button", { name: "Retry saving list", exact: true }),
+  ).toHaveCount(0);
   assert.equal(bodies.length, 2);
   assert.equal(bodies[0], bodies[1]);
   assert.equal(

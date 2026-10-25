@@ -382,7 +382,7 @@ try {
     .locator(".empire-account")
     .getByRole("link", { name: "Settings", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/settings\/reminders/);
+  await expect(page).toHaveURL(/\/settings\/apps/);
   await expect(page.locator(".empire-header")).toBeVisible();
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 1000 });

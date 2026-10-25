@@ -72,6 +72,16 @@ export const dashboardPreferences = pgTable("wuff_dashboard_preferences", {
     .$type<import("@wuff/contracts").DashboardSettings>()
     .notNull(),
 });
+export const empirePreferences = pgTable("wuff_empire_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  version: integer("version").notNull().default(0),
+  apps: jsonb("apps")
+    .$type<Record<string, { visible: boolean; dashboard: boolean }>>()
+    .notNull()
+    .default({}),
+});
 export const listViews = pgTable(
   "wuff_list_views",
   {

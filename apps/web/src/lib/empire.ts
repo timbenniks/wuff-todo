@@ -1,21 +1,5 @@
 import type { Dashboard } from "@wuff/contracts";
-
-export const empireApps = [
-  {
-    id: "todo",
-    name: "Wuff Todo",
-    href: "/lists",
-    status: "available",
-    description: "Private lists, shared plans, and a little less to remember.",
-  },
-  {
-    id: "totake",
-    name: "Wuff Totake",
-    href: "/totake",
-    status: "coming-soon",
-    description: "A personal home for medicine reminders.",
-  },
-] as const;
+export { empireAppCatalog as empireApps } from "@wuff/contracts";
 
 export type EmpireDestination = "dashboard" | "todo" | "totake" | "account";
 export function empireDestination(pathname: string): EmpireDestination | null {

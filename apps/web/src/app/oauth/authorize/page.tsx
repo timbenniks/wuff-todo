@@ -54,6 +54,10 @@ export default async function AuthorizePage({
   }
   const native = details.client.id === nativeClientId;
   const labels: Record<string, string> = {
+    "empire:read":
+      "Read your Wuff Empire app choices and AI-client connection permissions",
+    "empire:manage":
+      "Change your Wuff Empire app choices and disconnect your AI clients",
     "lists:read": "Read your accessible lists and tasks",
     "tasks:write": "Add, edit, complete, delete, and reorder tasks",
     "lists:manage": "Create lists and manage lists you own",
@@ -81,7 +85,7 @@ export default async function AuthorizePage({
       <p className="text-sm text-muted-foreground mb-7">
         {native
           ? "Your phone can access the same lists you can. You can revoke its connection from the website’s Connected AI clients page."
-          : "Your AI pal follows your lead: it can access the same lists you can. You can disconnect it at any time in Connected AI clients."}
+          : "Only the permissions listed above are granted. Hiding an app does not change this access. You can disconnect this client in AI & MCP connections."}
       </p>
       <Consent query={params.toString()} />
     </main>

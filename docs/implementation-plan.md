@@ -8,6 +8,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Empire Settings foundation (October 25):** phase 1 is implemented on PR #25:
+  standalone global Settings, personal app/summary choices, global AI clients and
+  separate Todo provider settings. Migration 0018 was explicitly authorized and
+  applied to development and production; app release remains separate. See
+  [scope/contracts and verification](empire-settings.md). Totake and notification
+  master/app pause controls remain the later planned phases.
+
 - **Wuff Empire portal (October 25):** authorized expansion to a shared app entry
   point, personal dashboard and global navigation. Todo retains its routes and
   workspace; Totake is coming soon. Implementation and verification are tracked in

@@ -7,7 +7,7 @@ export async function PortalPage({
   destination,
   children,
 }: {
-  destination: "/" | "/totake";
+  destination: "/" | "/totake" | "/settings";
   children: React.ReactNode;
 }) {
   try {

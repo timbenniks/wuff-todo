@@ -1,5 +1,12 @@
 # What Wuff does today
 
+Empire Settings has its own navigation, independent of Todo. Personal Your apps
+and Dashboard choices control app launchers and summaries. Hiding keeps data,
+notifications and connections; AI access needs explicit app/service permissions.
+AI clients and notification devices/status are global; Todo owns its schedules,
+GitHub and Cursor settings. No cross-app notification pause or Totake reminder
+behavior is included in this foundation.
+
 Wuff Empire is the shared web portal at `/`, with an app menu and a personal
 dashboard. Wuff Todo stays at `/lists`; Wuff Totake is a coming-soon destination
 for a future medicine reminder app. Portal previews reuse authorized Todo reads.

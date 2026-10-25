@@ -25,6 +25,13 @@ does not share private app data or expand existing AI-client grants. Native Todo
 keeps its existing navigation. Implementation/release evidence is recorded in the
 [portal document](wuff-empire.md); production release is separate.
 
+October 25 settings foundation: account-owned app visibility and app-summary
+choices live in standalone Empire Settings, independent of Todo's list sidebar.
+Global AI-client connection management uses explicit Empire scopes; GitHub/Cursor
+remain under Todo. Notifications houses existing device/status controls and Todo
+retains its schedule/quiet-hours settings. Hiding an app never changes data access,
+notifications or client grants. See [settings contracts](empire-settings.md).
+
 October 22 native decision: use online-only Tauri 2 with React/Vite for macOS, Windows, iPhone and Android, sharing the hosted backend and browser-compatible UI. The earlier Expo workspace was retired on October 24 at the maintainer’s request. See [Tauri development](tauri-client.md) and [platform/release gates](tauri-platforms.md). Offline task storage and queued edits remain deferred.
 
 October 17 expansion: [work tasks and developer workflows](work-tasks-plan.md) adds optional work lists before native apps, mostly for personal work with occasional sharing. All shipped features require web/API/MCP parity. Real [GitHub App issue sync](github-sync.md) is implemented with final production release validation recorded separately; cloud-agent execution is a future explicitly authorized integration. Historical first-release deferrals below do not override this selected staged scope.

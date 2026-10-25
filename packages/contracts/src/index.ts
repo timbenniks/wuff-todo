@@ -326,6 +326,8 @@ export function sidebarGroups(lists: ListSummary[], archived: boolean) {
 }
 
 export const scopes = [
+  "empire:read",
+  "empire:manage",
   "lists:read",
   "tasks:write",
   "lists:manage",
@@ -699,7 +701,12 @@ export const nativeScopes = [
   "lists:manage",
 ] as const;
 // Optional privileges require a new interactive authorization, never refresh.
-export const nativeAllowedScopes = [...nativeScopes, "github:manage"] as const;
+export const nativeAllowedScopes = [
+  ...nativeScopes,
+  "github:manage",
+  "empire:read",
+  "empire:manage",
+] as const;
 
 export const agentBindingSchema = listMutationSchema.extend({
   environmentId: idSchema,
@@ -748,6 +755,7 @@ export type AgentTaskState = {
 };
 
 export * from "./reminders";
+export * from "./empire";
 
 export const dashboardSections = ["today", "upcoming", "favorites"] as const;
 export type DashboardSection = (typeof dashboardSections)[number];

@@ -91,7 +91,16 @@ The first technical proof must establish:
 
 The implemented OAuth authorization layer delegates MCP access while preserving Neon identity. It uses application-owned OAuth tables and does not install upstream Better Auth plugins into the managed service.
 
-Implemented MCP scopes are `lists:read`, `tasks:write`, `lists:manage`, and explicit `github:manage`. Existing MCP grants do not acquire the GitHub permission through refresh. Codex tool interoperability is verified; other clients and named-host inline UI remain separate checks. List membership remains authoritative even when a token has a broad write scope.
+Implemented scopes include Todo's `lists:read`, `tasks:write`, `lists:manage`,
+explicit `github:manage`/`agents:manage`, and the new explicit `empire:read` and
+`empire:manage` for personal app choices and AI-client connection management.
+Existing grants/defaults are not expanded; refresh only retains previously granted
+authority. MCP can consent to Empire without Todo, while native retains its
+required basic list-read scope and may explicitly add Empire scopes. List
+membership still governs Todo. See [settings contracts](empire-settings.md) for
+the account-owned preference table, safe connection summaries, legacy adapters
+and device permission handoff. Protocol/native-API evidence does not certify a
+named host UI or installed native client.
 
 ## Conceptual data model
 
