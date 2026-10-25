@@ -1,5 +1,5 @@
 import { PortalPage } from "@/components/portal-page";
-import { SettingsNav } from "./settings-nav";
+import { SettingsNav } from "@/app/settings/settings-nav";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings · Wuff Empire" };
 export default function SettingsLayout({

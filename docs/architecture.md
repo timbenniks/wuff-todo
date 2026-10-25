@@ -54,6 +54,14 @@ Create packages only when they acquire real responsibilities. The retired Expo a
 
 ## Request flow and package boundaries
 
+October 25 shell refinement: private page wrappers share `app/(empire)/layout.tsx`.
+It supplies the authorized account name and Empire app choices in the first HTML;
+Next links keep the layout's account-scoped in-memory store mounted during app
+switches. Public docs/auth stay outside this group and existing URL paths remain
+unchanged. Names no longer wait for Todo preview reads. Server actor memoization
+is request-local; settings refreshes still authorize each request. No browser
+storage or cross-user server cache is used. See [shell contract/evidence](instant-empire-shell.md).
+
 ```text
 Website / Tauri client ── HTTP API ──┐
                                     ├── Domain services ── Drizzle ── Neon

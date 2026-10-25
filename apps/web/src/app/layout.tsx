@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { appOrigin } from "@/lib/config";
 import "./globals.css";
-import { EmpireFrame } from "@/components/empire-frame";
 const dmSans = localFont({
   src: [
     { path: "../fonts/dm-sans.ttf", weight: "100 1000", style: "normal" },
@@ -59,9 +58,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={dmSans.variable}>
-      <body>
-        <EmpireFrame>{children}</EmpireFrame>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -125,7 +125,9 @@ export function EmpireDashboard() {
         <div>
           <p className="empire-eyebrow">Your pack. One place.</p>
           <h1>
-            {data ? `Welcome back, ${data.name}.` : "Welcome to Wuff Empire."}
+            {preferences.name
+              ? `Welcome back, ${preferences.name}.`
+              : "Welcome to Wuff Empire."}
           </h1>
           <p>A little less to remember. A little more room for life.</p>
         </div>

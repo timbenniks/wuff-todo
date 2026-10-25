@@ -5,8 +5,8 @@ import { AppError } from "@wuff/contracts";
 import type { TodoList } from "@wuff/contracts";
 import { getList, listLists, listInvitations } from "@wuff/domain";
 import { sealLiveLists } from "@/lib/live-server";
-import { ActorApiProvider } from "./actor-api";
-import { ListApp } from "./list-app";
+import { ActorApiProvider } from "@/app/lists/actor-api";
+import { ListApp } from "@/app/lists/list-app";
 export const metadata = { title: "Wuff Todo · Wuff Empire" };
 export const dynamic = "force-dynamic";
 export default async function ListsPage({

@@ -42,6 +42,7 @@ const labels = {
 };
 export function HomeDashboard({
   userId,
+  name,
   revision,
   chooseList,
   createList,
@@ -53,6 +54,7 @@ export function HomeDashboard({
   retryTask,
 }: {
   userId: string;
+  name: string;
   revision: string;
   chooseList: (id: string) => void;
   createList: () => void;
@@ -256,7 +258,7 @@ export function HomeDashboard({
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground break-words">
               {greeting}
-              {data ? `, ${data.name}` : ""}
+              {`, ${name}`}
             </p>
             <h1 className="text-2xl font-bold tracking-tight">Your day</h1>
           </div>

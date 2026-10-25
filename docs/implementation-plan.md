@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Stable Empire shell (October 25, PR #30):** private pages seed account name
+  and app choices on the server, retaining the shell during client navigation.
+  Regression, first-HTML isolation, adapter and browser checks pass locally;
+  merge/production verification remain separate. See [contract/evidence](instant-empire-shell.md).
+
 - **Totake integration (October 25, PR #26):** personal schedules/records/stock,
   daily and calendar UI, HTTP/MCP/native adapters, opt-in Empire summary and real
   server-enforced global/app pauses are implemented for local review. Migration

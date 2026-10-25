@@ -1,6 +1,6 @@
 import { pageActor } from "@/lib/auth/server";
 import { getList, listLists } from "@wuff/domain";
-import { AgentSettings } from "../../../agents/settings";
+import { AgentSettings } from "@/app/agents/settings";
 export default async function CursorPage({
   searchParams,
 }: {

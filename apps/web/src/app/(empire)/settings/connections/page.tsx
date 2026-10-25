@@ -1,6 +1,6 @@
-import { Connections } from "../../connections/connections";
+import { Connections } from "@/app/connections/connections";
 import { mcpResource } from "@/lib/config";
-import { LegacyConnections } from "./legacy";
+import { LegacyConnections } from "@/app/settings/connections/legacy";
 export default function ConnectionsPage() {
   return (
     <section>
