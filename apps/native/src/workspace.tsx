@@ -1,6 +1,6 @@
 import { ImagePool, privateImageBlob } from "./image-pool";
 import { useMemo, useState, useEffect, type MouseEvent } from "react";
-import { ListApp } from "@wuff/ui/features/app/lists/list-app";
+import { ListApp } from "@wuff/ui/modules/todo/app/lists/list-app";
 import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
 import type {
   ListSummary,

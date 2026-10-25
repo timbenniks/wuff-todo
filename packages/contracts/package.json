@@ -4,7 +4,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./totake/*": "./src/totake-engine/*.ts"
+    "./totake/*": "./src/modules/totake/engine/*.ts",
+    "./modules": "./src/modules.ts",
+    "./modules/todo": "./src/modules/todo/index.ts",
+    "./modules/totake": "./src/modules/totake/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

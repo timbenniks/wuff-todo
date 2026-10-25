@@ -1,5 +1,8 @@
 # What Wuff does today
 
+New products are Empire modules. Read [Product modules](/docs/modules) for source
+ownership, contribution points and the Todo/Totake reference implementations.
+
 Empire Settings has its own navigation, independent of Todo. Personal Your apps
 and Dashboard choices control app launchers and summaries. Hiding keeps data,
 notifications and connections; AI access needs explicit app/service permissions.

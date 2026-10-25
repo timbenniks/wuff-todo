@@ -1,8 +1,12 @@
 "use client";
+import { empireModules } from "@wuff/contracts";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { NativeSelect } from "@wuff/ui/native-select";
-const sections = [
+const sections: {
+  title: string;
+  links: readonly (readonly [string, string])[];
+}[] = [
   {
     title: "Your Empire",
     links: [
@@ -13,16 +17,10 @@ const sections = [
       ["/settings/account", "Account"],
     ],
   },
-  {
-    title: "Wuff Todo",
-    links: [
-      ["/settings/todo", "Overview"],
-      ["/settings/reminders", "Reminders"],
-      ["/settings/todo/github", "GitHub"],
-      ["/settings/todo/cursor", "Cursor"],
-    ],
-  },
-  { title: "Wuff Totake", links: [["/settings/totake", "Reminders"]] },
+  ...empireModules.map((module) => ({
+    title: module.name,
+    links: module.settings,
+  })),
   { title: "Help", links: [["/settings/docs", "Docs"]] },
 ];
 export function SettingsNav() {

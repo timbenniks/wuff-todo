@@ -4,5 +4,5 @@
 @source "../../../../packages/ui/src";
 @import "../lib/task-prose.css";
 
-@import "@wuff/ui/features/views.css";
+@import "@wuff/ui/modules/todo/views.css";
 @import "../components/empire.css";

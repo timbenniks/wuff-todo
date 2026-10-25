@@ -11,7 +11,10 @@ const result = await build({
 const mascot = (
   await readFile("apps/web/public/mascot/waffles-icon.webp")
 ).toString("base64");
-const prose = await readFile("packages/ui/src/features/task-prose.css", "utf8");
+const prose = await readFile(
+  "packages/ui/src/modules/todo/task-prose.css",
+  "utf8",
+);
 const design = await readFile("packages/ui/src/design-system.css", "utf8");
 const mcpStyle = await readFile("apps/web/src/mcp-app/styles.css", "utf8");
 // Embed the same licensed font files as the web app: no host/CDN access needed.

@@ -5,13 +5,13 @@ import { Button } from "@wuff/ui/button";
 import { Input } from "@wuff/ui/input";
 import { NativeSelect } from "@wuff/ui/native-select";
 import { StatusTag } from "@wuff/ui/status-tag";
-import { TaskRow } from "@wuff/ui/features/app/lists/task-row";
-import { ListTheme } from "@wuff/ui/features/components/list-theme";
+import { TaskRow } from "@wuff/ui/modules/todo/app/lists/task-row";
+import { ListTheme } from "@wuff/ui/modules/todo/components/list-theme";
 import { Corgi } from "@wuff/ui/features/components/corgi";
 import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
-import type { ListChange } from "@wuff/ui/features/app/lists/list-settings";
-import type { NoteDraft } from "@wuff/ui/features/app/lists/task-notes";
-import type { DueDateDraft } from "@wuff/ui/features/app/lists/task-due-date";
+import type { ListChange } from "@wuff/ui/modules/todo/app/lists/list-settings";
+import type { NoteDraft } from "@wuff/ui/modules/todo/app/lists/task-notes";
+import type { DueDateDraft } from "@wuff/ui/modules/todo/app/lists/task-due-date";
 
 function task(title: string, position: number, id = crypto.randomUUID()): Task {
   const now = "2026-10-23T12:00:00.000Z";

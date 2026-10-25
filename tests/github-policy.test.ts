@@ -5,7 +5,7 @@ import {
   githubSafeFields,
   mergeGithub,
   verifyGithubSignature,
-} from "../packages/domain/src/github-policy";
+} from "../packages/domain/src/modules/todo/github-policy";
 const base = { title: "Before", body: "Notes", closed: false };
 test("GitHub merges independent edits and preserves Wuff-only workflow state", () => {
   assert.deepEqual(

@@ -27,6 +27,14 @@ The ignored root `.env.local` holds the isolated development database/auth confi
 
 Required variables are listed in [the environment template](../.env.example). Use a randomly generated cookie secret of at least 32 characters. Production and preview cookie secrets are stored separately through Vercel CLI. `WUFF_ORIGIN` is fixed for production; previews derive their origin from `VERCEL_URL` when it is omitted.
 
+## Product modules
+
+Follow [the module guide](guide/modules.md) for Todo, Totake and new products.
+Product table definitions live under `packages/db/src/modules/<id>/schema.ts`;
+`schema.ts` composes them with platform tables for the existing Drizzle workflow.
+There is one database/migration chain. App visibility switches never run migrations
+or provision services. Refactor evidence is in [Empire modules](empire-modules.md).
+
 ## Commands
 
 `pnpm build:guide` refreshes `/docs` and `/contributor-kit/` directly from maintained

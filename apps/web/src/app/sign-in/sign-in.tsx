@@ -1,6 +1,5 @@
 "use client";
 import { Input } from "@/components/ui/input";
-
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 export function SignIn({ next }: { next: string }) {

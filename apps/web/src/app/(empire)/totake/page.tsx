@@ -1,26 +1,3 @@
-import type { Metadata } from "next";
-import { PortalPage } from "@/components/portal-page";
-import { pageActor } from "@/lib/auth/server";
-import { getTotake } from "@wuff/domain";
-import { TotakeApp } from "@wuff/ui/features/totake/totake-app";
-import "@wuff/ui/features/totake/totake.css";
+// Stable framework route; implementation is owned by its product module.
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Wuff Totake · Wuff Empire" };
-async function TotakeContent() {
-  const actor = await pageActor();
-  return (
-    <TotakeApp
-      key={actor.id}
-      userId={actor.id}
-      initial={await getTotake(actor)}
-    />
-  );
-}
-
-export default function TotakePage() {
-  return (
-    <PortalPage destination="/totake">
-      <TotakeContent />
-    </PortalPage>
-  );
-}
+export { metadata, default } from "@/modules/totake/pages/totake/page";

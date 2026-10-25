@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Empire product modules (October 25, draft PR #32):** refactoring Todo and
+  Totake into product-owned contracts/domain/schema/UI/adapters and typed
+  navigation/settings/dashboard/MCP/notification contributions. Public contracts
+  and database identities are preserved; no migration or release is implied.
+  See [scope and evidence](empire-modules.md) and [module guide](guide/modules.md).
+
 - **Personal MCP tool choices (October 25, draft PR #31):** per-connection app/service
   switches and advanced tools, scope-filtered discovery and cached-call denial,
   with shared HTTP/MCP/native services. Migration 0020 was explicitly authorized

@@ -3,7 +3,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./modules/todo": "./src/modules/todo/index.ts",
+    "./modules/todo/*": "./src/modules/todo/*.ts",
+    "./modules/totake": "./src/modules/totake/totake.ts",
+    "./modules/totake/*": "./src/modules/totake/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

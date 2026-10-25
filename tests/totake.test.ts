@@ -1,8 +1,8 @@
 import {
   acceptTotakeRead,
   createTotakeReadGate,
-} from "../packages/ui/src/features/totake/request";
-import { notificationDeliveryPolicy } from "../packages/domain/src/notification-policy";
+} from "../packages/ui/src/modules/totake/request";
+import { notificationDeliveryPolicy } from "../packages/domain/src/platform/notification-policy";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -12,7 +12,7 @@ import {
   refreshTotake,
   applyTotakeAction,
   totakeNeedsScheduler,
-} from "../packages/domain/src/totake-state";
+} from "../packages/domain/src/modules/totake/state";
 const now = Date.parse("2026-10-25T06:00:00Z");
 function fixture() {
   let s = emptyTotake(now, "Europe/Paris");

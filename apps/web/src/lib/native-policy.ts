@@ -1,5 +1,3 @@
-// Fixed first-party public clients. Custom schemes are never enabled for dynamic
-// third-party registration. PKCE protects intercepted authorization codes.
 import {
   nativeClientId,
   nativeRedirectUri,

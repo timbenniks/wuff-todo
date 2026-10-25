@@ -8,8 +8,8 @@ import { Corgi } from "@/components/corgi";
 import { ApiError } from "@/lib/api";
 import { LiveRefreshQueue } from "@/lib/live-refresh";
 import type { LiveLists } from "@/lib/live-types";
-import { useActorApi } from "../../lists/actor-api";
-import { LiveUpdates } from "../../lists/live-updates";
+import { useActorApi } from "@/platform/actor-api";
+import { LiveUpdates } from "../../../modules/todo/web/lists/live-updates";
 import { TaskDetailContent } from "./task-detail-content";
 
 type Pending = { path: string; method: string; body: Record<string, unknown> };

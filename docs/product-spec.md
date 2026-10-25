@@ -4,10 +4,19 @@ Status: working specification, version 0.1
 
 Updated: October 25, 2026
 
+## Empire product modules
+
+Todo and Totake are product-owned modules in the existing deployment. The
+[modules guide](guide/modules.md) defines manifests, contracts, domain/schema/UI
+ownership and typed web/MCP/notification composition. Account, consent, transport
+and design primitives remain shared. Existing routes, tool IDs, data ownership,
+reminder rules and native navigation are preserved. [Refactor evidence](empire-modules.md)
+distinguishes local implementation from release. No database migration is needed.
+
 ## Purpose
 
 Wuff Empire is the private portal for the family's apps. Its personal dashboard
-and shared top navigation open Wuff Todo and the upcoming Wuff Totake. Wuff Todo
+and shared top navigation open Wuff Todo and Wuff Totake. Wuff Todo
 helps friends and family manage private and shared lists; Wuff Totake adds personal medicine/equipment tracking and scheduled reminder rules;
 actual installed notification delivery remains a separate release gate. Waffles the corgi and one invite-only account
 connect the experience. See [portal scope and delivery](wuff-empire.md).

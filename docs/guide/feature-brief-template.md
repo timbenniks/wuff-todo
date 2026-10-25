@@ -37,3 +37,9 @@ Observable outcomes, including keyboard/focus, phone layout and failure recovery
 ## Open questions and evidence
 
 Assumptions, mocks, checks performed and checks still required.
+
+## Module ownership
+
+Name the owning product module (or shared platform), contribution points and public
+routes/tools to preserve. Follow [Product modules](/docs/modules); include client/server
+boundaries and independent app, dashboard, MCP and notification preferences.
