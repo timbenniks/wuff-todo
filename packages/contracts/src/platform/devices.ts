@@ -3,6 +3,8 @@ const uuid = z.uuid();
 export const webPushSubscriptionSchema = z
   .object({
     endpoint: z.url().max(2048),
+    // Standard PushSubscription.toJSON includes this even when it is null.
+    expirationTime: z.number().finite().nonnegative().nullable().optional(),
     keys: z.object({
       p256dh: z.string().regex(/^[A-Za-z0-9_-]{87}=$|^[A-Za-z0-9_-]{87}$/),
       auth: z.string().regex(/^[A-Za-z0-9_-]{22}={0,2}$/),

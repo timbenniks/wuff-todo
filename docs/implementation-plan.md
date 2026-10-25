@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Web push notifications (October 25, draft PR #34):** browser subscription
+  compatibility, explicit permission/reconnect/disconnect, safe Todo/Totake worker
+  links and private VAPID generation are implemented and locally verified on latest main; production activation remains a gate. Native push
+  remains deferred. [Scope, verification and activation](web-notifications.md).
+
 - **Wuff Notes (October 25, draft PR #33):** private rich notes, search/tags,
   personal pin/archive, owner-controlled Viewer/Editor sharing, linked notes and
   themed moodboards, settings/dashboard, authorized HTTP/MCP/native capabilities

@@ -1,14 +1,9 @@
+import { unsubscribeBrowserPush } from "./browser-push";
 // Unsubscribe before sign-out so a shared browser stops showing private alerts.
 export async function disableBrowserOnSignOut() {
-  if (!("serviceWorker" in navigator)) return;
   try {
-    const registration = await navigator.serviceWorker.getRegistration(
-      "/reminder-worker.js",
-    );
-    const subscription = await registration?.pushManager.getSubscription();
-    if (!subscription) return;
-    const endpoint = subscription.endpoint;
-    await subscription.unsubscribe();
+    const endpoint = await unsubscribeBrowserPush();
+    if (!endpoint) return;
     await fetch("/api/v1/reminders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -18,6 +13,6 @@ export async function disableBrowserOnSignOut() {
       }),
     });
   } catch {
-    /* OS subscription removal is best effort; sign-out stays available. */
+    /* Sign-out stays available; retired endpoints are removed on delivery. */
   }
 }
