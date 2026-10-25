@@ -595,7 +595,7 @@ export function ListApp({
       <Button
         type="button"
         variant="ghost"
-        className="sidebar-home justify-start mb-3"
+        className="sidebar-home sidebar-nav-item justify-start mb-3"
         aria-current={
           !workspace && !selectedId && !showArchive ? "page" : undefined
         }
@@ -758,7 +758,7 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="workspace-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
+      <aside className="workspace-sidebar app-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
         <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
           <a
             className="workspace-brand-link flex gap-2.5 items-center"

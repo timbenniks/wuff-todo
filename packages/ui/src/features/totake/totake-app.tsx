@@ -29,6 +29,7 @@ import { RecordedGroups, ItemName, SnoozeControls } from "./components";
 import { ReminderTimeEditor } from "./ReminderTimeEditor";
 import { acceptTotakeRead, createTotakeReadGate } from "./request";
 import { Modal, TotakeSaveContext } from "./Modal";
+import { Corgi } from "../components/corgi";
 import {
   CalendarDays,
   ChevronLeft,
@@ -37,6 +38,7 @@ import {
   Plus,
   Pill,
   Bell,
+  Settings2,
 } from "lucide-react";
 
 type Page = "daily" | "items" | "settings";
@@ -244,6 +246,7 @@ export function TotakeApp({
         <Button
           key={id}
           variant="ghost"
+          className="sidebar-nav-item"
           aria-current={page === id ? "page" : undefined}
           onClick={() => {
             setPage(id);
@@ -256,7 +259,7 @@ export function TotakeApp({
             setStockFilter(null);
           }}
         >
-          <Icon size={18} />
+          <Icon size={18} aria-hidden="true" />
           {label}
         </Button>
       ))}
@@ -317,17 +320,35 @@ export function TotakeApp({
         }
       >
         <div className="totake-layout">
-          <aside className="totake-sidebar">
-            <Button
-              className="totake-menu"
-              variant="outline"
-              onClick={() => setMenu(true)}
-            >
-              <Menu size={20} />
-              Totake menu
-            </Button>
+          <aside className="totake-sidebar app-sidebar">
+            <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
+              <a
+                className="workspace-brand-link flex gap-2.5 items-center"
+                href="/"
+                aria-label="Wuff Totake · Empire dashboard"
+              >
+                <Corgi size={48} />
+                <span className="wordmark text-xl font-bold">Wuff Totake</span>
+              </a>
+              <Button
+                className="totake-menu ml-auto"
+                variant="ghost"
+                aria-label="Totake menu"
+                aria-haspopup="dialog"
+                aria-expanded={menu}
+                onClick={() => setMenu(true)}
+              >
+                <Menu size={20} aria-hidden="true" />
+                Menu
+              </Button>
+            </div>
             <div className="totake-desktop-nav">{navigation}</div>
-            <a href="/">Wuff Empire dashboard</a>
+            <div className="totake-sidebar-footer">
+              <a className="sidebar-settings sidebar-nav-item" href="/settings">
+                <Settings2 size={17} aria-hidden="true" />
+                Settings
+              </a>
+            </div>
           </aside>
           <main id="empire-content" className="totake-main" aria-busy={busy}>
             <header className="module-heading">
@@ -693,8 +714,18 @@ export function TotakeApp({
           </main>
         </div>
         {menu && (
-          <Modal title="Totake menu" onClose={() => setMenu(false)}>
-            {navigation}
+          <Modal
+            title="Totake menu"
+            className="totake-navigation-dialog"
+            onClose={() => setMenu(false)}
+          >
+            <div className="totake-navigation-body">
+              {navigation}
+              <a className="sidebar-settings sidebar-nav-item" href="/settings">
+                <Settings2 size={17} aria-hidden="true" />
+                Settings
+              </a>
+            </div>
           </Modal>
         )}
         {calendar && (

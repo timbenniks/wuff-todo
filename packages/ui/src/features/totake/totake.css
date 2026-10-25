@@ -2257,33 +2257,53 @@
 }
 .totake-layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  min-height: calc(100dvh - 76px);
+  grid-template-columns: var(--app-sidebar-width, 260px) minmax(0, 1fr);
+  min-height: calc(100dvh - var(--empire-header-height, 72px));
 }
 .totake-sidebar {
-  padding: 24px 12px;
-  background: var(--wuff-sidebar);
-  border-right: 1px solid var(--wuff-border);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-.totake-sidebar nav {
+.totake-desktop-nav nav,
+.totake-navigation-body nav {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
-.totake-sidebar nav button {
-  justify-content: flex-start;
-  white-space: normal;
-  text-align: left;
+.totake .sidebar-nav-item {
+  color: var(--wuff-foreground);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
 }
-.totake-sidebar a {
-  display: block;
-  padding: 16px 12px;
+.totake .workspace-brand-link {
+  color: var(--wuff-foreground);
+}
+.totake-sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+}
+.totake .totake-navigation-dialog {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  border-radius: 16px;
+  background: var(--wuff-background);
+  padding: 0;
+}
+.totake-navigation-dialog .modal-heading {
+  padding: 12px 16px;
+}
+.totake-navigation-body {
+  display: grid;
+  gap: 16px;
+  padding: 0 16px 16px;
 }
 .totake-main {
   padding: 24px;
   min-width: 0;
   max-width: 1100px;
   width: 100%;
-  margin: auto;
+  margin: 0 auto;
 }
 .totake-menu {
   display: none !important;
@@ -2311,6 +2331,18 @@
 .totake dialog {
   color: var(--wuff-foreground);
 }
+@media (min-width: 768px) {
+  .totake:not(.totake-settings-only) .totake-layout {
+    height: calc(100dvh - var(--empire-header-height, 72px));
+    overflow: hidden;
+  }
+  .totake:not(.totake-settings-only) .totake-main {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+}
 @media (max-width: 767px) {
   .totake-layout {
     display: block;
@@ -2319,7 +2351,7 @@
     padding: 8px 16px;
     border-right: 0;
   }
-  .totake-sidebar > a,
+  .totake-sidebar-footer,
   .totake-desktop-nav {
     display: none;
   }

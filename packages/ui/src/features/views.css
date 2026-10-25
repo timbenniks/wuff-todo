@@ -563,7 +563,7 @@ button:focus-visible {
 @media (min-width: 768px) {
   .workspace-shell {
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-columns: var(--app-sidebar-width, 260px) minmax(0, 1fr);
     height: 100dvh;
     overflow: hidden;
   }
@@ -615,6 +615,36 @@ button:focus-visible {
 }
 
 /* Shared icon/text rails keep shortcuts, lists and utilities easy to scan. */
+.app-sidebar {
+  padding: 20px 16px;
+  background: var(--wuff-sidebar);
+  border-right: 1px solid var(--wuff-border);
+}
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: 8px;
+  color: var(--wuff-foreground);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-align: left;
+  white-space: normal;
+}
+.sidebar-nav-item:hover {
+  background: var(--wuff-surface);
+}
+.sidebar-nav-item[aria-current="page"] {
+  background: var(--wuff-surface);
+}
+.sidebar-nav-item > svg {
+  flex-shrink: 0;
+}
 .sidebar-brand {
   padding-inline: 4px;
 }
@@ -981,8 +1011,11 @@ button:focus-visible {
   .mobile-filter-recovery .view-filter-chip {
     max-width: 100%;
   }
-  .workspace-sidebar {
+  .workspace-sidebar,
+  .app-sidebar {
     padding-block: 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--wuff-border);
   }
   .workspace-brand-link > img,
   .workspace-brand-link > svg {
