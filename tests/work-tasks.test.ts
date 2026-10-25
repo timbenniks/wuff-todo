@@ -101,5 +101,5 @@ test("task identifiers and sign-in destinations cannot redirect outside Wuff", (
     "/tasks/WUFF-42?next=https://evil.example",
     "/tasks/WUFF-42/../../sign-out",
   ])
-    assert.equal(signInReturnPath(value), "/lists");
+    assert.equal(signInReturnPath(value), "/");
 });

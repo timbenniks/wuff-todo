@@ -37,6 +37,7 @@ import { listThemeVariables } from "../../lib/list-theme";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
 import { HomeDashboard } from "./home-dashboard";
+import { listSelectionHref } from "../../lib/list-navigation";
 import { CreateListForm } from "./create-list-form";
 import { SidebarLists } from "./sidebar-lists";
 import { mergeVisibleOrder } from "../../lib/reorder";
@@ -215,16 +216,12 @@ export function ListApp({
     startupHome.current = false;
     if (!id) setShowArchive(false);
     if (navigate && !workspace) {
-      const url = new URL(window.location.href);
-      if (id) {
-        url.searchParams.set("listId", id);
-        url.searchParams.delete("home");
-      } else {
-        url.searchParams.delete("listId");
-        url.searchParams.set("home", "1");
-      }
-      if (url.href !== window.location.href)
-        window.history.pushState(null, "", url.pathname + url.search);
+      const destination = listSelectionHref(window.location.href, id);
+      if (
+        destination &&
+        destination !== window.location.pathname + window.location.search
+      )
+        window.history.pushState(null, "", destination);
     }
     selected.current = id;
     setSelectedId(id);
@@ -609,7 +606,7 @@ export function ListApp({
         }}
       >
         <House size={18} />
-        Home
+        {runtime.native ? "Home" : "Overview"}
       </Button>
       <div className="workspace-list-nav">
         <SidebarLists
@@ -766,7 +763,9 @@ export function ListApp({
           <a
             className="workspace-brand-link flex gap-2.5 items-center"
             href={runtime.webOrigin + "/lists?home=1"}
-            aria-label="Wuff Todo Home"
+            aria-label={
+              runtime.native ? "Wuff Todo Home" : "Wuff Todo overview"
+            }
             onClick={(event) => {
               if (
                 event.button !== 0 ||

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { api } from "@/lib/api";
 import { disableBrowserOnSignOut } from "@/lib/reminder-browser";
 import { authClient } from "@/lib/auth/client";
+import { EmpireActor } from "@/components/empire-preferences";
 import { RuntimeContext, type FeatureRuntime } from "@wuff/ui/features/runtime";
 export { useActorApi } from "@wuff/ui/features/actor-api";
 export function ActorApiProvider({
@@ -33,6 +34,7 @@ export function ActorApiProvider({
   );
   return (
     <RuntimeContext.Provider value={runtime}>
+      <EmpireActor userId={userId} />
       {children}
     </RuntimeContext.Provider>
   );

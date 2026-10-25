@@ -1,26 +1,36 @@
 "use client";
 import { wuffError } from "@/lib/copy";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { connectionPermissionLabels, type AiConnection } from "@wuff/contracts";
+import { useActorApi } from "../lists/actor-api";
 export function Connections() {
-  const [clients, setClients] = useState<{ id: string; name: string }[] | null>(
-      null,
-    ),
+  const pending = useRef<{ clientId: string; operationId: string } | null>(
+    null,
+  );
+  const actorApi = useActorApi();
+  const [clients, setClients] = useState<AiConnection[] | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     setError("");
-    fetch("/api/v1/connections")
-      .then(async (r) => {
-        if (!r.ok)
-          throw new Error(
-            "We lost the scent! Couldn’t load your AI connections. Try again.",
-          );
-        setClients(await r.json());
+    let disposed = false;
+    actorApi<AiConnection[]>("/api/v1/connections")
+      .then((data) => {
+        if (!disposed) setClients(data);
       })
-      .catch((e) => setError(wuffError(e.message)));
-  }, [attempt]);
+      .catch((error) => {
+        if (!disposed) {
+          setClients(null);
+          setError(wuffError(error.message));
+        }
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [attempt, actorApi]);
   return (
     <div>
       {error && (
@@ -49,33 +59,61 @@ export function Connections() {
           {clients.map((client) => (
             <li
               key={client.id}
+              data-client-id={client.id}
               className="flex items-center justify-between gap-4 py-4"
             >
-              <span>{client.name}</span>
+              <span className="min-w-0 break-words">
+                {client.name}
+                <span className="block text-sm text-muted-foreground">
+                  {client.state === "authorized"
+                    ? "Authorized"
+                    : "Expired · reconnect in your AI client"}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {client.scopes.length
+                    ? client.scopes
+                        .map(
+                          (scope) => connectionPermissionLabels[scope] ?? scope,
+                        )
+                        .join(" · ")
+                    : "No active permissions"}
+                </span>
+              </span>
               <Button
                 variant="danger"
-                disabled={busy}
+                disabled={
+                  busy ||
+                  (!!pending.current && pending.current.clientId !== client.id)
+                }
                 onClick={async () => {
                   setBusy(true);
+                  setError("");
+                  pending.current ??= {
+                    clientId: client.id,
+                    operationId: crypto.randomUUID(),
+                  };
                   try {
-                    const r = await fetch("/api/v1/connections", {
-                      method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ clientId: client.id }),
-                    });
-                    if (!r.ok)
-                      throw new Error(
-                        "Ruff break! The AI client wasn’t disconnected. Try again.",
-                      );
+                    await actorApi(
+                      "/api/v1/connections",
+                      "DELETE",
+                      pending.current,
+                    );
+                    pending.current = null;
                     setClients(clients.filter((c) => c.id !== client.id));
                   } catch (e) {
+                    if (e instanceof ApiError && e.status < 500)
+                      pending.current = null;
                     setError(wuffError((e as Error).message));
                   } finally {
                     setBusy(false);
                   }
                 }}
               >
-                Disconnect
+                {busy && pending.current?.clientId === client.id
+                  ? "Disconnecting…"
+                  : pending.current?.clientId === client.id
+                    ? "Retry disconnect"
+                    : "Disconnect"}
               </Button>
             </li>
           ))}

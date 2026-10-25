@@ -129,7 +129,14 @@ export function featureApi(
           : method === "PUT"
             ? "reorderLists"
             : undefined;
-    else if (kind === "dashboard") {
+    else if (kind === "empire") {
+      action =
+        method === "GET"
+          ? "getEmpireSettings"
+          : method === "PUT"
+            ? "updateEmpireSettings"
+            : undefined;
+    } else if (kind === "dashboard") {
       action =
         method === "GET"
           ? "getDashboard"

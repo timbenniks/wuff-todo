@@ -7,22 +7,31 @@ import { getList, listLists, listInvitations } from "@wuff/domain";
 import { sealLiveLists } from "@/lib/live-server";
 import { ActorApiProvider } from "./actor-api";
 import { ListApp } from "./list-app";
+export const metadata = { title: "Wuff Todo · Wuff Empire" };
 export const dynamic = "force-dynamic";
 export default async function ListsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ listId?: string }>;
+  searchParams: Promise<{ listId?: string; home?: string }>;
 }) {
   try {
+    const query = await searchParams;
+    const requested = query.listId;
     const identity = await webIdentity();
-    if (!identity) redirect("/sign-in");
+    if (!identity) {
+      const destination = requested
+        ? `/lists?listId=${encodeURIComponent(requested)}`
+        : query.home === "1"
+          ? "/lists?home=1"
+          : "/lists";
+      redirect(`/sign-in?next=${encodeURIComponent(destination)}`);
+    }
     const actor = await pageActor();
     const [initialLists, initialInvitations] = await Promise.all([
       listLists(actor),
       listInvitations(actor),
     ]);
     let initialList: TodoList | null = null;
-    const requested = (await searchParams).listId;
     const first = initialLists.find((l) => l.id === requested);
     if (first) {
       try {

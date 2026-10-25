@@ -15,7 +15,7 @@ export default async function SignInPage({
         <div className="flex items-center gap-3 mb-8">
           <Corgi />
           <span className="wordmark text-2xl font-bold">
-            Wuff Todo
+            Wuff Empire
             <span className="block font-sans text-xs tracking-normal font-medium text-muted-foreground mt-1">
               Less to remember. More tail wags.
             </span>
@@ -23,7 +23,7 @@ export default async function SignInPage({
         </div>
         <h1 className="text-3xl font-bold mb-3">Wuff, welcome back.</h1>
         <p className="text-muted-foreground mb-8">
-          Your pack of lists is right where you left it.
+          Your pack of apps is right where you left it.
         </p>
         <SignIn next={safeNext} />
         <Link

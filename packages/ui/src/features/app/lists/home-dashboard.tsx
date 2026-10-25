@@ -33,6 +33,7 @@ import { TaskDetailDrawer } from "./task-detail-drawer";
 import { useHomeTasks } from "./use-home-tasks";
 import type { ListChange } from "./list-settings";
 import { NativeSelect } from "../../../native-select";
+import { useRuntime } from "../../runtime";
 
 const labels = {
   today: "Today",
@@ -62,6 +63,8 @@ export function HomeDashboard({
   taskError?: string;
   retryTask?: () => Promise<boolean>;
 }) {
+  const native = useRuntime().native;
+  const viewName = native ? "Home" : "Overview";
   const api = useActorApi(),
     today = useCalendarDay();
   const [data, setData] = useState<Dashboard | null>(null),
@@ -199,7 +202,7 @@ export function HomeDashboard({
         current ? { ...current, preferences: saved } : null,
       );
       setRetry(null);
-      setNotice("Your Home settings are saved.");
+      setNotice(`Your ${viewName} settings are saved.`);
       dialog.current?.close();
     } catch (e) {
       setSaveError((e as Error).message);
@@ -285,8 +288,8 @@ export function HomeDashboard({
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Customize Home"
-            title="Customize Home"
+            aria-label={`Customize ${viewName}`}
+            title={`Customize ${viewName}`}
             disabled={!data || !!retry || locked || !!retryTask}
             onClick={customize}
           >
@@ -334,7 +337,7 @@ export function HomeDashboard({
         >
           <h2 className="text-sm font-semibold">Recently completed</h2>
           <p className="text-xs text-muted-foreground">
-            Reopen tasks completed here while Home stays open.
+            Reopen tasks completed here while {viewName} stays open.
           </p>
           {canRecover.map((task) => (
             <div
@@ -389,7 +392,7 @@ export function HomeDashboard({
             className="mt-3"
             onClick={() => void refresh()}
           >
-            Retry Home
+            Retry {viewName}
           </Button>
         </div>
       ) : !data ? (
@@ -610,7 +613,7 @@ export function HomeDashboard({
                 A quiet corner for your pack.
               </h2>
               <p className="text-muted-foreground mt-2">
-                Choose Customize Home to bring a section back.
+                Choose Customize {viewName} to bring a section back.
               </p>
             </div>
           )}
@@ -643,13 +646,13 @@ export function HomeDashboard({
         >
           <div className="flex items-center justify-between gap-3 mb-2">
             <h2 id="customize-home-heading" className="text-xl font-bold">
-              Customize Home
+              Customize {viewName}
             </h2>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="Close Customize Home"
+              aria-label={`Close Customize ${viewName}`}
               disabled={saving || !!retry}
               onClick={() => dialog.current?.close()}
             >
@@ -657,7 +660,7 @@ export function HomeDashboard({
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Make this space yours. These choices only change your Home.
+            Make this space yours. These choices only change your {viewName}.
           </p>
           <fieldset disabled={saving || !!retry} className="min-w-0">
             <legend className="text-sm font-bold mb-2">Sections</legend>
@@ -707,7 +710,7 @@ export function HomeDashboard({
               className="block mt-5 mb-2 text-sm font-bold"
               htmlFor="home-start"
             >
-              When I open Wuff
+              {native ? "When I open Wuff" : "When I open Wuff Todo"}
             </label>
             <NativeSelect
               id="home-start"
@@ -719,7 +722,7 @@ export function HomeDashboard({
                 }))
               }
             >
-              <option value="home">Show Home</option>
+              <option value="home">Show {viewName}</option>
               <option value="last_list">
                 Open my last list on this device
               </option>
@@ -769,7 +772,7 @@ export function HomeDashboard({
                 ? "Saving…"
                 : retry
                   ? "Retry same request"
-                  : "Save Home settings"}
+                  : `Save ${viewName} settings`}
             </Button>
             <Button
               type="button"

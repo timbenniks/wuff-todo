@@ -1,6 +1,30 @@
 * {
   box-sizing: border-box;
 }
+.empire-settings-form {
+  display: grid;
+  gap: 16px;
+}
+.empire-settings-form fieldset {
+  min-width: 0;
+  border: 1px solid var(--wuff-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.empire-settings-form legend {
+  font-weight: 700;
+}
+.empire-settings-form label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.empire-settings-form input[type="checkbox"] {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+}
 body {
   font:
     16px/1.5 "DM Sans",

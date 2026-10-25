@@ -8,6 +8,7 @@ import { scopes } from "@wuff/contracts";
 import { database } from "@wuff/db";
 
 const origin = "http://localhost:3000";
+const empireView = process.env.WUFF_FIXTURE_VIEW === "empire";
 if (process.env.WUFF_ORIGIN !== origin)
   throw new Error("This fixture only runs against local development.");
 const [user] = JSON.parse(await readFile(".vercel/dev-users.json", "utf8"));
@@ -124,8 +125,8 @@ const server = createServer(async (req, res) => {
       res.end(
         JSON.stringify(
           await rpc("tools/call", {
-            name: "show_list",
-            arguments: { listId: list.id },
+            name: empireView ? "show_empire_settings" : "show_list",
+            arguments: empireView ? {} : { listId: list.id },
           }),
         ),
       );

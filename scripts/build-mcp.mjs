@@ -25,7 +25,7 @@ for (const [file, style] of [
   );
   fonts += `@font-face{font-family:"DM Sans";font-style:${style};font-weight:100 1000;font-display:swap;src:url(data:font/ttf;base64,${data}) format("truetype");}`;
 }
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${fonts}${design}${mcpStyle}${prose}</style></head><body><header style="display:flex;align-items:center;gap:10px;margin-bottom:20px;font-weight:700"><img src="data:image/webp;base64,${mascot}" width="48" height="48" alt="Waffles the corgi">Wuff Todo</header><main id="app"><h1>Wuff Todo</h1><p>Fetching your pack’s list…</p></main><p id="status" role="status"></p><script type="module">${result.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${fonts}${design}${mcpStyle}${prose}</style></head><body><header style="display:flex;align-items:center;gap:10px;margin-bottom:20px;font-weight:700"><img src="data:image/webp;base64,${mascot}" width="48" height="48" alt="Waffles the corgi">Wuff Empire</header><main id="app"><h1>Wuff Empire</h1><p>Fetching your workspace…</p></main><p id="status" role="status"></p><script type="module">${result.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`;
 await mkdir("apps/web/.mcp", { recursive: true });
 await writeFile("apps/web/.mcp/ui.html", html);
 console.log("MCP App bundled.");

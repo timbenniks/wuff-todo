@@ -8,7 +8,7 @@ export default function SetPasswordPage() {
       <div className="w-full max-w-sm">
         <Link href="/sign-in" className="flex items-center gap-3 mb-12">
           <Corgi />
-          <span className="wordmark text-2xl font-bold">Wuff Todo</span>
+          <span className="wordmark text-2xl font-bold">Wuff Empire</span>
         </Link>
         <h1 className="text-3xl font-bold mb-3">Set or reset your password</h1>
         <p className="text-muted-foreground mb-8">

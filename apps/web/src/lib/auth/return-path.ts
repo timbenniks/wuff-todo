@@ -6,8 +6,33 @@ export function signInReturnPath(value?: string) {
     value.startsWith("//") ||
     value.includes("\\")
   )
-    return "/lists";
+    return "/";
+  if (
+    [
+      "/",
+      "/lists",
+      "/totake",
+      "/settings",
+      "/settings/reminders",
+      "/settings/connections",
+      "/settings/docs",
+      "/settings/apps",
+      "/settings/dashboard",
+      "/settings/notifications",
+      "/settings/account",
+      "/settings/todo",
+      "/settings/todo/github",
+      "/settings/todo/cursor",
+      "/settings/totake",
+    ].includes(value)
+  )
+    return value;
+  if (
+    value === "/lists?home=1" ||
+    /^\/lists\?listId=[a-f0-9-]{36}$/i.test(value)
+  )
+    return value;
   if (/^\/tasks\/(?:[a-f0-9-]{36}|WUFF-[1-9][0-9]{0,9})$/i.test(value))
     return value;
-  return value.startsWith("/oauth/authorize?") ? value : "/lists";
+  return value.startsWith("/oauth/authorize?") ? value : "/";
 }

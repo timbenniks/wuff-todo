@@ -2,6 +2,17 @@
 
 October 24, 2026. Wishlist WUFF-120, WUFF-121, WUFF-122 and WUFF-123.
 
+Superseded account layout, October 25: [Empire Settings](empire-settings.md) now
+uses an independent settings navigation, rather than Todo's sidebar. Todo keeps
+its own list UI and creation/retry behavior. The original acceptance/evidence
+below describes the earlier milestone; the current settings contract takes
+precedence for account pages.
+
+October 25 extension: [Wuff Empire](wuff-empire.md) adds a shared web header above
+this workspace. Its logo goes to `/`; Todo's sidebar logo stays inside Todo's
+Overview (`/lists?home=1`). Desktop height subtracts the global header so existing
+independent scrolling survives. Native retains the original shell and Home label.
+
 ## Scope and acceptance
 
 1. Logo and wordmark are a single accessible Home link. Ordinary activation inside

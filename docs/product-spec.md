@@ -2,15 +2,35 @@
 
 Status: working specification, version 0.1
 
-Updated: October 24, 2026
+Updated: October 25, 2026
 
 ## Purpose
 
-Wuff Todo helps friends and family manage simple private and shared lists. The initial users are the owner of this project and his wife. A small corgi avatar gives the product its identity.
+Wuff Empire is the private portal for the family's apps. Its personal dashboard
+and shared top navigation open Wuff Todo and the upcoming Wuff Totake. Wuff Todo
+helps friends and family manage private and shared lists; Wuff Totake's medicine
+reminders remain future scope. Waffles the corgi and one invite-only account
+connect the experience. See [portal scope and delivery](wuff-empire.md).
 
 The first release focuses on lists, tasks, and ordering. It should feel fast and straightforward, without requiring scheduling or project-management concepts.
 
 ## Confirmed decisions
+
+October 25 portal decision: `/` opens Wuff Empire's dashboard. Wuff Todo stays at
+`/lists`, with existing list/task links and an Overview sidebar entry. Its saved
+last-list startup preference applies only when entering Todo, never the portal.
+Read-only portal previews reuse the actor's authorized Todo dashboard and section
+preferences. `/totake` is an admitted-account coming-soon page. Shared navigation
+does not share private app data or expand existing AI-client grants. Native Todo
+keeps its existing navigation. Implementation/release evidence is recorded in the
+[portal document](wuff-empire.md); production release is separate.
+
+October 25 settings foundation: account-owned app visibility and app-summary
+choices live in standalone Empire Settings, independent of Todo's list sidebar.
+Global AI-client connection management uses explicit Empire scopes; GitHub/Cursor
+remain under Todo. Notifications houses existing device/status controls and Todo
+retains its schedule/quiet-hours settings. Hiding an app never changes data access,
+notifications or client grants. See [settings contracts](empire-settings.md).
 
 October 22 native decision: use online-only Tauri 2 with React/Vite for macOS, Windows, iPhone and Android, sharing the hosted backend and browser-compatible UI. The earlier Expo workspace was retired on October 24 at the maintainer’s request. See [Tauri development](tauri-client.md) and [platform/release gates](tauri-platforms.md). Offline task storage and queued edits remain deferred.
 

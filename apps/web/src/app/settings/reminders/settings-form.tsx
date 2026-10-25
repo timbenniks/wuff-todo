@@ -9,9 +9,11 @@ import { api } from "@/lib/api";
 export function ReminderSettingsForm({
   initial,
   userId,
+  mode = "todo",
 }: {
   initial: ReminderSettings;
   userId: string;
+  mode?: "todo" | "delivery";
 }) {
   const [saved, setSaved] = useState(initial),
     [draft, setDraft] = useState(initial.preferences),
@@ -82,12 +84,24 @@ export function ReminderSettingsForm({
     <section>
       <div className="flex items-center gap-3 mb-3">
         <Bell size={22} className="text-primary" aria-hidden="true" />
-        <h2 className="text-2xl font-bold">Reminders</h2>
+        <h2 className="text-2xl font-bold">
+          {mode === "delivery" ? "Notifications" : "Todo reminders"}
+        </h2>
       </div>
       <p className="text-muted-foreground mb-6">
-        A gentle nudge for things still on your list. These settings are just
-        for you.
+        {mode === "delivery"
+          ? "Manage your personal notification devices and delivery status. Schedules belong to each app."
+          : "A gentle nudge for things still on your list. These settings are just for you."}
       </p>
+      {mode === "delivery" && (
+        <p className="settings-note">
+          Todo currently supplies reminders.{" "}
+          <a href="/settings/reminders">
+            Manage Todo schedules and quiet hours
+          </a>
+          . Totake has no notification delivery yet.
+        </p>
+      )}
       <section
         aria-label="Reminder delivery status"
         className="rounded-xl border border-border p-4 mb-6 grid gap-2 text-sm"
@@ -128,7 +142,9 @@ export function ReminderSettingsForm({
               );
               setSaved(next);
               setStatus(
-                "Delivery status refreshed. Your schedule draft is kept.",
+                mode === "delivery"
+                  ? "Delivery status refreshed."
+                  : "Delivery status refreshed. Your schedule draft is kept.",
               );
             })
           }
@@ -136,72 +152,79 @@ export function ReminderSettingsForm({
           Refresh delivery status
         </Button>
       </section>
-      <section className="mt-8 border-t border-border pt-6">
-        <h3 className="font-bold text-lg mb-2">Your devices</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Reminders go to the devices you enable. Permission is managed
-          separately on each device.
-        </p>
-        <Button
-          variant="outline"
-          disabled={locked || !saved.delivery.web || !saved.publicKey}
-          onClick={() => void action(enableBrowser)}
-        >
-          Enable this browser
-        </Button>
-        {!saved.delivery.web && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Web push setup is still needed before you can enable this browser.
+      {mode === "delivery" ? (
+        <section className="mt-8 border-t border-border pt-6">
+          <h3 className="font-bold text-lg mb-2">Your devices</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Reminders go to the devices you enable. Permission is managed
+            separately on each device.
           </p>
-        )}
-        {saved.devices.length ? (
-          <ul className="mt-4 divide-y divide-border">
-            {saved.devices.map((device) => (
-              <li key={device.id} className="flex items-center gap-3 py-3">
-                <span aria-hidden="true">
-                  {["ios", "android"].includes(device.transport) ? (
-                    <Smartphone size={18} />
-                  ) : (
-                    <Monitor size={18} />
-                  )}
-                </span>
-                <span className="flex-1 min-w-0 break-words text-sm">
-                  {device.label}
-                  <span className="block text-xs text-muted-foreground">
-                    {device.transport}
+          <Button
+            variant="outline"
+            disabled={locked || !saved.delivery.web || !saved.publicKey}
+            onClick={() => void action(enableBrowser)}
+          >
+            Enable this browser
+          </Button>
+          {!saved.delivery.web && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Web push setup is still needed before you can enable this browser.
+            </p>
+          )}
+          {saved.devices.length ? (
+            <ul className="mt-4 divide-y divide-border">
+              {saved.devices.map((device) => (
+                <li key={device.id} className="flex items-center gap-3 py-3">
+                  <span aria-hidden="true">
+                    {["ios", "android"].includes(device.transport) ? (
+                      <Smartphone size={18} />
+                    ) : (
+                      <Monitor size={18} />
+                    )}
                   </span>
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove ${device.label}`}
-                  disabled={locked}
-                  onClick={() =>
-                    void action(async () => {
-                      setSaved(
-                        await request<ReminderSettings>("removeDevice", {
-                          deviceId: device.id,
-                        }),
-                      );
-                      setStatus("Device removed.");
-                    })
-                  }
-                >
-                  <X size={18} />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground mt-4">
-            No devices enabled yet.
+                  <span className="flex-1 min-w-0 break-words text-sm">
+                    {device.label}
+                    <span className="block text-xs text-muted-foreground">
+                      {device.transport}
+                    </span>
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${device.label}`}
+                    disabled={locked}
+                    onClick={() =>
+                      void action(async () => {
+                        setSaved(
+                          await request<ReminderSettings>("removeDevice", {
+                            deviceId: device.id,
+                          }),
+                        );
+                        setStatus("Device removed.");
+                      })
+                    }
+                  >
+                    <X size={18} />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground mt-4">
+              No devices enabled yet.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-4">
+            On iPhone, web notifications require opening Wuff from its Home
+            Screen icon. Native apps register from their own notification
+            settings.
           </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-4">
-          On iPhone, web notifications require opening Wuff from its Home Screen
-          icon. Native apps register from their own notification settings.
-        </p>
-      </section>
+        </section>
+      ) : (
+        <a className="empire-text-link" href="/settings/notifications">
+          Manage notification devices
+        </a>
+      )}
       {!saved.schedulerReady && (
         <p
           role="status"
@@ -211,181 +234,185 @@ export function ReminderSettingsForm({
           notifications will start only after setup is complete.
         </p>
       )}
-      <form
-        className="grid gap-6"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void action(async () => {
-            const next = await request<ReminderSettings>("settings", {
-              version: draftVersion,
-              preferences: draft,
+      {mode === "todo" && (
+        <form
+          className="grid gap-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void action(async () => {
+              const next = await request<ReminderSettings>("settings", {
+                version: draftVersion,
+                preferences: draft,
+              });
+              setSaved(next);
+              setDraft(next.preferences);
+              setDraftVersion(next.version);
+              setStatus("Reminder preferences saved.");
             });
-            setSaved(next);
-            setDraft(next.preferences);
-            setDraftVersion(next.version);
-            setStatus("Reminder preferences saved.");
-          });
-        }}
-      >
-        <fieldset
-          disabled={locked}
-          className="rounded-2xl border border-border p-5 grid gap-4"
+          }}
         >
-          <legend className="px-2 text-sm font-semibold">Daily nudge</legend>
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              className="mt-1 size-5 shrink-0 accent-primary"
-              type="checkbox"
-              checked={draft.dailyEnabled}
-              onChange={(e) =>
-                setDraft({ ...draft, dailyEnabled: e.target.checked })
-              }
-            />
-            <span>
-              <span className="font-semibold block">
-                Remind me about unfinished tasks
-              </span>
-              <span className="text-muted-foreground">
-                One notification for tasks due today or overdue. Choose included
-                lists in each list’s settings.
-              </span>
-            </span>
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            Send at
-            <Input
-              type="time"
-              required
-              value={draft.dailyTime}
-              onChange={(e) =>
-                setDraft({ ...draft, dailyTime: e.target.value })
-              }
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            Timezone
-            <Input
-              required
-              value={draft.timezone}
-              list="reminder-timezones"
-              onChange={(e) => setDraft({ ...draft, timezone: e.target.value })}
-            />
-            <datalist id="reminder-timezones">
-              {[
-                "Europe/Paris",
-                "Europe/London",
-                "America/New_York",
-                "America/Los_Angeles",
-                "Asia/Tokyo",
-                "Australia/Sydney",
-                "UTC",
-              ].map((z) => (
-                <option key={z} value={z} />
-              ))}
-            </datalist>
-            <span className="text-xs font-normal text-muted-foreground">
-              Local times follow daylight-saving changes.
-            </span>
-          </label>
-          <Button
-            type="button"
-            variant="ghost"
-            className="justify-self-start"
-            onClick={() =>
-              setDraft({
-                ...draft,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              })
-            }
+          <fieldset
+            disabled={locked}
+            className="rounded-2xl border border-border p-5 grid gap-4"
           >
-            Use this device’s timezone
-          </Button>
-        </fieldset>
-        <fieldset
-          disabled={locked}
-          className="rounded-2xl border border-border p-5 grid gap-4"
-        >
-          <legend className="px-2 text-sm font-semibold">
-            Quiet hours &amp; privacy
-          </legend>
-          <label className="flex items-center gap-3 text-sm font-semibold">
-            <input
-              className="size-5 shrink-0 accent-primary"
-              type="checkbox"
-              checked={draft.quietEnabled}
-              onChange={(e) =>
-                setDraft({ ...draft, quietEnabled: e.target.checked })
-              }
-            />
-            Keep reminders quiet overnight
-          </label>
-          {draft.quietEnabled && (
-            <div className="grid grid-cols-2 gap-3">
-              <label className="grid gap-2 text-sm">
-                From
-                <Input
-                  type="time"
-                  required
-                  value={draft.quietStart}
-                  onChange={(e) =>
-                    setDraft({ ...draft, quietStart: e.target.value })
-                  }
-                />
-              </label>
-              <label className="grid gap-2 text-sm">
-                Until
-                <Input
-                  type="time"
-                  required
-                  value={draft.quietEnd}
-                  onChange={(e) =>
-                    setDraft({ ...draft, quietEnd: e.target.value })
-                  }
-                />
-              </label>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Reminders during quiet hours wait until quiet hours end. Times use{" "}
-            {draft.timezone}.
-            {draft.quietEnabled &&
-              (draft.quietStart < draft.quietEnd
-                ? draft.dailyTime >= draft.quietStart &&
-                  draft.dailyTime < draft.quietEnd
-                : draft.dailyTime >= draft.quietStart ||
-                  draft.dailyTime < draft.quietEnd) &&
-              ` Your daily nudge moves from ${draft.dailyTime} to ${draft.quietEnd} because of quiet hours.`}
-          </p>
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              className="mt-1 size-5 shrink-0 accent-primary"
-              type="checkbox"
-              checked={draft.showTaskTitles}
-              onChange={(e) =>
-                setDraft({ ...draft, showTaskTitles: e.target.checked })
-              }
-            />
-            <span>
-              Show task names in notifications
-              <span className="block text-xs text-muted-foreground mt-1">
-                Names may be visible on your lock screen. Hidden by default.
+            <legend className="px-2 text-sm font-semibold">Daily nudge</legend>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                className="mt-1 size-5 shrink-0 accent-primary"
+                type="checkbox"
+                checked={draft.dailyEnabled}
+                onChange={(e) =>
+                  setDraft({ ...draft, dailyEnabled: e.target.checked })
+                }
+              />
+              <span>
+                <span className="font-semibold block">
+                  Remind me about unfinished tasks
+                </span>
+                <span className="text-muted-foreground">
+                  One notification for tasks due today or overdue. Choose
+                  included lists in each list’s settings.
+                </span>
               </span>
-            </span>
-          </label>
-        </fieldset>
-        <Button
-          disabled={locked}
-          type="submit"
-          variant="primary"
-          className="justify-self-start"
-        >
-          {busy
-            ? "Saving…"
-            : deliverable
-              ? "Save reminder preferences"
-              : "Save preference"}
-        </Button>
-      </form>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Send at
+              <Input
+                type="time"
+                required
+                value={draft.dailyTime}
+                onChange={(e) =>
+                  setDraft({ ...draft, dailyTime: e.target.value })
+                }
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Timezone
+              <Input
+                required
+                value={draft.timezone}
+                list="reminder-timezones"
+                onChange={(e) =>
+                  setDraft({ ...draft, timezone: e.target.value })
+                }
+              />
+              <datalist id="reminder-timezones">
+                {[
+                  "Europe/Paris",
+                  "Europe/London",
+                  "America/New_York",
+                  "America/Los_Angeles",
+                  "Asia/Tokyo",
+                  "Australia/Sydney",
+                  "UTC",
+                ].map((z) => (
+                  <option key={z} value={z} />
+                ))}
+              </datalist>
+              <span className="text-xs font-normal text-muted-foreground">
+                Local times follow daylight-saving changes.
+              </span>
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              className="justify-self-start"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                })
+              }
+            >
+              Use this device’s timezone
+            </Button>
+          </fieldset>
+          <fieldset
+            disabled={locked}
+            className="rounded-2xl border border-border p-5 grid gap-4"
+          >
+            <legend className="px-2 text-sm font-semibold">
+              Quiet hours &amp; privacy
+            </legend>
+            <label className="flex items-center gap-3 text-sm font-semibold">
+              <input
+                className="size-5 shrink-0 accent-primary"
+                type="checkbox"
+                checked={draft.quietEnabled}
+                onChange={(e) =>
+                  setDraft({ ...draft, quietEnabled: e.target.checked })
+                }
+              />
+              Keep reminders quiet overnight
+            </label>
+            {draft.quietEnabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-2 text-sm">
+                  From
+                  <Input
+                    type="time"
+                    required
+                    value={draft.quietStart}
+                    onChange={(e) =>
+                      setDraft({ ...draft, quietStart: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="grid gap-2 text-sm">
+                  Until
+                  <Input
+                    type="time"
+                    required
+                    value={draft.quietEnd}
+                    onChange={(e) =>
+                      setDraft({ ...draft, quietEnd: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Reminders during quiet hours wait until quiet hours end. Times use{" "}
+              {draft.timezone}.
+              {draft.quietEnabled &&
+                (draft.quietStart < draft.quietEnd
+                  ? draft.dailyTime >= draft.quietStart &&
+                    draft.dailyTime < draft.quietEnd
+                  : draft.dailyTime >= draft.quietStart ||
+                    draft.dailyTime < draft.quietEnd) &&
+                ` Your daily nudge moves from ${draft.dailyTime} to ${draft.quietEnd} because of quiet hours.`}
+            </p>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                className="mt-1 size-5 shrink-0 accent-primary"
+                type="checkbox"
+                checked={draft.showTaskTitles}
+                onChange={(e) =>
+                  setDraft({ ...draft, showTaskTitles: e.target.checked })
+                }
+              />
+              <span>
+                Show task names in notifications
+                <span className="block text-xs text-muted-foreground mt-1">
+                  Names may be visible on your lock screen. Hidden by default.
+                </span>
+              </span>
+            </label>
+          </fieldset>
+          <Button
+            disabled={locked}
+            type="submit"
+            variant="primary"
+            className="justify-self-start"
+          >
+            {busy
+              ? "Saving…"
+              : deliverable
+                ? "Save reminder preferences"
+                : "Save preference"}
+          </Button>
+        </form>
+      )}
       {status && (
         <p role="status" className="mt-5 text-sm text-primary">
           {status}
