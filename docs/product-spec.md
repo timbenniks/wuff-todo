@@ -8,8 +8,8 @@ Updated: October 25, 2026
 
 Wuff Empire is the private portal for the family's apps. Its personal dashboard
 and shared top navigation open Wuff Todo and the upcoming Wuff Totake. Wuff Todo
-helps friends and family manage private and shared lists; Wuff Totake's medicine
-reminders remain future scope. Waffles the corgi and one invite-only account
+helps friends and family manage private and shared lists; Wuff Totake adds personal medicine/equipment tracking and scheduled reminder rules;
+actual installed notification delivery remains a separate release gate. Waffles the corgi and one invite-only account
 connect the experience. See [portal scope and delivery](wuff-empire.md).
 
 The first release focuses on lists, tasks, and ordering. It should feel fast and straightforward, without requiring scheduling or project-management concepts.
@@ -20,7 +20,7 @@ October 25 portal decision: `/` opens Wuff Empire's dashboard. Wuff Todo stays a
 `/lists`, with existing list/task links and an Overview sidebar entry. Its saved
 last-list startup preference applies only when entering Todo, never the portal.
 Read-only portal previews reuse the actor's authorized Todo dashboard and section
-preferences. `/totake` is an admitted-account coming-soon page. Shared navigation
+preferences. `/totake` now opens the admitted-account Totake workspace in PR #26; its original coming-soon milestone is superseded by [Totake](totake.md). Shared navigation
 does not share private app data or expand existing AI-client grants. Native Todo
 keeps its existing navigation. Implementation/release evidence is recorded in the
 [portal document](wuff-empire.md); production release is separate.
@@ -181,3 +181,13 @@ October 18: native notes and private image viewing/upload/removal are required a
 ## Personal list views
 
 Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization is released; online-only native apps are now in development.
+
+## Totake and shared notifications — October 25
+
+[Totake](totake.md) implements the reviewed handover inside Empire: personal
+medication/equipment schedules, stable expected occurrences, recorded/Skip/Undo,
+selected snooze, PRN intake and count-only inventory. No medical sharing or dosing
+advice. Dedicated Totake consent is required; old Todo grants do not expand.
+The portal summary is opt-in and omits medicine names. Global notification settings
+now have real account/app pauses and content privacy; Totake keeps its own repeat
+rules. Actual native delivery and watch interactions remain release gates.

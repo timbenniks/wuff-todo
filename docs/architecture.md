@@ -229,3 +229,17 @@ See [reminders](reminders.md) for personal revisions, delayed jobs, provider ada
 ## Personal Home dashboard
 
 [WUFF-87](home-dashboard.md) adds an authorized repeatable-read cross-list projection of dated open tasks/subtasks and favorites. Calendar boundaries come from an explicit local date, never the server timezone. Bounded previews include exact totals. Independent account-owned dashboard preferences have their own version, account lock and mutation receipts; settings cannot change list membership, sidebar revisions or shared content. HTTP/native/MCP adapters use the same domain operations. A device-local account-specific last-list ID is reauthorized on startup; explicit list/task/Home URLs take precedence.
+
+## Totake and notification dispatch
+
+[Totake](totake.md) adds ten app-owned tables behind account-serialized domain
+transactions, dedicated OAuth scopes and equivalent HTTP/MCP/native actions.
+Treatments, versioned schedule snapshots, occurrences, immutable records/audit and
+exact counted-stock ledgers remain independent from Todo lists/sharing. Typed
+JSON stores complex recurrence/exception payloads. Domain action validation and
+receipts protect concurrent recording and Undo. The initial engine reconstructs
+a personal aggregate; large-history pagination/performance is a documented scaling
+boundary. The shared notification lock precedes the Totake lock in callbacks and
+shared pause changes. Per-device/group acceptance receipts survive partial failure.
+Totake uses a separate durable next-job table with the existing signed QStash and
+push transports. Its production delivery flag stays off pending platform proof.

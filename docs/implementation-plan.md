@@ -8,6 +8,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Totake integration (October 25, PR #26):** personal schedules/records/stock,
+  daily and calendar UI, HTTP/MCP/native adapters, opt-in Empire summary and real
+  server-enforced global/app pauses are implemented for local review. Migration
+  0019 was authorized and applied to development and production without changing
+  existing users/lists/tasks/members. Application release and real installed
+  notification delivery remain separate. See [Totake contracts/gates](totake.md).
+
 - **Empire Settings foundation (October 25):** phase 1 is implemented on PR #25:
   standalone global Settings, personal app/summary choices, global AI clients and
   separate Todo provider settings. Migration 0018 was explicitly authorized and

@@ -10,7 +10,7 @@ import {
 import { authorizationScopes } from "../apps/web/src/lib/oauth";
 import { tauriClientId } from "@wuff/contracts";
 
-test("Empire defaults preserve Todo and the upcoming app while summaries require a real app contribution", () => {
+test("Empire defaults preserve Todo and keep the new private Totake summary opt-in", () => {
   assert.deepEqual(empireAppPreference({}, "todo"), {
     visible: true,
     dashboard: true,
@@ -25,7 +25,7 @@ test("Empire defaults preserve Todo and the upcoming app while summaries require
       operationId: crypto.randomUUID(),
       changes: [{ appId: "totake", dashboard: true }],
     }).success,
-    false,
+    true,
   );
 });
 test("personal patches preserve omitted fields, other apps and unknown future settings without mutating the source", () => {
@@ -89,7 +89,16 @@ test("new Empire permissions require explicit OAuth consent; old defaults and na
     "empire:manage",
   ]);
   assert.throws(() => authorizationScopes("empire:manage", client));
-  assert.throws(() => authorizationScopes("empire:read totake:read", client));
+  assert.deepEqual(authorizationScopes("totake:read totake:write", client), [
+    "totake:read",
+    "totake:write",
+  ]);
+  assert.deepEqual(
+    authorizationScopes("notifications:read notifications:manage", client),
+    ["notifications:read", "notifications:manage"],
+  );
+  assert.throws(() => authorizationScopes("totake:write", client));
+  assert.throws(() => authorizationScopes("totake:read totake:manage", client));
   assert.throws(() => authorizationScopes("empire:read", tauriClientId));
   assert.deepEqual(
     authorizationScopes("lists:read empire:read empire:manage", tauriClientId),

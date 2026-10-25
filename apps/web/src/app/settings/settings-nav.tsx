@@ -21,7 +21,7 @@ const sections = [
       ["/settings/todo/cursor", "Cursor"],
     ],
   },
-  { title: "Wuff Totake", links: [["/settings/totake", "Coming soon"]] },
+  { title: "Wuff Totake", links: [["/settings/totake", "Reminders"]] },
   { title: "Help", links: [["/settings/docs", "Docs"]] },
 ];
 export function SettingsNav() {

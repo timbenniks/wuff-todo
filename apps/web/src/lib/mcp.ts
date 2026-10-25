@@ -9,6 +9,9 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import {
+  totakeQuerySchema,
+  totakeMutationSchema,
+  notificationSettingsSchema,
   dashboardQuerySchema,
   updateEmpireSettingsSchema,
   disconnectAiClientSchema,
@@ -420,7 +423,7 @@ export function createMcpServer(actor: Actor) {
     "update_empire_settings",
     {
       description:
-        "Patch personal app visibility/dashboard choices. Read get_empire_settings first; supply version and fresh operationId. Requires empire:read and empire:manage. Omitted apps/fields are preserved. Retry uncertain saves with exactly the same arguments. Hiding does not pause notifications, revoke connections or remove data. Totake has no dashboard yet.",
+        "Patch personal app visibility/dashboard choices. Read get_empire_settings first; supply version and fresh operationId. Requires empire:read and empire:manage. Omitted apps/fields are preserved. Retry uncertain saves with exactly the same arguments. Hiding does not pause notifications, revoke connections or remove data. Totake summary is opt-in.",
       inputSchema: updateEmpireSettingsSchema.shape,
       annotations: write,
     },
@@ -847,6 +850,85 @@ export function createMcpServer(actor: Actor) {
         },
       ],
     }),
+  );
+  registerAppTool(
+    server,
+    "show_totake",
+    {
+      title: "Wuff Totake",
+      description:
+        "Open your private Totake daily overview with selected Taken/Done, Skip, Snooze and Undo controls. Requires totake:read; actions require totake:write.",
+      inputSchema: {},
+      annotations: read,
+      _meta: { ui: { resourceUri: uri } },
+    },
+    async (input) =>
+      result(async () => ({
+        totake: await domain.getTotake(actor, input),
+        totakeCanWrite: actor.scopes.includes("totake:write"),
+      })),
+  );
+  server.registerTool(
+    "get_totake_summary",
+    {
+      description:
+        "Read bounded personal Totake counts and next five reminder groups without medication names. Requires totake:read.",
+      inputSchema: {},
+      annotations: read,
+    },
+    async () =>
+      result(async () => ({ summary: await domain.getTotakeSummary(actor) })),
+  );
+  server.registerTool(
+    "get_totake",
+    {
+      description:
+        "Read your private Totake treatments, scheduled occurrences, records, stock and repeat settings. Requires totake:read. No Todo sharing grants access. Delivery status is separate from saved schedules. Optional day is a UTC-calendar day index since 1970, within one year of today.",
+      inputSchema: totakeQuerySchema.shape,
+      annotations: read,
+    },
+    async (input) =>
+      result(async () => ({
+        totake: await domain.getTotake(actor, input),
+        totakeCanWrite: actor.scopes.includes("totake:write"),
+      })),
+  );
+  server.registerTool(
+    "update_totake",
+    {
+      description:
+        "Change personal Totake data. Requires totake:read and totake:write. Read get_totake first; supply current version and a fresh operationId. Retry uncertain outcomes with IDENTICAL arguments. change.action selects save_treatment, record, snooze, undo, record_intake, undo_intake, adjust_stock, move_reminder or settings. Record/skip/snooze only explicit unresolved itemIds. Never infer medication doses or mark taken without the user saying they took it. Moving dates requires explicit one/future scope. Count-only stock; no liquid/drop tracking. Existing grants do not acquire Totake permissions.",
+      inputSchema: totakeMutationSchema.shape,
+      annotations: write,
+    },
+    async (input) =>
+      result(async () => ({ totake: await domain.updateTotake(actor, input) })),
+  );
+  server.registerTool(
+    "get_notification_settings",
+    {
+      description:
+        "Read your global/per-app notification pauses and lock-screen content setting. Requires notifications:read. Device registration uses secure Settings.",
+      inputSchema: {},
+      annotations: read,
+    },
+    async () =>
+      result(async () => ({
+        notifications: await domain.getNotificationSettings(actor),
+      })),
+  );
+  server.registerTool(
+    "update_notification_settings",
+    {
+      description:
+        "Save global/per-app notification pause and privacy settings. Requires notifications:read and notifications:manage. apps.todo/totake true means PAUSED. Read current version; supply fresh operationId and retry uncertain requests identically. Pause does not record or skip doses.",
+      inputSchema: notificationSettingsSchema.shape,
+      annotations: write,
+    },
+    async (input) =>
+      result(async () => ({
+        notifications: await domain.updateNotificationSettings(actor, input),
+      })),
   );
   return server;
 }

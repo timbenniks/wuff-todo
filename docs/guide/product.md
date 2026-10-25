@@ -4,12 +4,10 @@ Empire Settings has its own navigation, independent of Todo. Personal Your apps
 and Dashboard choices control app launchers and summaries. Hiding keeps data,
 notifications and connections; AI access needs explicit app/service permissions.
 AI clients and notification devices/status are global; Todo owns its schedules,
-GitHub and Cursor settings. No cross-app notification pause or Totake reminder
-behavior is included in this foundation.
+GitHub and Cursor settings. Global and per-app pauses are enforced by the delivery callbacks. Totake owns its medication/equipment repeat and recording rules. Real installed notification delivery remains a release gate.
 
 Wuff Empire is the shared web portal at `/`, with an app menu and a personal
-dashboard. Wuff Todo stays at `/lists`; Wuff Totake is a coming-soon destination
-for a future medicine reminder app. Portal previews reuse authorized Todo reads.
+dashboard. Wuff Todo stays at `/lists`; Wuff Totake opens its private medication/equipment workspace. Its optional portal summary shows counts and reminder-group links without medicine names. Todo previews reuse authorized Todo reads.
 App navigation never grants access to another person's private information or
 expands an existing connection's permissions. Web Todo's Overview is the existing
 Home view; native/MCP keep Home. The portal and Todo startup preferences are

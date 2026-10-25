@@ -1,5 +1,10 @@
 import { z } from "zod";
 export const connectionPermissionLabels: Record<string, string> = {
+  "totake:read":
+    "Totake: read private medication, equipment, history and stock",
+  "totake:write": "Totake: change schedules, records, reminders and stock",
+  "notifications:read": "Read shared notification settings",
+  "notifications:manage": "Change shared notification settings",
   "empire:read": "Read Empire choices and AI connections",
   "empire:manage": "Change Empire choices and disconnect AI clients",
   "lists:read": "Todo: read accessible lists and tasks",
@@ -52,7 +57,7 @@ export const empireAppCatalog = [
     name: "Wuff Todo",
     href: "/lists",
     settingsHref: "/settings/todo",
-    status: "available",
+    status: "available" as "available" | "coming-soon",
     hasDashboard: true,
     description: "Private lists, shared plans, and a little less to remember.",
   },
@@ -61,8 +66,8 @@ export const empireAppCatalog = [
     name: "Wuff Totake",
     href: "/totake",
     settingsHref: "/settings/totake",
-    status: "coming-soon",
-    hasDashboard: false,
+    status: "available" as "available" | "coming-soon",
+    hasDashboard: true,
     description: "A personal home for medicine reminders.",
   },
 ] as const;
@@ -84,10 +89,6 @@ export const empireChangeSchema = z
   .refine(
     (v) => v.visible !== undefined || v.dashboard !== undefined,
     "Choose a setting to change",
-  )
-  .refine(
-    (v) => v.appId !== "totake" || v.dashboard !== true,
-    "Totake has no dashboard summary yet",
   );
 export const updateEmpireSettingsSchema = z
   .object({

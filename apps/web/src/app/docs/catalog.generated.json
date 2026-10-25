@@ -346,6 +346,114 @@
     ]
   },
   {
+    "source": "packages/ui/src/features/totake/components.tsx",
+    "module": "@wuff/ui/features/totake/components.tsx",
+    "components": [
+      {
+        "name": "OverdueLabel",
+        "signature": "export function OverdueLabel({\n  state,\n  group,\n}: {\n  state: State;\n  group: Occurrence;\n})"
+      },
+      {
+        "name": "ItemName",
+        "signature": "export function ItemName({ item }: { item: Item })"
+      },
+      {
+        "name": "SnoozeControls",
+        "signature": "export function SnoozeControls({\n  id,\n  count,\n  minutes,\n  onMinutes,\n  onSnooze,\n  showExplanation = false,\n  disabled = false,\n}: {\n  disabled?: boolean;\n  showExplanation?: boolean;\n  id: string;\n  count: number;\n  minutes: number;\n  onMinutes: (minutes: number) => void;\n  onSnooze: () => void;\n})"
+      },
+      {
+        "name": "RecordedGroups",
+        "signature": "export function RecordedGroups({\n  groups,\n  onUndo,\n  stockMovements = [],\n}: {\n  stockMovements?: StockMovement[];\n  groups: Occurrence[];\n  onUndo: (g: Occurrence, recordId: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/DateInput.tsx",
+    "module": "@wuff/ui/features/totake/DateInput.tsx",
+    "components": [
+      {
+        "name": "DateInput",
+        "signature": "export function DateInput({\n  id,\n  value,\n  draftText,\n  onChange,\n}: {\n  id: string;\n  value: string;\n  draftText?: string;\n  onChange: (iso: string, text: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/Modal.tsx",
+    "module": "@wuff/ui/features/totake/Modal.tsx",
+    "components": [
+      {
+        "name": "Modal",
+        "signature": "export function Modal({\n  title,\n  children,\n  onClose,\n  className = \"\",\n  dirty = false,\n  open = true,\n}: {\n  title: string;\n  children: ReactNode;\n  onClose: () => void;\n  className?: string;\n  dirty?: boolean;\n  open?: boolean;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/OneTimeFlow.tsx",
+    "module": "@wuff/ui/features/totake/OneTimeFlow.tsx",
+    "components": [
+      {
+        "name": "OneTimeFlow",
+        "signature": "export function OneTimeFlow({\n  initial,\n  state,\n  onBack,\n  onCancel,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: IntakeDraft;\n  state: State;\n  initialDirty?: boolean;\n  onBack: (d: IntakeDraft, dirty: boolean) => void;\n  onCancel: () => void;\n  onSave: (d: IntakeDraft, fail: boolean) => Promise<string | null>;\n})"
+      },
+      {
+        "name": "IntakeHistory",
+        "signature": "export function IntakeHistory({\n  intakes,\n  onUndo,\n  state,\n}: {\n  intakes: Intake[];\n  onUndo: (id: string) => void;\n  state: State;\n})"
+      },
+      {
+        "name": "IntakeAudit",
+        "signature": "export function IntakeAudit({ state, day }: { state: State; day: number })"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/ReminderTimeEditor.tsx",
+    "module": "@wuff/ui/features/totake/ReminderTimeEditor.tsx",
+    "components": [
+      {
+        "name": "ReminderTimeEditor",
+        "signature": "export function ReminderTimeEditor({\n  group,\n  item,\n  state,\n  onCancel,\n  onSave,\n}: {\n  group: Occurrence;\n  item: Item;\n  state: State;\n  onCancel: () => void;\n  onSave: (\n    due: number,\n    scope: \"one\" | \"future\",\n    proposal: boolean,\n  ) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/SetupWizard.tsx",
+    "module": "@wuff/ui/features/totake/SetupWizard.tsx",
+    "components": [
+      {
+        "name": "ChoiceField",
+        "signature": "export function ChoiceField({\n  id,\n  label,\n  value,\n  options,\n  onChange,\n}: {\n  id: string;\n  label: string;\n  value: string;\n  options: string[];\n  onChange: (v: string) => void;\n})"
+      },
+      {
+        "name": "SetupWizard",
+        "signature": "export function SetupWizard({\n  initial,\n  state,\n  original,\n  onCancel,\n  onFirstBack,\n  onSave,\n  initialDirty = false,\n}: {\n  initial: SetupDraft;\n  state: State;\n  initialDirty?: boolean;\n  original?: Treatment;\n  onCancel: () => void;\n  onFirstBack: (draft: SetupDraft, dirty: boolean) => void;\n  onSave: (draft: SetupDraft) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/StockControls.tsx",
+    "module": "@wuff/ui/features/totake/StockControls.tsx",
+    "components": [
+      {
+        "name": "StockSummary",
+        "signature": "export function StockSummary({\n  state,\n  treatment: t,\n  onAdjust,\n}: {\n  state: State;\n  treatment: Treatment;\n  onAdjust: (kind: \"add\" | \"correct\") => void;\n})"
+      },
+      {
+        "name": "StockAdjustment",
+        "signature": "export function StockAdjustment({\n  treatment: t,\n  kind,\n  onCancel,\n  onSave,\n}: {\n  treatment: Treatment;\n  kind: \"add\" | \"correct\";\n  onCancel: () => void;\n  onSave: (value: string, id: string, fail: boolean) => Promise<string | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/features/totake/totake-app.tsx",
+    "module": "@wuff/ui/features/totake/totake-app.tsx",
+    "components": [
+      {
+        "name": "TotakeApp",
+        "signature": "export function TotakeApp({\n  initial,\n  userId,\n  initialPage = \"daily\",\n}: {\n  initial: TotakeSnapshot;\n  userId: string;\n  initialPage?: Page;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/input-group.tsx",
     "module": "@wuff/ui/input-group",
     "components": [

@@ -45,7 +45,8 @@
     "./features/actor-api": "./src/features/actor-api.tsx",
     "./features/runtime": "./src/features/runtime.ts",
     "./features/live-updates": "./src/features/live-updates.tsx",
-    "./features/components/reminders/request": "./src/features/components/reminders/request.ts"
+    "./features/components/reminders/request": "./src/features/components/reminders/request.ts",
+    "./features/totake/totake-app": "./src/features/totake/totake-app.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

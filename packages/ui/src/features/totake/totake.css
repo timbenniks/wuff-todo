@@ -1,0 +1,2353 @@
+:where(.totake) .totake-root {
+  --font-dm-sans: "DM Sans";
+}
+:where(.totake) * {
+  box-sizing: border-box;
+}
+:where(.totake) .totake-root {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  background: var(--wuff-background);
+  color: var(--wuff-foreground);
+  font-size: 15px;
+  line-height: 1.5;
+}
+:where(.totake) button,
+:where(.totake) select,
+:where(.totake) input {
+  font: inherit;
+}
+:where(.totake) button {
+  cursor: pointer;
+}
+:where(.totake) button:disabled {
+  cursor: default;
+}
+:where(.totake) :focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: 3px;
+}
+:where(.totake) .app {
+  min-height: 100vh;
+  background: var(--wuff-background);
+  color: var(--wuff-foreground);
+}
+:where(.totake) h1,
+:where(.totake) h2,
+:where(.totake) h3,
+:where(.totake) h4,
+:where(.totake) p {
+  margin: 0;
+}
+:where(.totake) h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+:where(.totake) h3 {
+  font-weight: 650;
+}
+:where(.totake) svg {
+  flex-shrink: 0;
+}
+:where(.totake) a {
+  color: var(--wuff-primary);
+}
+:where(.totake) .skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 20;
+  padding: 12px;
+  background: var(--wuff-surface);
+}
+:where(.totake) .skip-link:focus {
+  top: 8px;
+}
+:where(.totake) .topbar {
+  min-height: 80px;
+  padding: 16px max(24px, calc((100vw - 1200px) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--wuff-border);
+  background: var(--wuff-surface);
+}
+:where(.totake) .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+}
+:where(.totake) .brand span {
+  white-space: nowrap;
+}
+:where(.totake) .brand strong {
+  font-weight: 500;
+  margin-left: 8px;
+  padding-left: 14px;
+  border-left: 1px solid var(--wuff-border);
+}
+:where(.totake) .prototype-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .demo-banner {
+  padding: 12px 24px;
+  background: var(--wuff-sidebar);
+  color: var(--wuff-muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+:where(.totake) .demo-banner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 8px;
+}
+:where(.totake) .demo-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wuff-primary);
+}
+:where(.totake) .workspace {
+  max-width: 1200px;
+  padding: 40px 24px 64px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 40px;
+  align-items: start;
+}
+:where(.totake) .daily,
+:where(.totake) .simulation {
+  min-width: 0;
+  scroll-margin-top: 24px;
+}
+:where(.totake) .eyebrow {
+  color: var(--wuff-primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+:where(.totake) .page-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 10px 0 24px;
+}
+:where(.totake) h1 {
+  font-size: clamp(27px, 3vw, 36px);
+  letter-spacing: -1.2px;
+  line-height: 1.2;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+:where(.totake) .page-heading p,
+:where(.totake) .muted {
+  color: var(--wuff-muted);
+}
+:where(.totake) .tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--wuff-border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+:where(.totake) .tabs [aria-current] {
+  background: var(--wuff-accent);
+  color: var(--wuff-primary);
+}
+:where(.totake) .context-note {
+  font-size: 13px;
+  color: var(--wuff-muted);
+  max-width: 510px;
+}
+:where(.totake) .feedback {
+  font-size: 13px;
+  color: var(--wuff-primary);
+}
+:where(.totake) .feedback:not(:empty) {
+  padding: 12px;
+  border-left: 3px solid var(--wuff-primary);
+  background: var(--wuff-accent);
+  margin: 16px 0;
+  border-radius: 4px;
+}
+:where(.totake) .section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+:where(.totake) .section-heading span {
+  font-size: 13px;
+  color: var(--wuff-muted);
+  white-space: nowrap;
+}
+:where(.totake) .card {
+  background: var(--wuff-surface);
+  border: 1px solid var(--wuff-border);
+  border-radius: 12px;
+  min-width: 0;
+}
+:where(.totake) .groups {
+  display: grid;
+  gap: 20px;
+}
+:where(.totake) .group-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid var(--wuff-border);
+}
+:where(.totake) .time-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+:where(.totake) .time-title h3 {
+  font-size: 19px;
+  line-height: 1.3;
+}
+:where(.totake) .time-title h3 span {
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 5px;
+}
+:where(.totake) .time-title p {
+  font-size: 12px;
+  color: var(--wuff-muted);
+  margin-top: 4px;
+}
+:where(.totake) .time-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wuff-accent);
+  color: var(--wuff-primary);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+:where(.totake) .count {
+  background: var(--wuff-accent);
+  color: var(--wuff-primary);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+:where(.totake) .overdue {
+  color: #9a3412;
+  font-weight: 600;
+}
+:where(.totake) .item-list {
+  list-style: none;
+  padding: 0 20px;
+  margin: 0;
+}
+:where(.totake) .item-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--wuff-border);
+  min-width: 0;
+}
+:where(.totake) .item-list li:last-child {
+  border-bottom: 0;
+}
+:where(.totake) .item-icon {
+  color: var(--wuff-muted);
+  display: flex;
+}
+:where(.totake) .item-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .item-name strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+:where(.totake) .item-name > span {
+  font-size: 13px;
+  color: var(--wuff-muted);
+  margin-top: 2px;
+}
+:where(.totake) .group-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .snooze-note {
+  padding: 0 20px 16px;
+  color: var(--wuff-primary);
+  font-size: 13px;
+}
+:where(.totake) .recorded {
+  margin-top: 24px;
+  padding: 4px 20px 12px;
+}
+:where(.totake) summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+:where(.totake) summary span {
+  float: right;
+  color: var(--wuff-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+:where(.totake) .recorded > p {
+  font-size: 13px;
+  margin: 8px 0;
+}
+:where(.totake) .record-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+:where(.totake) .record-list li {
+  border-top: 1px solid var(--wuff-border);
+  padding: 14px 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+:where(.totake) .record-list li > div {
+  min-width: 0;
+}
+:where(.totake) .record-list small {
+  color: var(--wuff-muted);
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+}
+:where(.totake) .record-list .status-tag {
+  flex-shrink: 0;
+}
+:where(.totake) .tomorrow {
+  display: flex;
+  gap: 8px;
+  color: var(--wuff-muted);
+  font-size: 12px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+:where(.totake) .review-note {
+  color: var(--wuff-muted);
+  font-size: 11px;
+  margin-top: 32px;
+}
+:where(.totake) .history {
+  padding: 20px;
+}
+:where(.totake) .history .section-heading {
+  margin-top: 0;
+}
+:where(.totake) .history > .muted {
+  font-size: 13px;
+}
+:where(.totake) .empty {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--wuff-muted);
+}
+:where(.totake) .empty svg,
+:where(.totake) .no-alert svg {
+  margin: 0 auto 12px;
+  color: var(--wuff-primary);
+}
+:where(.totake) .empty h3 {
+  margin-bottom: 8px;
+  color: var(--wuff-foreground);
+}
+:where(.totake) .empty p {
+  font-size: 13px;
+}
+:where(.totake) .simulation {
+  padding: 20px;
+  border: 1px solid var(--wuff-border);
+  background: var(--wuff-sidebar);
+  border-radius: 14px;
+}
+:where(.totake) .sim-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+:where(.totake) .paused {
+  font-size: 10px;
+  color: var(--wuff-muted);
+  border: 1px solid var(--wuff-border);
+  background: var(--wuff-surface);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+:where(.totake) .simulation > h2 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+:where(.totake) .simulation > .muted {
+  font-size: 13px;
+}
+:where(.totake) .clock {
+  margin: 20px 0 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 10px;
+  background: var(--wuff-surface);
+}
+:where(.totake) .clock strong {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  margin: 4px 0;
+}
+:where(.totake) .clock span {
+  color: var(--wuff-muted);
+  font-size: 12px;
+}
+:where(.totake) .clock span:last-child {
+  font-size: 10px;
+}
+:where(.totake) .advance {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+:where(.totake) .advance button {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+:where(.totake) .scenario-controls {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px -8px 20px;
+}
+:where(.totake) .scenario-controls button {
+  font-size: 12px;
+  padding: 8px;
+}
+:where(.totake) .notification-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 20px;
+  margin-bottom: 16px;
+}
+:where(.totake) .notification-heading h3 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+}
+:where(.totake) .notification-heading > span {
+  font-size: 11px;
+  color: var(--wuff-muted);
+  white-space: nowrap;
+}
+:where(.totake) .field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+:where(.totake) .device-note {
+  font-size: 11px;
+  color: var(--wuff-muted);
+  margin: 8px 0 16px;
+}
+:where(.totake) .no-alert {
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--wuff-surface);
+  border: 1px dashed var(--wuff-control);
+  border-radius: 10px;
+}
+:where(.totake) .no-alert h3 {
+  font-size: 14px;
+}
+:where(.totake) .no-alert p {
+  font-size: 12px;
+  color: var(--wuff-muted);
+  margin-top: 6px;
+}
+:where(.totake) .notifications {
+  display: grid;
+  gap: 16px;
+}
+:where(.totake) .notification {
+  padding: 16px;
+  border: 1px solid var(--wuff-control);
+  background: var(--wuff-surface);
+  border-radius: 12px;
+}
+:where(.totake) .notification-brand {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--wuff-muted);
+  margin-bottom: 12px;
+}
+:where(.totake) .notification-brand span {
+  margin-left: auto;
+}
+:where(.totake) .notification h4 {
+  font-size: 17px;
+  font-weight: 650;
+}
+:where(.totake) .notification > .muted {
+  font-size: 12px;
+  margin: 2px 0 8px;
+}
+:where(.totake) .notification-items {
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .notification > button {
+  margin: 8px 0;
+  padding-left: 0;
+}
+:where(.totake) .notification-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+:where(.totake) .scope {
+  color: var(--wuff-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+:where(.totake) .notification-bottom {
+  border-top: 1px solid var(--wuff-border);
+  margin-top: 12px;
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: space-between;
+}
+:where(.totake) .notification-bottom > span {
+  font-size: 10px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .notification-bottom button {
+  padding: 8px;
+  font-size: 12px;
+}
+:where(.totake) .watch-concept {
+  border-radius: 28px;
+  border-width: 3px;
+  padding: 20px 16px;
+}
+:where(.totake) .sim-details {
+  margin-top: 16px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .sim-details summary {
+  font-size: 12px;
+}
+:where(.totake) .sim-details .muted {
+  font-size: 12px;
+  margin: 8px 0;
+}
+:where(.totake) .cycles {
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+:where(.totake) .cycles li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--wuff-border);
+}
+:where(.totake) .cycles span {
+  display: block;
+}
+:where(.totake) .cycles button {
+  padding: 6px 0;
+  font-size: 12px;
+}
+:where(.totake) .event-log {
+  max-height: 300px;
+  overflow: auto;
+  padding-left: 18px;
+  font-size: 11px;
+}
+:where(.totake) .event-log li {
+  padding: 8px 0;
+}
+:where(.totake) .event-log time {
+  display: block;
+  color: var(--wuff-muted);
+}
+:where(.totake) .check-row {
+  min-height: 44px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+:where(.totake) input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--wuff-primary);
+  cursor: pointer;
+}
+:where(.totake) dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--wuff-border);
+  border-radius: 16px;
+  background: var(--wuff-surface);
+  color: var(--wuff-foreground);
+  overflow: auto;
+}
+:where(.totake) dialog::backdrop {
+  background: rgba(16, 30, 45, 0.44);
+}
+:where(.totake) .reminder-content {
+  padding: 20px 24px 24px;
+}
+:where(.totake) .reminder-content > button:first-child {
+  padding-left: 0;
+}
+:where(.totake) .reminder-heading {
+  margin: 12px 0 24px;
+}
+:where(.totake) .reminder-heading > .time-icon {
+  margin-bottom: 16px;
+}
+:where(.totake) .reminder-heading h2 {
+  font-size: 28px;
+  margin: 6px 0 10px;
+  line-height: 1.2;
+}
+:where(.totake) .reminder-heading > p:last-child {
+  font-size: 14px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .selection {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+:where(.totake) .selection legend {
+  color: var(--wuff-muted);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+:where(.totake) .selection-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--wuff-border);
+  min-height: 64px;
+  cursor: pointer;
+}
+:where(.totake) .record-selected {
+  width: 100%;
+  margin-top: 24px;
+}
+:where(.totake) .reminder-secondary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+:where(.totake) .reminder-secondary button {
+  flex: 1;
+}
+:where(.totake) .repeat-settings {
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+:where(.totake) .repeat-form {
+  display: flex;
+  gap: 8px;
+}
+:where(.totake) .error {
+  padding: 12px;
+  border: 1px solid #b91c1c;
+  color: #991b1b;
+  background: #fef2f2;
+  font-size: 13px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+@media (max-width: 900px) {
+  :where(.totake) .workspace {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+  }
+  :where(.totake) .group-top,
+  :where(.totake) .item-list {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  :where(.totake) .group-footer {
+    padding: 12px 16px;
+  }
+  :where(.totake) .page-heading > img {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  :where(.totake) .workspace {
+    grid-template-columns: 1fr;
+    padding: 28px 16px 40px;
+    gap: 32px;
+  }
+  :where(.totake) .topbar {
+    padding: 12px 16px;
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  :where(.totake) .prototype-tag {
+    font-size: 10px;
+  }
+  :where(.totake) .brand {
+    font-size: 18px;
+  }
+  :where(.totake) .demo-banner {
+    padding: 8px 16px;
+    font-size: 11px;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  :where(.totake) .demo-banner a {
+    min-height: 44px;
+  }
+  :where(.totake) .page-heading > img {
+    display: block;
+    width: 52px;
+    height: 52px;
+  }
+  :where(.totake) .page-heading {
+    gap: 8px;
+  }
+  :where(.totake) h1 {
+    font-size: 28px;
+  }
+  :where(.totake) .simulation {
+    padding: 20px;
+  }
+  :where(.totake) .group-footer button {
+    padding: 8px 10px;
+  }
+  :where(.totake) .time-title h3 span {
+    display: block;
+    margin: 2px 0 0;
+  }
+  :where(.totake) .recorded {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  :where(.totake) .item-list li {
+    gap: 10px;
+  }
+  :where(.totake) .item-name strong {
+    font-size: 14px;
+  }
+}
+@media (max-width: 360px) {
+  :where(.totake) .page-heading > img {
+    display: none;
+  }
+  :where(.totake) .topbar {
+    gap: 8px;
+  }
+  :where(.totake) .item-icon {
+    display: none;
+  }
+  :where(.totake) .simulation {
+    padding: 16px;
+  }
+  :where(.totake) .notification-heading {
+    flex-wrap: wrap;
+  }
+  :where(.totake) .reminder-content {
+    padding: 16px;
+  }
+  :where(.totake) .repeat-form {
+    flex-direction: column;
+  }
+  :where(.totake) .record-list li {
+    flex-wrap: wrap;
+  }
+  :where(.totake) .group-footer {
+    gap: 4px;
+  }
+  :where(.totake) .group-footer button {
+    font-size: 12px;
+    padding: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.totake) *,
+  :where(.totake) *::before,
+  :where(.totake) *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+/* Keep action labels readable on narrow phones. Native dialog supplies modality. */
+:where(.totake) dialog {
+  max-width: calc(100% - 24px);
+}
+@media (max-width: 480px) {
+  :where(.totake) .reminder-secondary {
+    flex-direction: column;
+  }
+  :where(.totake) .reminder-secondary button {
+    width: 100%;
+  }
+}
+/* v2: shared medication rows in notifications and original schedule boxes in history. */
+:where(.totake) .notification-selection {
+  border: 0;
+  padding: 0;
+  margin: 16px 0 0;
+  min-width: 0;
+}
+:where(.totake) .notification-selection legend {
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .notification-selection .selection-row {
+  gap: 12px;
+  padding: 12px 0;
+}
+:where(.totake) .notification-selection .item-name strong {
+  font-size: 14px;
+}
+:where(.totake) .snooze-controls {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .snooze-controls > button {
+  width: 100%;
+  margin-top: 8px;
+}
+:where(.totake) .recorded-groups {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+:where(.totake) .recorded-group {
+  overflow: hidden;
+}
+:where(.totake) .recorded-group .group-top {
+  padding: 16px;
+}
+:where(.totake) .recorded-group h3 {
+  font-size: 17px;
+}
+:where(.totake) .recorded-group .muted {
+  font-size: 12px;
+  margin-top: 4px;
+}
+:where(.totake) .recorded-group .record-list {
+  margin: 0;
+  padding: 0 16px;
+}
+:where(.totake) .recorded-group .record-list li:first-child {
+  border-top: 0;
+}
+:where(.totake) .recorded.card {
+  padding-bottom: 16px;
+}
+:where(.totake) .snoozed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--wuff-border);
+  padding: 12px 0;
+  color: var(--wuff-muted);
+}
+:where(.totake) .snoozed-row > div {
+  min-width: 0;
+}
+:where(.totake) .snoozed-row small {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* Integrated module: reuse Wuff's workspace shell, navigation rails and dialog pattern. */
+:where(.totake) .integrated-shell {
+  font-family: "DM Sans", sans-serif;
+}
+:where(.totake) .integrated-shell .workspace-main {
+  padding-top: 0;
+}
+:where(.totake) .workspace-brand-link {
+  color: var(--wuff-foreground);
+  text-decoration: none;
+}
+:where(.totake) .desktop-module-navigation {
+  min-width: 0;
+}
+:where(.totake) .module-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+:where(.totake) .module-navigation button {
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+:where(.totake) .module-navigation [aria-current] {
+  background: var(--wuff-surface);
+  box-shadow: inset 2px 0 var(--wuff-primary);
+}
+:where(.totake) .workspace-footer {
+  margin-top: auto;
+  padding-top: 24px;
+}
+:where(.totake) .workspace-footer > button {
+  width: 100%;
+  justify-content: flex-start;
+}
+:where(.totake) .workspace-footer p {
+  font-size: 11px;
+  color: var(--wuff-muted);
+  padding: 12px;
+}
+:where(.totake) .prototype-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--wuff-border);
+  margin-bottom: 24px;
+  min-height: 60px;
+}
+:where(.totake) .prototype-bar > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .prototype-bar button {
+  font-size: 12px;
+}
+:where(.totake) .module-content {
+  max-width: 980px;
+  margin: auto;
+  padding-bottom: 32px;
+}
+:where(.totake) .module-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0;
+}
+:where(.totake) .module-heading h1 {
+  font-size: 30px;
+  margin: 6px 0 0;
+  letter-spacing: -0.8px;
+}
+:where(.totake) .date-navigation {
+  border: 1px solid var(--wuff-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--wuff-surface);
+  margin-bottom: 24px;
+}
+:where(.totake) .week-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+:where(.totake) .week-controls h2 {
+  flex: 1;
+  font-size: 16px;
+}
+:where(.totake) .week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 12px;
+}
+:where(.totake) .week-strip .week-day {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+:where(.totake) .week-day small {
+  font-size: 11px;
+  font-weight: 400;
+}
+:where(.totake) .week-day strong {
+  font-size: 17px;
+}
+:where(.totake) .week-day[aria-pressed="true"],
+:where(.totake) .month-day[aria-pressed="true"] {
+  background: var(--wuff-accent);
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: -2px;
+  color: var(--wuff-primary);
+}
+:where(.totake) .day-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--wuff-muted);
+  line-height: 1;
+}
+:where(.totake) .day-indicator.all-recorded {
+  background: #dcfce7;
+  color: #166534;
+}
+:where(.totake) .day-indicator.unrecorded {
+  background: #ffedd5;
+  color: #9a3412;
+}
+:where(.totake) .calendar-legend {
+  display: flex;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--wuff-muted);
+  margin-top: 12px;
+}
+:where(.totake) .calendar-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+:where(.totake) .selected-date {
+  margin-top: 24px;
+}
+:where(.totake) .selected-date h2 {
+  font-size: 18px;
+}
+:where(.totake) .context-note {
+  margin-bottom: 16px;
+}
+:where(.totake) .fixture-note {
+  font-size: 12px;
+  color: var(--wuff-muted);
+  margin: 0 0 16px;
+}
+:where(.totake) .active-item {
+  flex: 1;
+  min-width: 0;
+}
+:where(.totake) .active-item > small {
+  display: block;
+  color: var(--wuff-primary);
+  font-size: 11px;
+  margin-top: 4px;
+}
+:where(.totake) .recorded-group .record-list li {
+  align-items: center;
+}
+:where(.totake) .recorded-group .record-list li > div {
+  flex: 1;
+}
+:where(.totake) .recorded-group .record-list li > button {
+  padding-inline: 10px;
+}
+:where(.totake) .audit-trail {
+  margin-top: 16px;
+  border-top: 1px solid var(--wuff-border);
+  font-size: 12px;
+}
+:where(.totake) .audit-trail summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+:where(.totake) .audit-trail li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--wuff-border);
+}
+:where(.totake) .audit-trail span,
+:where(.totake) .audit-trail small {
+  display: block;
+  color: var(--wuff-muted);
+}
+:where(.totake) .registered,
+:where(.totake) .settings-card,
+:where(.totake) .home-preview {
+  padding: 24px;
+}
+:where(.totake) .registered > p,
+:where(.totake) .settings-card > .muted {
+  font-size: 13px;
+  margin: 8px 0 20px;
+}
+:where(.totake) .registered .item-list {
+  padding: 0;
+}
+:where(.totake) .settings-card {
+  max-width: 640px;
+}
+:where(.totake) .settings-card > label {
+  margin-top: 24px;
+}
+:where(.totake) .settings-card > button {
+  margin-top: 12px;
+}
+:where(.totake) .settings-card h3 {
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+:where(.totake) .settings-card > .status-tag {
+  margin: 8px 0;
+}
+:where(.totake) .home-preview {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+:where(.totake) .home-preview > p {
+  font-size: 14px;
+}
+:where(.totake) .modal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wuff-border);
+  background: var(--wuff-surface);
+}
+:where(.totake) .modal-heading h2 {
+  font-size: 18px;
+}
+:where(.totake) .modal-heading > button {
+  flex-shrink: 0;
+}
+:where(.totake) .calendar-body,
+:where(.totake) .destination-body {
+  padding: 20px;
+}
+:where(.totake) .destination-body {
+  display: grid;
+  gap: 16px;
+}
+:where(.totake) .equipment-choices {
+  display: grid;
+  gap: 8px;
+}
+:where(.totake) .month-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+:where(.totake) .month-controls h3 {
+  font-size: 18px;
+}
+:where(.totake) .month-weekdays,
+:where(.totake) .month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+:where(.totake) .month-weekdays {
+  text-align: center;
+  font-size: 12px;
+  color: var(--wuff-muted);
+  margin: 12px 0;
+}
+:where(.totake) .month-grid .month-day {
+  min-width: 0;
+  padding: 4px 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+:where(.totake) .month-day[data-outside="true"] {
+  color: var(--wuff-muted);
+  background: var(--wuff-background);
+}
+:where(.totake) .calendar-body > button {
+  margin-top: 20px;
+}
+:where(.totake) .calendar-dialog {
+  width: min(480px, calc(100% - 24px));
+}
+:where(.totake) .module-navigation-dialog {
+  width: min(380px, calc(100% - 24px));
+}
+:where(.totake) .mobile-list-navigation {
+  padding: 16px;
+  min-height: 320px;
+}
+:where(.totake) .module-navigation-dialog .workspace-footer {
+  margin-top: 24px;
+}
+:where(.totake) .simulation-dialog {
+  width: min(720px, calc(100% - 24px));
+}
+:where(.totake) .simulation-dialog .simulation {
+  border: 0;
+  border-radius: 0;
+  background: var(--wuff-background);
+}
+:where(.totake) .simulation-dialog .notifications {
+  margin-top: 16px;
+}
+:where(.totake) .simulation-dialog .notification-actions {
+  grid-template-columns: 1fr 1fr;
+}
+:where(.totake) .simulation-dialog .notification-actions button {
+  white-space: normal;
+}
+:where(.totake) .simulation-dialog .clock {
+  max-width: 360px;
+}
+:where(.totake) .simulation-dialog .advance {
+  max-width: 360px;
+}
+:where(.totake) .simulation-dialog .notification {
+  max-width: 560px;
+}
+:where(.totake) .simulation-dialog .notification-selection .selection-row {
+  min-height: 64px;
+}
+:where(.totake) .simulation-dialog h3 {
+  margin: 16px 0 12px;
+}
+:where(.totake) .compact-notification summary {
+  margin-top: 12px;
+}
+:where(.totake) .compact-notification {
+  border: 1px solid var(--wuff-border);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+:where(.totake) dialog.full-screen-alert {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  border: 0;
+  margin: 0;
+  background: var(--wuff-background);
+}
+:where(.totake) .full-screen-alert .modal-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+:where(.totake) .full-alert-body {
+  max-width: 640px;
+  margin: auto;
+  padding: 28px 24px 40px;
+}
+:where(.totake) .alert-time {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: var(--wuff-primary);
+  margin: 16px 0 8px;
+}
+:where(.totake) .alert-time strong {
+  font-size: 42px;
+  letter-spacing: -1px;
+}
+:where(.totake) .full-alert-body > h2 {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+:where(.totake) .full-alert-body > .selection {
+  margin-top: 24px;
+}
+:where(.totake) .full-alert-body .skip-selected,
+:where(.totake) .full-alert-body .open-app {
+  width: 100%;
+  margin-top: 12px;
+}
+:where(.totake) .full-alert-body .record-selected {
+  margin-top: 24px;
+}
+@media (max-width: 767px) {
+  :where(.totake) .module-heading {
+    margin: 20px 0;
+  }
+  :where(.totake) .module-heading h1 {
+    font-size: 25px;
+  }
+  :where(.totake) .prototype-bar {
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  :where(.totake) .prototype-bar > span {
+    font-size: 10px;
+  }
+  :where(.totake) .prototype-bar > button {
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+  :where(.totake) .date-navigation {
+    padding: 8px;
+  }
+  :where(.totake) .week-controls h2 {
+    font-size: 14px;
+  }
+  :where(.totake) .week-controls {
+    gap: 0;
+  }
+  :where(.totake) .week-controls > button {
+    padding-inline: 8px;
+  }
+  :where(.totake) .week-strip {
+    gap: 0;
+  }
+  :where(.totake) .week-strip .week-day {
+    border-radius: 6px;
+  }
+  :where(.totake) .week-day small {
+    font-size: 10px;
+  }
+  :where(.totake) .calendar-legend {
+    font-size: 10px;
+    gap: 6px 10px;
+  }
+  :where(.totake) .selected-date {
+    flex-wrap: wrap;
+  }
+  :where(.totake) .selected-date h2 {
+    font-size: 17px;
+  }
+  :where(.totake) .recorded {
+    padding-inline: 12px;
+  }
+  :where(.totake) .recorded-group .record-list {
+    padding-inline: 12px;
+  }
+  :where(.totake) .recorded-group .record-list li {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  :where(.totake) .recorded-group .record-list li > div {
+    flex-basis: 100%;
+  }
+  :where(.totake) .recorded-group .record-list li > button {
+    margin-left: auto;
+  }
+  :where(.totake) .calendar-body {
+    padding: 12px;
+  }
+  :where(.totake) .month-grid,
+  :where(.totake) .month-weekdays {
+    gap: 0;
+  }
+  :where(.totake) .modal-heading {
+    padding: 12px 16px;
+  }
+  :where(.totake) .modal-heading h2 {
+    font-size: 16px;
+  }
+  :where(.totake) .full-alert-body {
+    padding: 20px 16px 32px;
+  }
+  :where(.totake) .simulation-dialog .notification-actions {
+    grid-template-columns: 1fr;
+  }
+  :where(.totake) .registered,
+  :where(.totake) .settings-card {
+    padding: 16px;
+  }
+  :where(.totake) .module-navigation button {
+    min-height: 48px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.totake) * {
+    scroll-behavior: auto !important;
+  }
+}
+/* Final v3 calendar refinement: coloured numbers, no visible state annotations. */
+:where(.totake) .date-navigation {
+  padding: 8px;
+  margin-bottom: 16px;
+}
+:where(.totake) .week-strip {
+  margin-top: 4px;
+  gap: 2px;
+}
+:where(.totake) .week-strip .week-day {
+  min-height: 48px;
+  padding: 4px 2px;
+  gap: 2px;
+}
+:where(.totake) .week-day small {
+  color: var(--wuff-muted);
+  font-size: 10px;
+}
+:where(.totake) .week-day strong {
+  font-size: 16px;
+}
+:where(.totake) .week-day[aria-pressed="true"],
+:where(.totake) .month-day[aria-pressed="true"] {
+  background: transparent;
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: -2px;
+}
+:where(.totake) .date-number[data-state="neutral"] {
+  color: var(--wuff-foreground);
+}
+:where(.totake) .date-number[data-state="all-recorded"] {
+  color: #166534;
+}
+:where(.totake) .date-number[data-state="unrecorded"] {
+  color: #9a3412;
+}
+:where(.totake) .month-grid .month-day {
+  min-height: 44px;
+  padding: 4px 0;
+  gap: 0;
+}
+:where(.totake) .month-weekdays {
+  margin: 8px 0 4px;
+}
+:where(.totake) .calendar-body > button {
+  margin-top: 12px;
+}
+@media (max-width: 767px) {
+  :where(.totake) .week-controls h2 {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  :where(.totake) .week-strip {
+    gap: 0;
+  }
+  :where(.totake) .date-navigation {
+    padding: 6px;
+  }
+  :where(.totake) .week-controls > button {
+    padding-inline: 6px;
+  }
+  :where(.totake) .week-controls > button[aria-label] {
+    min-width: 44px;
+  }
+  :where(.totake) .week-strip .week-day {
+    min-height: 48px;
+  }
+}
+/* Setup iteration: keep the reviewed shell and compact calendars. */
+:where(.totake) .month-day .date-number[data-state="all-recorded"],
+:where(.totake) .month-day .date-number[data-state="unrecorded"] {
+  font-weight: 700;
+}
+:where(.totake) .month-day .date-number[data-state="neutral"] {
+  font-weight: 400;
+}
+:where(.totake) .setup-dialog {
+  width: min(680px, calc(100% - 24px));
+}
+:where(.totake) .setup-body {
+  padding: 20px 24px 24px;
+}
+:where(.totake) .setup-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--wuff-muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+:where(.totake) .setup-body > h3 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin-bottom: 20px;
+  letter-spacing: -0.4px;
+}
+:where(.totake) .setup-fields {
+  display: grid;
+  gap: 20px;
+}
+:where(.totake) .setup-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+:where(.totake) .setup-field > label,
+:where(.totake) .repeat-group > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+:where(.totake) .field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  min-width: 0;
+}
+:where(.totake) .schedule-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+:where(.totake) .schedule-choices button {
+  min-width: 0;
+  white-space: normal;
+}
+:where(.totake) .schedule-choices [aria-pressed="true"] {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: -2px;
+  background: var(--wuff-accent);
+}
+:where(.totake) .more-schedules {
+  padding-top: 12px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .weekday-choice {
+  border: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+:where(.totake) .weekday-choice legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+:where(.totake) .weekday-choice label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--wuff-control);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+:where(.totake) .proposal {
+  border-left: 3px solid var(--wuff-primary);
+  background: var(--wuff-accent);
+  padding: 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .proposal .check-row {
+  font-size: 13px;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+:where(.totake) .proposal .check-row input {
+  margin-top: 2px;
+}
+:where(.totake) .administration {
+  border: 1px solid var(--wuff-border);
+  padding: 12px;
+  border-radius: 8px;
+  min-width: 0;
+}
+:where(.totake) .administration > button {
+  margin-top: 8px;
+}
+:where(.totake) .repeat-group {
+  border: 1px solid var(--wuff-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+:where(.totake) .repeat-group > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+:where(.totake) .repeat-group span,
+:where(.totake) .saved-interval {
+  color: var(--wuff-muted);
+  font-size: 12px;
+}
+:where(.totake) .repeat-group .check-row {
+  margin-top: 0;
+  font-size: 12px;
+}
+:where(.totake) .setup-note {
+  border-top: 1px solid var(--wuff-border);
+  font-size: 12px;
+}
+:where(.totake) .setup-note p {
+  color: var(--wuff-muted);
+  margin: 4px 0 12px;
+}
+:where(.totake) .setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .setup-actions > button:first-child {
+  margin-right: auto;
+}
+:where(.totake) .setup-review {
+  display: grid;
+  gap: 16px;
+}
+:where(.totake) .review-section {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--wuff-border);
+  padding-bottom: 12px;
+}
+:where(.totake) .review-section > div {
+  min-width: 0;
+}
+:where(.totake) .review-section h4 {
+  font-size: 13px;
+  font-weight: 650;
+}
+:where(.totake) .review-section p {
+  font-size: 13px;
+  color: var(--wuff-muted);
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+}
+:where(.totake) .review-section button {
+  font-size: 11px;
+  max-width: 140px;
+  white-space: normal;
+  padding-inline: 8px;
+}
+:where(.totake) .local-save-label,
+:where(.totake) .local-status {
+  font-size: 11px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .local-status {
+  margin-top: 24px;
+}
+:where(.totake) .registered-description {
+  min-width: 0;
+  flex: 1;
+}
+:where(.totake) .registered-description > small {
+  display: block;
+  font-size: 11px;
+  color: var(--wuff-muted);
+  margin-top: 4px;
+}
+:where(.totake) .registered > h2 {
+  margin-bottom: 12px;
+}
+:where(.totake) .scope-choice {
+  margin-top: 20px;
+  padding: 0;
+  border: 0;
+}
+:where(.totake) .scope-choice legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+:where(.totake) .scope-choice label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  font-size: 14px;
+  cursor: pointer;
+}
+:where(.totake) .scope-choice input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--wuff-primary);
+}
+:where(.totake) .reminder-time-actions {
+  margin-top: 20px;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .reminder-time-actions button {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  :where(.totake) .setup-body {
+    padding: 16px;
+  }
+  :where(.totake) .field-pair {
+    gap: 12px;
+  }
+  :where(.totake) .setup-body > h3 {
+    font-size: 20px;
+  }
+  :where(.totake) .setup-progress {
+    font-size: 11px;
+  }
+  :where(.totake) .review-section {
+    flex-direction: column;
+    gap: 4px;
+  }
+  :where(.totake) .review-section button {
+    max-width: none;
+  }
+  :where(.totake) .setup-actions {
+    gap: 6px;
+  }
+  :where(.totake) .setup-actions button {
+    padding-inline: 12px;
+  }
+  :where(.totake) .setup-fields {
+    gap: 16px;
+  }
+}
+@media (max-width: 360px) {
+  :where(.totake) .field-pair {
+    grid-template-columns: 1fr;
+  }
+  :where(.totake) .schedule-choices {
+    grid-template-columns: 1fr;
+  }
+  :where(.totake) .setup-actions button {
+    font-size: 12px;
+    padding-inline: 10px;
+  }
+}
+
+/* Shared setup/reminder date picker: formatted entry plus calendar selection. */
+:where(.totake) .date-picker {
+  min-width: 0;
+}
+:where(.totake) .date-picker-entry {
+  display: flex;
+  gap: 8px;
+}
+:where(.totake) .date-picker-entry input {
+  min-width: 0;
+  flex: 1;
+}
+:where(.totake) .date-picker-panel {
+  margin-top: 8px;
+  max-width: 320px;
+  padding: 8px;
+  border: 1px solid var(--wuff-border);
+  border-radius: 8px;
+  background: var(--wuff-background);
+}
+:where(.totake) .date-picker-panel h4 {
+  font-size: 14px;
+}
+:where(.totake) .date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+:where(.totake) .date-picker-grid button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+:where(.totake) .date-picker-grid button[data-outside="true"] {
+  color: var(--wuff-muted);
+}
+:where(.totake) .date-picker-grid button[aria-pressed="true"] {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: -3px;
+}
+:where(.totake) .setup-field:has(.date-picker-panel) {
+  grid-column: 1/-1;
+}
+
+:where(.totake) .stock-summary {
+  margin-top: 10px;
+  font-size: 13px;
+  min-width: 0;
+}
+:where(.totake) .stock-summary > strong,
+:where(.totake) .stock-summary > small {
+  display: block;
+}
+:where(.totake) .stock-summary p {
+  margin: 6px 0;
+}
+:where(.totake) .stock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+:where(.totake) .stock-estimate {
+  font-weight: 600;
+}
+:where(.totake) .stock-discrepancy,
+:where(.totake) .stock-refill {
+  padding: 8px;
+  border: 1px solid var(--wuff-border);
+  border-left: 3px solid var(--wuff-primary);
+  border-radius: 6px;
+}
+:where(.totake) .stock-history summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+:where(.totake) .stock-history ol {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+}
+:where(.totake) .stock-history li {
+  display: block !important;
+  border-top: 1px solid var(--wuff-border);
+  padding: 10px 0 !important;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .stock-history li > * {
+  display: block;
+}
+:where(.totake) .forecast-assumptions {
+  margin-top: 16px;
+}
+:where(.totake) .stock-summary button {
+  white-space: normal;
+}
+
+:where(.totake) .registered .item-list > li.tracked-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+}
+:where(.totake) .tracked-item > .stock-summary {
+  grid-column: 1/-1;
+  width: 100%;
+  margin-top: 0;
+}
+:where(.totake) .stock-estimate {
+  overflow-wrap: normal;
+}
+
+:where(.totake) .tracked-item > .item-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+:where(.totake) .tracked-item > .registered-description {
+  grid-column: 2;
+  grid-row: 1;
+}
+:where(.totake) .tracked-item > button {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Semantic stock warning colours are independent of the selected list palette. */
+:where(.totake) .warning-surface {
+  background: #ffedd5;
+  color: #713600;
+  border: 1px solid #d97706;
+}
+:where(.totake) .warning-surface[data-tone="danger"] {
+  background: #fee2e2;
+  color: #881337;
+  border-color: #dc2626;
+}
+:where(.totake) .stock-warning-strip.wuff-button {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  white-space: normal;
+  min-height: 44px;
+  height: auto;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  background: #ffedd5;
+  color: #713600;
+  border-color: #d97706;
+}
+:where(.totake) .stock-warning-strip.wuff-button[data-tone="danger"] {
+  background: #fee2e2;
+  color: #881337;
+  border-color: #dc2626;
+}
+:where(.totake) .stock-warning-strip > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .stock-warning-strip > svg {
+  flex-shrink: 0;
+}
+:where(.totake) .stock-warning-strip.wuff-button:hover {
+  filter: brightness(0.97);
+}
+:where(.totake) .stock-warning-panel {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+:where(.totake) .stock-warning-panel > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+:where(.totake) .stock-warning-panel > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .stock-warning-panel p {
+  margin: 6px 0 10px;
+}
+:where(.totake) .stock-warning-panel button {
+  background: #fff;
+  color: #713600;
+  border-color: #d97706;
+}
+:where(.totake) .stock-warning-panel[data-tone="danger"] button {
+  color: #881337;
+  border-color: #dc2626;
+}
+:where(.totake) .stock-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+:where(.totake) .stock-list-heading h2 {
+  margin: 0;
+}
+:where(.totake) .stock-summary:focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Compact calendar controls retain touch targets and wrap as two logical groups. */
+:where(.totake) .week-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 6px;
+}
+:where(.totake) .week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: max-content;
+}
+:where(.totake) .week-navigation h2 {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+:where(.totake) .week-navigation > button {
+  flex-shrink: 0;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+}
+:where(.totake) .week-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+:where(.totake) .week-actions > button {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+:where(.totake) .week-actions > button:first-child {
+  padding-inline: 10px;
+}
+:where(.totake) .week-actions > button[aria-label] {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+}
+:where(.totake) .date-navigation .week-strip {
+  margin-top: 10px;
+}
+
+:where(.totake) .clock-controls {
+  margin-top: 24px;
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 12px;
+}
+:where(.totake) .clock-controls > label,
+:where(.totake) .clock-examples > label {
+  display: block;
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+:where(.totake) .clock-controls > .field-pair {
+  margin-top: 16px;
+}
+:where(.totake) .clock-controls > button {
+  margin-top: 10px;
+}
+:where(.totake) .clock-examples {
+  margin-top: 20px;
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 12px;
+}
+:where(.totake) .clock-examples > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+:where(.totake) .clock-example-now {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+}
+:where(.totake) .clock-example-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+:where(.totake) .clock-example-list > li {
+  padding: 12px 0;
+  border-top: 1px solid var(--wuff-border);
+}
+:where(.totake) .clock-example-list small,
+:where(.totake) .clock-example-list span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .clock-example-list small {
+  font-size: 11px;
+  color: var(--wuff-muted);
+}
+:where(.totake) .clock-controls .scenario-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+:where(.totake) .clock-controls .scenario-controls button {
+  white-space: normal;
+}
+:where(.totake) .registered .item-list > li:has(.adjust-hourly) {
+  flex-wrap: wrap;
+}
+:where(.totake) .registered .item-list > li > .adjust-hourly {
+  grid-column: 2/-1;
+  grid-row: 2;
+  justify-self: start;
+  margin-left: auto;
+}
+
+:where(.totake) .registered .item-list > li > .adjust-hourly {
+  flex-basis: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+:where(.totake) .notification .reminder-overdue,
+:where(.totake) .full-alert-body .reminder-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 9px;
+  margin: 8px 0;
+  background: #fee2e2;
+  color: #881337;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+:where(.totake) .reminder-overdue svg {
+  flex-shrink: 0;
+}
+
+/* Shared prototype reminder secondary action: palette fills, unchanged geometry. */
+:where(.totake) .reminder-skip.wuff-button {
+  background: var(--wuff-accent);
+  color: var(--wuff-foreground);
+}
+:where(.totake) .reminder-skip.wuff-button:hover:not(:disabled) {
+  background: var(--wuff-border);
+}
+:where(.totake) .reminder-skip.wuff-button:focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: 3px;
+}
+:where(.totake) .simulation-dialog .lab-palette {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 0;
+  margin-bottom: 12px;
+  background: var(--wuff-background);
+}
+:where(.totake) .lab-palette > label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+:where(.totake) .lab-palette > span {
+  flex: 1;
+  min-width: 0;
+}
+
+/* One-time intake uses existing setup and recorded-row geometry. */
+:where(.totake) .one-time-choices {
+  display: grid;
+  gap: 8px;
+}
+:where(.totake) .one-time-choices > button {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+}
+:where(.totake) .one-time-choices span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:where(.totake) .one-time-choices small,
+:where(.totake) .one-time-medication span {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+}
+:where(.totake) .one-time-medication {
+  overflow-wrap: anywhere;
+}
+:where(.totake) .intake-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  :where(.totake) .one-time-dialog .field-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+:where(.totake) .one-time-history small {
+  overflow-wrap: anywhere;
+}
+
+/* Exclusive one-time choice: persistent selection, separate hover and focus. */
+:where(.totake) .one-time-dialog .one-time-option {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+  gap: 12px;
+}
+:where(.totake) .one-time-option .choice-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  min-height: 20px;
+  color: var(--wuff-primary);
+}
+:where(.totake) .one-time-dialog .one-time-option[aria-pressed="true"] {
+  background: var(--wuff-accent);
+  border-color: var(--wuff-primary);
+  box-shadow: inset 0 0 0 1px var(--wuff-primary);
+  color: var(--wuff-foreground);
+}
+:where(.totake) .one-time-dialog .one-time-option[aria-pressed="true"]:hover {
+  background: var(--wuff-border);
+}
+:where(.totake) .one-time-dialog .one-time-option:focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: 3px;
+}
+
+:where(.totake) .destination-body > .add-one-time {
+  display: grid;
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 16px;
+}
+
+.totake {
+  min-width: 0;
+}
+.totake-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: calc(100dvh - 76px);
+}
+.totake-sidebar {
+  padding: 24px 12px;
+  background: var(--wuff-sidebar);
+  border-right: 1px solid var(--wuff-border);
+}
+.totake-sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+.totake-sidebar nav button {
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+.totake-sidebar a {
+  display: block;
+  padding: 16px 12px;
+}
+.totake-main {
+  padding: 24px;
+  min-width: 0;
+  max-width: 1100px;
+  width: 100%;
+  margin: auto;
+}
+.totake-menu {
+  display: none !important;
+}
+.totake-operation-scope {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.totake .settings-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+.totake dialog fieldset.totake-operation-scope:disabled {
+  opacity: 0.7;
+}
+.totake .groups {
+  margin-top: 16px;
+}
+.totake .tracked-item {
+  flex-wrap: wrap;
+}
+.totake dialog {
+  color: var(--wuff-foreground);
+}
+@media (max-width: 767px) {
+  .totake-layout {
+    display: block;
+  }
+  .totake-sidebar {
+    padding: 8px 16px;
+    border-right: 0;
+  }
+  .totake-sidebar > a,
+  .totake-desktop-nav {
+    display: none;
+  }
+  .totake-menu {
+    display: flex !important;
+  }
+  .totake-main {
+    padding: 16px;
+  }
+  .totake .week-day {
+    padding: 8px 0;
+    min-width: 0;
+  }
+  .totake .module-heading h1 {
+    font-size: 26px;
+  }
+}
+
+.totake-settings-only .totake-layout {
+  display: block;
+  min-height: 0;
+}
+.totake-settings-only .totake-sidebar {
+  display: none;
+}
+.totake-settings-only .totake-main {
+  padding: 0;
+}
+.totake-settings-only .module-heading h1 {
+  font-size: 24px;
+}

@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
-import { Pill, ArrowLeft } from "lucide-react";
 import { PortalPage } from "@/components/portal-page";
-
-export const metadata: Metadata = { title: "Wuff Totake · Wuff Empire" };
+import { pageActor } from "@/lib/auth/server";
+import { getTotake } from "@wuff/domain";
+import { TotakeApp } from "@wuff/ui/features/totake/totake-app";
+import "@wuff/ui/features/totake/totake.css";
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Wuff Totake · Wuff Empire" };
+async function TotakeContent() {
+  const actor = await pageActor();
+  return (
+    <TotakeApp
+      key={actor.id}
+      userId={actor.id}
+      initial={await getTotake(actor)}
+    />
+  );
+}
+
 export default function TotakePage() {
   return (
     <PortalPage destination="/totake">
-      <main id="empire-content" className="empire-page empire-coming-soon">
-        <span className="empire-app-icon" aria-hidden="true">
-          <Pill size={32} />
-        </span>
-        <p className="empire-eyebrow">A new member of the pack</p>
-        <h1>Wuff Totake</h1>
-        <p>A personal home for medicine reminders.</p>
-        <p className="empire-coming-note">
-          Coming soon. Medicine tracking and reminders aren’t available yet.
-        </p>
-        <a className="empire-text-link" href="/">
-          <ArrowLeft size={18} aria-hidden="true" />
-          Back to dashboard
-        </a>
-      </main>
+      <TotakeContent />
     </PortalPage>
   );
 }

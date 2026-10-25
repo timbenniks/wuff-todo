@@ -49,9 +49,9 @@ no production application release or installed-device acceptance is claimed.
   behavior, account sign-out recovery and 320/390/1280px layouts. Its mocked
   empty/error responses remain clearly distinct from real successful reads.
 - `node --env-file=.env.local --import tsx --test --test-concurrency=1
-  tests/empire-settings.integration.test.ts tests/empire-adapters.integration.test.ts
-  tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts
-  tests/reminders.integration.test.ts` passed **all 6 integration tests**, no skips.
+tests/empire-settings.integration.test.ts tests/empire-adapters.integration.test.ts
+tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts
+tests/reminders.integration.test.ts` passed **all 6 integration tests**, no skips.
   New cases call real HTTP, MCP and native bearer adapters in both write/read
   directions, read actual consent pages, test Empire-only/read-only/legacy grants,
   unchanged refresh authority, account/origin/audience rejection, stale/concurrent
@@ -122,7 +122,7 @@ This is local development evidence, not production or installed-client acceptanc
   public/private boundaries, and exact create-response-loss recovery. Its existing
   screenshot files were restored to preserve the earlier milestone's evidence.
 - `node --env-file=.env.local --import tsx --test --test-concurrency=1
-  tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts`
+tests/dashboard.integration.test.ts tests/dashboard-adapters.integration.test.ts`
   passed all **3 integration tests**: actual web/MCP/native adapters, scope/origin/
   account/audience boundaries, shared preferences, authorized dated task/subtask
   projection/counts/favorites, independent preference revisions, retries and
@@ -1093,3 +1093,75 @@ Local implementation is ready for review and source push to main. Production
 runtime, installed native clients, physical touch, assistive technologies and
 participant usability remain separate verification. Existing public `/docs` URLs
 and downloads are preserved; authenticated embedded guide routes are `/settings/docs`.
+
+## Totake and shared notification controls — October 25, 2026
+
+Implementation source: `61347699ec162c1db82d87748ad104ed1b7d23f1` on
+`codex/wuff-totake`, draft PR #26. Contract and explicit release gates:
+[Totake](totake.md). No application production deployment or actual notification
+send is claimed. Existing unrelated root dependency/tooling edits were retained
+locally and excluded from the PR.
+
+- `pnpm typecheck`: all workspace and root scripts/tests passed.
+- `pnpm test`: **156 tests, no skips**. `tests/totake.test.ts` covers empty personal
+  defaults; identities/no backfill; stock/Undo/Skip/Snooze; strict selection;
+  liquid/drop exclusion; exact twelve-decimal count arithmetic; Add versus Correct;
+  PRN registration/intake/Undo; immutable history; DST gap/fold and elapsed-hour
+  repeated labels; weekdays/day intervals/cycles; weekly sensor anchors; one-only
+  scoped moves and active repeat cadence; timezone edits without fabricated sends;
+  global/app pause/privacy projection; future-snooze rejection; and delayed-read
+  version/account guards and explicit-recovery priority over periodic reads; due reminders retained after a definition becomes as-needed. Updated `tests/native-features.test.ts` exercises native
+  action/query/account pinning and rejection; `tests/empire-settings.test.ts`
+  verifies new consent roots/default preservation and opt-in summary behavior.
+- `pnpm build`: guide generation, MCP bundle and optimized web build passed.
+- `pnpm build:native:web`: frontend compilation passed. Existing >500kB chunk
+  advisory remains; this is not an installed Totake or push-registration test.
+- The serial integration command for `tests/totake.integration.test.ts`,
+  `tests/reminders.integration.test.ts`, `tests/empire-settings.integration.test.ts`
+  and `tests/empire-adapters.integration.test.ts` passed **five tests, no skips**.
+  The focused Totake pair was rerun after final domain changes and passed again.
+  Tests use the actual optimized HTTP/MCP/native adapters and real isolated
+  transactions: consent/PKCE, dedicated/readonly/legacy grants, refresh expansion
+  denial, account/origin guards, API-write/MCP-read and MCP-write/readback,
+  native Undo, bounded summary without medicine names, conflicts/concurrency,
+  same-operation replay, revocation including receipt replay, notification
+  settings parity, paused/stale callbacks, per-device partial failure receipts,
+  current-state cancellation and recovery of an overdue scheduled job.
+  Push senders are mocked; loopback prevents publication to QStash.
+- `node --env-file=.env.local --import tsx scripts/verify-totake.ts`: optimized
+  browser and real local MCP Apps SDK host exercise selected recording, exact
+  Undo/stock, lost committed response and identical explicit retry, Cancel,
+  dirty cross-category dismissal, conflict/draft/load-latest, failed-refresh
+  read-only recovery, future-snooze availability, opt-in portal summary,
+  shared pause Save/Cancel/readback, and 320/390/1280px document overflow.
+  The SDK fixture additionally loses a committed tool reply and retries identical
+  arguments. Synthetic data and grants are cleaned; existing personal settings
+  are restored. This is local SDK-host proof, not named ChatGPT/Codex production
+  host, touch device or screen-reader proof.
+- Screenshots `docs/screenshots/totake-*` show overview, inventory, reminder,
+  six-stage review, Empire summary and actual embedded MCP controls with fictional
+  data. No private handover reference images/conversation/medication data were
+  added to the repository.
+
+Migration `0019_totake_and_notifications.sql` was explicitly authorized for
+**development and production**. Development applied first. Production preflight
+required a distinct direct connection, all nineteen prior migration hashes and
+only 0019 pending. Ten new tables and final migration hash were read back; all
+existing user/list/task/member row counts and complete row fingerprints matched
+before/after. Only app tables and Drizzle bookkeeping changed; no auth-managed
+schema or production medicine fixtures were written.
+
+Read-only `vercel env ls production` name inventory was verified against the
+existing DATABASE_URL entry. It showed no complete Web Push/native push provider
+configuration and no Totake delivery flag. No credential values were displayed,
+no provider was provisioned/configured and no real message was sent. Actual
+native push registration/actions, native Totake workspace/optional consent flow,
+provider setup and closed/restarted-phone plus Galaxy Watch 7/Garmin Venu 3 proof
+remain release work. Current native workspace stays Todo. Large-history pagination
+and performance beyond the initial personal aggregate are documented limits.
+
+GitHub Verify run 40188248561 and policy run 40188246816 did not start: account
+billing/spending limits blocked runners. These are incomplete remote checks,
+not passing code verification. Keep the PR draft. Vercel preview status and final
+PR metadata are recorded separately; preview backend isolation is unconfirmed,
+so no preview writes or medical-data smoke are claimed.

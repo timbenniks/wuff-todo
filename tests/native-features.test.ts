@@ -255,3 +255,38 @@ test("GitHub consent survives old live 401 responses without triggering session 
   assert.equal(signouts, 0);
   assert.equal(saved.refreshToken, "upgraded-refresh");
 });
+
+test("Totake and notification routes use account-pinned native calls and reject unsupported mutations", async () => {
+  const calls: unknown[] = [];
+  const api = featureApi(
+    {
+      call: async (...args: unknown[]) => {
+        calls.push(args);
+        return {} as never;
+      },
+    },
+    "totake-actor",
+  );
+  const payload = {
+    version: 2,
+    operationId: "stable-operation",
+    change: {
+      action: "record",
+      groupId: "group",
+      itemIds: ["item"],
+      outcome: "taken",
+    },
+  };
+  await api("/api/v1/totake");
+  await api("/api/v1/totake", "PUT", payload);
+  await api("/api/v1/notifications");
+  await api("/api/v1/totake?day=21000");
+  assert.deepEqual(calls, [
+    ["getTotake", {}, "totake-actor"],
+    ["updateTotake", payload, "totake-actor"],
+    ["getNotificationSettings", {}, "totake-actor"],
+    ["getTotake", { day: 21000 }, "totake-actor"],
+  ]);
+  await assert.rejects(api("/api/v1/totake", "DELETE", payload), ApiError);
+  await assert.rejects(api("https://other.example/api/v1/totake"), ApiError);
+});
