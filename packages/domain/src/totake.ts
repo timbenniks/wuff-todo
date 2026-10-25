@@ -23,7 +23,12 @@ import {
   type TotakeSnapshot,
 } from "@wuff/contracts";
 import { schedulePendingTotake } from "./totake-delivery";
-import { emptyTotake, refreshTotake, applyTotakeAction } from "./totake-state";
+import {
+  emptyTotake,
+  refreshTotake,
+  applyTotakeAction,
+  totakeNeedsScheduler,
+} from "./totake-state";
 type Db = ReturnType<typeof database>["db"];
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 async function admitted(tx: Db | Tx, actor: Actor, write = false) {
@@ -357,7 +362,7 @@ export async function reconcileTotakeJob(
       .pending(g)
       .map((i) => g.reminders[i.id].nextInstant ?? i.alertInstant ?? Infinity),
   );
-  const enabled = !!state.treatments?.some((t) => t.schedule !== "prn");
+  const enabled = totakeNeedsScheduler(state);
   const runAt = new Date(
     Math.max(now + 1000, Math.min(now + 6 * 86400000, ...future)),
   );

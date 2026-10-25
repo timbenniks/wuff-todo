@@ -169,3 +169,11 @@ export function applyTotakeAction(
   // Diagnostic event strings are not a second permanent medical history.
   return { ...next, events: [] };
 }
+
+/** Editing a definition never cancels an already-due unresolved occurrence. */
+export function totakeNeedsScheduler(state: TotakeState) {
+  return (
+    !!state.treatments?.some((t) => t.schedule !== "prn") ||
+    state.groups.some((g) => e.pending(g).length > 0)
+  );
+}

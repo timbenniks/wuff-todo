@@ -11,6 +11,7 @@ import {
   emptyTotake,
   refreshTotake,
   applyTotakeAction,
+  totakeNeedsScheduler,
 } from "../packages/domain/src/totake-state";
 const now = Date.parse("2026-10-25T06:00:00Z");
 function fixture() {
@@ -561,4 +562,38 @@ test("explicit latest-load cannot be canceled by periodic reads; saving invalida
   gate.invalidate();
   assert.equal(gate.current(next), false);
   assert.notEqual(gate.begin(), null);
+});
+
+test("changing a treatment to as-needed keeps already-due reminders active until explicitly recorded", () => {
+  const { s } = fixture(),
+    g = s.groups[0],
+    at = g.items[0].alertInstant! + 3600000;
+  const changed = applyTotakeAction(
+    s,
+    {
+      action: "save_treatment",
+      draft: {
+        ...s.treatments![0],
+        schedule: "prn",
+        groupIntervals: {},
+        groupEdits: {},
+      },
+    },
+    randomUUID(),
+    at,
+  );
+  assert.ok(changed.treatments!.every((t) => t.schedule === "prn"));
+  assert.equal(totakeNeedsScheduler(changed), true);
+  const resolved = applyTotakeAction(
+    changed,
+    {
+      action: "record",
+      groupId: g.id,
+      itemIds: [g.items[0].id],
+      outcome: "skipped",
+    },
+    randomUUID(),
+    at,
+  );
+  assert.equal(totakeNeedsScheduler(resolved), false);
 });

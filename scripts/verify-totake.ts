@@ -332,6 +332,7 @@ try {
   await expect(
     page.getByRole("heading", { name: "From Wuff Totake", exact: true }),
   ).toBeVisible();
+  await expect(page.getByText(/items unrecorded today/)).toBeVisible();
   await page.screenshot({
     path: "docs/screenshots/totake-empire-summary-1280.png",
     fullPage: true,
