@@ -53,6 +53,9 @@ Todo connection. No auth schema, native permissions or infrastructure changes.
 
 ## Delivery
 
+Proposed follow-up before Totake: [shared Empire settings and personal app choices](empire-settings-plan.md).
+That plan is not part of the portal's implemented behavior or verification claims.
+
 Branch `codex/wuff-empire-portal`; [draft PR #25](https://github.com/timbenniks/wuff-todo/pull/25).
 Verification commands and limits are recorded in `docs/verification.md`. Existing local
 edits to package.json, pnpm-lock.yaml and pnpm-workspace.yaml are outside this
