@@ -1,21 +1,17 @@
-name: Contributor scope and evidence
+name: Contributor delivery and safety
 on:
   pull_request_target:
     branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
-  issue_comment:
-    types: [created, edited, deleted]
 permissions:
   contents: read
   pull-requests: read
-  issues: read
   checks: write
 concurrency:
-  group: contributor-policy-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: contributor-policy-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 jobs:
   policy:
-    if: github.event_name == 'pull_request_target' || (github.event.issue.pull_request && github.event.comment.user.id == 121096)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

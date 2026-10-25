@@ -2,14 +2,15 @@
 
 <!-- Replace comments with the goal, intended users, included/excluded behavior,
 preserved behavior and testable acceptance checkboxes: - [ ] Observable result.
-Tim approves a hash of this brief AND the surface scope fields below. Capability
-or UI/connection decisions changing need renewed approval; evidence can evolve. -->
+Keep this brief proportional to the change and current as you iterate. No
+preliminary approval, scope hash or approved file list is required. -->
 
 ## Scope
 
 <!-- Identify files/components, interactions, test/doc changes and any schema,
 auth, contracts, dependencies, global styles, native config or safeguard changes.
-Explain sensitive changes and request Tim's approval. -->
+Highlight high-risk access/privacy, schema, permission, operational or safeguard
+changes for Tim's final review. Routine implementation choices need no approval. -->
 
 ## API, MCP and connections
 

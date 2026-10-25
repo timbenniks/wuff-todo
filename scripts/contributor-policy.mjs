@@ -1,9 +1,7 @@
-import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 export const CHECK_NAME = "Contributor policy";
-export const MAINTAINER_ID = 121096;
 const sections = [
   "Feature brief",
   "Scope",
@@ -27,44 +25,6 @@ export function section(body, title) {
     .join("\n")
     .replace(/<!--[\s\S]*?-->/g, "")
     .trim();
-}
-
-export function briefHash(body) {
-  const content = section(body, "API, MCP and connections");
-  let scope = content;
-  try {
-    const matches = [...content.matchAll(/```json\s*\n([\s\S]*?)\n```/g)];
-    if (matches.length !== 1) throw new Error("Invalid contract");
-    const value = JSON.parse(matches[0][1]);
-    // Bind intended capabilities, not results/status that must evolve during implementation.
-    scope = JSON.stringify({
-      dataChanges: value.dataChanges,
-      noDataChangesReason:
-        value.dataChanges === false ? value.noDataChangesReason : undefined,
-      operations: Array.isArray(value.operations)
-        ? value.operations.map((op) => ({
-            action: op?.action,
-            domain: op?.domain,
-            api: op?.api,
-            mcp: op?.mcp,
-          }))
-        : value.operations,
-      mcpUi: { decision: value.mcpUi?.decision, reason: value.mcpUi?.reason },
-      connections: {
-        affected: value.connections?.affected,
-        review: value.connections?.review,
-      },
-    });
-  } catch {
-    /* Invalid declarations still get a reportable hash but can never pass policy. */
-  }
-  return createHash("sha256")
-    .update(
-      section(body, "Feature brief") +
-        "\n\n## API, MCP and connections\n" +
-        scope,
-    )
-    .digest("hex");
 }
 
 export function surfaceContractErrors(body) {
@@ -165,37 +125,22 @@ function validPath(path) {
   );
 }
 
-function validPattern(pattern) {
-  if (typeof pattern !== "string") return false;
-  const prefix = pattern?.endsWith("/**") ? pattern.slice(0, -3) : pattern;
-  return validPath(prefix) && !/[\*?\[\]{}!]/.test(prefix);
-}
-
-function matches(path, pattern) {
-  return pattern.endsWith("/**")
-    ? path.startsWith(pattern.slice(0, -2))
-    : path === pattern;
-}
-
+// Review hints only: contributors may prepare these changes without prior approval.
+// Semantic access/permission changes still need human review even outside these paths.
 export function sensitive(path) {
   return (
-    /^(?:\.github\/|\.codex\/|\.agents\/|scripts\/|packages\/(?:db|domain|contracts|design)\/)/.test(
-      path,
-    ) ||
+    /^(?:\.github\/|\.codex\/|\.agents\/|packages\/db\/)/.test(path) ||
     /(?:^|\/)AGENTS(?:\.override)?\.md$/.test(path) ||
-    /(?:^|\/)(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vercel\.json|drizzle\.config\.[^/]+|tsconfig[^/]*\.json|next\.config\.[^/]+|postcss\.config\.[^/]+|Cargo\.(?:toml|lock)|\.gitignore)$/.test(
+    /^(?:scripts\/(?:contributor-policy|migrate|seed-development|provision)[^/]*|docs\/(?:contributor[^/]*|github-main-ruleset\.json))$/.test(
       path,
     ) ||
-    /\.(?:css|scss)$/.test(path) ||
-    /^(?:apps\/web\/src\/(?:app\/(?:api|oauth|\.well-known)(?:\/|$)|lib\/)|packages\/(?:client|ui)\/src\/.*(?:auth|api|runtime|live))/i.test(
+    /^(?:apps\/web\/src\/(?:app\/(?:oauth|\.well-known)(?:\/|$)|lib\/(?:auth(?:\/|\.)|oauth\.|native-policy\.))|packages\/domain\/src\/(?:index|agents|github-policy)\.)/.test(
       path,
     ) ||
-    /^(?:apps\/native\/src-tauri\/|apps\/mobile\/.*(?:app\.config|app\.json))/.test(
+    /(?:^|\/)(?:vercel\.json|drizzle\.config\.[^/]+|tauri\.conf\.json)$/.test(
       path,
     ) ||
-    /^(?:docs\/(?:contributor|github-main|guide\/|implementation-guide\.md)|\.env\.example|tsconfig)/.test(
-      path,
-    )
+    /^apps\/native\/src-tauri\/(?:capabilities|permissions)\//.test(path)
   );
 }
 
@@ -276,10 +221,9 @@ export function unitTestErrors(body, files) {
   return [...new Set(errors)];
 }
 
-export function evaluate({ pr, files, comments }) {
+export function evaluate({ pr, files }) {
   const errors = surfaceContractErrors(pr.body);
   errors.push(...unitTestErrors(pr.body, files));
-  const hash = briefHash(pr.body);
   if (pr.base?.ref !== "main") errors.push("Contributor PRs must target main.");
   if (!pr.head?.ref?.startsWith("codex/"))
     errors.push("Use a codex/ feature branch.");
@@ -305,76 +249,14 @@ export function evaluate({ pr, files, comments }) {
     errors.push(
       "Verification must include 'Evidence commit: <current full head SHA>'.",
     );
-  const approvals = comments
-    .filter(
-      (comment) =>
-        comment.user?.id === MAINTAINER_ID &&
-        comment.body?.startsWith("/wuff-scope\n"),
-    )
-    .sort((a, b) => a.id - b.id);
-  let approval;
-  try {
-    approval = JSON.parse(
-      approvals.at(-1)?.body.slice("/wuff-scope\n".length) ?? "null",
-    );
-  } catch {
-    errors.push("Latest maintainer scope comment is invalid JSON.");
-  }
-  if (!approval || approval.revoke === true)
-    errors.push(
-      "Tim must approve scope using a /wuff-scope comment; approval is missing or revoked.",
-    );
-  else {
-    if (approval.briefSha256 !== hash)
-      errors.push(
-        "The feature brief changed or its API/MCP/connection scope is not approved; request a new scope approval.",
-      );
-    if (
-      !Array.isArray(approval.allowedPaths) ||
-      approval.allowedPaths.length === 0 ||
-      approval.allowedPaths.length > 100 ||
-      !approval.allowedPaths.every(validPattern)
-    )
-      errors.push(
-        "Approved paths must be repository-relative exact files or directory/** patterns; broad root wildcards are not accepted.",
-      );
-    if (
-      !Array.isArray(approval.sensitivePaths) ||
-      !approval.sensitivePaths.every(
-        (path) => validPath(path) && !path.includes("*"),
-      )
-    )
-      errors.push(
-        "sensitivePaths must list exact files (or be an empty array).",
-      );
-    if (!errors.some((error) => /Approved paths|sensitivePaths/.test(error))) {
-      for (const file of files) {
-        for (const path of new Set(
-          [file.filename, file.previous_filename].filter(Boolean),
-        )) {
-          if (!validPath(path)) {
-            errors.push("A changed path is invalid.");
-            continue;
-          }
-          if (!approval.allowedPaths.some((pattern) => matches(path, pattern)))
-            errors.push(`Outside approved scope: ${path}`);
-          if (sensitive(path) && !approval.sensitivePaths.includes(path))
-            errors.push(`Needs explicit sensitive-file approval: ${path}`);
-        }
-      }
-    }
-    if (
-      files.reduce(
-        (sum, file) => sum + (file.additions ?? 0) + (file.deletions ?? 0),
-        0,
-      ) > 800 &&
-      approval.allowLargeDiff !== true
-    )
-      errors.push(
-        "Diff exceeds 800 changed lines; split the feature or ask Tim to approve allowLargeDiff.",
-      );
-  }
+  const reviewPaths = new Set();
   for (const file of files) {
+    for (const path of new Set(
+      [file.filename, file.previous_filename].filter(Boolean),
+    )) {
+      if (!validPath(path)) errors.push("A changed path is invalid.");
+      else if (sensitive(path)) reviewPaths.add(path);
+    }
     if ([file.filename, file.previous_filename].filter(Boolean).some(forbidden))
       errors.push(
         "Credential/environment/generated dependency files cannot be submitted; remove them and rotate any exposed credentials.",
@@ -388,14 +270,12 @@ export function evaluate({ pr, files, comments }) {
     errors.push(
       "Incomplete changed-file inventory; split the PR or investigate before review.",
     );
-  return { errors: [...new Set(errors)], briefSha256: hash };
+  return { errors: [...new Set(errors)], reviewPaths: [...reviewPaths].sort() };
 }
 
 export async function run({ event, request = fetch, env = process.env } = {}) {
   event ??= JSON.parse(await readFile(env.GITHUB_EVENT_PATH, "utf8"));
-  const number =
-    event.pull_request?.number ??
-    (event.issue?.pull_request && event.issue.number);
+  const number = event.pull_request?.number;
   if (!number) return;
   const repo = env.GITHUB_REPOSITORY;
   if (repo !== "timbenniks/wuff-todo")
@@ -441,41 +321,29 @@ export async function run({ event, request = fetch, env = process.env } = {}) {
     status: "in_progress",
   });
   try {
-    const [files, comments] = await Promise.all([
-      pages(`pulls/${number}/files`),
-      pages(`issues/${number}/comments`),
-    ]);
-    const result = evaluate({ pr, files, comments });
-    const [latest, latestComments] = await Promise.all([
-      api(`pulls/${number}`),
-      pages(`issues/${number}/comments`),
-    ]);
+    const files = await pages(`pulls/${number}/files`);
+    const result = evaluate({ pr, files });
+    const latest = await api(`pulls/${number}`);
     if (
       latest.head.sha !== pr.head.sha ||
       latest.body !== pr.body ||
       latest.base.sha !== pr.base.sha ||
-      JSON.stringify(
-        latestComments.filter(
-          (c) =>
-            c.user?.id === MAINTAINER_ID && c.body?.startsWith("/wuff-scope\n"),
-        ),
-      ) !==
-        JSON.stringify(
-          comments.filter(
-            (c) =>
-              c.user?.id === MAINTAINER_ID &&
-              c.body?.startsWith("/wuff-scope\n"),
-          ),
-        )
+      latest.base.ref !== pr.base.ref ||
+      latest.state !== "open"
     )
       result.errors.push(
         "PR changed during evaluation. Rerun the policy before review.",
       );
     const summary = [
-      `Feature scope SHA-256: \`${result.briefSha256}\``,
       `Evidence commit: ${pr.head.sha}`,
       ...result.errors.map((error) => `- ${error}`),
-      "This check validates declared scope and evidence presence, not evidence truth or application quality. Tim's review and passing Verify checks remain required.",
+      ...(result.reviewPaths.length
+        ? [
+            "Review attention (no preliminary approval required):",
+            ...result.reviewPaths.map((path) => `- ${path}`),
+          ]
+        : []),
+      "This check validates delivery declarations and evidence presence, not evidence truth or application quality. Tim's review and passing Verify checks remain required.",
     ].join("\n\n");
     await api(`check-runs/${check.id}`, "PATCH", {
       status: "completed",
@@ -483,7 +351,7 @@ export async function run({ event, request = fetch, env = process.env } = {}) {
       output: {
         title: result.errors.length
           ? "Contributor requirements need attention"
-          : "Scope and evidence requirements satisfied",
+          : "Delivery requirements satisfied",
         summary: summary.slice(0, 60000),
       },
     });

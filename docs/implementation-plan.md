@@ -2,11 +2,20 @@
 
 Status: web/MCP and GitHub synchronization released; shared online-only Tauri client implemented, platform/release gates remain
 
-Updated: October 24, 2026
+Updated: October 25, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
 ## Current status and handoff
+
+- **Contributor autonomy (October 25):** Tim requested independent iteration for
+  contributors. Brief/path preapproval, scope hashes, exact-file gates and diff-size
+  exceptions are removed in the feature implementation. Tim retains final PR
+  review/merge and explicit authorization of migration execution, production,
+  infrastructure, destructive real-data operations and paid execution. Secret
+  rejection, meaningful tests, current evidence and API/MCP parity remain. See
+  [decision and verification](contributor-autonomy.md). GitHub activation and isolated
+  workspace/preview setup are separate gates; no production change is claimed.
 
 - **Contributor GitHub safeguards (October 24):** owner mapping, PR template and
   an activation payload are prepared. Private-repository protection is blocked by
@@ -15,9 +24,9 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   Automatic CI is reduced to one Ubuntu typecheck/unit-test job; platform
   compilation is local, with the native release workflow retained as manual-only.
   The contributor workflow, `/docs/build`, portable contributor skill and trusted
-  main-based scope/evidence policy are implemented locally; bootstrap and isolated
+  main-based delivery/evidence policy are implemented locally; bootstrap and isolated
   contributor/preview environments remain onboarding gates.
-  Every feature PR now requires an API/MCP/connection surface contract, approved
+  Every feature PR now requires an API/MCP/connection surface contract, documented
   capability mappings and actual adapter evidence for persisted-data changes.
 
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,

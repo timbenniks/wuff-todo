@@ -40,18 +40,22 @@ Start with `docs/implementation-plan.md` for current status and the next planned
   component, design and accessibility rules consistent with current source. The
   contributor skill applies these rules; GitHub checks and review enforce delivery.
 - Follow [the contributor workflow](docs/contributor-workflow.md) and the repository's
-  `wuff-contributor` skill for real feature work. Before implementation, record a
-  brief/acceptance criteria in a draft PR and obtain Tim's technical scope approval.
-  Confirm environment readiness before preview or integration writes.
-- At the start of a feature, identify the active root/nearby instructions, approved
+  `wuff-contributor` skill for real feature work. Record a proportional
+  brief/acceptance criteria in an early draft PR. Contributors may implement and iterate
+  without Tim approving briefs, file lists or routine choices. Confirm environment
+  readiness before preview or integration writes.
+- At the start of a feature, identify the active root/nearby instructions, feature
   scope, unit-test plan and API/MCP/connection impacts in the brief. Do not assume
   this host has loaded a skill or that an earlier session used current rules.
 - Implement features on a `codex/` branch and open a draft PR early. Commit and push
   to that branch; do not push directly to `main`. Keep the PR current with scope,
   preview, actual verification evidence and remaining technical work.
-- Stay within the agreed feature brief. Hand off database migrations, auth/access
-  changes, production operations and changes to GitHub safeguards to Tim unless
-  he explicitly authorizes that work. Explain the concrete proposed change.
+- Keep the feature brief current as the contributor iterates. Call out schema,
+  auth/access/privacy, native permission, production configuration and safeguard
+  changes for Tim's review before merge; preparing code needs no preliminary
+  approval. Migration execution, provisioning, production operations, releases,
+  destructive operations on real data and paid execution require Tim's explicit
+  operational authorization. Do not weaken protections to pass checks.
 - Reuse existing UI components and tokens. Call out dependencies, global styling
   changes and API contract changes in the PR for review.
 - Tim reviews and merges contributor work. Agent instructions are guidance;

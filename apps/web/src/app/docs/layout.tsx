@@ -7,7 +7,7 @@ import "./docs.css";
 export const metadata: Metadata = {
   title: "Implementation guide · Wuff Todo",
   description:
-    "Implement Wuff features with its real components, product rules, approved scope and verified PR workflow.",
+    "Implement Wuff features with its real components, product rules, independent iteration and verified PR workflow.",
 };
 export default function DocsLayout({
   children,

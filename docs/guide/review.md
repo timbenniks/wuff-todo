@@ -10,7 +10,7 @@ PR. The conversation supports that record; Tim should not need to reconstruct it
 - Link the exact preview deployment and source commit. Confirm Tim can open it.
   Include simple test steps and annotated phone/desktop screenshots where useful.
 - Record the existing components/services reused, intentional visual departures,
-  sensitive-file approvals and important technical decisions in feature docs.
+  high-risk changes and important technical decisions in feature docs.
 - Report applicable success, loading, pending, empty, error, denied and conflict
   behavior, including cancellation, retained drafts and uncertain-save recovery.
 - List commands actually run, results, mocked behavior, unverified checks and
@@ -23,7 +23,8 @@ PR. The conversation supports that record; Tim should not need to reconstruct it
   affected connection scopes, consent, recovery, revocation and privacy checks.
   Web-only writes and unresolved parity work cannot be presented as complete.
 
-Do not silently expand the scope or turn unanswered questions into requirements.
+Keep the brief current when the contributor changes direction. Do not turn
+unanswered questions into requirements; ask product questions when needed.
 After new code, rerun affected checks and update the evidence for the current PR
 head. Tim can request changes even when every automated check is green.
 
