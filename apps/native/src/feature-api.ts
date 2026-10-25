@@ -144,6 +144,15 @@ export function featureApi(
             : undefined;
       if (kind === "totake" && method === "GET" && url.searchParams.has("day"))
         input = { day: Number(url.searchParams.get("day")) };
+    } else if (kind === "connections" && id === "tools" && !sub) {
+      action =
+        method === "GET"
+          ? "getMcpToolPreferences"
+          : method === "PUT"
+            ? "updateMcpToolPreferences"
+            : undefined;
+      if (method === "GET")
+        input = { clientId: url.searchParams.get("clientId") };
     } else if (kind === "empire") {
       action =
         method === "GET"

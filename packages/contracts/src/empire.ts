@@ -6,7 +6,8 @@ export const connectionPermissionLabels: Record<string, string> = {
   "notifications:read": "Read shared notification settings",
   "notifications:manage": "Change shared notification settings",
   "empire:read": "Read Empire choices and AI connections",
-  "empire:manage": "Change Empire choices and disconnect AI clients",
+  "empire:manage":
+    "Change Empire choices, manage MCP tool choices and disconnect AI clients",
   "lists:read": "Todo: read accessible lists and tasks",
   "tasks:write": "Todo: change tasks and personal reminders",
   "lists:manage": "Todo: manage owned lists and personal views",
@@ -24,6 +25,7 @@ export type AiConnection = {
   name: string;
   scopes: string[];
   state: "authorized" | "expired";
+  mcp?: boolean;
 };
 export function summarizeAiConnections(
   rows: { id: string; name: string; scopes: string[]; expiresAt: number }[],

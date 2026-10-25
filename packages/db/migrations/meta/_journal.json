@@ -141,6 +141,13 @@
       "when": 1792924918649,
       "tag": "0019_totake_and_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792935791573,
+      "tag": "0020_mcp_tool_preferences",
+      "breakpoints": true
     }
   ]
 }

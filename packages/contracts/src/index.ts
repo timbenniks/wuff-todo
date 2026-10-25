@@ -339,7 +339,12 @@ export const scopes = [
   "agents:manage",
 ] as const;
 export type Scope = (typeof scopes)[number];
-export type Actor = { id: string; scopes: readonly string[] };
+export type Actor = {
+  id: string;
+  scopes: readonly string[];
+  /** Trusted OAuth client identity set by the MCP bearer adapter; never parsed from input. */
+  mcpClientId?: string;
+};
 
 export class AppError extends Error {
   constructor(
@@ -831,3 +836,4 @@ export function dashboardThrough(today: string) {
 }
 
 export * from "./totake";
+export * from "./mcp-tools";

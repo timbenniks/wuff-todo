@@ -55,6 +55,18 @@ export function serverOrigin(value: string) {
 }
 
 export class NativeClient {
+  mcpToolPreferences(clientId: string) {
+    return this.call<import("@wuff/contracts").McpToolPreferences>(
+      "getMcpToolPreferences",
+      { clientId },
+    );
+  }
+  updateMcpToolPreferences(input: import("@wuff/contracts").McpToolsUpdate) {
+    return this.call<import("@wuff/contracts").McpToolPreferences>(
+      "updateMcpToolPreferences",
+      input,
+    );
+  }
   totake(day?: number) {
     return this.call<import("@wuff/contracts").TotakeSnapshot>(
       "getTotake",

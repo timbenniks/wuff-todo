@@ -123,16 +123,19 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
       ).status,
       401,
     );
-    assert.equal(
-      (await empireMcp(readonly.access_token, "update_empire_settings", input))
-        .result.structuredContent.error.code,
-      "forbidden",
+    const readOnlyDenied = await empireMcp(
+      readonly.access_token,
+      "update_empire_settings",
+      input,
     );
-    assert.equal(
-      (await empireMcp(legacy.access_token, "get_empire_settings")).result
-        .structuredContent.error.code,
-      "forbidden",
+    assert(readOnlyDenied.result.isError);
+    assert(JSON.stringify(readOnlyDenied.result).includes("disabled"));
+    const legacyDenied = await empireMcp(
+      legacy.access_token,
+      "get_empire_settings",
     );
+    assert(legacyDenied.result.isError);
+    assert(JSON.stringify(legacyDenied.result).includes("disabled"));
     const refreshed = await fetch(origin + "/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -146,11 +149,12 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
     assert.equal(refreshed.status, 200);
     const renewed = await refreshed.json();
     assert(!(renewed.scope as string).includes("empire:"));
-    assert.equal(
-      (await empireMcp(renewed.access_token, "get_empire_settings")).result
-        .structuredContent.error.code,
-      "forbidden",
+    const renewedDenied = await empireMcp(
+      renewed.access_token,
+      "get_empire_settings",
     );
+    assert(renewedDenied.result.isError);
+    assert(JSON.stringify(renewedDenied.result).includes("disabled"));
     const badOrigin = await fetch(origin + "/api/v1/empire", {
       method: "PUT",
       headers: { ...headers, Origin: "https://example.invalid" },

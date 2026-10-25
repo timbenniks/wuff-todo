@@ -1,6 +1,10 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { after } from "next/server";
-import { processGithubJobs, processAgentJobs } from "@wuff/domain";
+import {
+  processGithubJobs,
+  processAgentJobs,
+  getEffectiveMcpToolSelection,
+} from "@wuff/domain";
 import { createMcpServer } from "@/lib/mcp";
 import { bearerActor, unauthorizedMcp } from "@/lib/oauth";
 import { boundedBody } from "@/lib/bounded-body";
@@ -30,7 +34,13 @@ async function handle(request: Request) {
   } catch (error) {
     return failure(error);
   }
-  const server = createMcpServer(actor);
+  let enabledTools;
+  try {
+    enabledTools = await getEffectiveMcpToolSelection(actor);
+  } catch (error) {
+    return failure(error);
+  }
+  const server = createMcpServer(actor, enabledTools);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

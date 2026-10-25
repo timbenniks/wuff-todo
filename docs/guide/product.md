@@ -62,3 +62,10 @@ Saved views are personal to each list. Save view updates the current view; Save 
 new view creates a named view. Shared list settings separate List details, People,
 Only for me and Manage list. Home completion and task-title navigation are separate.
 Date shortcuts and Clear date change a draft; Save date commits it.
+
+In Settings → AI & MCP connections, each MCP client has app/service switches and
+an advanced individual tool list. These choices only narrow the existing OAuth
+grant and are separate from menu visibility. Connection controls stay available
+when authorized. AI clients can turn tools off; the owner re-enables them in
+Settings. After saving, refresh the client tool catalog; cached disabled calls
+are blocked immediately. Newly added optional tools stay off after a selection.

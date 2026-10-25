@@ -15,8 +15,8 @@ export default function ConnectionsPage() {
       </code>
       <p className="settings-note">
         Existing Todo permissions stay limited to Todo. Empire app choices
-        require explicit Empire permissions. Future Totake access will require
-        separate consent.
+        require explicit Empire permissions. Totake access requires separate
+        consent. Use Choose tools to narrow each MCP connection further.
       </p>
       <Connections />
       <a className="empire-text-link" href="/settings/todo/github">

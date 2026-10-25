@@ -259,6 +259,23 @@ export const oauthClients = pgTable("wuff_oauth_clients", {
   redirectUris: jsonb("redirect_uris").$type<string[]>().notNull(),
   createdAt: time("created_at"),
 });
+export const mcpToolPreferences = pgTable(
+  "wuff_mcp_tool_preferences",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(0),
+    enabledTools: jsonb("enabled_tools")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.clientId] })],
+);
 export const oauthCodes = pgTable("wuff_oauth_codes", {
   hash: text("hash").primaryKey(),
   clientId: text("client_id")
