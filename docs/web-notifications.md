@@ -137,3 +137,24 @@ GitHub Verify run 40229885611 did not start: the account's recent payments/spend
 limit blocked runners. Contributor policy is also blocked by runner availability.
 These are incomplete hosted checks, not passing CI. The PR remains a draft.
 Tim must resolve the account runner gate and review the change before merge.
+
+## Authorized production credential setup — October 25
+
+Tim explicitly authorized generating and installing web push credentials. A fresh
+read of the existing Vercel project's Production environment found no WEB_PUSH_*
+entries. A separate Production P-256 pair was generated into the ignored private
+`.env.web-push.production.local`, validated locally and installed through Vercel
+CLI as three Production Secrets: WEB_PUSH_PUBLIC_KEY, WEB_PUSH_PRIVATE_KEY and
+WEB_PUSH_SUBJECT. A subsequent inventory verified exactly one entry for each.
+
+Only those three values were added to the original checkout's ignored
+`.env.production.local` backup; unrelated database, auth, QStash and development
+configuration was preserved. Keys were not printed and no existing pair was
+rotated. The subject is the canonical public Wuff HTTPS origin.
+
+No merge, application deployment, production test write, test notification or
+Totake delivery-gate change occurred. A future production deployment must load
+these variables, followed by a real browser subscription/receipt test. PR #34
+remains draft: the latest inspected Verify run 40230760272 was not started because
+GitHub account payments/spending limits block runners. Local verification above
+remains the implementation evidence; this follow-up changes documentation only.
