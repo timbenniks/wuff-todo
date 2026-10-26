@@ -10,7 +10,7 @@ production deployment changes. Tim retains review/merge.
 - [x] Confirm public visibility and current Actions availability rather than assuming old failures still apply.
 - [x] Activate only the prepared ruleset after Tim's explicit operational authorization.
 - [x] Read back its stored configuration and effective main-branch rules.
-- [ ] Verify the trusted Contributor policy and Verify checks on an open public PR.
+- [x] Verify the trusted Contributor policy and Verify checks on an open public PR.
 
 ## Live evidence
 
@@ -37,7 +37,16 @@ settings for every collaborator/push remain unverified.
 
 ## Verification
 
-Open-PR hosted check evidence and documentation checks will be added before
-handoff. This PR changes prose/generated guide content only; no new behavior test
+On live PR #39, the trusted metadata workflow ran from main and created an actual
+`Contributor policy` check from GitHub Actions app 15368. Its initial draft
+correctly failed because the declaration used a short SHA instead of the required
+full current head SHA. The declaration is corrected before final handoff; no
+workflow/test/guard was weakened. GitHub reports the PR `BLOCKED` and
+`REVIEW_REQUIRED`, consistent with the active protections. Current-head final
+check results are recorded in the PR body after completion.
+
+`pnpm build:guide` and `git diff --check` passed locally. This is documentation-only;
+there are no new runtime tests or UI/browser/device checks. Existing hosted Verify
+executes frozen install, typecheck and the complete unit suite. This PR changes prose/generated guide content only; no new behavior test
 should assert the text of these instructions. No production fixture writes,
 manual preview, new paid agent run, migration or application release.
