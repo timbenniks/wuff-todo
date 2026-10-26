@@ -61,7 +61,35 @@ in [the original notification actions](totake-notification-actions.md).
 
 Before implementation the new grouped-selection regression failed (0/1 passed).
 After implementation full unit discovery passes 231 cases with no skips;
-`pnpm typecheck` passes all workspaces and root. Detailed final adapter/browser,
-build and hosted-CI evidence will be recorded before delivery. Tests use the existing
+`pnpm typecheck` passes all workspaces and root. The optimized production build also passes. Tests use the existing
 isolated development backend, synthetic accounts and mocked providers. No production
 operation or new provider send occurs during this feature work.
+
+Final application source tested: `85bbe4008a6055cc334a27f5abba47251f8cc125`.
+- `pnpm typecheck`: all workspace and root checks passed.
+- `pnpm test`: 231 passed, no skips. New tests exercise actual grouped worker
+  handlers, strict selection snapshots, private/expired/unsupported fallbacks,
+  exact lost-committed-response retry, partial-result denial and UTF-8 payload limits.
+- `pnpm build`: generated worker, guide, MCP bundle and optimized website passed.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1 tests/totake-notification-actions.integration.test.ts tests/totake.integration.test.ts tests/scheduler-publishing.integration.test.ts`:
+  five real isolated-database cases passed, no skips. Both single/grouped callbacks
+  feed actual HTTP/MCP/native mutations. HTTP confirmation/MCP readback and exact
+  receipt replay, MCP grouped Skip/HTTP readback, native grouped 30-minute Snooze/
+  HTTP readback, readonly/revoked consent, account/origin/device/privacy/pause guards,
+  conflicts/concurrent clicks, unchanged stock on Skip/Snooze and complete Undo
+  all passed. Provider requests/sends are mocked; no real notification is sent.
+- `node --env-file=.env.local --import tsx scripts/verify-totake-notification-actions.ts`:
+  optimized Chrome review/checklist, sign-in/account pin, exact group selection,
+  all four app snooze options, untouched unselected item, uncertain committed
+  record/retry, Skip and Undo/stock passed. Focus/overflow at 320/390/1280px passed;
+  no captured page errors. Screenshots `totake-group-review-{320,390,1280}.png`
+  show the real web review fallback, not an OS notification simulation.
+- `git diff --check`: passed. Source checkout's unrelated pnpm changes preserved.
+
+Hosted Verify run 40298849131 and policy run 40298846060 did not start: GitHub
+account payments/spending limits blocked runners. This is incomplete hosted
+verification, not a code failure/pass. Keep PR #37 draft. Real Android/iPhone/macOS
+notification display/actions and watch behavior remain post-merge device checks;
+browser-specific action counts and OS-controlled chrome cannot be guaranteed.
+No manual preview, production operation, migration, native release or real-data
+fixture was performed for this PR. Synthetic data is cleaned and test grants revoked.
