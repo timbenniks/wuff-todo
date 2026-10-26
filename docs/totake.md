@@ -73,3 +73,38 @@ contract, current tests and remaining real-device/release gates are recorded in
 inventory above is historical: VAPID was subsequently configured in the separately
 authorized setup recorded in [web notifications](web-notifications.md). Totake's
 production delivery gate remains separate; this branch does not enable it.
+
+## Production delivery activation — October 26
+
+Read-only investigation on deployed main `5cda72369a68e191067715fcd17f81023b072f40`
+found Web Push and QStash configured, but `WUFF_TOTAKE_DELIVERY_ENABLED` absent.
+Both Totake publication and callbacks return early without that flag. One enabled
+job was pending and no Totake delivery receipts existed; global/app pauses were
+off. Todo's working transport did not imply Totake activation.
+
+Tim explicitly authorized enabling the Production flag, redeploying the same main
+commit, and publishing the pending job. Activation can alert for an existing
+unresolved occurrence and repeat on its saved cadence. No medicine was marked
+Taken/Skipped, no intake/stock data was edited, and no schema migration is needed.
+The existing account/privacy, pause, current-state, consent and delivery gates
+remain in force. Vercel CLI added the flag to the existing project only.
+
+Fresh isolated verification against that exact main commit:
+- `node --import tsx --test tests/totake.test.ts tests/totake-notification-actions.test.ts tests/scheduler.test.ts`: 38 unit tests passed, no skips.
+- `node --env-file=<isolated-development-env> --import tsx --test --test-name-pattern='Totake callbacks' tests/totake.integration.test.ts`: one real-database callback case passed, no skips; pause, per-device partial failure/retry, stale generation, repeat scheduling, recorded-item cancellation, stock and recovery.
+- `node --env-file=<isolated-development-env> --import tsx --test tests/scheduler-publishing.integration.test.ts`: one real-database publisher case passed, no skips; deterministic provider-compatible IDs, rejected/uncertain publication, six-day hops, account scope, pause and Totake gate.
+
+These tests use synthetic data and mocked provider requests/senders; they prove
+neither physical-device display nor production receipt. Application source was
+unchanged. Production deployment and callback readback are recorded below when
+finished. No preview deployment is requested for this documentation.
+
+Production activation completed at 08:33 UTC (09:33 Europe/Paris). Vercel redeployed
+existing main to `wuff-todo-cwddmq7cp-tim-benniks-projects-1b967033.vercel.app`
+and aliased the canonical origin. The pending publication moved to `scheduled`.
+The real callback recorded two device-provider acceptances at
+08:33:40–08:33:41 UTC, advanced job generation 22 to 23 and scheduled the next
+repeat for 08:48:40 UTC (15 minutes later). No historical repeat backlog was
+published. Actual device display remains for Tim to confirm. This validates
+provider acceptance/repeat chaining, not every medicine schedule/device/watch
+combination or a guarantee that a person saw the alert.
