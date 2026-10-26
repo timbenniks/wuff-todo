@@ -114,8 +114,8 @@ try {
         .boundingBox())!.y,
   );
   await expect(
-    page.getByRole("button", { name: "Enable this browser", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("link", { name: "Manage notification devices", exact: true }),
+  ).toHaveAttribute("href", "/settings/notifications");
   await page.getByLabel("Send at", { exact: true }).fill("23:00");
   const quiet = page.getByLabel("Keep reminders quiet overnight", {
     exact: true,
@@ -161,7 +161,7 @@ try {
     ...settings,
     schedulerReady: true,
     devices: [{ id: op(), label: "Mock PWA", transport: "web" }] as any,
-    delivery: { ...settings.delivery, ios: true },
+    delivery: { ...settings.delivery, web: true },
   };
   await page
     .getByRole("button", { name: "Refresh delivery status", exact: true })

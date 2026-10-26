@@ -12,7 +12,7 @@ Updated: October 24, 2026
 
 ## Provisioned infrastructure
 
-- Private GitHub repository: `timbenniks/wuff-todo`.
+- Public GitHub repository: `timbenniks/wuff-todo`.
 - Vercel project: `wuff-todo`, under `tim-benniks-projects-1b967033`.
 - Project root directory: `apps/web`; the build command runs the root workspace build.
 - Neon resource: `wuff-todo`, provisioned through `vercel integration add neon` on the free plan in Frankfurt.

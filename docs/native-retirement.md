@@ -60,3 +60,19 @@ a real-browser check discovers Remove controls by accessible name and removes on
 its chosen synthetic browser/retired-device records through the authorized API.
 The latter fails against the malformed pre-fix label. See PR review replies for
 fix commits and passing evidence.
+
+Final local adapter evidence: all 18 relevant cases have passing isolated runs
+across dashboard, Empire settings, list nesting, MCP choices, Notes, OAuth,
+reminders, Totake actions/callbacks and Web Push suites. The first combined run
+was 15/18: older OAuth expectations were corrected to the current disabled-tool
+SDK envelope/return URL, and a Web Push run hit managed Auth 429. Subsequent
+serial OAuth (3/3) and Web Push (1/1) runs passed after cooldown. The final actual
+retirement case includes both private-image methods, stored legacy grants, MCP
+PKCE and refresh. Do not present the initial combined run as all-green.
+
+Chrome passed portal/Todo/AI+MCP/notification-settings smoke at 390/1280px; the
+real device-removal regression; Totake sign-in/account guards, grouped selection,
+15/30/45/60-minute snooze, exact retry, Skip/Undo and stock at 320/390/1280px; and
+the full mocked-provider UX phase-five workflow. Its mock PWA now enables Web
+Push rather than iOS, and Todo device-management navigation follows global
+notification Settings. Provider mocks remain distinct from live device receipt.

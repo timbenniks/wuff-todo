@@ -520,11 +520,15 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      githubDenied.body.error?.code,
-      -32602,
+      githubDenied.body.result.isError,
+      true,
       "Existing task scopes do not grant GitHub writes",
     );
-    assert.equal(githubDenied.body.result, undefined);
+    assert.equal(githubDenied.body.result.structuredContent, undefined);
+    assert.match(
+      githubDenied.body.result.content[0].text,
+      /Tool link_github_issue disabled/,
+    );
     assert(
       !tools.body.result.tools.some(
         (t: { name: string }) => t.name === "link_github_issue",
@@ -567,11 +571,15 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      agentDenied.body.error?.code,
-      -32602,
+      agentDenied.body.result.isError,
+      true,
       "Existing task grants cannot launch paid agents",
     );
-    assert.equal(agentDenied.body.result, undefined);
+    assert.equal(agentDenied.body.result.structuredContent, undefined);
+    assert.match(
+      agentDenied.body.result.content[0].text,
+      /Tool launch_task_agent disabled/,
+    );
     assert(
       !tools.body.result.tools.some(
         (t: { name: string }) => t.name === "launch_task_agent",
