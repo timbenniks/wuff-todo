@@ -1,5 +1,9 @@
 # Totake web notification actions — October 25
 
+October 26 follow-up: [grouped notifications](totake-group-notifications.md) extends
+the original single-item design below with exact group confirmation, 30-minute
+snooze, supported third-button Skip all and informative count/time titles.
+
 ## Brief and acceptance
 
 Tim requested a new branch implementing Totake's notification behavior correctly

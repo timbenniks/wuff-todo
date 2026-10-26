@@ -35,7 +35,7 @@ if (
 )
   throw Error("Isolated development only, QStash disabled");
 after(() => database().pool.end());
-test("guarded Totake actions preserve real HTTP/MCP/native parity, current policy/device checks, races, receipts, stock and Undo", async () => {
+async function notificationActionParity(count: number) {
   const [user, other] = JSON.parse(
     await readFile(".vercel/dev-users.json", "utf8"),
   );
@@ -52,7 +52,7 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
     .select()
     .from(notificationPreferences)
     .where(eq(notificationPreferences.userId, user.id));
-  const f = await seedTotakeNotice(user.id),
+  const f = await seedTotakeNotice(user.id, count),
     cookie = await loginFixture(user);
   const headers = {
     Cookie: cookie,
@@ -138,6 +138,15 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
       user.id,
     );
     assert.equal(delivered.totake.direct.deviceId, deviceId);
+    assert.match(
+      delivered.title,
+      new RegExp(
+        `^${count} reminder${count === 1 ? "" : "s"} at \\d{2}:\\d{2}$`,
+      ),
+    );
+    for (const item of f.group.items)
+      assert(delivered.body.includes(item.name));
+    assert.equal(delivered.totake.direct.items?.length ?? 1, count);
     const current = await read(),
       group = current.state.groups.find((g: any) => g.id === f.group.id),
       context = delivered.totake.direct;
@@ -145,7 +154,7 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
     const change = {
       action: "record",
       groupId: group.id,
-      itemIds: [group.items[0].id],
+      itemIds: group.items.map((i: any) => i.id),
       outcome: "taken",
     };
     const input = {
@@ -225,7 +234,10 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
     assert.equal(saved.state.treatments[0].inventory.current, "9");
     assert.equal(
       saved.state.groups.find((g: any) => g.id === group.id).records.length,
-      1,
+      count,
+    );
+    assert(
+      saved.state.treatments.every((t: any) => t.inventory.current === "9"),
     );
     const mcpRead = await empireMcp(writable.access_token, "get_totake");
     assert.equal(
@@ -241,15 +253,21 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
       winning,
     );
     assert(!replay.result.isError);
-    const recordId = saved.state.groups.find((g: any) => g.id === group.id)
-      .records[0].id;
-    const undone = await empireMcp(writable.access_token, "update_totake", {
-      operationId: op(),
-      version: saved.version,
-      change: { action: "undo", groupId: group.id, recordId },
-    });
-    assert(!undone.result.isError);
-    assert.equal((await read()).state.treatments[0].inventory.current, "10");
+    for (const record of saved.state.groups.find((g: any) => g.id === group.id)
+      .records) {
+      const latest = await read();
+      const undone = await empireMcp(writable.access_token, "update_totake", {
+        operationId: op(),
+        version: latest.version,
+        change: { action: "undo", groupId: group.id, recordId: record.id },
+      });
+      assert(!undone.result.isError);
+    }
+    assert(
+      (await read()).state.treatments.every(
+        (t: any) => t.inventory.current === "10",
+      ),
+    );
     const afterUndo = await read();
     assert.equal(
       (await put({ ...input, operationId: op(), version: afterUndo.version }))
@@ -286,23 +304,130 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
     assert.equal(nativeResult.status, 200);
     const nativeSaved = await read();
     assert.equal(nativeSaved.state.treatments[0].inventory.current, "9");
-    const nativeRecord = nativeSaved.state.groups.find(
-      (g: any) => g.id === group.id,
-    ).records[0];
-    assert.equal(
-      (
-        await put({
-          operationId: op(),
-          version: nativeSaved.version,
-          change: {
-            action: "undo",
-            groupId: group.id,
-            recordId: nativeRecord.id,
-          },
-        })
-      ).status,
-      200,
+    assert(
+      nativeSaved.state.treatments.every(
+        (t: any) => t.inventory.current === "9",
+      ),
     );
+    for (const record of nativeSaved.state.groups.find(
+      (g: any) => g.id === group.id,
+    ).records) {
+      const latest = await read();
+      assert.equal(
+        (
+          await put({
+            operationId: op(),
+            version: latest.version,
+            change: {
+              action: "undo",
+              groupId: group.id,
+              recordId: record.id,
+            },
+          })
+        ).status,
+        200,
+      );
+    }
+    if (count === 2) {
+      let latest = await read();
+      let context = makeTotakeNotification(
+        latest.state,
+        latest.state.groups.find((g: any) => g.id === group.id),
+        user.id,
+        deviceId,
+        true,
+        Date.now(),
+      ).direct!;
+      assert.equal(context.items?.length, 2);
+      const skip = await empireMcp(writable.access_token, "update_totake", {
+        operationId: op(),
+        version: latest.version,
+        notification: context,
+        change: { ...change, outcome: "skipped" },
+      });
+      assert(!skip.result.isError);
+      const skipped = await read();
+      const records = skipped.state.groups.find(
+        (g: any) => g.id === group.id,
+      ).records;
+      assert.equal(records.length, 2);
+      assert(records.every((r: any) => r.outcome === "skipped"));
+      assert(
+        skipped.state.treatments.every(
+          (t: any) => t.inventory.current === "10",
+        ),
+      );
+      for (const record of records) {
+        latest = await read();
+        assert.equal(
+          (
+            await put({
+              operationId: op(),
+              version: latest.version,
+              change: {
+                action: "undo",
+                groupId: group.id,
+                recordId: record.id,
+              },
+            })
+          ).status,
+          200,
+        );
+      }
+      latest = await read();
+      context = makeTotakeNotification(
+        latest.state,
+        latest.state.groups.find((g: any) => g.id === group.id),
+        user.id,
+        deviceId,
+        true,
+        Date.now(),
+      ).direct!;
+      const snoozed = await fetch(origin + "/api/mobile", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${native.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "updateTotake",
+          userId: user.id,
+          input: {
+            operationId: op(),
+            version: latest.version,
+            notification: context,
+            change: {
+              action: "snooze",
+              groupId: group.id,
+              itemIds: change.itemIds,
+              minutes: 30,
+            },
+          },
+        }),
+      });
+      assert.equal(snoozed.status, 200);
+      const result = await read();
+      const currentGroup = result.state.groups.find(
+        (g: any) => g.id === group.id,
+      );
+      assert(
+        change.itemIds.every(
+          (id: string) =>
+            currentGroup.reminders[id].snoozedInstant > Date.now() + 29 * 60000,
+        ),
+      );
+      assert.equal(currentGroup.due, group.due);
+      assert(
+        result.state.treatments.every((t: any) => t.inventory.current === "10"),
+      );
+      const denied = await empireMcp(writable.access_token, "update_totake", {
+        operationId: op(),
+        version: result.version,
+        notification: context,
+        change,
+      });
+      assert(denied.result.isError);
+    }
     // Full app/MCP snooze choices remain legal, preserve due/stock and never record.
     for (const minutes of [15, 30, 45, 60]) {
       const latest = await read();
@@ -379,4 +504,8 @@ test("guarded Totake actions preserve real HTTP/MCP/native parity, current polic
       .where(eq(notificationPreferences.userId, user.id));
     if (oldPolicy) await db.insert(notificationPreferences).values(oldPolicy);
   }
-});
+}
+for (const count of [1, 2]) {
+  test(`guarded Totake actions (${count} items) preserve real HTTP/MCP/native parity, current policy/device checks, races, receipts, stock and Undo`, () =>
+    notificationActionParity(count));
+}

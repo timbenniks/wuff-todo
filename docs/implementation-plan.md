@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Totake grouped notifications (October 26, draft PR #37):** count/time titles,
+  privacy-aware details and exact Confirm all / 30-minute snooze / supported
+  third-button Skip all reuse the authorized shared mutation contract. Local
+  verification and release limits: [grouped notifications](totake-group-notifications.md).
+
 - **QStash scheduling incident (October 25, included in draft PR #35):** both
   publishers now use a shared deterministic hex ID instead of rejected colon
   separators. Failing-before/passing-after SDK/DB regression preserves retries,

@@ -1,5 +1,7 @@
 import {
   makeTotakeNotification,
+  fitTotakePushPayload,
+  totakeNotificationContent,
   totakeReminderPath,
 } from "@wuff/contracts/modules/totake/notification";
 import {
@@ -168,14 +170,8 @@ export async function deliverTotake(
         if (sent) continue;
         const path = totakeReminderPath(g.id, initial.userId);
         try {
-          await send(device, {
-            title: "Wuff Totake reminder",
-            body: policy.showContent
-              ? ids
-                  .map((i) => `${i.name} · ${i.dose}`)
-                  .join("\n")
-                  .slice(0, 1000)
-              : "Open Wuff to view your reminder.",
+          const payload = {
+            ...totakeNotificationContent(s, g, policy.showContent, now),
             path,
             tag: `totake:${job.id}:${g.id}`,
             ...(device.transport === "web"
@@ -190,7 +186,13 @@ export async function deliverTotake(
                   ),
                 }
               : {}),
-          });
+          };
+          await send(
+            device,
+            device.transport === "web"
+              ? fitTotakePushPayload(payload)
+              : payload,
+          );
         } catch (error) {
           if (error instanceof PushTransportError && error.permanent) {
             await tx
