@@ -64,7 +64,7 @@ Start with `docs/implementation-plan.md` for current status and the next planned
   preview, actual verification evidence and remaining technical work.
 - Keep the feature brief current as the contributor iterates. Call out schema,
   auth/access/privacy, production configuration and safeguard
-  changes for Tim's review before merge; preparing code needs no preliminary
+  changes for review before merge; preparing code needs no preliminary
   approval. Migration execution, provisioning, production operations, releases,
   destructive operations on real data and paid execution require Tim's explicit
   operational authorization. Do not weaken protections to pass checks.

@@ -57,7 +57,7 @@ The responsive website and MCP tools use the same authorized backend; the MCP Ap
 
 No offline list cache or queued offline edits. No arbitrary palette colors, dark mode, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
 
-Preserve these defaults unless the feature deliberately changes them. Explain proposed product changes in the PR; admission, access and privacy changes need Tim’s review before merge. Contributors can prepare and test code without preliminary approval.
+Preserve these defaults unless the feature deliberately changes them. Explain proposed product changes in the PR; admission, access and privacy changes need explicit review in the PR before merge. Contributors can prepare and test code without preliminary approval.
 
 ## Current interaction language
 
