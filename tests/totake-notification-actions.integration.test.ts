@@ -71,8 +71,8 @@ async function notificationActionParity(count: number) {
     assert.equal(r.status, 200);
     return r.json();
   };
-  const grant = async (scope: string, native = false) => {
-    const t = await empireGrant(cookie, scope, native);
+  const grant = async (scope: string) => {
+    const t = await empireGrant(cookie, scope);
     tokens.push(t);
     return t;
   };
@@ -113,8 +113,7 @@ async function notificationActionParity(count: number) {
     )!.id;
     devices.push(deviceId);
     const writable = await grant("totake:read totake:write"),
-      readonly = await grant("totake:read"),
-      native = await grant("lists:read totake:read totake:write", true);
+      readonly = await grant("totake:read");
     const [job] = await db
       .select()
       .from(totakeJobs)
@@ -283,33 +282,20 @@ async function notificationActionParity(count: number) {
       true,
       Date.now(),
     ).direct!;
-    // Native bearer uses the same strict guard and mutation contract.
-    const nativeResult = await fetch(origin + "/api/mobile", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${native.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action: "updateTotake",
-        userId: user.id,
-        input: {
-          ...input,
-          operationId: op(),
-          version: afterUndo.version,
-          notification: freshContext,
-        },
-      }),
+    // The supported MCP mutation uses the same strict notification context.
+    const repeated = await empireMcp(writable.access_token, "update_totake", {
+      ...input,
+      operationId: op(),
+      version: afterUndo.version,
+      notification: freshContext,
     });
-    assert.equal(nativeResult.status, 200);
-    const nativeSaved = await read();
-    assert.equal(nativeSaved.state.treatments[0].inventory.current, "9");
+    assert(!repeated.result.isError);
+    const mcpSaved = await read();
+    assert.equal(mcpSaved.state.treatments[0].inventory.current, "9");
     assert(
-      nativeSaved.state.treatments.every(
-        (t: any) => t.inventory.current === "9",
-      ),
+      mcpSaved.state.treatments.every((t: any) => t.inventory.current === "9"),
     );
-    for (const record of nativeSaved.state.groups.find(
+    for (const record of mcpSaved.state.groups.find(
       (g: any) => g.id === group.id,
     ).records) {
       const latest = await read();
@@ -383,27 +369,16 @@ async function notificationActionParity(count: number) {
         true,
         Date.now(),
       ).direct!;
-      const snoozed = await fetch(origin + "/api/mobile", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${native.access_token}`,
-          "Content-Type": "application/json",
+      const snoozed = await put({
+        operationId: op(),
+        version: latest.version,
+        notification: context,
+        change: {
+          action: "snooze",
+          groupId: group.id,
+          itemIds: change.itemIds,
+          minutes: 30,
         },
-        body: JSON.stringify({
-          action: "updateTotake",
-          userId: user.id,
-          input: {
-            operationId: op(),
-            version: latest.version,
-            notification: context,
-            change: {
-              action: "snooze",
-              groupId: group.id,
-              itemIds: change.itemIds,
-              minutes: 30,
-            },
-          },
-        }),
       });
       assert.equal(snoozed.status, 200);
       const result = await read();
@@ -506,6 +481,6 @@ async function notificationActionParity(count: number) {
   }
 }
 for (const count of [1, 2]) {
-  test(`guarded Totake actions (${count} items) preserve real HTTP/MCP/native parity, current policy/device checks, races, receipts, stock and Undo`, () =>
+  test(`guarded Totake actions (${count} items) preserve real HTTP/MCP parity, current policy/device checks, races, receipts, stock and Undo`, () =>
     notificationActionParity(count));
 }

@@ -14,11 +14,7 @@ playwright-report/
 !.agents/skills/wuff-contributor/
 skills-lock.json
 
-# Tauri build output and generated platform projects
-apps/native/src-tauri/target/
-apps/native/src-tauri/gen/
-
-# Python release tooling
+# Python caches
 __pycache__/
 
 # Generated public guide downloads

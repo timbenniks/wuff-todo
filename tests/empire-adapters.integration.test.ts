@@ -1,7 +1,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { scopes } from "@wuff/contracts";
 import { registerReminderDevice, removeReminderDevice } from "@wuff/domain";
 import { eq, inArray } from "drizzle-orm";
@@ -15,7 +15,7 @@ import {
 if (!process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l"))
   throw Error("Development only");
 after(() => database().pool.end());
-test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy and revocation", async () => {
+test("real HTTP/MCP settings adapters preserve parity, consent, privacy and revocation", async () => {
   const [user, other] = JSON.parse(
     await readFile(".vercel/dev-users.json", "utf8"),
   );
@@ -44,8 +44,8 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
       headers,
       body: JSON.stringify(input),
     });
-  const grant = async (scope: string, native = false) => {
-    const token = await empireGrant(cookie, scope, native);
+  const grant = async (scope: string) => {
+    const token = await empireGrant(cookie, scope);
     tokens.push(token);
     return token;
   };
@@ -67,7 +67,6 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
     const mcp = await grant("empire:read empire:manage"),
       readonly = await grant("empire:read"),
       legacy = await grant("lists:read lists:manage"),
-      native = await grant("lists:read empire:read empire:manage", true),
       victim = await grant("empire:read");
     const first = await read(),
       input = {
@@ -93,35 +92,6 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
     assert.deepEqual(
       await read(),
       update.result.structuredContent.empireSettings,
-    );
-    const beforeNative = await read();
-    const nativeResponse = await fetch(origin + "/api/mobile", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${native.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action: "updateEmpireSettings",
-        input: {
-          version: beforeNative.version,
-          operationId: crypto.randomUUID(),
-          changes: [{ appId: "totake", visible: false }],
-        },
-        userId: user.id,
-      }),
-    });
-    assert.equal(nativeResponse.status, 200);
-    assert.deepEqual(await nativeResponse.json(), await read());
-    assert.equal(
-      (
-        await fetch(origin + "/api/mobile", {
-          method: "POST",
-          headers: { Cookie: cookie, "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "getEmpireSettings" }),
-        })
-      ).status,
-      401,
     );
     const readOnlyDenied = await empireMcp(
       readonly.access_token,
@@ -190,7 +160,7 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
       (await empireMcp(victim.access_token, "get_empire_settings")).status,
       401,
     );
-    const reconnected = await empireGrant(cookie, "empire:read", false, {
+    const reconnected = await empireGrant(cookie, "empire:read", {
       clientId: victim.clientId,
       redirectUri: "http://127.0.0.1:4173/callback",
     });
@@ -231,13 +201,19 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
     );
     const reminderGrant = await grant("lists:read tasks:write");
     for (const throughMcp of [true, false]) {
-      const address = randomBytes(32).toString("hex");
+      const address =
+        "https://fcm.googleapis.com/fcm/send/" +
+        randomBytes(32).toString("hex");
       const settings = await registerReminderDevice(
         { id: user.id, scopes },
         {
           label: "Empire device adapter fixture",
-          transport: "ios",
+          transport: "web",
           address,
+          subscription: {
+            endpoint: address,
+            keys: { p256dh: "a".repeat(87), auth: "b".repeat(22) },
+          },
           operationId: crypto.randomUUID(),
         },
       );
@@ -335,21 +311,11 @@ test("real HTTP/MCP/native settings adapters preserve parity, consent, privacy a
       await database()
         .db.delete(empirePreferences)
         .where(eq(empirePreferences.userId, user.id));
-    const dynamicIds = tokens.filter((t) => !t.native).map((t) => t.clientId);
+    const dynamicIds = tokens.map((t) => t.clientId);
     if (dynamicIds.length)
       await database()
         .db.update(oauthTokens)
         .set({ revoked: true })
         .where(inArray(oauthTokens.clientId, dynamicIds));
-    for (const token of tokens.filter((t) => t.native))
-      await database()
-        .db.update(oauthTokens)
-        .set({ revoked: true })
-        .where(
-          eq(
-            oauthTokens.accessHash,
-            createHash("sha256").update(token.access_token).digest("hex"),
-          ),
-        );
   }
 });

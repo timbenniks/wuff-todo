@@ -75,7 +75,7 @@ Ask the contributor product questions when needed; do not route routine technica
 decisions through Tim. Show the main interaction early and incorporate feedback.
 
 Call out changes to admission, authorization, sharing/privacy rules, OAuth consent,
-schema/migrations, native permissions, production configuration and safeguards in
+schema/migrations,  production configuration and safeguards in
 the PR. You can prepare and test these changes in the isolated workspace without
 preliminary permission; Tim reviews their implications before merge. Path-based
 policy hints draw attention to likely risk and never replace semantic review.
@@ -138,7 +138,7 @@ private details, static copy, CSS classes, source text or stubbed success.
 
 `pnpm test` automatically discovers nested JS/TS unit files under `tests/` and
 excludes `*.integration.test.*`. Adding a unit test must not require editing a
-manual list. Python/native behavior also needs the appropriate local test command.
+manual list. Python helper behavior also needs the appropriate local test command.
 Line coverage or a test count alone is not proof of meaningful behavior coverage.
 
 Fill `## Unit tests` with one JSON block:
@@ -252,3 +252,10 @@ When operational authorization or infrastructure is missing, prepare a concrete 
 proposed technical change, affected files, risks and smallest alternative. Keep
 the draft PR/mock reviewable. Never ask a nontechnical contributor to authorize
 migrations or production commands.
+
+## Supported clients
+
+Web, PWA and MCP only. Do not require native adapters/builds or register Tauri
+clients. [Native retirement](native-retirement.md) records the removed product
+and deliberate legacy authorization/transport rejection. Browser-native HTML
+controls and shared web UI remain supported.

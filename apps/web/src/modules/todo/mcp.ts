@@ -403,7 +403,7 @@ export function registerTodoMcp({
     "remove_reminder_device",
     {
       description:
-        "Remove one of your notification devices. Read get_reminder_settings for safe device IDs/labels first. Requires tasks:write and lists:read under the existing reminder contract. Supply fresh operationId; retry uncertain outcomes identically. Registration and OS permission use the secure browser/native handoff at /settings/notifications; never paste device addresses or push keys into chat.",
+        "Remove one of your notification devices. Read get_reminder_settings for safe device IDs/labels first. Requires tasks:write and lists:read under the existing reminder contract. Supply fresh operationId; retry uncertain outcomes identically. Registration and OS permission use the secure browser handoff at /settings/notifications; never paste device addresses or push keys into chat.",
       inputSchema: removeReminderDeviceSchema.shape,
       annotations: { ...write, destructiveHint: true },
     },

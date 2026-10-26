@@ -68,4 +68,4 @@ await sharp({
   .composite([{ input: portrait, left: 40, top: 70 }, { input: text }])
   .png()
   .toFile(`${out}/share.png`);
-console.log("Waffles web, social and future native exports generated.");
+console.log("Waffles web, social and PWA exports generated.");

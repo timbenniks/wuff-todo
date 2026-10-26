@@ -2,7 +2,7 @@ import OAuth2Server from "@node-oauth/oauth2-server";
 import { and, eq } from "drizzle-orm";
 import { database, oauthCodes, oauthTokens } from "@wuff/db";
 import { appOrigin } from "@/lib/config";
-import { validResourceClient } from "@/lib/native-policy";
+import { validResourceClient } from "@/lib/oauth-resource-policy";
 import { digest, oauthRequest, oauthServer } from "@/lib/oauth";
 export async function POST(request: Request) {
   try {

@@ -8,7 +8,7 @@ preliminary approval, scope hash or approved file list is required. -->
 ## Scope
 
 <!-- Identify files/components, interactions, test/doc changes and any schema,
-auth, contracts, dependencies, global styles, native config or safeguard changes.
+auth, contracts, dependencies, global styles or safeguard changes.
 Highlight high-risk access/privacy, schema, permission, operational or safeguard
 changes for Tim's final review. Routine implementation choices need no approval. -->
 

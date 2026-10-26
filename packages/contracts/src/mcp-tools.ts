@@ -95,7 +95,7 @@ export function mcpToolAllowed(
     (tool.control || enabled === null || enabled.includes(id))
   );
 }
-/** MCP may narrow a saved selection. Owner Settings/native can re-enable tools. */
+/** MCP may narrow a saved selection. Owner Settings can re-enable tools. */
 export function mcpToolSelectionAllowed(
   current: readonly string[] | null,
   requested: readonly string[],

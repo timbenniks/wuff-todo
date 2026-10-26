@@ -12,10 +12,9 @@ const a = { id: users[0].id, scopes },
   b = { id: users[1].id, scopes },
   op = () => crypto.randomUUID();
 after(() => database().pool.end());
-test("authenticated web/MCP/native Home adapters enforce scopes, account/origin/audience boundaries and share preferences", async () => {
+test("authenticated web/MCP Home adapters enforce scopes, account/origin/audience boundaries and share preferences", async () => {
   const { loginFixture } = await import("./helpers/login");
   const { createHash, randomBytes } = await import("node:crypto");
-  const { tauriClientId, tauriRedirectUri } = await import("@wuff/contracts");
   const origin = "http://localhost:3000",
     cookie = await loginFixture(users[0]),
     headers = {
@@ -39,13 +38,11 @@ test("authenticated web/MCP/native Home adapters enforce scopes, account/origin/
     dueDate: "2026-10-23",
     operationId: op(),
   });
-  async function grant(native: boolean, scope = "lists:read lists:manage") {
-    const resource = origin + (native ? "/api/mobile" : "/api/mcp");
-    let clientId = tauriClientId,
-      redirectUri = tauriRedirectUri;
-    if (native)
-      assert.equal((await fetch(origin + "/oauth/tauri")).status, 200);
-    else {
+  async function grant(scope = "lists:read lists:manage") {
+    const resource = origin + "/api/mcp";
+    let clientId = "",
+      redirectUri = "";
+    {
       const registered = await fetch(origin + "/oauth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -194,7 +191,7 @@ test("authenticated web/MCP/native Home adapters enforce scopes, account/origin/
         .status,
       400,
     );
-    const token = await grant(false);
+    const token = await grant();
     let result = await mcp(token, "get_dashboard", { today: "2026-10-23" });
     assert.deepEqual(result.structuredContent.dashboard.preferences, saved);
     result = await mcp(token, "show_dashboard", {
@@ -213,23 +210,21 @@ test("authenticated web/MCP/native Home adapters enforce scopes, account/origin/
     });
     assert.ok(!result.isError);
     saved = result.structuredContent.dashboardPreferences;
-    const nativeToken = await grant(true);
-    response = await native(nativeToken, "getDashboard", {
-      today: "2026-10-23",
-    });
-    assert.equal(response.status, 200);
-    assert.deepEqual((await response.json()).preferences, saved);
-    response = await native(nativeToken, "updateDashboard", {
-      version: saved.version,
-      settings: defaultDashboardSettings,
-      operationId: op(),
+    response = await fetch(origin + "/api/v1/dashboard", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        version: saved.version,
+        settings: defaultDashboardSettings,
+        operationId: op(),
+      }),
     });
     assert.equal(response.status, 200);
     assert.deepEqual(
       (await response.json()).settings,
       defaultDashboardSettings,
     );
-    const readToken = await grant(false, "lists:read");
+    const readToken = await grant("lists:read");
     result = await mcp(readToken, "get_dashboard", { today: "2026-10-23" });
     assert.ok(!result.isError);
     result = await mcp(readToken, "update_dashboard", {
@@ -240,7 +235,7 @@ test("authenticated web/MCP/native Home adapters enforce scopes, account/origin/
     assert.equal(result.isError, true);
     assert.equal(
       (await native(token, "getDashboard", { today: "2026-10-23" })).status,
-      401,
+      410,
     );
     response = await fetch(origin + "/api/v1/dashboard?today=2026-10-23");
     assert.equal(response.status, 401);

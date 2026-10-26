@@ -13,7 +13,7 @@ Wuff Empire is the shared web portal at `/`, with an app menu and a personal
 dashboard. Wuff Todo stays at `/lists`; Wuff Totake opens its private medication/equipment workspace. Its optional portal summary shows counts and reminder-group links without medicine names. Todo previews reuse authorized Todo reads.
 App navigation never grants access to another person's private information or
 expands an existing connection's permissions. Web Todo's Overview is the existing
-Home view; native/MCP keep Home. The portal and Todo startup preferences are
+Home view; MCP keeps Home. The portal and Todo startup preferences are
 separate: opening `/` always opens the portal.
 
 Wuff Todo helps friends and family manage private and shared lists. It also has an optional Work mode for development tasks. Keep everyday lists fast and approachable; richer features should not make every simple task feel like project management.
@@ -53,7 +53,7 @@ Personal reminders and Settings are implemented. Scheduling, delivery-provider c
 
 ## Surfaces and boundaries
 
-The responsive website and MCP tools use the same authorized backend; the MCP App adds an embedded interface. An online-only Tauri client shares React components; installed-platform capabilities still need platform-specific proof. A browser preview is not a native build or a live MCP-host test.
+The responsive website and MCP tools use the same authorized backend; the MCP App adds an embedded interface. Installable PWAs use the responsive web application. Tauri/native apps are retired. Browser checks do not prove physical-device push delivery or a named MCP-host integration.
 
 No offline list cache or queued offline edits. No arbitrary palette colors, dark mode, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
 

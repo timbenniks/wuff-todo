@@ -476,6 +476,8 @@ test("review hints focus on safeguards, schema, access and operational permissio
     "packages/domain/src/index.ts",
     "apps/web/src/lib/auth/server.ts",
     "apps/web/src/lib/oauth.ts",
+    "apps/web/src/lib/oauth-resource-policy.ts",
+    "apps/web/src/lib/retired-native.ts",
     "apps/native/src-tauri/tauri.conf.json",
     "apps/native/src-tauri/capabilities/default.json",
     "scripts/contributor-policy.mjs",

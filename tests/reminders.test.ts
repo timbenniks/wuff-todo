@@ -1,11 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateKeyPairSync } from "node:crypto";
-import { EventEmitter } from "node:events";
 import {
   reminderPreferencesSchema,
   reminderTimezoneSchema,
   setTaskReminderSchema,
+  reminderDeviceSchema,
 } from "@wuff/contracts";
 import {
   nextDailyReminder,
@@ -16,6 +15,7 @@ import {
   allowedPushEndpoint,
   sendReminderPush,
   PushTransportError,
+  reminderDeliveryStatus,
 } from "../packages/domain/src/platform/reminder-transport";
 const p = reminderPreferencesSchema.parse({});
 test("reminder defaults are opt-in and validate timezone/quiet hours", () => {
@@ -84,16 +84,16 @@ test("registered push endpoints cannot target arbitrary hosts, credentials, port
   assert.equal(
     allowedPushEndpoint(
       "https://wns2-par.notify.windows.com/?token=synthetic",
-      "windows",
+      "web",
     ),
     true,
   );
   assert.equal(
-    allowedPushEndpoint("https://evil.test/notify.windows.com", "windows"),
+    allowedPushEndpoint("https://evil.test/notify.windows.com", "web"),
     false,
   );
 });
-test("all transport adapters build provider-specific payloads and distinguish retired devices", async () => {
+test("Web Push preserves payload/error behavior while native registration and delivery are retired", async () => {
   const original = { ...process.env };
   const payload = {
     title: "Synthetic title",
@@ -108,53 +108,26 @@ test("all transport adapters build provider-specific payloads and distinguish re
     subscription: null,
   };
   try {
-    const ec = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
-      .privateKey.export({ type: "pkcs8", format: "pem" })
-      .toString();
     Object.assign(process.env, {
-      APNS_KEY_ID: "fake-key",
-      APNS_TEAM_ID: "fake-team",
-      APNS_IOS_TOPIC: "test.wuff.ios",
-      APNS_MACOS_TOPIC: "test.wuff.macos",
-      APNS_PRIVATE_KEY_BASE64: Buffer.from(ec).toString("base64"),
       WEB_PUSH_SUBJECT: "mailto:synthetic@example.invalid",
       WEB_PUSH_PUBLIC_KEY: "fake",
       WEB_PUSH_PRIVATE_KEY: "fake",
-      WNS_CLIENT_ID: "fake",
-      WNS_CLIENT_SECRET: "fake",
-      WUFF_ORIGIN: "https://wuff.example.invalid",
     });
-    for (const transport of ["ios", "macos"] as const) {
-      let headers: any,
-        body = "";
-      const req = new EventEmitter() as any;
-      req.setTimeout = () => {};
-      req.end = (v: string) => {
-        body = v;
-        queueMicrotask(() => {
-          req.emit("response", { ":status": 200 });
-          req.emit("end");
-        });
-      };
-      await sendReminderPush({ ...target, transport }, payload, {
-        appleConnect: (() => ({
-          on() {
-            return this;
-          },
-          close() {},
-          request(h: any) {
-            headers = h;
-            return req;
-          },
-        })) as any,
-      });
+    for (const transport of ["ios", "macos", "android", "windows"] as const) {
+      assert.equal(reminderDeliveryStatus()[transport], false);
       assert.equal(
-        headers["apns-topic"],
-        transport === "ios" ? "test.wuff.ios" : "test.wuff.macos",
+        reminderDeviceSchema.safeParse({
+          transport,
+          address: target.address,
+          label: target.label,
+          operationId: crypto.randomUUID(),
+        }).success,
+        false,
       );
-      assert.equal(headers["apns-push-type"], "alert");
-      assert.equal(JSON.parse(body).aps.alert.body, payload.body);
-      assert.equal(headers.authorization.split(".").length, 3);
+      await assert.rejects(
+        sendReminderPush({ ...target, transport }, payload),
+        (e) => e instanceof PushTransportError && e.permanent,
+      );
     }
     let webBody = "";
     await sendReminderPush(
@@ -195,50 +168,6 @@ test("all transport adapters build provider-specific payloads and distinguish re
         },
       ),
       (e) => e instanceof PushTransportError && e.permanent,
-    );
-    const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 })
-      .privateKey.export({ type: "pkcs8", format: "pem" })
-      .toString();
-    process.env.FCM_SERVICE_ACCOUNT_BASE64 = Buffer.from(
-      JSON.stringify({
-        project_id: "synthetic-wuff",
-        client_email: "synthetic@example.invalid",
-        private_key: rsa,
-      }),
-    ).toString("base64");
-    const calls: { url: string; init: RequestInit }[] = [];
-    const fakeFetch = async (url: string, init: RequestInit) => {
-      calls.push({ url, init });
-      return Response.json(
-        calls.length === 1
-          ? { access_token: "fake-access" }
-          : { name: "accepted" },
-      );
-    };
-    await sendReminderPush({ ...target, transport: "android" }, payload, {
-      fetch: fakeFetch,
-    });
-    const fcm = JSON.parse(calls[1].init.body as string).message;
-    assert.equal(fcm.data.path, "/lists");
-    assert.equal(fcm.android.notification.tag, payload.tag);
-    assert.equal(fcm.token, target.address);
-    calls.length = 0;
-    await sendReminderPush(
-      {
-        ...target,
-        transport: "windows",
-        address: "https://wns2-par.notify.windows.com/synthetic",
-      },
-      payload,
-      { fetch: fakeFetch },
-    );
-    assert.equal(
-      (calls[1].init.headers as Record<string, string>)["X-WNS-Type"],
-      "wns/toast",
-    );
-    assert.match(
-      calls[1].init.body as string,
-      /A &lt;private&gt; &amp; safe task/,
     );
   } finally {
     for (const key of Object.keys(process.env))

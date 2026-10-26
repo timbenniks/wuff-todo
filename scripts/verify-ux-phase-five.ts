@@ -160,7 +160,7 @@ try {
   settings = {
     ...settings,
     schedulerReady: true,
-    devices: [{ id: op(), label: "Mock phone", transport: "ios" }] as any,
+    devices: [{ id: op(), label: "Mock PWA", transport: "web" }] as any,
     delivery: { ...settings.delivery, ios: true },
   };
   await page

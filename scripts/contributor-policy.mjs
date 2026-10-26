@@ -134,7 +134,7 @@ export function sensitive(path) {
     /^(?:scripts\/(?:contributor-policy|migrate|seed-development|provision)[^/]*|docs\/(?:contributor[^/]*|github-main-ruleset\.json))$/.test(
       path,
     ) ||
-    /^(?:apps\/web\/src\/(?:app\/(?:oauth|\.well-known)(?:\/|$)|lib\/(?:auth(?:\/|\.)|oauth\.|native-policy\.))|packages\/domain\/src\/(?:index|agents|github-policy)\.)/.test(
+    /^(?:apps\/web\/src\/(?:app\/(?:oauth|\.well-known)(?:\/|$)|lib\/(?:auth(?:\/|\.)|oauth\.|oauth-resource-policy\.|retired-native\.|native-policy\.))|packages\/domain\/src\/(?:index|agents|github-policy)\.)/.test(
       path,
     ) ||
     /(?:^|\/)(?:vercel\.json|drizzle\.config\.[^/]+|tauri\.conf\.json)$/.test(

@@ -32,9 +32,9 @@ standalone application or proof of backend behavior.
 ## Source and reuse
 
 `packages/ui/src/features/runtime.ts` defines FeatureRuntime and RuntimeContext.
-It separates shared components from routing, requests, image retrieval and account
+It separates shared components from routing, requests and account
 behavior. `@wuff/contracts` supplies public types; `@wuff/design` supplies palette
-derivation; `@wuff/client` supplies typed interfaces. Real features use the existing
+derivation; `@wuff/client` supplies the browser-safe live-refresh queue. Real features use the existing
 authorized runtime/adapters. Database and domain packages stay server-side.
 
 Inspect import paths and signatures, then read the matching repository file for

@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { authorizationDetails } from "@/lib/oauth";
 import { pageActor, webIdentity } from "@/lib/auth/server";
 import { Corgi } from "@/components/corgi";
-import { nativeClientId } from "@/lib/native-policy";
 import { Consent } from "./consent";
 export const dynamic = "force-dynamic";
 export default async function AuthorizePage({
@@ -52,7 +51,6 @@ export default async function AuthorizePage({
       </main>
     );
   }
-  const native = details.client.id === nativeClientId;
   const labels: Record<string, string> = {
     "totake:read":
       "Read your private medications, equipment, schedules, intake history and stock",
@@ -81,9 +79,7 @@ export default async function AuthorizePage({
         Connect {details.client.name}?
       </h1>
       <p className="text-muted-foreground">
-        {native
-          ? "Wuff on your phone is asking to:"
-          : "This AI pal wants to join your pack. It is asking to:"}
+        This AI pal wants to join your pack. It is asking to:
       </p>
       <ul className="list-disc pl-5 my-6 space-y-3">
         {details.requested.map((s) => (
@@ -91,9 +87,9 @@ export default async function AuthorizePage({
         ))}
       </ul>
       <p className="text-sm text-muted-foreground mb-7">
-        {native
-          ? "Your phone can access the same lists you can. You can revoke its connection from the website’s Connected AI clients page."
-          : "Only the permissions listed above are granted. Hiding an app does not change this access. You can disconnect this client in AI & MCP connections."}
+        Only the permissions listed above are granted. Hiding an app does not
+        change this access. You can disconnect this client in AI &amp; MCP
+        connections.
       </p>
       <Consent query={params.toString()} />
     </main>

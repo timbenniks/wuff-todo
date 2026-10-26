@@ -68,11 +68,10 @@ handled by Vercel deployments; they are not part of this required GitHub check.
 Native compilation, mobile exports and installed-device checks are local release
 evidence, recorded by Tim before shipping affected clients.
 
-The multi-platform Native test builds workflow is manual-only (`workflow_dispatch`),
-retained as an optional fallback. No PR or main push starts it. Manually running it
-on main still builds all platforms and publishes a complete test prerelease after
-the jobs pass. It is not a required PR check. Only the lightweight Verify and
-metadata-only policy checks are required; removed native jobs cannot block PRs.
+Native test builds were disabled and are removed as part of the web/PWA-only
+retirement. All 37 artifacts and 3 test releases were removed at Tim's request.
+There are no native CI/release gates. Only Verify and Contributor policy remain
+required; see [retirement](native-retirement.md).
 
 ## Independent contribution and delivery policy
 
@@ -98,7 +97,7 @@ truth. Large diffs can pass without special approval; reviewers can still ask fo
 a smaller change when that improves review.
 
 Likely high-risk paths (safeguards/instructions, schema/migrations, key access/auth
-services, production configuration and native permission declarations) appear as
+services and production configuration) appear as
 informational review hints. They do not block implementation or require approval
 comments. Ordinary UI, CSS, design tokens, dependencies and contracts have no
 path-based gate. Path hints cannot identify every semantic risk: the PR must also

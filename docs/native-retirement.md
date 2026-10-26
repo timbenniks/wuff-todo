@@ -4,11 +4,11 @@ Tim explicitly retired native apps and all Tauri support. Root AGENTS.md and
 wuff-contributor apply. This PR supersedes the documentation-only public-safeguard
 PR #39 and includes its verified CI/ruleset evidence and resolved guide finding.
 
-- [ ] Remove Tauri workspace, native SDK, release scripts/workflow and their retired-product tests.
-- [ ] Retire native registration and bearer API endpoints with explicit non-data responses; reject native identities/resources in OAuth without weakening MCP.
-- [ ] Keep web/PWA service-worker notifications, HTTP API/MCP parity and shared browser utilities.
-- [ ] Update current architecture, contributor/module guidance, commands and dependencies; mark historical native evidence as retired.
-- [ ] Meaningful retirement/OAuth regressions and remaining type/unit/build/integration checks pass.
+- [x] Remove Tauri workspace, native SDK, release scripts/workflow and their retired-product tests.
+- [x] Retire native registration and bearer API endpoints with explicit non-data responses; reject native identities/resources in OAuth without weakening MCP.
+- [x] Keep web/PWA service-worker notifications, HTTP API/MCP parity and shared browser utilities.
+- [x] Update current architecture, contributor/module guidance, commands and dependencies; mark historical native evidence as retired.
+- Retirement/OAuth regressions and supported type/unit/build/integration checks are required; see verification below.
 
 Operational cleanup explicitly requested by Tim: Native test builds workflow was
 disabled; all 37 native Actions artifacts and 3 test prereleases (15 release
@@ -21,7 +21,36 @@ grants. Standard public CI and active main ruleset 25908933 remain enabled.
 The web still uses the generic LiveRefreshQueue in @wuff/client; preserve it while
 removing native-only SDK classes. Keep shared UI/domain/contracts used by web/MCP.
 Native HTML controls (for example native-select) are browser accessibility controls,
-not Tauri code, and remain. Runtime retirement changes require authorization,
+not Tauri code, and remain. Runtime retirement changes require access-control,
 OAuth/PKCE/refresh/resource isolation and actual HTTP/MCP verification. No MCP
 capability or user data migration is required; supported persisted actions remain
 on the existing authorized domain, HTTP and MCP services.
+
+Native APNs/FCM/WNS senders and environment setup are removed. Browser Web Push
+continues to use the browser's push service, including Apple/Google/Microsoft
+endpoints; these are required for PWAs, not native client support. New device
+registration accepts only Web Push subscriptions. Historical native device rows
+remain visible/removable but are skipped by both Todo and Totake callbacks and
+reported unavailable. No automatic data deletion or native provider request occurs.
+
+## Verification
+
+At source preparation: `pnpm typecheck`, `pnpm test` (203 passing, zero failed or
+skipped) and `pnpm build` pass. The native-resource rejection assertion fails on
+main's former policy and passes with this change. Retirement units cover denied
+identities/audiences/scopes, preserved MCP defaults/opt-in scopes/redirect safety,
+and explicit non-cacheable 410 responses. Web Push units cover unchanged payloads
+and expired subscriptions, retired registration/delivery and endpoint safety.
+Contributor policy still flags retired paths against accidental reintroduction;
+new OAuth/retirement policy paths also receive sensitive-change review hints.
+
+The smaller unit count (231 to 203) reflects deletion of native-only app, SDK,
+auth and adapter tests with their implementation. Supported account/privacy,
+retry, notification and HTTP/MCP outcomes remain covered. Former native-only
+mutation segments in product integration suites now exercise actual HTTP/MCP
+adapters, including stock Undo, private image reads and app settings.
+
+Final isolated integration, browser, hosted CI and reviewer results are recorded
+on [PR #40](https://github.com/timbenniks/wuff-todo/pull/40). Check that record
+for current-head evidence before merge. Local provider mocks do not prove live
+push delivery; installed-PWA/physical-phone receipt is a separate gate.

@@ -279,38 +279,6 @@ test("dashboard slots render their content and replace only a failed contributio
   assert.doesNotMatch(failed, /Synthetic widget content/);
 });
 
-test("native module dispatch composes products without prototype fallthrough or duplicate action ownership", async () => {
-  const { composeNativeOperations, nativeOperation, nativeBackgroundJobs } =
-    await import("../apps/web/src/modules/native");
-  const actor = { id: "synthetic-native-user", scopes: ["totake:read"] };
-  const operations = composeNativeOperations([
-    { read_first: (viewer, input) => ({ userId: viewer.id, input }) },
-    { read_second: () => "second" },
-  ]);
-  assert.equal(Object.getPrototypeOf(operations), null);
-  assert.deepEqual(operations.read_first(actor, { value: 1 }), {
-    userId: actor.id,
-    input: { value: 1 },
-  });
-  assert.equal(operations.read_second(actor, undefined), "second");
-  assert.throws(
-    () =>
-      composeNativeOperations([{ duplicate: () => 1 }, { duplicate: () => 2 }]),
-    /Duplicate native operation/,
-  );
-  for (const name of ["toString", "constructor", "__proto__", "missing_action"])
-    assert.throws(() => nativeOperation(name), { code: "not_found" });
-  assert.deepEqual(await nativeOperation("session")(actor, undefined), {
-    userId: actor.id,
-    scopes: actor.scopes,
-  });
-  assert.equal(typeof nativeOperation("getTotake"), "function");
-  assert.equal(typeof nativeOperation("getList"), "function");
-  assert.equal(nativeBackgroundJobs("getTotake").length, 0);
-  assert.equal(nativeBackgroundJobs("createTask").length, 1);
-  assert.equal(nativeBackgroundJobs("getList").length, 0);
-});
-
 test("cross-module tools require explicit integrations without creating new permission grants", () => {
   const product = sample(),
     tool = { ...product.mcpTools[0], scopes: ["lists:read"] };

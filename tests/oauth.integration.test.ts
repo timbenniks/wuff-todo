@@ -74,8 +74,8 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     .filter((part) => !part.startsWith("__Secure-neon-auth.session_data="))
     .join("; ");
   for (const [path, content] of [
-    ["/lists", "Your list pack"],
-    ["/settings/connections", "Connected AI clients"],
+    ["/lists", "Wuff Todo"],
+    ["/settings/connections", "/api/mcp"],
   ]) {
     const page = await fetch(`${origin}${path}`, {
       headers: { Cookie: uncachedCookie },
@@ -325,8 +325,8 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         body: JSON.stringify({ action: "listLists" }),
       })
     ).status,
-    401,
-    "An MCP token cannot authorize the native API",
+    410,
+    "Retired transport returns no data even for a valid MCP token",
   );
 
   assert.equal(
@@ -352,7 +352,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     clientInfo: { name: "Wuff test", version: "1" },
   });
   assert.equal(initialized.status, 200);
-  assert.equal(initialized.body.result.serverInfo.name, "Wuff Todo");
+  assert.equal(initialized.body.result.serverInfo.name, "Wuff Empire");
   const tools = await rpc(token.access_token, "tools/list", {});
   assert.ok(
     tools.body.result.tools.some(

@@ -1,10 +1,18 @@
 # Wuff Todo architecture
 
+**Current client decision — October 26:** web, installable PWA and MCP only.
+Tauri/native apps, SDK and release tooling are retired. Native registration and
+API entry points return 410; native client IDs/resources cannot obtain or use MCP
+grants. No database/auth-managed table changes. See [retirement](native-retirement.md).
+Earlier dated native implementation/release sections are historical and do not
+instruct current development.
+
+
 Status: implemented web/API/MCP architecture with explicitly marked future scope
 
 Updated: October 25, 2026
 
-The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication and the shared Tauri workspace are implemented; installed-platform/signing acceptance and new-account invitation delivery remain separate gates.
+The implemented foundation uses managed Neon Auth for login and `@node-oauth/oauth2-server` on Next.js for delegated MCP authorization. See [development and operations](development.md) for concrete endpoints, environment setup, and current limitations. Existing-account list invitations and membership management are implemented; see [sharing](sharing.md). Personal sidebar order, shared colors/descriptions, sections, and archive/restore are implemented in the [mature lists milestone](mature-lists.md). Native authentication/workspace support is retired; new-account invitation delivery remains separate.
 
 ## Empire product modules
 
@@ -12,14 +20,14 @@ Todo and Totake are product-owned modules in the existing deployment. The
 [modules guide](guide/modules.md) defines manifests, contracts, domain/schema/UI
 ownership and typed web/MCP/notification composition. Account, consent, transport
 and design primitives remain shared. Existing routes, tool IDs, data ownership,
-reminder rules and native navigation are preserved. [Refactor evidence](empire-modules.md)
+reminder rules and web navigation are preserved. [Refactor evidence](empire-modules.md)
 distinguishes local implementation from release. No database migration is needed.
 
 ## Stack and deployment
 
 Confirmed stack: Next.js, TypeScript, Tailwind CSS, shadcn/ui primitives, Drizzle ORM, Neon Postgres, Neon Auth, and Vercel hosting. Provision Neon through the Vercel integration. Use the GitHub CLI and Vercel CLI in the development and delivery workflow.
 
-The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. The Tauri application has its own native build/release pipeline in the same repository.
+The website, HTTP API, and MCP endpoint live in one Next.js application and one Vercel project. There is no native app build/release pipeline.
 
 Wuff Empire adds a web-only frame around private app routes and a personal portal
 at `/`; Todo retains `/lists` and `/tasks/:id`, and `/totake` opens the protected Totake module. An explicit app registry supplies app-card/menu destinations.
@@ -28,9 +36,8 @@ layouts. The portal calls the existing account-pinned dashboard API with the
 browser's local calendar date and five-item task previews, refreshing on focus,
 visibility, reconnect and a ten-second fallback. Latest-request arbitration and
 failure clearing prevent stale responses restoring a revoked preview. No new
-schema, data mutation, OAuth scope or provider is introduced. The shared Tauri
-workspace retains its existing Home wording/navigation; web Todo calls that view
-Overview. See [portal decisions](wuff-empire.md).
+schema, data mutation, OAuth scope or provider is introduced. Web Todo calls
+that view Overview. See [portal decisions](wuff-empire.md).
 
 Private task-note images use Vercel Blob for bytes and Neon for task-bound attachment records. Current admission/list permissions authorize each delivery; Markdown uses stable application attachment references. Development and production use separate private Frankfurt stores. See [private task images](task-images.md) for lifecycle, APIs, MCP and verification status.
 
@@ -178,11 +185,11 @@ MCP App packaging must respect host sandboxing and resource policies. Do not emb
 
 ## Web and mobile offline boundary
 
-**Current native decision:** online-only Tauri for desktop and phones. Offline persistence and queued edits remain deferred. See [client architecture](tauri-client-plan.md).
+**Current client decision:** web, installable PWA and MCP only. Tauri/native apps are retired. Offline persistence and queued edits remain deferred.
 
 Preserve the website’s online behavior and manifest/icon identity. The push-only notification service worker adds no fetch interception or offline task storage. No offline-first PWA or disconnected mutation queue is selected. Transient in-memory snapshots, uncertain-request retries and reconnect reconciliation are online features.
 
-The Tauri client follows the same online-only boundary. Native credential storage is scoped by server origin; snapshots and unsaved edits stay in memory. Bearer-authorized live invalidation, polling and foreground reconciliation refresh authoritative state. Sign-out clears local state and attempts remote revocation. Offline caches and queued writes need a separate privacy/revocation/conflict decision. See [authentication](tauri-auth.md) and [live refresh](tauri-live.md).
+Retired native endpoints return 410 without data access. OAuth rejects retired native identities and resources, including stored grants presented to MCP. Existing connection rows remain available for account revocation; no user data is deleted. See [retirement](native-retirement.md).
 
 ## Environments and delivery
 

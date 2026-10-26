@@ -1,5 +1,13 @@
 # Wuff Todo product specification
 
+**Current client decision — October 26:** web, installable PWA and MCP only.
+Tauri/native apps, SDK and release tooling are retired. Native registration and
+API entry points return 410; native client IDs/resources cannot obtain or use MCP
+grants. No database/auth-managed table changes. See [retirement](native-retirement.md).
+Earlier dated native implementation/release sections are historical and do not
+instruct current development.
+
+
 Status: working specification, version 0.1
 
 Updated: October 25, 2026
@@ -10,7 +18,7 @@ Todo and Totake are product-owned modules in the existing deployment. The
 [modules guide](guide/modules.md) defines manifests, contracts, domain/schema/UI
 ownership and typed web/MCP/notification composition. Account, consent, transport
 and design primitives remain shared. Existing routes, tool IDs, data ownership,
-reminder rules and native navigation are preserved. [Refactor evidence](empire-modules.md)
+reminder rules and web navigation are preserved. [Refactor evidence](empire-modules.md)
 distinguishes local implementation from release. No database migration is needed.
 
 ## Purpose
@@ -133,7 +141,7 @@ Primary actions and form submissions use filled theme-colored buttons with expli
 - Calendar actions open inline date controls with Today, Tomorrow, a date picker and explicit clearing. Date badges identify due-today and overdue tasks; completed dates remain visible without urgency styling. Manual order stays unchanged.
 - Sharing settings expose the owner, members, and pending invitations.
 - Empty, loading, denied-access, and failed-request states are designed deliberately.
-- Responsive layouts support phones before native apps arrive.
+- Responsive layouts support phones and installed PWAs.
 
 The corgi appears in the app identity and selected empty states. App-authored greetings, guidance and feedback use friendly corgi wordplay, while action labels, permissions and consequences stay explicit; user content is never rewritten. [Waffles' voice](voice.md) defines the shared web/MCP copy conventions and examples. Animation and completion celebrations are optional future design choices. Core actions remain readable, accessible, and usable without animation.
 
@@ -155,11 +163,10 @@ Concurrent edits must have a defined outcome. An outdated screen must not silent
 
 **Confirmed web/offline boundary — October 15, 2026:** keep the website’s current online behavior. Do not add an offline-first PWA, service-worker caching, persistent offline list storage, or queued offline writes. Existing manifest, icons, and home-screen identity stay as they are; those assets do not imply offline support. Network failures must remain visible, and unsaved changes must never appear confirmed.
 
-**Native decision — October 22, 2026:** Tauri in `apps/native` is the selected client for all four platforms. Persist authentication credentials securely through native storage; task snapshots and drafts remain in memory. Server access is required for list/task operations. See [native authentication](tauri-auth.md), [shared features](tauri-features.md) and [installed-platform gates](tauri-platforms.md).
+**Client decision — October 26, 2026:** web, installable PWA and MCP are supported. Native/Tauri apps are retired, including their SDK, registration and bearer adapters. See [retirement](native-retirement.md).
 
 ## Future scope
 
-- Native iPhone and Android apps.
 - Per-list cover images, arbitrary colors and further theme customization; seven named shared app palettes are implemented.
 - Richer task details and organization, if the initial users need them.
 - Scheduling, reminders, recurring tasks, calendars, and integrations.
@@ -189,7 +196,7 @@ October 18: native notes and private image viewing/upload/removal are required a
 
 ## Personal list views
 
-Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization is released; online-only native apps are now in development.
+Each user can save a view of an accessible list: task title/key search, section/status/priority/assignee/due-date filters, completion visibility, grouping, sorting, section-specific sort overrides, compact/detailed rows and collapsed groups. These preferences never change shared task order or other members' views. Every preference is available through API and MCP. Subtasks remain attached to parents, with contextual matches explained. See [personal views](personal-views.md). GitHub synchronization is released; native apps have since been retired.
 
 ## Totake and shared notifications — October 25
 
@@ -199,7 +206,7 @@ selected snooze, PRN intake and count-only inventory. No medical sharing or dosi
 advice. Dedicated Totake consent is required; old Todo grants do not expand.
 The portal summary is opt-in and omits medicine names. Global notification settings
 now have real account/app pauses and content privacy; Totake keeps its own repeat
-rules. Actual native delivery and watch interactions remain release gates.
+rules. Real Web Push delivery and physical-device receipt require separate verification.
 
 ## Wuff Notes
 
@@ -212,11 +219,11 @@ with seven shared approved themes. The dashboard is opt-in and bounded.
 
 Eight Notes-owned tables extend the shared Drizzle migration chain (0021), without
 auth-table changes. Shared domain services enforce admission, roles, scopes,
-versions, operation receipts and image access for HTTP/MCP/native adapters. New
+versions, operation receipts and image access for HTTP/MCP adapters. New
 Notes scopes need explicit consent; existing defaults/grants remain unchanged.
 Todo task export requires explicit destination confirmation and both products'
 permissions; its transaction creates exactly one task and source reference, with
 optional text copying. Linked-note content/private images are never copied.
 Trash is reversible; physical image purge/permanent deletion, public sharing,
-collaborative live editing and native product navigation are outside this scope.
+collaborative live editing are outside this scope.
 See [Notes delivery evidence](wuff-notes.md) and [module guide](guide/modules.md).
