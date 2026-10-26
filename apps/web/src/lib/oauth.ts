@@ -10,11 +10,7 @@ import {
 } from "@wuff/db";
 import { AppError, scopes } from "@wuff/contracts";
 import { appOrigin, mcpResource } from "./config";
-import {
-  firstPartyRedirect,
-  nativeAllowedScopes,
-  validResourceClient,
-} from "./native-policy";
+import { isRetiredClient, validResourceClient } from "./oauth-resource-policy";
 
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -55,11 +51,7 @@ export function oauthServer(resource = mcpResource()) {
     validateScope: async (user, _client, requested) => {
       if (!(await admitted(user.id))) return false;
       return requested?.length &&
-        requested.every((s) =>
-          (resource === mcpResource() ? scopes : nativeAllowedScopes).some(
-            (allowed) => allowed === s,
-          ),
-        ) &&
+        requested.every((s) => scopes.some((allowed) => allowed === s)) &&
         (requested.includes("lists:read") ||
           (resource === mcpResource() &&
             [
@@ -91,7 +83,13 @@ export function oauthServer(resource = mcpResource()) {
         .select()
         .from(oauthCodes)
         .where(eq(oauthCodes.hash, digest(code)));
-      if (!row || !(await admitted(row.userId))) return null;
+      if (
+        !row ||
+        row.resource !== resource ||
+        !validResourceClient(row.clientId, resource, appOrigin()) ||
+        !(await admitted(row.userId))
+      )
+        return null;
       return {
         authorizationCode: code,
         expiresAt: row.expiresAt,
@@ -143,7 +141,13 @@ export function oauthServer(resource = mcpResource()) {
             eq(oauthTokens.issuer, appOrigin()),
           ),
         );
-      if (!row || !(await admitted(row.userId))) return null;
+      if (
+        !row ||
+        row.resource !== resource ||
+        !validResourceClient(row.clientId, resource, appOrigin()) ||
+        !(await admitted(row.userId))
+      )
+        return null;
       return {
         accessToken: token,
         accessTokenExpiresAt: row.accessExpiresAt,
@@ -164,7 +168,13 @@ export function oauthServer(resource = mcpResource()) {
             eq(oauthTokens.issuer, appOrigin()),
           ),
         );
-      if (!row || !(await admitted(row.userId))) return null;
+      if (
+        !row ||
+        row.resource !== resource ||
+        !validResourceClient(row.clientId, resource, appOrigin()) ||
+        !(await admitted(row.userId))
+      )
+        return null;
       return {
         refreshToken: token,
         refreshTokenExpiresAt: row.refreshExpiresAt,
@@ -251,11 +261,7 @@ export async function authorizationDetails(params: URLSearchParams) {
       "A valid state parameter is required.",
     );
   const resource = params.get("resource") ?? "";
-  if (
-    !validResourceClient(client.id, resource, appOrigin()) ||
-    (firstPartyRedirect(client.id) !== null &&
-      params.get("redirect_uri") !== firstPartyRedirect(client.id))
-  )
+  if (!validResourceClient(client.id, resource, appOrigin()))
     throw new AppError(
       "invalid_target",
       "This authorization is for a different resource.",
@@ -267,24 +273,24 @@ export async function authorizationDetails(params: URLSearchParams) {
 // OAuth permits an omitted scope. ChatGPT's connection setup uses this path;
 // consent must display the same bounded defaults that are saved in the grant.
 export function authorizationScopes(scope: string | null, clientId: string) {
+  if (isRetiredClient(clientId))
+    throw new AppError(
+      "invalid_client",
+      "This client is retired. Use Wuff in your browser.",
+    );
   const requested =
-    scope === null && firstPartyRedirect(clientId) === null
+    scope === null
       ? ["lists:read", "tasks:write", "lists:manage"]
-      : (scope ?? "").split(" ").filter(Boolean);
+      : scope.split(" ").filter(Boolean);
   if (
-    !(
-      requested.includes("lists:read") ||
-      (firstPartyRedirect(clientId) === null &&
-        ["empire:read", "totake:read", "notes:read", "notifications:read"].some(
-          (s) => requested.includes(s),
-        ))
-    ) ||
-    requested.some(
-      (s) =>
-        !(
-          firstPartyRedirect(clientId) !== null ? nativeAllowedScopes : scopes
-        ).some((allowed) => allowed === s),
-    )
+    ![
+      "lists:read",
+      "empire:read",
+      "totake:read",
+      "notes:read",
+      "notifications:read",
+    ].some((s) => requested.includes(s)) ||
+    requested.some((s) => !scopes.some((allowed) => allowed === s))
   )
     throw new AppError("invalid_scope", "Choose supported Wuff permissions.");
   return requested;

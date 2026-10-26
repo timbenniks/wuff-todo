@@ -18,7 +18,7 @@ in a page handler, React component or MCP adapter.
 API and MCP use the same domain services, actor/access rules, validation, defaults,
 personal/shared semantics, version conflicts, operation IDs and retry behavior.
 Both must return enough authorized state to reconcile success or recover from an
-uncertain save. Existing web/native views must refresh after MCP writes and MCP
+uncertain save. Existing web/PWA views must refresh after MCP writes and MCP
 reads must reflect API writes. Preserve pending drafts during remote refresh.
 
 No web-only mutations, placeholder tools or silent API/MCP deferral. If backend

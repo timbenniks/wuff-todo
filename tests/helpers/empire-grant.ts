@@ -1,22 +1,19 @@
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { createHash, randomBytes } from "node:crypto";
-import { tauriClientId, tauriRedirectUri } from "@wuff/contracts";
 export const fixtureOrigin = "http://localhost:3000";
 export async function empireGrant(
   cookie: string,
   scope: string,
-  native = false,
   existing?: { clientId: string; redirectUri: string },
 ) {
   if (!process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l"))
     throw Error("Development only");
   const origin = fixtureOrigin,
-    resource = origin + (native ? "/api/mobile" : "/api/mcp");
-  let clientId: string = tauriClientId,
-    redirectUri: string = tauriRedirectUri;
-  if (native) assert.equal((await fetch(origin + "/oauth/tauri")).status, 200);
-  else if (existing) {
+    resource = origin + "/api/mcp";
+  let clientId: string = "",
+    redirectUri: string = "";
+  if (existing) {
     clientId = existing.clientId;
     redirectUri = existing.redirectUri;
   } else {
@@ -97,12 +94,11 @@ export async function empireGrant(
   });
   assert.equal(response.status, 200);
   const token = await response.json();
-  return { ...token, clientId, native, resource } as {
+  return { ...token, clientId, resource } as {
     access_token: string;
     refresh_token: string;
     scope: string;
     clientId: string;
-    native: boolean;
     resource: string;
   };
 }

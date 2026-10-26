@@ -8,7 +8,7 @@ import {
   summarizeAiConnections,
 } from "@wuff/contracts";
 import { authorizationScopes } from "../apps/web/src/lib/oauth";
-import { tauriClientId } from "@wuff/contracts";
+const retiredClientId = "wuff-tauri-v1";
 
 test("Empire defaults preserve Todo and keep the new private Totake summary opt-in", () => {
   assert.deepEqual(empireAppPreference({}, "todo"), {
@@ -77,7 +77,7 @@ test("visibility writes reject unknown IDs, duplicate app changes, empty writes,
       false,
     );
 });
-test("new Empire permissions require explicit OAuth consent; old defaults and native basic grants remain unchanged", () => {
+test("new Empire permissions require explicit OAuth consent; old defaults remain unchanged and native clients are retired", () => {
   const client = crypto.randomUUID();
   assert.deepEqual(authorizationScopes(null, client), [
     "lists:read",
@@ -99,10 +99,14 @@ test("new Empire permissions require explicit OAuth consent; old defaults and na
   );
   assert.throws(() => authorizationScopes("totake:write", client));
   assert.throws(() => authorizationScopes("totake:read totake:manage", client));
-  assert.throws(() => authorizationScopes("empire:read", tauriClientId));
-  assert.deepEqual(
-    authorizationScopes("lists:read empire:read empire:manage", tauriClientId),
-    ["lists:read", "empire:read", "empire:manage"],
+  assert.throws(() => authorizationScopes("empire:read", retiredClientId));
+  assert.throws(
+    () =>
+      authorizationScopes(
+        "lists:read empire:read empire:manage",
+        retiredClientId,
+      ),
+    { code: "invalid_client" },
   );
 });
 test("AI connection summaries deduplicate live grants and do not present expired scopes as active authority", () => {
@@ -129,7 +133,7 @@ test("AI connection summaries deduplicate live grants and do not present expired
   assert.deepEqual(summarizeAiConnections([], 100), []);
 });
 test("connection revocation supports fixed native client IDs as well as dynamic UUID clients", () => {
-  for (const clientId of [tauriClientId, crypto.randomUUID()])
+  for (const clientId of [retiredClientId, crypto.randomUUID()])
     assert(
       disconnectAiClientSchema.safeParse({
         clientId,

@@ -406,7 +406,7 @@ test("Notes domain enforces private/sharing/link/board boundaries, personal stat
   }
 });
 
-test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, account pinning and revocation", async () => {
+test("Notes HTTP and MCP adapters preserve consent, mutations, images, account pinning and revocation", async () => {
   const db = database().db,
     ids: string[] = [],
     operations: string[] = [],
@@ -424,8 +424,8 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       "Content-Type": "application/json",
       "X-Wuff-User": first.id,
     };
-  const grant = async (scope: string, native = false) => {
-    const token = await empireGrant(cookie, scope, native);
+  const grant = async (scope: string) => {
+    const token = await empireGrant(cookie, scope);
     tokens.push(token);
     return token;
   };
@@ -444,30 +444,13 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       "notes:read notes:write notes:manage lists:read tasks:write",
     ),
     readonly = await grant("notes:read"),
-    legacy = await grant("lists:read"),
-    native = await grant(
-      "lists:read tasks:write notes:read notes:write notes:manage",
-      true,
-    );
+    legacy = await grant("lists:read");
   const invoke = async (name: string, input: unknown = {}) => {
     const r = await empireMcp(mcp.access_token, name, input);
     assert.equal(r.status, 200);
     assert(!r.result?.isError, JSON.stringify(r.result));
     return r.result.structuredContent;
   };
-  const nativeCall = async (
-    action: string,
-    input: unknown,
-    userId = first.id,
-  ) =>
-    fetch(origin + "/api/mobile", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${native.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ action, input, userId }),
-    });
   const [settingsBefore] = await db
     .select()
     .from(notesSettings)
@@ -658,25 +641,33 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       (await invoke("get_notes_settings")).notesSettings,
       await apiSettings.json(),
     );
-    const nativeInput = {
+    const apiInput = {
       noteId: n.id,
       version: n.version,
       operationId: op(),
       change: {
         action: "save",
-        title: "Native changed title",
+        title: "API changed title",
         content: n.content,
         tags: n.tags,
         mode: n.mode,
         theme: n.theme,
       },
     };
-    response = await nativeCall("updateNote", nativeInput);
+    response = await api("/" + n.id, "PUT", apiInput);
     assert.equal(response.status, 200);
     n = await response.json();
     assert.deepEqual((await invoke("get_note", { noteId: n.id })).note, n);
-    assert.equal((await nativeCall("getNote", n.id, second.id)).status, 409);
-    assert.equal((await nativeCall("getNote", n.id)).status, 200);
+    assert.equal(
+      (
+        await api("/" + n.id, "GET", undefined, {
+          ...headers,
+          "X-Wuff-User": second.id,
+        })
+      ).status,
+      409,
+    );
+    assert.equal((await api("/" + n.id)).status, 200);
     const image = await sharp({
         create: { width: 16, height: 10, channels: 3, background: "#bca17d" },
       })
@@ -712,12 +703,10 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
       ).status,
       404,
     );
-    const nativeImage = await nativeCall("getNoteImage", {
-      assetId: uploaded.image.id,
-    });
-    assert.equal(nativeImage.status, 200);
+    const apiImage = await api("/images/" + uploaded.image.id);
+    assert.equal(apiImage.status, 200);
     assert.equal(
-      (await nativeImage.json()).imageBase64,
+      Buffer.from(await apiImage.arrayBuffer()).toString("base64"),
       imageMcp.result.content[0].data,
     );
     response = await fetch(origin + "/api/v1/notes/images", {
@@ -815,22 +804,12 @@ test("Notes HTTP, MCP and native adapters preserve consent, mutations, images, a
             inArray(receipts.operationId, operations),
           ),
         );
-    const dynamic = tokens.filter((t) => !t.native).map((t) => t.clientId);
+    const dynamic = tokens.map((t) => t.clientId);
     if (dynamic.length)
       await db
         .update(oauthTokens)
         .set({ revoked: true })
         .where(inArray(oauthTokens.clientId, dynamic));
-    for (const token of tokens.filter((t) => t.native))
-      await db
-        .update(oauthTokens)
-        .set({ revoked: true })
-        .where(
-          eq(
-            oauthTokens.accessHash,
-            createHash("sha256").update(token.access_token).digest("hex"),
-          ),
-        );
   }
 });
 

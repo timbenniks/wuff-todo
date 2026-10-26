@@ -42,7 +42,7 @@ const fixtures = JSON.parse(await readFile(".vercel/dev-users.json", "utf8"));
 const actor = { id: fixtures[0].id, scopes },
   other = { id: fixtures[1].id, scopes };
 after(() => database().pool.end());
-test("Totake real domain/HTTP/MCP/native parity, consent, account isolation, receipts and concurrent records", async () => {
+test("Totake real domain/HTTP/MCP parity, consent, account isolation, receipts and concurrent records", async () => {
   const db = database().db;
   assert.equal(
     (
@@ -111,12 +111,6 @@ test("Totake real domain/HTTP/MCP/native parity, consent, account isolation, rec
     tokens.push(readonly.access_token);
     const legacy = await empireGrant(cookie, "lists:read tasks:write");
     tokens.push(legacy.access_token);
-    const native = await empireGrant(
-      cookie,
-      "lists:read totake:read totake:write",
-      true,
-    );
-    tokens.push(native.access_token);
     const expanded = await fetch(origin + "/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -229,19 +223,13 @@ test("Totake real domain/HTTP/MCP/native parity, consent, account isolation, rec
     );
     const recordId = saved.state.groups.find((g: any) => g.id === group.id)
       .records[0].id;
-    const undoResponse = await fetch(origin + "/api/mobile", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${native.access_token}`,
-        "Content-Type": "application/json",
-      },
+    const undoResponse = await fetch(origin + "/api/v1/totake", {
+      method: "PUT",
+      headers,
       body: JSON.stringify({
-        action: "updateTotake",
-        input: {
-          version: saved.version,
-          operationId: op(),
-          change: { action: "undo", groupId: group.id, recordId },
-        },
+        version: saved.version,
+        operationId: op(),
+        change: { action: "undo", groupId: group.id, recordId },
       }),
     });
     assert.equal(undoResponse.status, 200);
@@ -422,15 +410,30 @@ test("Totake callbacks enforce pauses, partial-device retry receipts, current st
       change: { action: "save_treatment", draft: t },
     });
     for (let n = 0; n < 2; n++) {
-      const label = `Totake callback fixture ${n}`,
+      const endpoint = `https://fcm.googleapis.com/fcm/send/totake-${crypto.randomUUID()}`,
+        label = `Totake callback fixture ${n}`,
         result = await registerReminderDevice(actor, {
           operationId: op(),
-          transport: "android",
-          address: `totake-synthetic-${crypto.randomUUID()}`,
+          transport: "web",
+          address: endpoint,
+          subscription: {
+            endpoint,
+            keys: { p256dh: "a".repeat(87), auth: "b".repeat(22) },
+          },
           label,
         });
       devices.push(result.devices.find((d) => d.label === label)!.id);
     }
+    const [legacy] = await db
+      .insert(reminderDevices)
+      .values({
+        userId: actor.id,
+        transport: "android",
+        address: crypto.randomUUID(),
+        label: "Retired callback fixture",
+      })
+      .returning({ id: reminderDevices.id });
+    devices.push(legacy.id);
     let settings = await getNotificationSettings(actor);
     const pause = async (paused: boolean) => {
       settings = await updateNotificationSettings(actor, {
@@ -464,9 +467,10 @@ test("Totake callbacks enforce pauses, partial-device retry receipts, current st
     const accepted = new Map<string, number>();
     let failure = true;
     const sender = async (
-      device: { id: string },
+      device: { id: string; transport: string },
       payload: { body: string },
     ) => {
+      assert.equal(device.transport, "web");
       assert.equal(payload.body, "Open Wuff to view your reminder.");
       if (accepted.size === 1 && !accepted.has(device.id) && failure) {
         failure = false;
@@ -481,6 +485,16 @@ test("Totake callbacks enforce pauses, partial-device retry receipts, current st
     assert.equal(accepted.size, 1);
     await deliverTotake({ id: job.id, version: job.version }, sender, due);
     assert.equal(accepted.size, 2);
+    assert.equal(
+      (
+        await db
+          .select()
+          .from(reminderDevices)
+          .where(eq(reminderDevices.id, legacy.id))
+      ).length,
+      1,
+      "legacy device is preserved without receiving medicine alerts",
+    );
     assert.deepEqual([...accepted.values()], [1, 1]);
     const [nextJob] = await db
       .select()

@@ -1,10 +1,18 @@
 # Development and operations
 
+**Current client decision — October 26:** web, installable PWA and MCP only.
+Tauri/native apps, SDK and release tooling are retired. Native registration and
+API entry points return 410; native client IDs/resources cannot obtain or use MCP
+grants. No database/auth-managed table changes. See [retirement](native-retirement.md).
+Earlier dated native implementation/release sections are historical and do not
+instruct current development.
+
+
 Updated: October 24, 2026
 
 ## Provisioned infrastructure
 
-- Private GitHub repository: `timbenniks/wuff-todo`.
+- Public GitHub repository: `timbenniks/wuff-todo`.
 - Vercel project: `wuff-todo`, under `tim-benniks-projects-1b967033`.
 - Project root directory: `apps/web`; the build command runs the root workspace build.
 - Neon resource: `wuff-todo`, provisioned through `vercel integration add neon` on the free plan in Frankfurt.
@@ -218,7 +226,7 @@ Tim’s previously supplied key was migrated into his production personal connec
 
 See [reminders](reminders.md). Additive migration `0013_vengeful_lila_cheney.sql` creates only application reminder tables; `0014_reminder_completion.sql` cancels pending task reminders on any completion transition, including GitHub synchronization writes. Apply both to isolated development before production. Scheduler and all push credentials are optional server-only configuration from `.env.example`. An HTTPS public WUFF_ORIGIN is required for QStash; loopback can test the domain with mocked providers but cannot receive public callbacks. Use the existing Vercel deployment for a signed-provider smoke rather than exposing credentials through a tunnel or logs.
 
-QStash publishes only job IDs/generations to `/api/internal/reminders`. POST verifies its signature against the canonical URL and body; GET requires CRON_SECRET for once-daily recovery. Set both signing keys for rotation. Generate VAPID keys privately and store the private key only in ignored environment files/Vercel; only the public key reaches browsers. Never print APNs/FCM/WNS credentials or device addresses. Missing provider configuration is displayed in personal Settings; saving a preference does not assert deliverability.
+QStash publishes only job IDs/generations to `/api/internal/reminders`. POST verifies its signature against the canonical URL and body; GET requires CRON_SECRET for once-daily recovery. Set both signing keys for rotation. Generate VAPID keys privately and store the private key only in ignored environment files/Vercel; only the public key reaches browsers. Never print Web Push secrets or device addresses. Native provider senders and their configuration are retired; legacy device records remain removable but cannot receive delivery. Missing provider configuration is displayed in personal Settings; saving a preference does not assert deliverability.
 
 ### QStash Marketplace provisioning attempt — October 22
 

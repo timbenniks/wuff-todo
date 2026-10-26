@@ -11,7 +11,6 @@ import {
   updateMcpToolsSchema,
 } from "@wuff/contracts";
 import { createMcpServer } from "../apps/web/src/lib/mcp";
-import { featureApi } from "../apps/native/src/feature-api";
 const require = createRequire(
   new URL("../apps/web/package.json", import.meta.url),
 );
@@ -126,28 +125,6 @@ test("actual MCP SDK discovery covers the full catalog and hides denied tools; c
       ),
     );
   });
-});
-test("native route mapping preserves tool selection payloads and rejects unsupported methods", async () => {
-  const calls: unknown[] = [];
-  const api = featureApi({
-    call: async <T>(action: string, input: unknown) => {
-      calls.push({ action, input });
-      return {} as T;
-    },
-  });
-  await api("/api/v1/connections/tools?clientId=abc%2Fdef");
-  const input = {
-    version: 2,
-    operationId: crypto.randomUUID(),
-    clientId: "abc/def",
-    enabledTools: ["get_task"],
-  };
-  await api("/api/v1/connections/tools", "PUT", input);
-  assert.deepEqual(calls, [
-    { action: "getMcpToolPreferences", input: { clientId: "abc/def" } },
-    { action: "updateMcpToolPreferences", input },
-  ]);
-  await assert.rejects(api("/api/v1/connections/tools", "DELETE", input));
 });
 
 test("MCP actors can narrow but cannot re-enable any saved selection; owners can recover", () => {

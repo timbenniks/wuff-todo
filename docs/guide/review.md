@@ -14,7 +14,7 @@ PR. The conversation supports that record; Tim should not need to reconstruct it
 - Report applicable success, loading, pending, empty, error, denied and conflict
   behavior, including cancellation, retained drafts and uncertain-save recovery.
 - List commands actually run, results, mocked behavior, unverified checks and
-  rollout/native/device gates. A green check is not proof that evidence is true.
+  rollout/device gates. A green check is not proof that evidence is true.
 - Include meaningful unit cases for all changed behavior, regression tests for
   fixes and the PR's Unit tests declaration. Verify new tests are discovered by
   `pnpm test`; integration-only coverage or empty assertions do not substitute.
@@ -46,7 +46,9 @@ by itself authorizes paid agent execution, a migration, merge or production rele
 ## What the contributor receives
 
 Give a plain-language description of what changed, how to try it, what was tested
-and what still needs Tim. Tim owns final review, merge and production release.
+and any remaining gates. Tim and Josibe84 may merge their own PRs after required
+checks and the Codex fix/review loop. Agents need explicit merge instructions;
+production operations still need Tim’s authorization.
 
 ## Module review
 

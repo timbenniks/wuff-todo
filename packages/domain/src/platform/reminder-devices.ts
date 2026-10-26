@@ -10,10 +10,7 @@ import { allowedPushEndpoint } from "./reminder-transport";
 import { fail, notificationWrite } from "./notification-write";
 export async function saveReminderDevice(actor: Actor, data: unknown) {
   const input = reminderDeviceSchema.parse(data);
-  if (
-    ["web", "windows"].includes(input.transport) &&
-    !allowedPushEndpoint(input.address, input.transport as "web" | "windows")
-  )
+  if (!allowedPushEndpoint(input.address, input.transport))
     fail(
       "invalid_endpoint",
       "This notification endpoint is not supported.",

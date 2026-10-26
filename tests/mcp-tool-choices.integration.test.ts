@@ -20,7 +20,7 @@ import {
 if (!process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l"))
   throw Error("Development only");
 after(() => database().pool.end());
-test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope ceiling, narrowing, retries, races and revocation", async () => {
+test("MCP connection tool choices: actual HTTP/MCP parity, privacy, scope ceiling, narrowing, retries, races and revocation", async () => {
   const [user, other] = JSON.parse(
     await readFile(".vercel/dev-users.json", "utf8"),
   );
@@ -38,8 +38,8 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
     operationIds.push(id);
     return id;
   };
-  const grant = async (scope: string, native = false) => {
-    const token = await empireGrant(cookie, scope, native);
+  const grant = async (scope: string) => {
+    const token = await empireGrant(cookie, scope);
     tokens.push(token);
     return token;
   };
@@ -57,17 +57,6 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
       headers: { ...headers, ...extra },
       body: JSON.stringify(input),
     });
-  const nativeCall = async (token: string, action: string, input: unknown) => {
-    const r = await fetch(origin + "/api/mobile", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ action, input, userId: user.id }),
-    });
-    return { status: r.status, data: await r.json() };
-  };
   const discovery = async (token: string) => {
     const r = await fetch(origin + "/api/mcp", {
       method: "POST",
@@ -93,7 +82,6 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
         "lists:read lists:manage tasks:write empire:read empire:manage totake:read totake:write",
       ),
       second = await grant("empire:read empire:manage totake:read"),
-      native = await grant("lists:read empire:read empire:manage", true),
       readonly = await grant("empire:read");
     const actor = { id: user.id, scopes },
       target = { clientId: full.clientId };
@@ -176,25 +164,15 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
     );
     assert.equal(narrow.result.isError, undefined);
     assert.deepEqual((await api(full.clientId)).enabledTools, ["get_task"]);
-    const nativeRead = await nativeCall(
-      native.access_token,
-      "getMcpToolPreferences",
-      target,
-    );
-    assert.equal(nativeRead.status, 200);
-    assert.deepEqual(nativeRead.data, await api(full.clientId));
-    const nativeSave = await nativeCall(
-      native.access_token,
-      "updateMcpToolPreferences",
-      {
-        ...target,
-        version: 2,
-        operationId: op(),
-        enabledTools: ["get_totake"],
-      },
-    );
-    assert.equal(nativeSave.status, 200);
-    assert.deepEqual(nativeSave.data.enabledTools, ["get_totake"]);
+    assert.deepEqual((await api(full.clientId)).enabledTools, ["get_task"]);
+    const browserSave = await write({
+      ...target,
+      version: 2,
+      operationId: op(),
+      enabledTools: ["get_totake"],
+    });
+    assert.equal(browserSave.status, 200);
+    assert.deepEqual((await browserSave.json()).enabledTools, ["get_totake"]);
     assert((await discovery(full.access_token)).includes("get_totake"));
     const race = await Promise.all(
       [[], ["get_task"]].map((enabledTools) =>
@@ -220,7 +198,7 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
     assert.deepEqual(await api(full.clientId), before);
     assert(!(await discovery(rotated.access_token)).includes("get_totake"));
     // A newly consented token for the same client does not reset the owner's policy.
-    const again = await empireGrant(cookie, full.scope, false, {
+    const again = await empireGrant(cookie, full.scope, {
       clientId: full.clientId,
       redirectUri: "http://127.0.0.1:4173/callback",
     });
@@ -287,7 +265,7 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
       401,
     );
   } finally {
-    const dynamicIds = tokens.filter((t) => !t.native).map((t) => t.clientId);
+    const dynamicIds = tokens.map((t) => t.clientId);
     if (dynamicIds.length) {
       await database()
         .db.delete(mcpToolPreferences)
@@ -297,15 +275,6 @@ test("MCP connection tool choices: actual HTTP/MCP/native parity, privacy, scope
         .set({ revoked: true })
         .where(inArray(oauthTokens.clientId, dynamicIds));
     }
-    for (const token of tokens.filter((t) => t.native))
-      await fetch(origin + "/oauth/revoke", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: token.clientId,
-          token: token.refresh_token,
-        }),
-      });
     if (operationIds.length)
       await database()
         .db.delete(receipts)

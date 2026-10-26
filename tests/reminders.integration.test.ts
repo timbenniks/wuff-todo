@@ -2,7 +2,13 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { and, eq, sql } from "drizzle-orm";
-import { database, members, reminderJobs, reminderPreferences } from "@wuff/db";
+import {
+  database,
+  members,
+  reminderJobs,
+  reminderPreferences,
+  reminderDevices,
+} from "@wuff/db";
 import { scopes, reminderPreferencesSchema } from "@wuff/contracts";
 import {
   createList,
@@ -116,26 +122,43 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
       ),
       { code: "forbidden" },
     );
-    const address = "d".repeat(64);
+    const address =
+      "https://fcm.googleapis.com/fcm/send/synthetic-retirement-a";
+    const subscription = {
+      endpoint: address,
+      keys: { p256dh: "a".repeat(87), auth: "b".repeat(22) },
+    };
     const settings = await registerReminderDevice(b, {
-      transport: "ios",
+      transport: "web",
       address,
-      label: "Synthetic iOS",
+      subscription,
+      label: "Synthetic browser",
       operationId: crypto.randomUUID(),
     });
     deviceIds.push(
-      settings.devices.find((d) => d.label === "Synthetic iOS")!.id,
+      settings.devices.find((d) => d.label === "Synthetic browser")!.id,
     );
     assert.ok(!JSON.stringify(settings).includes(address));
     await assert.rejects(
       registerReminderDevice(a, {
-        transport: "ios",
+        transport: "web",
         address,
+        subscription,
         label: "Forbidden takeover",
         operationId: crypto.randomUUID(),
       }),
       { code: "device_in_use" },
     );
+    const [legacyDevice] = await db
+      .insert(reminderDevices)
+      .values({
+        userId: b.id,
+        transport: "ios",
+        address: crypto.randomUUID(),
+        label: "Retired fixture",
+      })
+      .returning({ id: reminderDevices.id });
+    deviceIds.push(legacyDevice.id);
     const runAt = new Date(Date.now() + 3600000).toISOString();
     const request = {
       listId: list.id,
@@ -153,7 +176,8 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
       [1, 2].map(() =>
         deliverReminder(
           { id: reminder.id, version: 1 },
-          async () => {
+          async (device) => {
+            assert.equal(device.transport, "web");
             sends++;
           },
           new Date(runAt),
@@ -161,15 +185,26 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
       ),
     );
     assert.equal(sends, 1);
+    assert.equal(
+      (
+        await db
+          .select()
+          .from(reminderDevices)
+          .where(eq(reminderDevices.id, legacyDevice.id))
+      ).length,
+      1,
+      "retired devices are preserved without delivery",
+    );
     assert.equal((await getTaskReminder(b, request)).reminder?.enabled, false);
     const second = await registerReminderDevice(b, {
-      transport: "android",
-      address: "synthetic-android-token-123456789",
-      label: "Synthetic Android",
+      transport: "web",
+      address: address + "-b",
+      subscription: { ...subscription, endpoint: address + "-b" },
+      label: "Synthetic second browser",
       operationId: crypto.randomUUID(),
     });
     deviceIds.push(
-      second.devices.find((d) => d.label === "Synthetic Android")!.id,
+      second.devices.find((d) => d.label === "Synthetic second browser")!.id,
     );
     const retryJob = await setTaskReminder(b, {
       ...request,

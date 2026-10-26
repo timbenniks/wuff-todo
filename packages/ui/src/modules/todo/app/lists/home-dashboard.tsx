@@ -25,7 +25,6 @@ import { ApiError } from "../../../../features/api";
 import { useCalendarDay } from "../../lib/use-calendar-day";
 import { formatDueDate } from "../../lib/due-date";
 import { listPalette } from "../../lib/list-colors";
-import { Corgi } from "../../../../features/components/corgi";
 import { Button } from "../../../../button";
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
 import { TaskCapture } from "./task-capture";
@@ -33,7 +32,6 @@ import { TaskDetailDrawer } from "./task-detail-drawer";
 import { useHomeTasks } from "./use-home-tasks";
 import type { ListChange } from "./list-settings";
 import { NativeSelect } from "../../../../native-select";
-import { useRuntime } from "../../../../features/runtime";
 
 const labels = {
   today: "Today",
@@ -65,8 +63,7 @@ export function HomeDashboard({
   taskError?: string;
   retryTask?: () => Promise<boolean>;
 }) {
-  const native = useRuntime().native;
-  const viewName = native ? "Home" : "Overview";
+  const viewName = "Overview";
   const api = useActorApi(),
     today = useCalendarDay();
   const [data, setData] = useState<Dashboard | null>(null),
@@ -254,7 +251,6 @@ export function HomeDashboard({
     <div className="home-dashboard home-actionable">
       <header className="home-daily-header">
         <div className="flex min-w-0 max-w-full items-center gap-3">
-          {native && <Corgi size={40} />}
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground break-words">
               {greeting}
@@ -712,7 +708,7 @@ export function HomeDashboard({
               className="block mt-5 mb-2 text-sm font-bold"
               htmlFor="home-start"
             >
-              {native ? "When I open Wuff" : "When I open Wuff Todo"}
+              When I open Wuff Todo
             </label>
             <NativeSelect
               id="home-start"

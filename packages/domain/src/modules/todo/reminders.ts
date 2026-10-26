@@ -524,7 +524,7 @@ export async function deliverReminder(
             eq(reminderDevices.userId, job.userId),
           ),
         );
-      if (!device) return;
+      if (!device || device.transport !== "web") return;
       const [sent] = await tx
         .select()
         .from(reminderDeliveries)

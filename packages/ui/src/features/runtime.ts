@@ -12,9 +12,6 @@ export type FeatureRuntime = {
   reset: () => void;
   navigate: (url: string) => void;
   webOrigin: string;
-  native?: boolean;
-  githubConsent?: () => Promise<void>;
-  image?: (id: string) => Promise<{ url: string; release: () => void }>;
   request: (path: string, init?: RequestInit) => Promise<Response>;
 };
 export const RuntimeContext = createContext<FeatureRuntime | null>(null);

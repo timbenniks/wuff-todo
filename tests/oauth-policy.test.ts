@@ -4,7 +4,7 @@ import {
   authorizationScopes,
   validateRedirectUri,
 } from "../apps/web/src/lib/oauth";
-import { nativeClientId, tauriClientId } from "@wuff/contracts";
+import { retiredNativeClientIds } from "../apps/web/src/lib/oauth-resource-policy";
 
 test("omitted MCP scopes default to basic list/task consent without elevated access", () => {
   assert.deepEqual(authorizationScopes(null, "synthetic-client"), [
@@ -24,18 +24,18 @@ test("omitted MCP scopes default to basic list/task consent without elevated acc
   );
 });
 
-test("explicit invalid scopes and missing native scopes remain rejected", () => {
+test("explicit invalid scopes and retired native identities remain rejected", () => {
   for (const value of ["", " ", "tasks:write", "lists:read unknown"])
     assert.throws(() => authorizationScopes(value, "synthetic-client"), {
       code: "invalid_scope",
     });
-  for (const clientId of [nativeClientId, tauriClientId]) {
+  for (const clientId of retiredNativeClientIds) {
     assert.throws(() => authorizationScopes(null, clientId), {
-      code: "invalid_scope",
+      code: "invalid_client",
     });
     assert.throws(
       () => authorizationScopes("lists:read agents:manage", clientId),
-      { code: "invalid_scope" },
+      { code: "invalid_client" },
     );
   }
 });

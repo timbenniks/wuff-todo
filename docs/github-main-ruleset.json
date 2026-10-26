@@ -16,17 +16,22 @@
     }
   },
   "rules": [
-    { "type": "deletion" },
-    { "type": "non_fast_forward" },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
     {
       "type": "pull_request",
       "parameters": {
         "dismiss_stale_reviews_on_push": true,
-        "require_code_owner_review": true,
+        "require_code_owner_review": false,
         "require_last_push_approval": false,
-        "required_approving_review_count": 1,
+        "required_approving_review_count": 0,
         "required_review_thread_resolution": true,
-        "allowed_merge_methods": ["squash"]
+        "allowed_merge_methods": ["squash"],
+        "require_extra_approval_for_unattributed_changes": false
       }
     },
     {
@@ -34,8 +39,14 @@
       "parameters": {
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
-          { "context": "check", "integration_id": 15368 },
-          { "context": "Contributor policy", "integration_id": 15368 }
+          {
+            "context": "check",
+            "integration_id": 15368
+          },
+          {
+            "context": "Contributor policy",
+            "integration_id": 15368
+          }
         ]
       }
     }

@@ -605,7 +605,7 @@ export function ListApp({
         }}
       >
         <House size={18} />
-        {runtime.native ? "Home" : "Overview"}
+        Overview
       </Button>
       <div className="workspace-list-nav">
         <SidebarLists
@@ -707,19 +707,6 @@ export function ListApp({
           </a>
           {workspace?.navigation}
         </div>
-        {runtime.githubConsent && (
-          <Button
-            className="my-2"
-            disabled={busy}
-            onClick={() =>
-              void runtime.githubConsent!().catch((error) =>
-                setError(error.message),
-              )
-            }
-          >
-            Enable GitHub changes
-          </Button>
-        )}
         <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
           <span className="hidden md:inline truncate">{name}</span>
           <Button
@@ -746,7 +733,7 @@ export function ListApp({
       <a className="skip-link" href="#list-content">
         Skip to content
       </a>
-      {(liveConfig || runtime.native) && (
+      {liveConfig && (
         <LiveUpdates
           config={liveConfig}
           userId={userId}
@@ -762,9 +749,7 @@ export function ListApp({
           <a
             className="workspace-brand-link flex gap-2.5 items-center"
             href={runtime.webOrigin + "/lists?home=1"}
-            aria-label={
-              runtime.native ? "Wuff Todo Home" : "Wuff Todo overview"
-            }
+            aria-label="Wuff Todo overview"
             onClick={(event) => {
               if (
                 event.button !== 0 ||
@@ -780,7 +765,6 @@ export function ListApp({
               setNavigationOpen(false);
             }}
           >
-            {runtime.native && <Corgi size={48} />}
             <span className="wordmark text-xl font-bold">Wuff Todo</span>
           </a>
           <Button
@@ -906,13 +890,11 @@ export function ListApp({
         tabIndex={-1}
         className="list-content workspace-main"
       >
-        {(liveConfig || runtime.native) &&
-          liveStatus !== "live" &&
-          liveStatus !== "connecting" && (
-            <p role="status" className="text-xs text-muted-foreground mb-4">
-              {wuffCopy.reconnectingLive}
-            </p>
-          )}
+        {liveConfig && liveStatus !== "live" && liveStatus !== "connecting" && (
+          <p role="status" className="text-xs text-muted-foreground mb-4">
+            {wuffCopy.reconnectingLive}
+          </p>
+        )}
         {workspace ? (
           <>
             {pendingCreate?.status === "failed" && !creating && (

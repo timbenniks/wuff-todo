@@ -2,16 +2,16 @@
 
 This workflow covers real feature work in the repository. The contributor chooses
 product behavior and tries the result. Their agent handles Git, code, checks and
-the PR. Contributors build and iterate independently; Tim reviews and merges. A draft PR may be
+the PR. Contributors build and iterate independently; Tim and Josibe84 may merge their own PRs after required checks and the Codex fix/review loop. Agents still need explicit instructions to merge. A draft PR may be
 incomplete; ready for review requires the evidence below.
 
 ## Before the first feature
 
 Tim must finish these gates before granting contributor write access:
 
-- Activate and verify main protection with owner review, `check` and
+- Activate and verify main protection with PRs, resolved threads, `check` and
   `Contributor policy`. This is one-time onboarding, not per-feature approval.
-  Current plan and runner billing blocks are recorded in
+  Current activation evidence and remaining onboarding limits are recorded in
   [GitHub safeguards](https://github.com/timbenniks/wuff-todo/blob/main/docs/contributor-github.md).
 - Give each person their own GitHub credentials and no administration or bypass
   access. Never lend Tim's gh login, production credentials or environment files.
@@ -75,9 +75,9 @@ Ask the contributor product questions when needed; do not route routine technica
 decisions through Tim. Show the main interaction early and incorporate feedback.
 
 Call out changes to admission, authorization, sharing/privacy rules, OAuth consent,
-schema/migrations, native permissions, production configuration and safeguards in
+schema/migrations,  production configuration and safeguards in
 the PR. You can prepare and test these changes in the isolated workspace without
-preliminary permission; Tim reviews their implications before merge. Path-based
+preliminary permission; reviewers assess their implications before merge. Path-based
 policy hints draw attention to likely risk and never replace semantic review.
 Do not disable protections or weaken tests to make a feature pass.
 
@@ -118,7 +118,7 @@ and notification delivery separate. Do not copy the app or add runtime plugins.
 - Avoid unbounded reads, per-row repeated requests, eager heavy editors and
   duplicate subscriptions. Measure query/request or bundle impact when affected.
 - Explain dependencies, contract changes and global styling changes in the PR.
-  Highlight the high-risk changes listed above for Tim's final review. Routine
+  Highlight the high-risk changes listed above for final review. Routine
   implementation choices and evolving file lists do not require permission.
 - Add meaningful regression coverage for changed permissions, retries, concurrency
   and recovery. Do not weaken tests, hide errors with suppressions, mock away the
@@ -138,7 +138,7 @@ private details, static copy, CSS classes, source text or stubbed success.
 
 `pnpm test` automatically discovers nested JS/TS unit files under `tests/` and
 excludes `*.integration.test.*`. Adding a unit test must not require editing a
-manual list. Python/native behavior also needs the appropriate local test command.
+manual list. Python helper behavior also needs the appropriate local test command.
 Line coverage or a test count alone is not proof of meaningful behavior coverage.
 
 Fill `## Unit tests` with one JSON block:
@@ -224,9 +224,13 @@ do not purchase credits, add a paid service or bypass a limit without Tim.
 Codex review is independent of `pnpm` tests, application builds, integration/device
 proof and the metadata policy. Its no-findings result does not prove those checks
 ran, that the review was exhaustive or that merging is technically prevented.
-While hosted checks are unavailable, run meaningful local checks and retain the
-honest blocked/draft status. Instructions/templates cannot lock an unprotected
-Merge button. See [current enforcement](contributor-github.md) and
+As of October 26, main is protected by the active public-repository ruleset and
+hosted Verify/Contributor policy checks run. Inspect the latest head's actual
+results; a prior green run does not cover a new push. If required hosted checks
+become unavailable, run meaningful local checks and retain the honest blocked/draft
+status. The GitHub ruleset supplies enforcement; these instructions/templates do
+not independently lock merging. See [current enforcement](contributor-github.md),
+[activation evidence](public-safeguards-activation.md) and
 [the review-loop scope](pr-review-loop.md).
 
 ## 5. Submit for review
@@ -248,3 +252,10 @@ When operational authorization or infrastructure is missing, prepare a concrete 
 proposed technical change, affected files, risks and smallest alternative. Keep
 the draft PR/mock reviewable. Never ask a nontechnical contributor to authorize
 migrations or production commands.
+
+## Supported clients
+
+Web, PWA and MCP only. Do not require native adapters/builds or register Tauri
+clients. [Native retirement](native-retirement.md) records the removed product
+and deliberate legacy authorization/transport rejection. Browser-native HTML
+controls and shared web UI remain supported.

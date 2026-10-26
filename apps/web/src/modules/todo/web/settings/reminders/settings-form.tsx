@@ -228,6 +228,7 @@ export function ReminderSettingsForm({
                   </span>
                   <span className="flex-1 min-w-0 break-words text-sm">
                     {device.label}
+                    {device.transport !== "web" ? " (retired app)" : ""}
                     <span className="block text-xs text-muted-foreground">
                       {device.transport}
                     </span>
@@ -235,7 +236,7 @@ export function ReminderSettingsForm({
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Remove ${device.label}`}
+                    aria-label={`Remove ${device.label}${device.transport !== "web" ? " (retired app)" : ""}`}
                     disabled={locked}
                     onClick={() =>
                       void action(async () => {
@@ -260,8 +261,7 @@ export function ReminderSettingsForm({
           )}
           <p className="text-xs text-muted-foreground mt-4">
             On iPhone, web notifications require opening Wuff from its Home
-            Screen icon. Native apps register from their own notification
-            settings.
+            Screen icon.
           </p>
         </section>
       ) : (

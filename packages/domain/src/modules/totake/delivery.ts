@@ -144,7 +144,7 @@ export async function deliverTotake(
             eq(reminderDevices.userId, initial.userId),
           ),
         );
-      if (!device) return;
+      if (!device || device.transport !== "web") return;
       const { state } = await loadTotakeState(tx, initial.userId, now),
         s = refreshTotake(state, now);
       for (const g of s.groups) {

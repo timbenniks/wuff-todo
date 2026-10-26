@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../../../features/api";
 import { Button } from "../../../../../button";
 import type { AgentTaskState, Task, TodoList } from "@wuff/contracts";
-import { useRuntime } from "../../../../../features/runtime";
 import { useActorApi } from "../../../../../features/actor-api";
 export function AgentTask({
   task,
@@ -17,7 +16,6 @@ export function AgentTask({
   refresh: () => Promise<void>;
 }) {
   const api = useActorApi();
-  const runtime = useRuntime();
   const [state, setState] = useState<AgentTaskState>({
     conversation: null,
     runs: [],
@@ -149,30 +147,6 @@ export function AgentTask({
     }
   }
   if (list.mode !== "work") return null;
-  if (runtime.native)
-    return (
-      <section className="rounded-xl border border-border p-4 grid gap-3">
-        <h2 className="text-lg font-bold">Agent conversation</h2>
-        {error && <p role="alert">{error}</p>}
-        {state.conversation && (
-          <a href={state.conversation.url} className="underline">
-            Open conversation in Cursor
-          </a>
-        )}
-        {state.runs.map((run) => (
-          <div key={run.id}>
-            <p>
-              {run.status} · {run.mode}
-            </p>
-            <p className="whitespace-pre-wrap">{run.prompt}</p>
-            {run.result && <p className="whitespace-pre-wrap">{run.result}</p>}
-          </div>
-        ))}
-        <a href={runtime.webOrigin + task.path} className="underline">
-          Manage agents on the website
-        </a>
-      </section>
-    );
 
   return (
     <section

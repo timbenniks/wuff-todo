@@ -50,11 +50,11 @@ export async function POST(request: Request) {
     };
     if (!Object.hasOwn(actions, action))
       throw new AppError("invalid_action", "Unknown reminder action.", 400);
-    // Browser registration cannot spoof an installed native client's token.
+    // Only browser/PWA subscriptions are supported; native clients are retired.
     if (action === "device" && input?.transport !== "web")
       throw new AppError(
         "invalid_device",
-        "Register native devices from the installed app.",
+        "Only browser and PWA notifications are supported.",
         400,
       );
     return privateJson(

@@ -201,10 +201,9 @@ test("one-level personal nesting preserves tasks, permissions, revisions and ret
   }
 });
 
-test("authenticated web, MCP and native adapters share personal hierarchy and enforce scope/origin boundaries", async () => {
+test("authenticated web and MCP adapters share personal hierarchy and enforce scope/origin boundaries", async () => {
   const { loginFixture } = await import("./helpers/login");
   const { createHash, randomBytes } = await import("node:crypto");
-  const { tauriClientId, tauriRedirectUri } = await import("@wuff/contracts");
   const origin = "http://localhost:3000";
   const cookie = await loginFixture(users[0]);
   const headers = {
@@ -222,13 +221,11 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     title: "Adapter child",
     operationId: op(),
   });
-  async function grant(native: boolean, scope = "lists:read lists:manage") {
-    const resource = origin + (native ? "/api/mobile" : "/api/mcp");
-    let clientId = tauriClientId,
-      redirectUri = tauriRedirectUri;
-    if (native)
-      assert.equal((await fetch(origin + "/oauth/tauri")).status, 200);
-    else {
+  async function grant(scope = "lists:read lists:manage") {
+    const resource = origin + "/api/mcp";
+    let clientId = "",
+      redirectUri = "";
+    {
       const registered = await fetch(origin + "/oauth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -351,7 +348,7 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
       ).status,
       409,
     );
-    const token = await grant(false);
+    const token = await grant();
     let result = await mcp(token, "get_list_order", {});
     assert.deepEqual(result.structuredContent.order.nesting, input.nesting);
     assert.deepEqual(result.structuredContent.order.favoriteListIds, [
@@ -365,23 +362,21 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     });
     assert.ok(!result.isError);
     order = result.structuredContent.order;
-    const nativeToken = await grant(true);
-    response = await native(nativeToken, "getListOrder");
-    assert.equal(response.status, 200);
-    const nativeOrder = await response.json();
-    assert.deepEqual(nativeOrder.collapsedListIds, [parent.id]);
-    assert.deepEqual(nativeOrder.favoriteListIds, [parent.id, child.id]);
-    response = await native(nativeToken, "reorderLists", {
-      ...order,
-      nesting: [],
-      favoriteListIds: [],
-      operationId: op(),
+    response = await fetch(origin + "/api/v1/list-order", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        ...order,
+        nesting: [],
+        favoriteListIds: [],
+        operationId: op(),
+      }),
     });
     assert.equal(response.status, 200);
-    const nativeSaved = await response.json();
-    assert.deepEqual(nativeSaved.nesting, []);
-    assert.deepEqual(nativeSaved.favoriteListIds, []);
-    const readToken = await grant(false, "lists:read");
+    const savedOrder = await response.json();
+    assert.deepEqual(savedOrder.nesting, []);
+    assert.deepEqual(savedOrder.favoriteListIds, []);
+    const readToken = await grant("lists:read");
     const denied = await mcp(readToken, "reorder_lists", {
       ...(await getListOrder(a)),
       nesting: input.nesting,
@@ -390,8 +385,8 @@ test("authenticated web, MCP and native adapters share personal hierarchy and en
     assert.equal(denied.isError, true);
     assert.equal(
       (await native(token, "getListOrder")).status,
-      401,
-      "MCP token cannot authorize native calls",
+      410,
+      "Retired transport returns no data for any token",
     );
     response = await fetch(origin + "/api/v1/lists", {
       headers: { Cookie: cookie },

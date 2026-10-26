@@ -22,7 +22,6 @@ import {
   uncertainNotesError,
   canReplaceNoteDraft,
 } from "../packages/ui/src/modules/notes/recovery";
-import { featureApi } from "../apps/native/src/feature-api";
 const id = () => crypto.randomUUID();
 test("Notes creation validates content/title/mode/theme, normalizes tags and starts with explicit private fields", () => {
   const note = createNoteSchema.parse({
@@ -253,35 +252,6 @@ test("Notes sign-in return paths preserve explicit app routes without accepting 
   ])
     assert.equal(signInReturnPath(path), "/");
 });
-test("native Notes adapter maps only supported operations and pins the account", async () => {
-  const calls: { action: string; input: unknown; userId?: string }[] = [];
-  const api = featureApi(
-    {
-      call: async <T>(action: string, input: unknown, userId?: string) => {
-        calls.push({ action, input, userId });
-        return {} as T;
-      },
-    },
-    "synthetic-native",
-  );
-  await api("/api/v1/notes?search=idea&filter=pinned");
-  await api(`/api/v1/notes/${id()}`);
-  await api("/api/v1/notes/settings", "PUT", { version: 0 });
-  await api("/api/v1/notes/export", "POST", { confirmed: true });
-  await api(`/api/v1/notes/images/${id()}`);
-  assert.deepEqual(
-    calls.map((c) => c.action),
-    [
-      "searchNotes",
-      "getNote",
-      "updateNotesSettings",
-      "createNoteTask",
-      "getNoteImage",
-    ],
-  );
-  assert(calls.every((c) => c.userId === "synthetic-native"));
-  await assert.rejects(() => api("https://evil.invalid/api/v1/notes"));
-});
 
 test("note roles separate shared editing, owner management, personal choices and explicit Todo access", async () => {
   const { noteCapabilities } = await import("@wuff/contracts");
@@ -414,48 +384,6 @@ test("MCP editing and management schemas cannot bypass individual tool choices",
         archived: false,
       },
     }).success,
-  );
-});
-
-test("native image uploads share the 3 MiB contract while other envelopes remain bounded", async () => {
-  const { nativeInput } = await import("../apps/web/src/lib/native-input");
-  const request = (value: unknown) =>
-    new Request("http://localhost/api/mobile", {
-      method: "POST",
-      body: JSON.stringify(value),
-    });
-  const payload = "a".repeat(150000);
-  assert.equal(
-    (
-      (await nativeInput(
-        request({ action: "uploadNoteImage", input: { imageBase64: payload } }),
-      )) as any
-    ).input.imageBase64,
-    payload,
-  );
-  await assert.rejects(
-    () => nativeInput(request({ action: "updateNote", input: payload })),
-    { code: "too_large" },
-  );
-  await assert.rejects(
-    () =>
-      nativeInput(
-        new Request("http://localhost/api/mobile", {
-          method: "POST",
-          body: "{",
-        }),
-      ),
-    { code: "invalid_json" },
-  );
-  await assert.rejects(
-    () =>
-      nativeInput(
-        request({
-          action: "uploadNoteImage",
-          input: "a".repeat(4 * 1024 * 1024 + 20000),
-        }),
-      ),
-    { code: "too_large" },
   );
 });
 

@@ -74,8 +74,8 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     .filter((part) => !part.startsWith("__Secure-neon-auth.session_data="))
     .join("; ");
   for (const [path, content] of [
-    ["/lists", "Your list pack"],
-    ["/settings/connections", "Connected AI clients"],
+    ["/lists", "Wuff Todo"],
+    ["/settings/connections", "/api/mcp"],
   ]) {
     const page = await fetch(`${origin}${path}`, {
       headers: { Cookie: uncachedCookie },
@@ -105,7 +105,7 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     redirect: "manual",
   });
   assert.equal(signedOutPage.status, 307);
-  assert.equal(signedOutPage.headers.get("Location"), "/sign-in");
+  assert.equal(signedOutPage.headers.get("Location"), "/sign-in?next=%2Flists");
   assert.equal(
     (await fetch(`${origin}/api/v1/lists`, { headers: { Cookie: cookie } }))
       .status,
@@ -325,8 +325,8 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
         body: JSON.stringify({ action: "listLists" }),
       })
     ).status,
-    401,
-    "An MCP token cannot authorize the native API",
+    410,
+    "Retired transport returns no data even for a valid MCP token",
   );
 
   assert.equal(
@@ -352,7 +352,7 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
     clientInfo: { name: "Wuff test", version: "1" },
   });
   assert.equal(initialized.status, 200);
-  assert.equal(initialized.body.result.serverInfo.name, "Wuff Todo");
+  assert.equal(initialized.body.result.serverInfo.name, "Wuff Empire");
   const tools = await rpc(token.access_token, "tools/list", {});
   assert.ok(
     tools.body.result.tools.some(
@@ -520,9 +520,19 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      githubDenied.body.result.structuredContent.error.code,
-      "forbidden",
+      githubDenied.body.result.isError,
+      true,
       "Existing task scopes do not grant GitHub writes",
+    );
+    assert.equal(githubDenied.body.result.structuredContent, undefined);
+    assert.match(
+      githubDenied.body.result.content[0].text,
+      /Tool link_github_issue disabled/,
+    );
+    assert(
+      !tools.body.result.tools.some(
+        (t: { name: string }) => t.name === "link_github_issue",
+      ),
     );
     const githubAnon = await fetch(`${origin}/api/v1/github`);
     assert.equal(githubAnon.status, 401);
@@ -561,9 +571,19 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      agentDenied.body.result.structuredContent.error.code,
-      "forbidden",
+      agentDenied.body.result.isError,
+      true,
       "Existing task grants cannot launch paid agents",
+    );
+    assert.equal(agentDenied.body.result.structuredContent, undefined);
+    assert.match(
+      agentDenied.body.result.content[0].text,
+      /Tool launch_task_agent disabled/,
+    );
+    assert(
+      !tools.body.result.tools.some(
+        (t: { name: string }) => t.name === "launch_task_agent",
+      ),
     );
     assert.equal((await fetch(`${origin}/api/v1/agents`)).status, 401);
     assert.equal(

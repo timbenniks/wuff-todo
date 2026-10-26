@@ -1,23 +1,48 @@
 # Contributor GitHub safeguards
 
-Updated October 25, 2026. This is the GitHub foundation for contributors implementing real
+Updated October 26, 2026. This is the GitHub foundation for contributors implementing real
 features. `/docs` is the implementation guide and `wuff-contributor` is the single
 feature skill; the old standalone prototype workflow is retired.
 
 ## Current enforcement boundary
 
-The private `timbenniks/wuff-todo` repository's ruleset and branch-protection API
-reads both returned HTTP 403 with “Upgrade to GitHub Pro or make this repository
-public to enable this feature.” No protection rule was activated. Keep the
-repository private; enabling protection requires the owner's GitHub plan upgrade.
-Repository files alone do not prevent pushes, merges or migration execution.
+`timbenniks/wuff-todo` is now public. Tim explicitly authorized activation of
+**Main contributor safeguards**, ruleset **25908933**, on October 26. Stored and
+effective main-branch API readback confirms it is active: PRs, resolved review
+threads, squash-only merges,
+current-branch passing `check` and `Contributor policy` from GitHub Actions app
+15368, plus force-push/deletion protection. Only Tim has a PR-only bypass;
+contributors have none. A contributor-identity rejection attempt is not yet proven.
 
 `.github/CODEOWNERS` designates Tim for every file, including workflows,
-instructions and migrations. Required code-owner reviews need GitHub protection
-enabled and this file merged into the target branch. The PR template captures
-scope, preview, verification evidence and technical handoffs.
+instructions and migrations. GitHub now requires that approval through the active
+ruleset. Instructions alone are not this enforcement. The previous private-plan
+403 responses below are historical and no longer describe protection availability.
 
-## Codex review while Actions is unavailable — October 26
+A fresh retry of main Verify run 40387514693 (attempt 2) after public conversion
+completed setup, frozen install, typecheck and unit tests successfully. Earlier
+billing-blocked runs remain historical; current results must be inspected per
+commit. See [activation evidence](public-safeguards-activation.md).
+
+## Autonomous merge decision — October 26
+
+Tim explicitly authorized removing human approval gates so Tim and Josibe84 can
+merge their own PRs. Ruleset 25908933 now requires zero approving reviews, no
+code-owner approval, no last-push approval and no extra approval for unattributed
+changes. Stored and effective main-branch readback confirmed these values. Their
+current roles are admin and write respectively; no new bypass was granted.
+CODEOWNERS remains advisory. PRs, strict passing Verify (`check`)/Contributor
+policy checks, resolved review threads, squash merging, deletion/force-push blocks
+and existing bypass configuration remain unchanged.
+
+Codex review and fixing actionable findings remain the contributor workflow.
+Codex does not publish a required pass/fail status here, so it is not a separate
+hard merge gate. Resolved threads and required Actions checks are enforced.
+Agents still deliver reviewable PRs and need explicit instructions to merge.
+Production/migration/destructive/paid operations still need Tim's authorization.
+The original activation record below describes the earlier human-approval setup.
+
+## Historical review setup while Actions was unavailable — October 26
 
 The live Codex app reviewed PR #37 at head `5f59383` and reported completion with
 no findings. The separate GitHub Actions Verify job for merged main did not start
@@ -42,14 +67,15 @@ in the contributor workflow. Do not describe this guidance as an enforced gate.
 Sources: [official Codex review guidance](https://learn.chatgpt.com/docs/third-party/github)
 and [custom repository review rules](https://developers.openai.com/blog/custom-code-review-rules-for-codex).
 
-## Prepared main ruleset
+## Activated main ruleset
 
-`github-main-ruleset.json` is an activation payload, not evidence of active rules.
-It requires PRs, one owner approval, resolved review threads, fresh approvals after
-changes, squash merging and current-branch passing `check` and `Contributor policy`
+`github-main-ruleset.json` is the reviewed activation payload. Actual activation
+and effective-rule readback are recorded above and in the activation evidence.
+It requires PRs, resolved review threads, squash merging and current-branch
+passing `check` and `Contributor policy`
 checks. It blocks deletion and force pushes. The existing Verify name and GitHub
 Actions app ID 15368 were read from actual check runs; the new policy context
-still needs a first live run after bootstrap.
+is verified on live PRs as recorded in the activation evidence.
 
 ## Lightweight CI and local compilation
 
@@ -60,11 +86,10 @@ handled by Vercel deployments; they are not part of this required GitHub check.
 Native compilation, mobile exports and installed-device checks are local release
 evidence, recorded by Tim before shipping affected clients.
 
-The multi-platform Native test builds workflow is manual-only (`workflow_dispatch`),
-retained as an optional fallback. No PR or main push starts it. Manually running it
-on main still builds all platforms and publishes a complete test prerelease after
-the jobs pass. It is not a required PR check. Only the lightweight Verify and
-metadata-only policy checks are required; removed native jobs cannot block PRs.
+Native test builds were disabled and are removed as part of the web/PWA-only
+retirement. All 37 artifacts and 3 test releases were removed at Tim's request.
+There are no native CI/release gates. Only Verify and Contributor policy remain
+required; see [retirement](native-retirement.md).
 
 ## Independent contribution and delivery policy
 
@@ -72,7 +97,8 @@ The canonical [contributor workflow](contributor-workflow.md) lets contributors
 implement and iterate without preliminary approval of briefs, files or technical
 choices. No scope hash, path allowlist, exact-file approval or diff-size exception
 is required. Keep a proportional brief and actual verification evidence in the PR.
-Tim reviews and merges. See [the October 25 decision](contributor-autonomy.md).
+Tim and Josibe84 may merge their own PRs after the required checks and Codex
+fix/review loop. See [the October 25 decision](contributor-autonomy.md).
 
 `contributor-policy.yml` executes only the policy script checked out from main.
 It never checks out PR code, installs dependencies or evaluates content as code.
@@ -90,7 +116,7 @@ truth. Large diffs can pass without special approval; reviewers can still ask fo
 a smaller change when that improves review.
 
 Likely high-risk paths (safeguards/instructions, schema/migrations, key access/auth
-services, production configuration and native permission declarations) appear as
+services and production configuration) appear as
 informational review hints. They do not block implementation or require approval
 comments. Ordinary UI, CSS, design tokens, dependencies and contracts have no
 path-based gate. Path hints cannot identify every semantic risk: the PR must also
@@ -115,51 +141,30 @@ checks. Binding a check to the Actions app does not uniquely identify its workfl
 Owner review and restricted credentials remain essential; the metadata policy is
 a guardrail for cooperative contributors, not an adversarial security boundary.
 
-The prepared ruleset gives only Tim (GitHub user ID 121096) a PR-only bypass, so
+The active ruleset gives only Tim (GitHub user ID 121096) a PR-only bypass, so
 he can merge his own PRs, including overriding failed checks through a PR.
-Contributors have no bypass. It remains an activation payload, not evidence of
-active protection. Do not expose the owner's credentials to contributor agents.
+Contributors have no bypass. Its activation is separately read back from GitHub;
+file contents alone are not evidence of enforcement. Do not expose the owner's credentials to contributor agents.
 
-Bootstrap: Tim reviews/merges the trusted workflow/script and CODEOWNERS. The
-workflow cannot validate its new implementation from an unmerged feature branch.
-Restore Actions availability and exercise a synthetic PR with no approval comment,
-review hints, rejected credential paths, incomplete inventories and stale evidence.
-Verify branch-protection read-back before onboarding. This is a one-time setup
-requirement, not a per-feature permission loop.
-
-After upgrading, inspect existing rulesets to avoid duplicates, then activate
-through `gh` from the repository root:
-
-```sh
-gh api repos/timbenniks/wuff-todo/rulesets
-gh api --method POST repos/timbenniks/wuff-todo/rulesets --input docs/github-main-ruleset.json
-gh api repos/timbenniks/wuff-todo/rules/branches/main
-```
-
-If the named ruleset already exists, inspect/update its ID rather than creating
-another. Confirm the stored bypass actor, required checks and review requirements
-by read-back. Test rejection with a synthetic contributor identity that has no
-bypass before describing contributor enforcement as proven.
+For future updates, inspect ruleset 25908933 before changing anything. Do not
+create duplicate rulesets or grant contributor bypass. The trusted workflow/script
+and CODEOWNERS are on main. Tim authorizes operational setting changes; ordinary
+feature implementation continues without preliminary approval.
 
 ## Verification and remaining gates
 
-The October 24 inspection confirmed ADMIN access, a private repository and `main`
-as default. Auto-merge was already disabled and was left unchanged. Latest Verify
-run 40093282223 failed before job steps; its check annotations identify the account
-billing/spending-limit block. Required checks must remain required on failure;
-restore runner availability before onboarding contributors.
+The October 26 live inspection confirmed public visibility, Actions enabled and
+no pre-existing branch/ruleset protections. After explicit authorization,
+`POST /rulesets` created 25908933 and both stored/effective reads confirmed it.
+The real main Verify retry passed. Open-PR required-check evidence is recorded in
+[the activation report](public-safeguards-activation.md). No fabricated
+contributor-identity rejection or exhaustive bot review is claimed.
 
-The independent-contribution policy is implemented on the feature branch and must
-be merged and exercised before its live behavior is established. Isolated contributor credentials/workspaces, Vercel preview
-data isolation and controlled migration execution remain onboarding gates.
-CODEOWNERS routes review; it is not a database permission boundary.
-
-An October 24 Vercel CLI preview-variable inventory showed integration-managed
-database/auth entries assigned jointly to Production, Preview and Development.
-No plaintext values were retrieved or compared. Treat previews as unverified and
-potentially production-connected. No environment assignment was changed. Verify
-backend identity, credentials and side-effect isolation before enabling contributor
-preview deployments.
+Isolated contributor credentials/workspaces and safe test backend configuration
+remain separate onboarding gates. Public CI runs only synthetic/unit checks with
+no production secrets. Do not put secrets or real medicine data in public PRs,
+artifacts, logs or screenshots. Manual preview deployment remains disabled by
+Tim's workflow preference; public visibility does not establish backend isolation.
 
 References: [GitHub rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets),
 [code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)

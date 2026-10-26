@@ -12,7 +12,7 @@ than copying an entire app or adding a plugin loader.
 | Contracts and rules      | `packages/contracts/src/modules/<id>/`                              | Actor/error/ID, account, notification and design contracts in `platform/`                                               |
 | Database                 | `packages/db/src/modules/<id>/schema.ts`                            | `schema.ts` composes tables; one migration chain and connection                                                         |
 | Domain                   | `packages/domain/src/modules/<id>/`                                 | Shared admission, transactions, notification delivery and settings orchestration in `platform/`                         |
-| Shared web/native UI     | `packages/ui/src/modules/<id>/`                                     | UI primitives, account-pinned API and platform runtime                                                                  |
+| Shared web/MCP UI     | `packages/ui/src/modules/<id>/`                                     | UI primitives, account-pinned API and platform runtime                                                                  |
 | Website                  | `apps/web/src/modules/<id>/pages`, `api`, `web`                     | Thin Next route entry points preserve public URLs and framework configuration                                           |
 | MCP                      | Product `mcp.ts` and `mcp-app.ts`                                   | Transport, authenticated actor, scope/tool filtering, resource packaging and shared embedded controls                   |
 | Dashboard                | Product `dashboard.tsx`                                             | Layout and choice filtering; typed UI registry in `apps/web/src/modules/ui.ts`                                          |
@@ -43,10 +43,9 @@ server registry or database package. Product UI imports real `@wuff/ui` primitiv
    Schema changes need their normal migration review and execution authorization.
 4. Add thin filesystem routes for Next.js and preserve explicit framework exports.
    Settings panels belong to the product; the global navigation discovers their
-   manifest links. Implement the HTTP/native adapters and MCP tools against the
-   same domain services. Register native action adapters in `apps/web/src/modules/native.ts`. The
-   bearer-only native transport checks identity/audience/account pinning before
-   dispatch; duplicate actions are rejected. Register embedded renderers in
+   manifest links. Implement HTTP adapters and MCP tools against the same
+   authorized domain services. Native/Tauri clients are retired; do not add native
+   registrations or adapters. Register embedded renderers in
    `modules/mcp-ui.ts` when an
    interactive MCP view is appropriate; complete tools remain available without it.
 5. If the product schedules notifications, contribute reconciliation and scheduling
@@ -56,7 +55,7 @@ server registry or database package. Product UI imports real `@wuff/ui` primitiv
    reviewed migration when adding a new notification-producing app; current
    columns are intentionally still Todo/Totake. Check pause, resume, stale callback
    and device isolation. Shared services must not invent medicine or task actions.
-6. Run registry, unit, API/MCP/native and relevant browser checks. Record explicit
+6. Run registry, unit, HTTP/MCP and relevant browser checks. Record explicit
    consent/revocation and MCP UI decisions under the surface contract. Update this
    guide when an extension point changes, and keep the feature PR current.
 
@@ -84,9 +83,8 @@ themes still take precedence inside Todo. Adding a manifest is not a license to
 replace global CSS or invent arbitrary theme colors. Preserve module-local design
 choices, including Totake's screens and recording workflow.
 
-Existing native navigation remains Todo-focused. Shared product UI and native
-HTTP capabilities remain available; installing a web module does not automatically
-add a native navigation destination or prove device behavior. Cross-product
+Native clients are retired; new modules need web/PWA and HTTP/MCP capabilities.
+Cross-product
 features call a deliberate platform orchestrator or public service, never reach
 into another product's private UI or data internals.
 
@@ -108,5 +106,5 @@ owned by the product's access boundary. See [Notes scope and evidence](../wuff-n
 
 When adding a product read scope, update and test both consent validation and the
 OAuth server's scope validation. Keep omitted-scope defaults and existing refresh
-grants unchanged. A manifest does not itself authorize new scopes. First-party
-native optional scopes are explicit; native navigation/release remain separate.
+grants unchanged. A manifest does not itself authorize new scopes. Retired native
+identities and resources must remain denied.
