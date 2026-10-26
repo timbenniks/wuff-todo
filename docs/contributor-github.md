@@ -17,6 +17,31 @@ instructions and migrations. Required code-owner reviews need GitHub protection
 enabled and this file merged into the target branch. The PR template captures
 scope, preview, verification evidence and technical handoffs.
 
+## Codex review while Actions is unavailable — October 26
+
+The live Codex app reviewed PR #37 at head `5f59383` and reported completion with
+no findings. The separate GitHub Actions Verify job for merged main did not start
+because account payments/spending limits blocked runners. A bot review is code
+analysis, not proof that unit, integration or build commands ran.
+
+Root AGENTS.md supplies focused Code Review Rules; the contributor workflow/skill
+requires an [author fix/review loop](contributor-workflow.md#resolve-review-findings).
+The PR template records latest reviewed SHA/link, fix evidence and unresolved
+findings. These are cooperative instructions. This change does not configure the
+Codex account's automatic-review coverage/triggers or add a required GitHub check.
+Check repository and personal review settings for collaborator coverage; explicitly
+request review when an eligible PR/head has not been reviewed. Read actual review
+status, rather than assuming every push triggered it.
+
+The planned November Actions billing reset and private-repository branch-protection
+availability are separate. A billing reset may restore runners; it does not enable
+the plan-gated protection API. CODEOWNERS and a no-findings comment cannot stop a
+Write collaborator merging/pushing to unprotected main. Tim retains review/merge
+in the contributor workflow. Do not describe this guidance as an enforced gate.
+
+Sources: [official Codex review guidance](https://learn.chatgpt.com/docs/third-party/github)
+and [custom repository review rules](https://developers.openai.com/blog/custom-code-review-rules-for-codex).
+
 ## Prepared main ruleset
 
 `github-main-ruleset.json` is an activation payload, not evidence of active rules.

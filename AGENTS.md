@@ -72,3 +72,34 @@ Start with `docs/implementation-plan.md` for current status and the next planned
   changes and API contract changes in the PR for review.
 - Tim reviews and merges contributor work. Agent instructions are guidance;
   [GitHub safeguards](docs/contributor-github.md) records actual enforcement and gates.
+
+## Code Review Rules
+
+Review the complete diff and related call paths. Report actionable defects with a
+concrete trigger, consequence and smallest relevant location. Do not invent
+findings, treat style preferences as bugs, or claim checks ran without evidence.
+
+- Flag any path that bypasses current account admission, ownership/membership,
+  OAuth scope/consent, device ownership or revocation checks, including retries.
+  Check that HTTP, MCP and native adapters reuse authorized domain operations.
+- For Totake changes, trace the affected scheduled occurrence through due-time/
+  timezone/DST, selected snooze, repeats, Taken/Skip/Undo and stock. Flag inferred
+  medicine intake, changed selection/dose accepted from an old notice, partial
+  group mutation, canceled-item alerts, or duplicate recording/stock deduction.
+- For persisted writes, examine transaction boundaries, optimistic versions and
+  actor-scoped exact-payload receipts. Flag demonstrable concurrent/uncertain-reply
+  failures and privacy leaks in payloads, logs, errors or client bundles.
+- Check regression tests against the described failure: a relevant assertion must
+  fail without the fix. Flag concrete permission/failure/parity gaps; do not accept
+  static copy/class/source assertions or weakened/skipped tests as behavior proof.
+
+## PR review findings
+
+Before handoff, follow the author fix/review loop in
+[the contributor workflow](docs/contributor-workflow.md#resolve-review-findings).
+Read current-head Codex findings and human review threads, fix actionable issues,
+verify the fixes and request a fresh review after code changes. Disputed findings
+need a reason and Tim's decision; do not dismiss or silently resolve them. Review
+completion is not evidence of passing tests. Keep missing reviews/checks explicit
+and retain the draft while required verification is incomplete. Tim reviews/merges;
+these instructions do not enforce GitHub branch protection.
