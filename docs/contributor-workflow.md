@@ -192,6 +192,43 @@ results with a new SHA. Under `## Preview`, link the deployment for that commit,
 test steps and who confirmed backend isolation. If unavailable, explain the
 blocker and local evidence. Never invent a preview or isolation claim.
 
+## Resolve review findings
+
+After pushing a feature, have the existing Codex reviewer inspect the latest head.
+Use the configured automatic review; if none runs, request `@codex review` on that
+feature PR. A draft may need an explicit request. Do not mark work ready merely to
+trigger a review while checks are blocked. Review usage has its own availability;
+do not purchase credits, add a paid service or bypass a limit without Tim.
+
+1. Read Codex's summary, inline findings and human review threads. Record the
+   reviewed commit SHA and link. An older review does not cover later code changes.
+2. Fix each actionable bug, add its regression coverage, run relevant checks and
+   push the fix. Reply on its thread with the fix commit and actual evidence;
+   when this workflow is invoked for delivery, these review requests/fix replies
+   on the feature PR are part of the requested work. Never publish credentials or
+   private user data in comments.
+3. For a disputed finding, explain the code path and evidence; leave it visible
+   for Tim's decision. Do not blindly implement incorrect advice, count a resolved
+   thread as proof of a fix, or close/dismiss someone else's unresolved objection.
+4. Request a fresh Codex review after fixes, wait for completion and inspect new
+   findings. Repeat for newly introduced bugs. If review is unavailable or the same
+   dispute persists, keep the PR draft and give Tim a concrete handoff instead of
+   sending repeated review requests or pretending it passed.
+5. Fill the PR's Review findings section with the current reviewed SHA/link,
+   addressed findings/fix commits/tests and remaining issues. If code has changed
+   since that review, state this explicitly. Only report no outstanding findings
+   after checking the latest summary and threads. Tim resolves disputed findings
+   and owns final review/merge; bot suggestions and unrelated comments are not all
+   automatic blockers.
+
+Codex review is independent of `pnpm` tests, application builds, integration/device
+proof and the metadata policy. Its no-findings result does not prove those checks
+ran, that the review was exhaustive or that merging is technically prevented.
+While hosted checks are unavailable, run meaningful local checks and retain the
+honest blocked/draft status. Instructions/templates cannot lock an unprotected
+Merge button. See [current enforcement](contributor-github.md) and
+[the review-loop scope](pr-review-loop.md).
+
 ## 5. Submit for review
 
 Review the entire diff for unintended files, secrets, debug data and regressions.

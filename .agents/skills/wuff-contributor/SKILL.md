@@ -73,3 +73,13 @@ Use `docs/guide/review.md` for a self-contained delivery record and optional Wuf
 task updates. Only create/update tasks when requested; resolve the intended list,
 preserve existing content and verify the write. Tools/hosting availability must be
 checked rather than assumed. No task write authorizes a paid agent run or release.
+
+Before final handoff, follow `docs/contributor-workflow.md#resolve-review-findings`:
+obtain a Codex review of the latest pushed code, read findings/threads, fix real
+issues with regression evidence and push, then request a fresh review. Requests
+and fix-evidence replies on the feature PR are part of delivery when this skill is
+invoked. Do not silently dismiss disputed findings or resolve threads as a
+substitute for fixes; hand unresolved disagreements to Tim. Record reviewed SHA,
+review link, fix commits/checks and outstanding issues in the PR's Review findings
+section. An unavailable reviewer/check is incomplete verification; no findings is
+not a passing test suite or GitHub merge protection. Never merge the PR yourself.

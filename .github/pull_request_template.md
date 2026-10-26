@@ -45,6 +45,14 @@ Server: relevant permission, idempotency, concurrency and API/MCP regression pro
 Performance: measurements when affected. Distinguish mocks/local/preview/device
 proof. Rerun affected checks after code changes; do not relabel old results. -->
 
+## Review findings
+
+<!-- Link the latest Codex review and its reviewed commit SHA. Summarize addressed
+findings with fix commits and actual tests; request a fresh review after changes.
+List unresolved/disputed findings for Tim, missing review/checks, or code changes
+since the review. Resolving a thread is not evidence of a fix. No findings does
+not prove tests passed or replace Tim's approval. -->
+
 ## Remaining work or risks
 
 <!-- Explain unverified behavior, technical help, rollout steps and release gates.
