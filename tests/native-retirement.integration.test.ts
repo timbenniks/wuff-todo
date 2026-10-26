@@ -29,6 +29,7 @@ test("retired routes expose no data and stored native grants cannot authenticate
       ["/oauth/tauri", "GET"],
       ["/api/mobile", "POST"],
       ["/api/mobile/images?id=private", "GET"],
+      ["/api/mobile/images", "POST"],
     ]) {
       const response = await fetch(origin + path, { method });
       assert.equal(response.status, 410);

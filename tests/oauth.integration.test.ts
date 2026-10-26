@@ -105,7 +105,7 @@ test("Neon login, closed signup, unauthorized access, and session restoration", 
     redirect: "manual",
   });
   assert.equal(signedOutPage.status, 307);
-  assert.equal(signedOutPage.headers.get("Location"), "/sign-in");
+  assert.equal(signedOutPage.headers.get("Location"), "/sign-in?next=%2Flists");
   assert.equal(
     (await fetch(`${origin}/api/v1/lists`, { headers: { Cookie: cookie } }))
       .status,
@@ -520,9 +520,15 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      githubDenied.body.result.structuredContent.error.code,
-      "forbidden",
+      githubDenied.body.error?.code,
+      -32602,
       "Existing task scopes do not grant GitHub writes",
+    );
+    assert.equal(githubDenied.body.result, undefined);
+    assert(
+      !tools.body.result.tools.some(
+        (t: { name: string }) => t.name === "link_github_issue",
+      ),
     );
     const githubAnon = await fetch(`${origin}/api/v1/github`);
     assert.equal(githubAnon.status, 401);
@@ -561,9 +567,15 @@ test("OAuth discovery, consent, PKCE, MCP operations, scope checks, refresh, and
       },
     });
     assert.equal(
-      agentDenied.body.result.structuredContent.error.code,
-      "forbidden",
+      agentDenied.body.error?.code,
+      -32602,
       "Existing task grants cannot launch paid agents",
+    );
+    assert.equal(agentDenied.body.result, undefined);
+    assert(
+      !tools.body.result.tools.some(
+        (t: { name: string }) => t.name === "launch_task_agent",
+      ),
     );
     assert.equal((await fetch(`${origin}/api/v1/agents`)).status, 401);
     assert.equal(

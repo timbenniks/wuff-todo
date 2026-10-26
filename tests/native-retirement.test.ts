@@ -10,6 +10,10 @@ import {
   oauthServer,
 } from "../apps/web/src/lib/oauth";
 import { retiredNativeResponse } from "../apps/web/src/lib/retired-native";
+import {
+  GET as retiredImageRead,
+  POST as retiredImageUpload,
+} from "../apps/web/src/app/api/mobile/images/route";
 const origin = "https://wuff.example";
 test("retired native identities cannot receive either native or MCP audience grants", async () => {
   for (const id of retiredNativeClientIds) {
@@ -74,4 +78,15 @@ test("retired transport responses explicitly fail without data or cacheable cred
   assert.equal(body.error, "client_retired");
   assert.equal(body.access_token, undefined);
   assert.equal(body.userId, undefined);
+});
+
+test("legacy private image uploads and reads both return retirement guidance without reading input", async () => {
+  for (const handler of [retiredImageRead, retiredImageUpload]) {
+    const response = handler();
+    assert.equal(response.status, 410);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    const body = await response.json();
+    assert.equal(body.error, "client_retired");
+    assert.equal(body.imageBase64, undefined);
+  }
 });

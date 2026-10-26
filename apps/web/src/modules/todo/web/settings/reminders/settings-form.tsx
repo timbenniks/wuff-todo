@@ -236,7 +236,7 @@ export function ReminderSettingsForm({
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Remove ${device.label}{device.transport !== "web" ? " (retired app)" : ""}`}
+                    aria-label={`Remove ${device.label}${device.transport !== "web" ? " (retired app)" : ""}`}
                     disabled={locked}
                     onClick={() =>
                       void action(async () => {

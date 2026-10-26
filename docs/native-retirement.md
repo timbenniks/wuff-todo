@@ -35,7 +35,7 @@ reported unavailable. No automatic data deletion or native provider request occu
 
 ## Verification
 
-At source preparation: `pnpm typecheck`, `pnpm test` (203 passing, zero failed or
+At source preparation: `pnpm typecheck`, `pnpm test` (204 passing, zero failed or
 skipped) and `pnpm build` pass. The native-resource rejection assertion fails on
 main's former policy and passes with this change. Retirement units cover denied
 identities/audiences/scopes, preserved MCP defaults/opt-in scopes/redirect safety,
@@ -44,7 +44,7 @@ and expired subscriptions, retired registration/delivery and endpoint safety.
 Contributor policy still flags retired paths against accidental reintroduction;
 new OAuth/retirement policy paths also receive sensitive-change review hints.
 
-The smaller unit count (231 to 203) reflects deletion of native-only app, SDK,
+The smaller unit count (231 to 204) reflects deletion of native-only app, SDK,
 auth and adapter tests with their implementation. Supported account/privacy,
 retry, notification and HTTP/MCP outcomes remain covered. Former native-only
 mutation segments in product integration suites now exercise actual HTTP/MCP
@@ -54,3 +54,9 @@ Final isolated integration, browser, hosted CI and reviewer results are recorded
 on [PR #40](https://github.com/timbenniks/wuff-todo/pull/40). Check that record
 for current-head evidence before merge. Local provider mocks do not prove live
 push delivery; installed-PWA/physical-phone receipt is a separate gate.
+
+Review regressions: legacy image uploads also return the same non-cacheable 410;
+a real-browser check discovers Remove controls by accessible name and removes only
+its chosen synthetic browser/retired-device records through the authorized API.
+The latter fails against the malformed pre-fix label. See PR review replies for
+fix commits and passing evidence.
