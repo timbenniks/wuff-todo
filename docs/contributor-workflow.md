@@ -11,7 +11,7 @@ Tim must finish these gates before granting contributor write access:
 
 - Activate and verify main protection with owner review, `check` and
   `Contributor policy`. This is one-time onboarding, not per-feature approval.
-  Current plan and runner billing blocks are recorded in
+  Current activation evidence and remaining onboarding limits are recorded in
   [GitHub safeguards](https://github.com/timbenniks/wuff-todo/blob/main/docs/contributor-github.md).
 - Give each person their own GitHub credentials and no administration or bypass
   access. Never lend Tim's gh login, production credentials or environment files.
