@@ -224,9 +224,13 @@ do not purchase credits, add a paid service or bypass a limit without Tim.
 Codex review is independent of `pnpm` tests, application builds, integration/device
 proof and the metadata policy. Its no-findings result does not prove those checks
 ran, that the review was exhaustive or that merging is technically prevented.
-While hosted checks are unavailable, run meaningful local checks and retain the
-honest blocked/draft status. Instructions/templates cannot lock an unprotected
-Merge button. See [current enforcement](contributor-github.md) and
+As of October 26, main is protected by the active public-repository ruleset and
+hosted Verify/Contributor policy checks run. Inspect the latest head's actual
+results; a prior green run does not cover a new push. If required hosted checks
+become unavailable, run meaningful local checks and retain the honest blocked/draft
+status. The GitHub ruleset supplies enforcement; these instructions/templates do
+not independently lock merging. See [current enforcement](contributor-github.md),
+[activation evidence](public-safeguards-activation.md) and
 [the review-loop scope](pr-review-loop.md).
 
 ## 5. Submit for review

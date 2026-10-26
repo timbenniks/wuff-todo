@@ -2,7 +2,7 @@
 
 Status: web/MCP and GitHub synchronization released; shared online-only Tauri client implemented, platform/release gates remain
 
-Updated: October 25, 2026
+Updated: October 26, 2026
 
 The web/API/MCP foundation and existing-account sharing are implemented and deployed. The phases below preserve the delivery sequence; this current-status section and the next-build scope take precedence over historical phase wording. See [verification](verification.md) for evidence and [development](development.md) for the selected auth design. Operator provisioning, email-code password setup, and existing-account sharing are implemented. Tim reported successful activation and Codex usage; automated authenticated Codex validation is recorded in [MCP validation](mcp-validation.md). Joreel’s independent website sharing actions were reported and their saved results confirmed on October 18; her own MCP client and installed native auth validation remain outstanding. This sequence is a delivery guide, not a claim that every exit criterion is complete.
 
@@ -79,20 +79,22 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   review/merge and explicit authorization of migration execution, production,
   infrastructure, destructive real-data operations and paid execution. Secret
   rejection, meaningful tests, current evidence and API/MCP parity remain. See
-  [decision and verification](contributor-autonomy.md). GitHub activation and isolated
-  workspace/preview setup are separate gates; no production change is claimed.
+  [decision and verification](contributor-autonomy.md). GitHub safeguards were subsequently activated on October 26; isolated
+  workspace/preview setup remains separate. See the activation evidence below.
 
-- **Contributor GitHub safeguards (October 24):** owner mapping, PR template and
-  an activation payload are prepared. Private-repository protection is blocked by
-  the current GitHub plan; required checks are also blocked by runner billing.
-  No main-branch protection is claimed active. See [configuration and gates](contributor-github.md).
-  Automatic CI is reduced to one Ubuntu typecheck/unit-test job; platform
-  compilation is local, with the native release workflow retained as manual-only.
-  The contributor workflow, `/docs/build`, portable contributor skill and trusted
-  main-based delivery/evidence policy are implemented locally; bootstrap and isolated
-  contributor/preview environments remain onboarding gates.
-  Every feature PR now requires an API/MCP/connection surface contract, documented
-  capability mappings and actual adapter evidence for persisted-data changes.
+- **Contributor GitHub safeguards (October 26):** after Tim made the repository
+  public and explicitly authorized activation, main ruleset 25908933 is active:
+  PRs, Tim's code-owner approval, resolved threads, current required Verify and
+  Contributor policy checks, stale approval dismissal, squash-only merges, and
+  force-push/deletion protection. Only Tim has a PR-only bypass. Public hosted
+  Verify now runs and passes; the trusted Contributor policy has executed on a
+  live PR. [Activation evidence](public-safeguards-activation.md) distinguishes
+  API/readback/PR-state proof from an unperformed contributor-identity rejection test.
+  Automatic CI remains one Ubuntu typecheck/unit-test job; native compilation is
+  local/manual and no new installed artifacts are implied. The contributor
+  workflow, hosted guide and portable skill require the review/fix loop and
+  API/MCP/connection evidence. Isolated contributor/test environments remain
+  separate onboarding gates; public visibility does not establish backend isolation.
 
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.
