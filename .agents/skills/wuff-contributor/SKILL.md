@@ -43,7 +43,7 @@ Handle branches, commits, PRs, checks and evidence for the contributor. Ask prod
 questions in plain language. Use one `codex/` branch and early draft PR per feature.
 Build and iterate without preliminary approval of briefs, file lists or ordinary
 technical choices. Keep the brief current; ask the contributor product questions,
-not permission for routine code changes. Call out access/privacy, schema, production configuration and safeguard changes for Tim's final review.
+not permission for routine code changes. Call out access/privacy, schema, production configuration and safeguard changes for final review.
 Do not weaken protections to pass checks. Writing code is separate from executing
 migrations, provisioning, production operations, releases, destructive operations
 on real data or paid runs; those need Tim's explicit operational authorization.
@@ -87,3 +87,7 @@ Supported clients are web, installable PWA and MCP. Tauri/native apps are retire
 do not add native clients, module adapters or native build/release checks. Use
 `docs/native-retirement.md` for the deliberate legacy endpoint/OAuth denial policy.
 Keep the shared web UI, browser-native HTML controls and Web Push service worker.
+
+Tim and Josibe84 may merge their own PRs after required checks and the Codex
+fix/review loop; no second human approval is required. Agents still need explicit
+merge instructions. Operational authorization remains separate.

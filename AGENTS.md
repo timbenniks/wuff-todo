@@ -70,7 +70,9 @@ Start with `docs/implementation-plan.md` for current status and the next planned
   operational authorization. Do not weaken protections to pass checks.
 - Reuse existing UI components and tokens. Call out dependencies, global styling
   changes and API contract changes in the PR for review.
-- Tim reviews and merges contributor work. Agent instructions are guidance;
+- Tim and Josibe84 may review and merge their own PRs after required checks and
+  the Codex fix/review loop. Agents need explicit instructions to merge.
+  Agent instructions are guidance;
   [GitHub safeguards](docs/contributor-github.md) records actual enforcement and gates.
 
 ## Code Review Rules
@@ -101,7 +103,7 @@ Read current-head Codex findings and human review threads, fix actionable issues
 verify the fixes and request a fresh review after code changes. Disputed findings
 need a reason and Tim's decision; do not dismiss or silently resolve them. Review
 completion is not evidence of passing tests. Keep missing reviews/checks explicit
-and retain the draft while required verification is incomplete. Tim reviews/merges;
+and retain the draft while required verification is incomplete. Tim and Josibe84 may merge their own verified PRs;
 these instructions do not enforce GitHub branch protection.
 
 ## Supported clients

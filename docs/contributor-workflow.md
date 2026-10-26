@@ -2,14 +2,14 @@
 
 This workflow covers real feature work in the repository. The contributor chooses
 product behavior and tries the result. Their agent handles Git, code, checks and
-the PR. Contributors build and iterate independently; Tim reviews and merges. A draft PR may be
+the PR. Contributors build and iterate independently; Tim and Josibe84 may merge their own PRs after required checks and the Codex fix/review loop. Agents still need explicit instructions to merge. A draft PR may be
 incomplete; ready for review requires the evidence below.
 
 ## Before the first feature
 
 Tim must finish these gates before granting contributor write access:
 
-- Activate and verify main protection with owner review, `check` and
+- Activate and verify main protection with PRs, resolved threads, `check` and
   `Contributor policy`. This is one-time onboarding, not per-feature approval.
   Current activation evidence and remaining onboarding limits are recorded in
   [GitHub safeguards](https://github.com/timbenniks/wuff-todo/blob/main/docs/contributor-github.md).
@@ -77,7 +77,7 @@ decisions through Tim. Show the main interaction early and incorporate feedback.
 Call out changes to admission, authorization, sharing/privacy rules, OAuth consent,
 schema/migrations,  production configuration and safeguards in
 the PR. You can prepare and test these changes in the isolated workspace without
-preliminary permission; Tim reviews their implications before merge. Path-based
+preliminary permission; reviewers assess their implications before merge. Path-based
 policy hints draw attention to likely risk and never replace semantic review.
 Do not disable protections or weaken tests to make a feature pass.
 
@@ -118,7 +118,7 @@ and notification delivery separate. Do not copy the app or add runtime plugins.
 - Avoid unbounded reads, per-row repeated requests, eager heavy editors and
   duplicate subscriptions. Measure query/request or bundle impact when affected.
 - Explain dependencies, contract changes and global styling changes in the PR.
-  Highlight the high-risk changes listed above for Tim's final review. Routine
+  Highlight the high-risk changes listed above for final review. Routine
   implementation choices and evolving file lists do not require permission.
 - Add meaningful regression coverage for changed permissions, retries, concurrency
   and recovery. Do not weaken tests, hide errors with suppressions, mock away the

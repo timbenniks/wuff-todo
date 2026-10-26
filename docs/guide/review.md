@@ -46,7 +46,9 @@ by itself authorizes paid agent execution, a migration, merge or production rele
 ## What the contributor receives
 
 Give a plain-language description of what changed, how to try it, what was tested
-and what still needs Tim. Tim owns final review, merge and production release.
+and any remaining gates. Tim and Josibe84 may merge their own PRs after required
+checks and the Codex fix/review loop. Agents need explicit merge instructions;
+production operations still need Tim’s authorization.
 
 ## Module review
 
