@@ -94,6 +94,50 @@ export type TotakeNotification = {
   direct?: TotakeNotificationContext;
   kind?: "medication" | "equipment";
 };
+/** Items actually due for this send; a normal repeat may already be planned later. */
+export function notificationDueItems(group: Occurrence, now: number) {
+  return group.items.filter(
+    (i) =>
+      !group.records.some((r) => r.itemId === i.id) &&
+      (group.reminders[i.id]?.nextInstant ?? i.alertInstant ?? Infinity) <=
+        now &&
+      (group.reminders[i.id]?.snoozedInstant ?? -Infinity) <= now,
+  );
+}
+function actionableItems(group: Occurrence, now: number) {
+  return group.items.filter(
+    (i) =>
+      !group.records.some((r) => r.itemId === i.id) &&
+      (i.alertInstant ?? Infinity) <= now &&
+      (group.reminders[i.id]?.snoozedInstant ?? -Infinity) <= now,
+  );
+}
+export function totakeNotificationContent(
+  state: State,
+  group: Occurrence,
+  showContent: boolean,
+  now: number,
+) {
+  const items = notificationDueItems(group, now);
+  const at = Math.min(...items.map((i) => i.alertInstant ?? Infinity));
+  const time = Number.isFinite(at)
+    ? new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZone: state.clock!.zone,
+      }).format(new Date(at))
+    : "";
+  return {
+    title: `${items.length} ${items.length === 1 ? "reminder" : "reminders"}${time ? ` at ${time}` : ""}`,
+    body: showContent
+      ? items
+          .map((i) => `${i.name} · ${i.dose}`)
+          .join("\n")
+          .slice(0, 1000)
+      : "Open Wuff to view your reminder.",
+  };
+}
 export function makeTotakeNotification(
   state: State,
   group: Occurrence,
@@ -102,33 +146,54 @@ export function makeTotakeNotification(
   showContent: boolean,
   now: number,
 ): TotakeNotification {
-  const items = group.items.filter(
-    (i) => !group.records.some((r) => r.itemId === i.id),
-  );
+  const items = notificationDueItems(group, now);
+  const eligible = actionableItems(group, now);
   const item = items[0];
   if (
     !showContent ||
-    items.length !== 1 ||
     !item ||
-    (item.alertInstant ?? Infinity) > now ||
-    (group.reminders[item.id]?.snoozedInstant ?? -Infinity) > now
+    items.length > 100 ||
+    items.length !== eligible.length ||
+    !items.every((i) => eligible.some((e) => e.id === i.id))
   )
     return { userId, groupId: group.id };
-  return {
+  const selection = items.map((i) => ({
+    itemId: i.id,
+    identity: notificationItemIdentity(group, i),
+    lastAuditId: notificationHistory(state, group.id, i.id),
+  }));
+  // Bound the serialized request below the adapters' 128 KiB envelope, even for multibyte names.
+  const direct: TotakeNotificationContext = {
     userId,
+    deviceId,
     groupId: group.id,
-    kind: item.kind,
-    direct: {
-      userId,
-      deviceId,
-      groupId: group.id,
-      itemId: item.id,
-      identity: notificationItemIdentity(group, item),
-      lastAuditId: notificationHistory(state, group.id, item.id),
-      issuedAt: now,
-      expiresAt: now + notificationActionLifetime,
-    },
+    ...selection[0],
+    ...(selection.length > 1 ? { items: selection } : {}),
+    issuedAt: now,
+    expiresAt: now + notificationActionLifetime,
   };
+  if (JSON.stringify(direct).length > 30000)
+    return { userId, groupId: group.id };
+  return { userId, groupId: group.id, kind: item.kind, direct };
+}
+/** Stay below Web Push's 3993-byte plaintext ceiling (RFC 8291 §4).
+ * Large selections use review instead of silently losing the entire notification.
+ */
+export function fitTotakePushPayload<
+  T extends { body: string; totake?: TotakeNotification },
+>(payload: T): T {
+  const next = {
+    ...payload,
+    ...(payload.totake ? { totake: { ...payload.totake } } : {}),
+  };
+  const size = () => new TextEncoder().encode(JSON.stringify(next)).length;
+  if (size() > 3500 && next.totake) delete next.totake.direct;
+  const text = Array.from(next.body);
+  while (size() > 3500 && text.length) {
+    text.splice(Math.max(0, text.length - 32));
+    next.body = text.join("") + "…";
+  }
+  return next;
 }
 /** Additional precondition, never an alternative to account/scope/version/receipt checks. */
 export function validateNotificationAction(
@@ -150,33 +215,60 @@ export function validateNotificationAction(
     throw Error(
       "This notification is no longer current. Open the reminder to review it.",
     );
+  const selection = context.items ?? [
+    {
+      itemId: context.itemId,
+      identity: context.identity,
+      lastAuditId: context.lastAuditId,
+    },
+  ];
   if (
-    !(change.action === "record" && change.outcome === "taken") &&
+    context.items &&
+    (selection.length < 2 ||
+      selection.length > 100 ||
+      new Set(selection.map((i) => i.itemId)).size !== selection.length ||
+      context.itemId !== selection[0].itemId ||
+      context.identity !== selection[0].identity ||
+      context.lastAuditId !== selection[0].lastAuditId)
+  )
+    throw Error(
+      "The notification selection changed. Open the reminder to review it.",
+    );
+  if (
+    !(
+      change.action === "record" &&
+      (change.outcome === "taken" ||
+        (!!context.items && change.outcome === "skipped"))
+    ) &&
     change.action !== "snooze"
   )
     throw Error("Use Totake to review this action.");
+  if (context.items && change.action === "snooze" && change.minutes !== 30)
+    throw Error("Use Totake to choose another snooze duration.");
   if (
     !("groupId" in change) ||
     change.groupId !== context.groupId ||
     !("itemIds" in change) ||
-    change.itemIds.length !== 1 ||
-    change.itemIds[0] !== context.itemId
+    change.itemIds.length !== selection.length ||
+    new Set(change.itemIds).size !== selection.length ||
+    !selection.every((i) => change.itemIds.includes(i.itemId))
   )
     throw Error(
       "The notification selection changed. Open the reminder to review it.",
     );
   const group = state.groups.find((g) => g.id === context.groupId);
-  const item = group?.items.find((i) => i.id === context.itemId);
+  const eligible = group ? actionableItems(group, now) : [];
   if (
     !group ||
-    !item ||
-    group.records.some((r) => r.itemId === item.id) ||
-    group.items.filter((i) => !group.records.some((r) => r.itemId === i.id))
-      .length !== 1 ||
-    (item.alertInstant ?? Infinity) > now ||
-    (group.reminders[item.id]?.snoozedInstant ?? -Infinity) > now ||
-    notificationItemIdentity(group, item) !== context.identity ||
-    notificationHistory(state, group.id, item.id) !== context.lastAuditId
+    eligible.length !== selection.length ||
+    selection.some((entry) => {
+      const item = eligible.find((i) => i.id === entry.itemId);
+      return (
+        !item ||
+        notificationItemIdentity(group, item) !== entry.identity ||
+        notificationHistory(state, group.id, item.id) !== entry.lastAuditId
+      );
+    })
   )
     throw Error(
       "This reminder changed. Open Totake to review before recording.",

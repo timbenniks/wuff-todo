@@ -7,6 +7,13 @@ import {
 import type { TotakeNotification } from "@wuff/contracts/modules/totake/notification";
 import type { TotakeMutation, TotakeSnapshot } from "@wuff/contracts";
 const sw = globalThis as unknown as ServiceWorkerGlobalScope;
+const directActions = [
+  "totake-record",
+  "totake-snooze-15",
+  "totake-group-record",
+  "totake-group-snooze-30",
+  "totake-group-skip",
+];
 // Replace the old UUID-only worker without waiting for every Wuff tab to close.
 sw.addEventListener("install", (event) => event.waitUntil(sw.skipWaiting()));
 sw.addEventListener("activate", (event) => event.waitUntil(sw.clients.claim()));
@@ -45,18 +52,24 @@ function buttons(data: Notice) {
     t.direct &&
     t.direct.issuedAt <= Date.now() &&
     t.direct.expiresAt > Date.now()
-      ? [
-          {
-            action: "totake-record",
-            title: t.kind === "equipment" ? "Done" : "Taken",
-          },
-          { action: "totake-snooze-15", title: "Snooze 15 min" },
-        ]
+      ? t.direct.items
+        ? [
+            { action: "totake-group-record", title: "Confirm all" },
+            { action: "totake-group-snooze-30", title: "30 min later" },
+            { action: "totake-group-skip", title: "Skip all" },
+          ]
+        : [
+            {
+              action: "totake-record",
+              title: t.kind === "equipment" ? "Done" : "Taken",
+            },
+            { action: "totake-snooze-15", title: "Snooze 15 min" },
+          ]
       : [
           { action: "totake-review", title: "Review items" },
           { action: "totake-snooze-options", title: "Snooze…" },
         ];
-  return actions.slice(0, Math.max(0, Math.min(2, max)));
+  return actions.slice(0, Math.max(0, Math.min(3, max)));
 }
 async function openReminder(path: string) {
   const url = new URL(safeNotificationPath(path), sw.location.origin).href;
@@ -79,8 +92,15 @@ async function openReminder(path: string) {
 }
 async function actionRequest(data: Notice, action: string) {
   const t = data.totake;
-  if (!t?.direct || !["totake-record", "totake-snooze-15"].includes(action))
+  if (!t?.direct || !directActions.includes(action))
     throw Error("Review required");
+  const grouped = !!t.direct.items;
+  if (grouped !== action.startsWith("totake-group-"))
+    throw Error("Review required");
+  const itemIds = t.direct.items?.map((i) => i.itemId) ?? [t.direct.itemId];
+  const snooze =
+    action === "totake-snooze-15" || action === "totake-group-snooze-30";
+  const outcome = action === "totake-group-skip" ? "skipped" : "taken";
   const headers = {
     "Content-Type": "application/json",
     "X-Wuff-User": t.userId,
@@ -94,20 +114,14 @@ async function actionRequest(data: Notice, action: string) {
   });
   if (!read.ok) throw Error("Sign in and review");
   const current = (await read.json()) as TotakeSnapshot;
-  const change: TotakeMutation["change"] =
-    action === "totake-record"
-      ? {
-          action: "record",
-          groupId: t.groupId,
-          itemIds: [t.direct.itemId],
-          outcome: "taken",
-        }
-      : {
-          action: "snooze",
-          groupId: t.groupId,
-          itemIds: [t.direct.itemId],
-          minutes: 15,
-        };
+  const change: TotakeMutation["change"] = snooze
+    ? {
+        action: "snooze",
+        groupId: t.groupId,
+        itemIds,
+        minutes: grouped ? 30 : 15,
+      }
+    : { action: "record", groupId: t.groupId, itemIds, outcome };
   if (current.userId !== t.userId) throw Error("Account changed");
   validateNotificationAction(
     current.state,
@@ -144,11 +158,17 @@ async function actionRequest(data: Notice, action: string) {
         throw new Error("Account changed", { cause: "known" });
       const group = saved.state.groups.find((g) => g.id === t.groupId);
       if (
-        action === "totake-record"
-          ? !group?.records.some(
-              (r) => r.itemId === t.direct!.itemId && r.outcome === "taken",
-            )
-          : !group?.reminders[t.direct.itemId]?.snoozedInstant
+        !group ||
+        itemIds.some((id) =>
+          snooze
+            ? !(
+                group.reminders[id]?.snoozedInstant &&
+                group.reminders[id].snoozedInstant! > t.direct!.issuedAt
+              )
+            : !group.records.some(
+                (r) => r.itemId === id && r.outcome === outcome,
+              ),
+        )
       )
         throw new Error("Result changed", { cause: "known" });
       return;
@@ -195,7 +215,7 @@ sw.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
     (async () => {
-      if (["totake-record", "totake-snooze-15"].includes(event.action)) {
+      if (directActions.includes(event.action)) {
         let accepted = false;
         try {
           await actionRequest(data, event.action);
@@ -206,9 +226,13 @@ sw.addEventListener("notificationclick", (event) => {
         try {
           await sw.registration.showNotification("Wuff Totake", {
             body: accepted
-              ? event.action === "totake-record"
-                ? "Recorded. Open Wuff to review or undo."
-                : "Snoozed for 15 minutes."
+              ? event.action === "totake-group-snooze-30"
+                ? "Snoozed for 30 minutes."
+                : event.action === "totake-snooze-15"
+                  ? "Snoozed for 15 minutes."
+                  : event.action === "totake-group-skip"
+                    ? "Skipped. Open Wuff to review or undo."
+                    : "Recorded. Open Wuff to review or undo."
               : "Couldn’t confirm this action. Open Wuff to check before trying again.",
             tag: event.notification.tag,
             data: { path: data.path },

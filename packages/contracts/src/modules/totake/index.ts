@@ -172,6 +172,23 @@ export const totakeNotificationContextSchema = z
     itemId: boundedText,
     identity: z.string().min(1).max(4096),
     lastAuditId: boundedText.nullable(),
+    items: z
+      .array(
+        z
+          .object({
+            itemId: boundedText,
+            identity: z.string().min(1).max(4096),
+            lastAuditId: boundedText.nullable(),
+          })
+          .strict(),
+      )
+      .min(2)
+      .max(100)
+      .refine(
+        (v) => new Set(v.map((i) => i.itemId)).size === v.length,
+        "Select each notification item once",
+      )
+      .optional(),
     issuedAt: z.number().int().nonnegative().safe(),
     expiresAt: z.number().int().nonnegative().safe(),
   })

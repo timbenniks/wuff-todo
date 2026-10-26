@@ -129,7 +129,7 @@ test("real calendar/DST occurrence links accept bounded IDs and account pins, re
     true,
   );
 });
-test("only an identified single due item receives direct Taken/Done and snooze context; groups/hidden/future items require review", () => {
+test("identified due items receive direct context; hidden/future and incomplete group metadata require review", () => {
   for (const kind of ["medication", "equipment"] as const) {
     const f = fixture(kind);
     assert(f.notice.direct);
@@ -165,7 +165,15 @@ test("only an identified single due item receives direct Taken/Done and snooze c
       undefined,
     );
     const grouped = structuredClone(f.group);
-    grouped.items.push({ ...grouped.items[0], id: "second-item" });
+    grouped.items.push({
+      ...grouped.items[0],
+      id: "second-item",
+      alertInstant: f.now + 1000,
+    });
+    grouped.reminders["second-item"] = {
+      ...grouped.reminders[grouped.items[0].id],
+      nextInstant: f.now,
+    };
     assert.equal(
       makeTotakeNotification(
         f.state,
