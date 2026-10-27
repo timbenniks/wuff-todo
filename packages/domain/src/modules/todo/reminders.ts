@@ -424,6 +424,7 @@ async function payloadFor(
       .for("share", { of: [tasks, lists] });
     if (!row) return null;
     return {
+      urgency: "normal",
       title: "Wuff reminder",
       body: p.showTaskTitles ? row.task.title : "You have a task to check.",
       path: `/tasks/${row.task.id}`,
@@ -445,6 +446,7 @@ async function payloadFor(
     );
   if (!rows.length) return null;
   return {
+    urgency: "normal",
     title: "Your daily Wuff nudge",
     body: `${rows.length} unfinished ${rows.length === 1 ? "task is" : "tasks are"} due today or overdue.`,
     path: "/lists",

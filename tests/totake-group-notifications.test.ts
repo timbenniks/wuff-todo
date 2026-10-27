@@ -441,3 +441,32 @@ test("large Unicode group payloads fall back to review within Web Push limits wi
   assert.equal(fitted.path, ordinary.path);
   assert.equal(fitted.tag, ordinary.tag);
 });
+
+test("high urgency preserves exact grouped actions at the browser payload size limit", async () => {
+  const { prepareTotakePush } =
+    await import("../packages/domain/src/modules/totake/delivery");
+  const f = fixture();
+  assert.equal(f.notice.direct?.items?.length, 2);
+  const notification = {
+    title: "Group reminder",
+    body: "",
+    path: "/totake",
+    tag: "synthetic-boundary",
+    totake: f.notice,
+  };
+  notification.body = "x".repeat(
+    3500 - new TextEncoder().encode(JSON.stringify(notification)).length,
+  );
+  assert.equal(
+    new TextEncoder().encode(JSON.stringify(notification)).length,
+    3500,
+  );
+  const { urgency, ...wire } = prepareTotakePush(notification);
+  assert.equal(urgency, "high");
+  assert.deepEqual(
+    wire,
+    notification,
+    "server urgency must not trim fitting medicine text or drop direct-action guards",
+  );
+  assert.equal(wire.totake?.direct?.items?.length, 2);
+});

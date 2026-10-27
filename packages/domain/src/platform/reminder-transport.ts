@@ -1,6 +1,8 @@
 import webpush from "web-push";
 import type { ReminderDevice } from "@wuff/contracts";
 export type PushPayload = {
+  // Server-owned delivery policy; never infer it from optional action metadata.
+  urgency: "normal" | "high";
   title: string;
   body: string;
   path: string;
@@ -56,13 +58,15 @@ export async function sendReminderPush(
   if (!reminderDeliveryStatus()[target.transport])
     throw new PushTransportError(false);
   if (target.transport === "web") {
+    const { urgency, ...notification } = payload;
     if (!target.subscription || !allowedPushEndpoint(target.address, "web"))
       throw new PushTransportError(true);
     try {
       await (dependencies.webSend ?? webpush.sendNotification)(
         target.subscription,
-        JSON.stringify(payload),
+        JSON.stringify(notification),
         {
+          urgency,
           TTL: 3600,
           timeout: 10_000,
           vapidDetails: {

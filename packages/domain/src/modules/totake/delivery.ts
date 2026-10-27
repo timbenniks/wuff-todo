@@ -30,7 +30,14 @@ import {
   sendReminderPush,
   PushTransportError,
   reminderDeliveryStatus,
+  type PushPayload,
 } from "../../platform/reminder-transport";
+// Fit only browser-visible data so server urgency cannot trim action metadata.
+export function prepareTotakePush(
+  payload: Omit<PushPayload, "urgency">,
+): PushPayload {
+  return { ...fitTotakePushPayload(payload), urgency: "high" };
+}
 const callback = z
   .object({ id: z.uuid(), version: z.number().int().positive() })
   .strict();
@@ -187,12 +194,7 @@ export async function deliverTotake(
                 }
               : {}),
           };
-          await send(
-            device,
-            device.transport === "web"
-              ? fitTotakePushPayload(payload)
-              : payload,
-          );
+          await send(device, prepareTotakePush(payload));
         } catch (error) {
           if (error instanceof PushTransportError && error.permanent) {
             await tx

@@ -176,7 +176,8 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
       [1, 2].map(() =>
         deliverReminder(
           { id: reminder.id, version: 1 },
-          async (device) => {
+          async (device, payload) => {
+            assert.equal(payload.urgency, "normal");
             assert.equal(device.transport, "web");
             sends++;
           },
@@ -256,6 +257,7 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
     await deliverReminder(
       { id: digest.id, version: digest.version },
       async (_d, p) => {
+        assert.equal(p.urgency, "normal");
         without = Number(p.body.split(" ")[0]);
         assert.ok(!p.body.includes(task.title));
       },
@@ -279,6 +281,7 @@ test("personal reminder isolation, concurrent revisions, retries, lifecycle and 
     await deliverReminder(
       { id: digest.id, version: digest.version },
       async (_d, p) => {
+        assert.equal(p.urgency, "normal");
         withIncluded = Number(p.body.split(" ")[0]);
       },
       new Date(runAt),
