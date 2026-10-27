@@ -5,6 +5,21 @@ Todo without Totake. App/service switches plus advanced individual choices live
 in Settings → AI & MCP connections. These choices are independent of web app
 visibility, notification settings and OAuth permission grants.
 
+## Selected tools and missing consent
+
+Connection settings distinguish selected tools from tools with permission. A
+checked Totake group can still have zero tools with permission under a Todo-only
+grant. Missing consent is visible above the groups and on each group, including
+after saving; refreshing tools does not grant it.
+
+Reconnect through the AI client to approve Totake. When the client omits `scope`,
+the consent page offers unchecked Read Totake and Change Totake choices; write
+requires read. Leaving them unchecked preserves the original Todo-only defaults.
+Clients sending explicit scopes must request `totake:read` and, for actions,
+`totake:write` themselves. Optional selections cannot broaden an explicit request.
+Existing tokens and refresh scope ceilings are unchanged. Approval creates a new
+grant; old tokens remain limited. See [consent recovery](totake-mcp-consent-recovery.md).
+
 Root/web AGENTS.md, contributor workflow/skill, surface and accessibility guides
 apply. Prepare one additive account/client-owned preferences table; execution
 received explicit operational approval for development and production. No auth-managed tables are changed.

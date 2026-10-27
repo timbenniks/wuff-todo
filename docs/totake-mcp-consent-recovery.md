@@ -13,13 +13,13 @@ retain their scope requirements. Existing dependency edits are outside this work
 
 Acceptance:
 
-- [ ] Connection settings distinguish selected tools from tools with permission,
-  with missing consent visible without opening individual tools.
-- [ ] Default OAuth consent offers explicit, unchecked Totake read/write access.
-- [ ] Explicit client scope requests remain bounded by the original request;
-  existing grants, refresh, revocation, PKCE and account isolation stay intact.
-- [ ] Regression tests cover effective availability and safe consent selection.
-- [ ] Run typecheck, unit tests and relevant local consent/UI integration checks.
+- [x] Connection settings distinguish selected tools from tools with permission,
+      with missing consent visible without opening individual tools.
+- [x] Default OAuth consent offers explicit, unchecked Totake read/write access.
+- [x] Explicit client scope requests remain bounded by the original request;
+      existing grants, refresh, revocation, PKCE and account isolation stay intact.
+- [x] Regression tests cover effective availability and safe consent selection.
+- [x] Run typecheck, unit tests and relevant local consent/UI integration checks.
 
 ## Surfaces and decisions
 
@@ -38,4 +38,36 @@ discovery and disabled-call coverage. Integration and browser evidence pending.
 
 ## Verification
 
-Draft. No implementation, deployment, production mutation or live recovery claimed.
+October 27, 2026, local isolated development:
+
+- `pnpm typecheck` passed, including the browser harness.
+- `pnpm test` passed 211 tests, no skips. New regressions in
+  `tests/oauth-consent-policy.test.ts` cover no opt-in, read-only/read-write,
+  write-only/duplicate/unoffered denial and explicit-request ceilings.
+  `tests/mcp-tool-choices.test.ts` covers selected-but-denied, read-only writes,
+  deselection, successful permission and unknown-tool denial, alongside SDK tests.
+- `pnpm build` passed optimized web and MCP builds.
+- Serial `tests/mcp-tool-choices.integration.test.ts` and
+  `tests/totake.integration.test.ts` passed 3 tests, no skips: real HTTP/MCP parity,
+  scopes, privacy, stale/concurrent/exact retries, consent and revocation; Totake
+  notification tests use mocked providers and loopback disables publishing.
+- `node --env-file=.env.local --import tsx scripts/verify-totake-mcp-consent.ts`
+  passed in headless Chrome with real isolated OAuth/HTTP/MCP: selected Totake
+  tools denied under Todo-only grant; Save does not grant access; explicit optional
+  browser approval issues a working new Totake grant while the old token remains
+  denied; explicit-scope expansion, unoffered/write-only scopes and foreign Origin
+  rejected; Cancel returns access_denied; keyboard read selection and read/write
+  dependency; 320/390/1280px overflow/screenshots and no page errors. All fixture
+  grants are revoked on exit and MCP returns 401 afterward. Fixture connection
+  metadata/preferences remain on the synthetic account; no real-user data changed.
+
+Screenshots are local under `artifacts/totake-mcp-consent/`; consent and Settings
+phone captures were visually inspected. Early harness attempts hit cookie import
+and warning-placement errors; those were corrected before the successful run.
+
+Draft PR #42. Current-head hosted checks and Codex review tracked on the PR.
+No production deployment, live-account recovery, named production MCP-host UI,
+physical device or screen-reader proof. Existing saved tool selections and grants
+remain unchanged. New consent requires reconnecting in the AI client; clients
+with explicit scopes must request Totake themselves. Approval is intentionally
+unavailable as an MCP self-grant operation.

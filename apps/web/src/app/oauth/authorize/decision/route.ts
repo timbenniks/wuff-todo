@@ -4,12 +4,17 @@ import { webActor } from "@/lib/auth/server";
 import { sameOrigin, jsonInput, failure } from "@/lib/http";
 import { authorizationDetails, oauthServer } from "@/lib/oauth";
 import { appOrigin } from "@/lib/config";
+import { approvedConsentScopes } from "@/lib/oauth-consent-policy";
 export async function POST(request: Request) {
   try {
     sameOrigin(request);
     const actor = await webActor(),
-      { query, accept } = z
-        .object({ query: z.string().max(8192), accept: z.boolean() })
+      { query, accept, optionalScopes } = z
+        .object({
+          query: z.string().max(8192),
+          accept: z.boolean(),
+          optionalScopes: z.array(z.string()).max(2).default([]),
+        })
         .parse(await jsonInput(request));
     const params = new URLSearchParams(query);
     const details = await authorizationDetails(params);
@@ -20,6 +25,11 @@ export async function POST(request: Request) {
       redirect.searchParams.set("iss", appOrigin());
       return Response.json({ redirect: redirect.href });
     }
+    const approved = approvedConsentScopes(
+      details.requested,
+      params.get("scope"),
+      optionalScopes,
+    );
     const response = new OAuth2Server.Response();
     await oauthServer(details.resource).authorize(
       new OAuth2Server.Request({
@@ -27,7 +37,7 @@ export async function POST(request: Request) {
         headers: {},
         query: {
           ...Object.fromEntries(params),
-          scope: details.requested.join(" "),
+          scope: approved.join(" "),
         },
       }),
       response,

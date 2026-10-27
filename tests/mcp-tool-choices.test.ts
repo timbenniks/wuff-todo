@@ -9,6 +9,7 @@ import {
   scopes,
   selectMcpToolGroup,
   updateMcpToolsSchema,
+  mcpToolAvailability,
 } from "@wuff/contracts";
 import { createMcpServer } from "../apps/web/src/lib/mcp";
 const require = createRequire(
@@ -20,6 +21,42 @@ const { Client } = await import(
 const { InMemoryTransport } = await import(
   require.resolve("@modelcontextprotocol/sdk/inMemory.js")
 );
+test("selected Totake tools remain unavailable without the required consent", () => {
+  const selected = ["get_totake", "update_totake", "get_task"];
+  assert.deepEqual(
+    mcpToolAvailability("get_totake", ["lists:read"], selected),
+    {
+      selected: true,
+      available: false,
+      missingScopes: ["totake:read"],
+    },
+  );
+  assert.deepEqual(
+    mcpToolAvailability("update_totake", ["totake:read"], selected),
+    {
+      selected: true,
+      available: false,
+      missingScopes: ["totake:write"],
+    },
+  );
+  assert.equal(
+    mcpToolAvailability("get_task", ["lists:read"], selected).available,
+    true,
+  );
+  assert.equal(
+    mcpToolAvailability("get_totake", ["totake:read"], selected).available,
+    true,
+  );
+  assert.deepEqual(mcpToolAvailability("get_totake", ["totake:read"], []), {
+    selected: false,
+    available: false,
+    missingScopes: [],
+  });
+  assert.equal(
+    mcpToolAvailability("unknown", scopes, ["unknown"]).available,
+    false,
+  );
+});
 async function host(
   granted: readonly string[],
   selected: readonly string[] | null,
