@@ -96,6 +96,7 @@ test("registered push endpoints cannot target arbitrary hosts, credentials, port
 test("Web Push preserves payload/error behavior while native registration and delivery are retired", async () => {
   const original = { ...process.env };
   const payload = {
+    urgency: "normal" as const,
     title: "Synthetic title",
     body: "A <private> & safe task",
     path: "/lists",

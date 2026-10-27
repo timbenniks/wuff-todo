@@ -468,8 +468,9 @@ test("Totake callbacks enforce pauses, partial-device retry receipts, current st
     let failure = true;
     const sender = async (
       device: { id: string; transport: string },
-      payload: { body: string },
+      payload: { body: string; urgency: string },
     ) => {
+      assert.equal(payload.urgency, "high");
       assert.equal(device.transport, "web");
       assert.equal(payload.body, "Open Wuff to view your reminder.");
       if (accepted.size === 1 && !accepted.has(device.id) && failure) {

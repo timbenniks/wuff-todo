@@ -171,6 +171,7 @@ export async function deliverTotake(
         const path = totakeReminderPath(g.id, initial.userId);
         try {
           const payload = {
+            urgency: "high" as const,
             ...totakeNotificationContent(s, g, policy.showContent, now),
             path,
             tag: `totake:${job.id}:${g.id}`,
