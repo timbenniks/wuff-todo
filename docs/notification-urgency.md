@@ -26,10 +26,11 @@ without network sends. Final commands/results and review evidence belong in the 
 ## Verification record
 
 The new SDK-header regression fails before the fix (`normal` instead of `high`).
-After implementation, the two focused cases pass: high/normal actual encrypted
-SDK request headers and unchanged notification body/TTL/timeout; high-urgency
+After implementation, the focused cases pass: high/normal actual encrypted
+SDK request headers and unchanged notification body/TTL/timeout; exact two-item
+group action preservation at a 3,500-byte browser payload boundary; high-urgency
 expired-device versus temporary-outage classification and one send per attempt.
-`pnpm typecheck`, `pnpm test` (206 passed, zero failed/skipped) and `pnpm build`
+`pnpm typecheck`, `pnpm test` (207 passed, zero failed/skipped) and `pnpm build`
 pass. Product callback integration assertions cover normal Todo task/daily payloads
 and high Totake private/grouped payloads, partial-device retry and existing
 permissions/receipts/stock protections. Final isolated integration, hosted CI and
@@ -38,3 +39,9 @@ latest-head Codex review results are recorded in the feature PR.
 No presentation/UI changes: the worker receives the same notification payload
 after server delivery metadata is removed. Existing HTTP/MCP capabilities are
 unchanged, so there is no new persisted-data surface or consent to integrate.
+
+The first Codex review also identified the size-budget issue: fitting the browser
+payload after adding urgency could drop direct action metadata unnecessarily.
+`prepareTotakePush` fits browser data first and then adds fixed high urgency.
+The grouped boundary regression checks full original JSON and both guarded items
+remain intact. Review fixes and final results are recorded on the PR.
