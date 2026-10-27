@@ -4,6 +4,7 @@ import {
   type McpToolPreferences,
   type McpToolsUpdate,
   selectMcpToolGroup,
+  mcpToolAvailability,
 } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
@@ -83,6 +84,11 @@ export function ToolChoices({
     setSelected(next);
     setSaved(false);
   }
+  const blocked =
+    data?.catalog.filter((tool) => {
+      const state = mcpToolAvailability(tool.id, data.grantedScopes, selected);
+      return state.selected && !state.available;
+    }) ?? [];
   return (
     <section
       className="rounded-xl border border-border bg-surface p-4 my-4"
@@ -92,7 +98,8 @@ export function ToolChoices({
         Choose tools{data ? ` · ${data.clientName}` : ""}
       </h3>
       <p className="text-sm text-muted-foreground my-3">
-        Choose what this connection can use. These choices are separate from the
+        Select tools for this connection. A selected tool is available only when
+        this connection also has permission. These choices are separate from the
         apps shown in your menu and never grant extra permissions.
       </p>
       {error && (
@@ -113,6 +120,17 @@ export function ToolChoices({
         </>
       ) : (
         <>
+          {blocked.length > 0 && (
+            <p role="status" className="text-sm my-3">
+              {blocked.length} selected tools need additional permission and
+              cannot run. Reconnect in your AI client and approve the missing
+              permissions. For Totake, select Read Totake and, for actions,
+              Change Totake on the consent page. If those choices are absent,
+              configure your AI client to request totake:read and totake:write.
+              Saving tool choices or refreshing the tool catalogue does not
+              approve access.
+            </p>
+          )}
           {data.groups
             .filter((group) => group.id !== "connections")
             .map((group) => {
@@ -121,6 +139,11 @@ export function ToolChoices({
               );
               const count = tools.filter((tool) =>
                 selected.includes(tool.id),
+              ).length;
+              const available = tools.filter(
+                (tool) =>
+                  mcpToolAvailability(tool.id, data.grantedScopes, selected)
+                    .available,
               ).length;
               return (
                 <div key={group.id} className="border-t border-border py-2">
@@ -133,14 +156,22 @@ export function ToolChoices({
                       change(selectMcpToolGroup(selected, group.id, checked))
                     }
                   />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {count} selected · {available} with permission
+                    {count > available
+                      ? ` · ${count - available} need consent`
+                      : ""}
+                  </p>
                   <details>
                     <summary className="text-sm text-muted-foreground cursor-pointer py-3 min-h-11">
                       Individual {group.title} tools
                     </summary>
                     <div className="grid gap-x-6 sm:grid-cols-2">
                       {tools.map((tool) => {
-                        const granted = tool.scopes.every((scope) =>
-                          data.grantedScopes.includes(scope),
+                        const state = mcpToolAvailability(
+                          tool.id,
+                          data.grantedScopes,
+                          selected,
                         );
                         return (
                           <label
@@ -165,9 +196,12 @@ export function ToolChoices({
                               <code className="block text-xs text-muted-foreground break-all">
                                 {tool.id}
                               </code>
-                              {!granted && (
+                              {state.missingScopes.length > 0 && (
                                 <span className="block text-xs text-muted-foreground">
-                                  Requires additional consent in your AI client
+                                  {state.selected
+                                    ? "Selected, awaiting consent"
+                                    : "Requires consent"}
+                                  : {state.missingScopes.join(", ")}
                                 </span>
                               )}
                             </span>
@@ -186,8 +220,11 @@ export function ToolChoices({
           </p>
           {saved && (
             <p role="status" className="my-3">
-              Tool choices saved. Refresh the connection’s tools in your AI
-              client. Disabled tools are blocked immediately.
+              Tool choices saved.{" "}
+              {blocked.length > 0
+                ? "Selected tools awaiting consent remain unavailable. Reconnect and approve access first."
+                : "Refresh the connection’s tools in your AI client."}{" "}
+              Disabled tools are blocked immediately.
             </p>
           )}
           <div className="flex flex-wrap gap-3 mt-4">

@@ -3,6 +3,7 @@ import { authorizationDetails } from "@/lib/oauth";
 import { pageActor, webIdentity } from "@/lib/auth/server";
 import { Corgi } from "@/components/corgi";
 import { Consent } from "./consent";
+import { optionalConsentPermissions } from "@/lib/oauth-consent-policy";
 export const dynamic = "force-dynamic";
 export default async function AuthorizePage({
   searchParams,
@@ -87,11 +88,14 @@ export default async function AuthorizePage({
         ))}
       </ul>
       <p className="text-sm text-muted-foreground mb-7">
-        Only the permissions listed above are granted. Hiding an app does not
-        change this access. You can disconnect this client in AI &amp; MCP
-        connections.
+        Only the permissions shown here, including optional permissions you
+        select, are granted. Hiding an app does not change this access. You can
+        disconnect this client in AI &amp; MCP connections.
       </p>
-      <Consent query={params.toString()} />
+      <Consent
+        query={params.toString()}
+        optionalPermissions={optionalConsentPermissions(params.get("scope"))}
+      />
     </main>
   );
 }
