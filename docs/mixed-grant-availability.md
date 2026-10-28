@@ -10,6 +10,12 @@ refresh-unexpired MCP grants for the account/client. A client may hold an older,
 Todo-only refresh token even when a newer Totake grant contributes to that union.
 The union can also combine scopes that no single grant holds together.
 
+GitHub records a successful Vercel status ("Deployment has completed") for this
+merge at October 27, 21:51:08 UTC, pointing to
+[deployment 2ujYgtf7f9AEQ9hCGju6i9ycdVyP](https://vercel.com/tim-benniks-projects-1b967033/wuff-todo/2ujYgtf7f9AEQ9hCGju6i9ycdVyP).
+That status is additional deployment evidence, not independent verification of
+the production alias, running UI or a recovered live ChatGPT authorization.
+
 Root AGENTS.md, apps/web/AGENTS.md and wuff-contributor apply. Empire owns this
 reporting-only correction. No stored selection, OAuth policy, schema, scope,
 dependency, API/MCP operation or production configuration changes.
@@ -33,14 +39,14 @@ Consent still belongs in the secure browser, so no embedded MCP UI is required.
 
 ## Establishing access reliably
 
-| Evidence | What it establishes |
-| --- | --- |
-| Tool appears in ChatGPT's tool catalogue | The host exposes a callable schema; it may be stale or disabled. |
-| Tool is checked in Wuff Settings | Saved client selection allows it; no OAuth consent is added. |
-| Client grant summary includes Totake scopes | Some active grants collectively contain those scopes; the host's token is unknown. |
-| Fresh MCP `tools/list` with the host's actual bearer token | Discovery allowed by that token's scopes and the current saved selection at that time. |
-| Successful read through that same host connection | Actual authorization for that read at that time, including current admission/domain access. |
-| Read succeeds | Does not prove write permission, delivery of reminders, or that every other tool works. |
+| Evidence                                                   | What it establishes                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Tool appears in ChatGPT's tool catalogue                   | The host exposes a callable schema; it may be stale or disabled.                            |
+| Tool is checked in Wuff Settings                           | Saved client selection allows it; no OAuth consent is added.                                |
+| Client grant summary includes Totake scopes                | Some active grants collectively contain those scopes; the host's token is unknown.          |
+| Fresh MCP `tools/list` with the host's actual bearer token | Discovery allowed by that token's scopes and the current saved selection at that time.      |
+| Successful read through that same host connection          | Actual authorization for that read at that time, including current admission/domain access. |
+| Read succeeds                                              | Does not prove write permission, delivery of reminders, or that every other tool works.     |
 
 A diagnostic implemented later should derive scopes from the authenticated MCP
 actor only for its own verified `mcpClientId`. A caller-supplied client ID must
@@ -84,10 +90,24 @@ successful call or token-specific server evidence from that connection.
 
 ## Verification status
 
-Prepared regression cases in `tests/mcp-tool-choices.test.ts` and expanded the
-existing real OAuth/browser harness `scripts/verify-totake-mcp-consent.ts` to cover
-mixed-grant feedback before/after Save, phone/desktop layouts and old-token
-refresh denial. Local check results will be recorded before handoff.
+Local verification on October 28, using Node 22.23.4 and pnpm 10.33.3:
+
+- Frozen dependency installation completed without dependency/lockfile changes.
+- `pnpm typecheck` passed across workspace packages and root tests/scripts.
+- `pnpm test`: 213 passed, zero failures/skips.
+- Focused `node --import tsx --test tests/mcp-tool-choices.test.ts`: 8 passed,
+  including actual in-memory MCP SDK discovery and denied old-scope invocation.
+- A temporary mutation that treated complete aggregate coverage as authorized
+  failed both new regression cases (2 failures). Restoring the correction passed
+  all 8 focused cases. No mutated source remains.
+- `pnpm build` passed optimized web/MCP compilation. This proves compilation,
+  not a deployed or authenticated browser recovery.
+- Changed-file Prettier and `git diff --check` passed.
+
+The expanded real OAuth/browser harness `scripts/verify-totake-mcp-consent.ts`
+covers mixed-grant feedback before/after Save, 320/390/1280px layouts and
+old-token refresh denial. It has not run in this checkout. Its new mixed-grant
+expectation rejects the former “4 selected · 4 with permission” browser outcome.
 
 The isolated database/auth environment and `.vercel/dev-users.json` are absent
 here. The real OAuth/browser harness and integration suites cannot run safely

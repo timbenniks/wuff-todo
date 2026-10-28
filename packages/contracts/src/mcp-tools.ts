@@ -95,7 +95,7 @@ export function mcpToolAllowed(
     (tool.control || enabled === null || enabled.includes(id))
   );
 }
-/** Saved selection and effective permission are independent connection states. */
+/** Use scopes from one verified grant/token, never a union of client grants. */
 export function mcpToolAvailability(
   id: string,
   grantedScopes: readonly string[],
@@ -109,6 +109,27 @@ export function mcpToolAvailability(
   return {
     selected,
     available: selected && mcpToolAllowed(id, grantedScopes, selectedTools),
+    missingScopes,
+  };
+}
+/** Browser settings know aggregate grants, not which token the AI client holds. */
+export function mcpToolGrantSummary(
+  id: string,
+  grantedScopes: readonly string[],
+  selectedTools: readonly string[],
+) {
+  const tool = mcpToolCatalog.find((tool) => tool.id === id);
+  const selected = !!tool && selectedTools.includes(id);
+  const missingScopes = tool
+    ? tool.scopes.filter((scope) => !grantedScopes.includes(scope))
+    : [];
+  return {
+    selected,
+    permission: !tool
+      ? ("unknown_tool" as const)
+      : missingScopes.length > 0
+        ? ("missing_consent" as const)
+        : ("unverified" as const),
     missingScopes,
   };
 }
@@ -165,6 +186,7 @@ export type McpToolPreferences = {
   version: number;
   configured: boolean;
   enabledTools: McpToolId[];
+  /** Union of active client grants; not the scopes of a particular bearer token. */
   grantedScopes: string[];
   catalog: typeof mcpToolCatalog;
   groups: typeof mcpToolGroups;

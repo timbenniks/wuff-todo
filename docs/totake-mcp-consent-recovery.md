@@ -1,5 +1,10 @@
 # Totake MCP consent recovery
 
+October 28 follow-up: PR #42's unioned-grant availability claim has an unresolved
+P2 finding. The historical checks below do not prove that a client's older token
+can use a newer grant. See [mixed-grant reporting and reconnection](mixed-grant-availability.md)
+for the correction, token-specific verification and current limitations.
+
 ## Brief
 
 Totake tools can be checked in AI & MCP connection settings while the bearer

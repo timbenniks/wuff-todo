@@ -4,7 +4,7 @@ import {
   type McpToolPreferences,
   type McpToolsUpdate,
   selectMcpToolGroup,
-  mcpToolAvailability,
+  mcpToolGrantSummary,
 } from "@wuff/contracts";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
@@ -86,8 +86,8 @@ export function ToolChoices({
   }
   const blocked =
     data?.catalog.filter((tool) => {
-      const state = mcpToolAvailability(tool.id, data.grantedScopes, selected);
-      return state.selected && !state.available;
+      const state = mcpToolGrantSummary(tool.id, data.grantedScopes, selected);
+      return state.selected && state.permission === "missing_consent";
     }) ?? [];
   return (
     <section
@@ -98,9 +98,11 @@ export function ToolChoices({
         Choose tools{data ? ` · ${data.clientName}` : ""}
       </h3>
       <p className="text-sm text-muted-foreground my-3">
-        Select tools for this connection. A selected tool is available only when
-        this connection also has permission. These choices are separate from the
-        apps shown in your menu and never grant extra permissions.
+        Select tools for this connection. These choices are separate from the
+        apps shown in your menu and never grant extra permissions. Permission
+        information combines this client’s active grants; it does not verify the
+        token your AI client is using. An older token can still be denied after
+        new consent. Verify access in your AI client.
       </p>
       {error && (
         <p role="alert" className="text-red-800 my-3">
@@ -140,10 +142,11 @@ export function ToolChoices({
               const count = tools.filter((tool) =>
                 selected.includes(tool.id),
               ).length;
-              const available = tools.filter(
+              const missing = tools.filter(
                 (tool) =>
-                  mcpToolAvailability(tool.id, data.grantedScopes, selected)
-                    .available,
+                  selected.includes(tool.id) &&
+                  mcpToolGrantSummary(tool.id, data.grantedScopes, selected)
+                    .permission === "missing_consent",
               ).length;
               return (
                 <div key={group.id} className="border-t border-border py-2">
@@ -157,10 +160,8 @@ export function ToolChoices({
                     }
                   />
                   <p className="text-sm text-muted-foreground mb-2">
-                    {count} selected · {available} with permission
-                    {count > available
-                      ? ` · ${count - available} need consent`
-                      : ""}
+                    {count} selected · client access unverified
+                    {missing > 0 ? ` · ${missing} need consent` : ""}
                   </p>
                   <details>
                     <summary className="text-sm text-muted-foreground cursor-pointer py-3 min-h-11">
@@ -168,7 +169,7 @@ export function ToolChoices({
                     </summary>
                     <div className="grid gap-x-6 sm:grid-cols-2">
                       {tools.map((tool) => {
-                        const state = mcpToolAvailability(
+                        const state = mcpToolGrantSummary(
                           tool.id,
                           data.grantedScopes,
                           selected,
@@ -214,16 +215,16 @@ export function ToolChoices({
               );
             })}
           <p className="text-sm text-muted-foreground my-3">
-            Connection controls stay available within your granted permissions.
-            AI clients can turn tools off; re-enable them here. New optional
-            tools stay off after you save a selection.
+            Connection controls require permission on your AI client’s token. AI
+            clients can turn tools off; re-enable them here. New optional tools
+            stay off after you save a selection.
           </p>
           {saved && (
             <p role="status" className="my-3">
               Tool choices saved.{" "}
               {blocked.length > 0
                 ? "Selected tools awaiting consent remain unavailable. Reconnect and approve access first."
-                : "Refresh the connection’s tools in your AI client."}{" "}
+                : "Client access is still unverified. Refresh tools and verify access in your AI client; reconnect if permission is denied."}{" "}
               Disabled tools are blocked immediately.
             </p>
           )}
