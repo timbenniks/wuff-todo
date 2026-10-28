@@ -76,8 +76,8 @@ decisions through Tim. Show the main interaction early and incorporate feedback.
 Call out changes to admission, authorization, sharing/privacy rules, OAuth consent,
 schema/migrations, production configuration and safeguards in
 the PR. You can prepare and test these changes in the isolated workspace without
-preliminary permission; reviewers assess their implications before merge. Path-based
-policy hints draw attention to likely risk and never replace semantic review.
+preliminary permission. Contributors must identify sensitive changes in the PR;
+reviewers inspect their implications directly, without automated path hints.
 Do not disable protections or weaken tests to make a feature pass.
 
 Operational authorization is separate from writing code. Explicit authorization
@@ -125,8 +125,8 @@ and notification delivery separate. Do not copy the app or add runtime plugins.
 - Keep one feature per PR, record decisions/evidence in its feature document, and
   report unrelated defects separately instead of expanding scope.
 
-The policy conservatively flags sensitive files. It cannot identify every risky
-code path or judge architecture; Tim must inspect semantic changes too.
+Contributors and reviewers must inspect the diff for sensitive files and semantic
+access, schema, privacy or safeguard changes. No metadata policy flags paths.
 
 ## 4. Verify and record current evidence
 

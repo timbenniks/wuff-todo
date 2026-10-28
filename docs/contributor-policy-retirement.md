@@ -34,6 +34,17 @@ application deployment, database write or provider operation was performed.
   hosted guide and portable contributor downloads use the updated guidance.
 - `git diff --check`: passed.
 
-No application integration or browser checks were run because this change removes
-CI metadata validation and edits contributor prose only. No application integration or
-browser flows change; no synthetic or production application writes are needed.
+`node scripts/verify-contributor-guide.mjs` passed against the local development
+server: 320/390/1280px, copy/keyboard/navigation, downloads, raw-reference/workflow
+parity, implementation/review routes and zero application API requests. The
+harness checks that the raw reference includes the served workflow rather than
+asserting the retired evidence marker. No application integration writes or
+production operations were performed.
+
+## Follow-up review
+
+Current-head review found stale automated path-hint promises and the old evidence
+marker assertion in the guide harness. Both are corrected; guide regeneration
+passed. Live workflow 395255536 was disabled with `gh workflow disable` and API
+readback confirmed `disabled_manually`, with no active runs. Historical failures
+remain visible but cannot block merging.
