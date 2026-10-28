@@ -74,7 +74,7 @@ Ask the contributor product questions when needed; do not route routine technica
 decisions through Tim. Show the main interaction early and incorporate feedback.
 
 Call out changes to admission, authorization, sharing/privacy rules, OAuth consent,
-schema/migrations,  production configuration and safeguards in
+schema/migrations, production configuration and safeguards in
 the PR. You can prepare and test these changes in the isolated workspace without
 preliminary permission; reviewers assess their implications before merge. Path-based
 policy hints draw attention to likely risk and never replace semantic review.
@@ -207,7 +207,7 @@ do not purchase credits, add a paid service or bypass a limit without Tim.
    automatic blockers.
 
 Codex review is independent of `pnpm` tests, application builds, integration/device
-proof and the metadata policy. Its no-findings result does not prove those checks
+proof. Its no-findings result does not prove those checks
 ran, that the review was exhaustive or that merging is technically prevented.
 As of October 26, main is protected by the active public-repository ruleset and
 hosted Verify runs; the metadata policy was retired on October 28. Inspect the latest head's actual
