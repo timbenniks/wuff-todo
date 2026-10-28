@@ -126,9 +126,12 @@ try {
     await page.goto(origin + "/settings/connections?clientId=" + req.clientId);
     const choices = page.getByRole("region", { name: "MCP tool choices" });
     await expect(
-      choices.getByText("4 selected · 0 with permission · 4 need consent", {
-        exact: true,
-      }),
+      choices.getByText(
+        "4 selected · client access unverified · 4 need consent",
+        {
+          exact: true,
+        },
+      ),
     ).toBeVisible();
     await expect(
       choices.getByText(
@@ -210,9 +213,47 @@ try {
   // Approval creates a new grant; the old token retains its original ceiling.
   assert((await empireMcp(old.access_token, "get_totake")).result.isError);
   await page.goto(origin + "/settings/connections?clientId=" + req.clientId);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 950 });
+    await expect(
+      page.getByText("4 selected · client access unverified", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/An older token can still be denied/),
+    ).toBeVisible();
+    assert(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    await page.screenshot({
+      path: `artifacts/totake-mcp-consent/mixed-grants-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await page
+    .getByRole("button", { name: "Save tool choices", exact: true })
+    .click();
   await expect(
-    page.getByText("4 selected · 4 with permission", { exact: true }),
+    page.getByText(/Client access is still unverified/),
   ).toBeVisible();
+  assert((await empireMcp(old.access_token, "get_totake")).result.isError);
+  // Refreshing the old grant cannot adopt the newer grant's Totake consent.
+  const refreshed = await fetch(origin + "/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: req.clientId,
+      refresh_token: old.refresh_token,
+      resource,
+    }),
+  });
+  assert.equal(refreshed.status, 200);
+  const rotated = { ...(await refreshed.json()), clientId: req.clientId };
+  tokens.push(rotated);
+  assert(!rotated.scope.split(" ").includes("totake:read"));
+  assert((await empireMcp(rotated.access_token, "get_totake")).result.isError);
 
   const explicit = await request("lists:read", req.clientId);
   await page.goto(origin + "/oauth/authorize?" + explicit.query);

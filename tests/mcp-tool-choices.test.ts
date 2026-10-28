@@ -10,6 +10,7 @@ import {
   selectMcpToolGroup,
   updateMcpToolsSchema,
   mcpToolAvailability,
+  mcpToolGrantSummary,
 } from "@wuff/contracts";
 import { createMcpServer } from "../apps/web/src/lib/mcp";
 const require = createRequire(
@@ -77,6 +78,84 @@ async function host(
     await server.close();
   }
 }
+test("mixed grants never establish the client's token permission; old-token discovery and invocation stay denied", async () => {
+  const oldScopes = ["lists:read", "empire:read"];
+  const newScopes = [...oldScopes, "totake:read", "totake:write"];
+  const aggregate = [...new Set([...oldScopes, ...newScopes])];
+  const selected = ["get_totake", "update_totake"];
+  for (const id of selected) {
+    assert.deepEqual(mcpToolGrantSummary(id, aggregate, selected), {
+      selected: true,
+      permission: "unverified",
+      missingScopes: [],
+    });
+    assert.equal(mcpToolAvailability(id, oldScopes, selected).available, false);
+    assert.equal(mcpToolAvailability(id, newScopes, selected).available, true);
+  }
+  await host(oldScopes, selected, async (client) => {
+    const result = await client.listTools();
+    assert(
+      !result.tools.some((tool: { name: string }) =>
+        selected.includes(tool.name),
+      ),
+    );
+    for (const id of selected) {
+      const denied = await client.callTool({ name: id, arguments: {} });
+      assert(denied.isError);
+    }
+  });
+  await host(newScopes, selected, async (client) => {
+    const result = await client.listTools();
+    for (const id of selected)
+      assert(result.tools.some((tool: { name: string }) => tool.name === id));
+  });
+});
+test("aggregate consent summaries handle missing, split, deselected and unknown tools without inferring authorization", () => {
+  const selected = ["get_totake", "update_totake"];
+  assert.deepEqual(
+    mcpToolGrantSummary("get_totake", ["lists:read"], selected),
+    {
+      selected: true,
+      permission: "missing_consent",
+      missingScopes: ["totake:read"],
+    },
+  );
+  assert.deepEqual(
+    mcpToolGrantSummary("update_totake", ["totake:read"], selected),
+    {
+      selected: true,
+      permission: "missing_consent",
+      missingScopes: ["totake:write"],
+    },
+  );
+  // No single grant has both scopes, even though their union does.
+  const splitGrants = [["totake:read"], ["totake:write"]];
+  assert(
+    splitGrants.every(
+      (grant) => !mcpToolAllowed("update_totake", grant, selected),
+    ),
+  );
+  assert.equal(
+    mcpToolGrantSummary("update_totake", splitGrants.flat(), selected)
+      .permission,
+    "unverified",
+  );
+  assert.deepEqual(mcpToolGrantSummary("get_totake", ["totake:read"], []), {
+    selected: false,
+    permission: "unverified",
+    missingScopes: [],
+  });
+  assert.deepEqual(mcpToolGrantSummary("get_totake", [], []), {
+    selected: false,
+    permission: "missing_consent",
+    missingScopes: ["totake:read"],
+  });
+  assert.deepEqual(mcpToolGrantSummary("unknown", scopes, ["unknown"]), {
+    selected: false,
+    permission: "unknown_tool",
+    missingScopes: [],
+  });
+});
 test("tool choices enforce scope ceilings, locked controls and unknown-tool denial", () => {
   assert(mcpToolAllowed("get_totake", ["totake:read"], null));
   assert(!mcpToolAllowed("get_totake", ["lists:read"], null));
