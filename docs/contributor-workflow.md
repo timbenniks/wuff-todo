@@ -9,8 +9,7 @@ incomplete; ready for review requires the evidence below.
 
 Tim must finish these gates before granting contributor write access:
 
-- Activate and verify main protection with PRs, resolved threads, `check` and
-  `Contributor policy`. This is one-time onboarding, not per-feature approval.
+- Activate and verify main protection with PRs, resolved threads, Verify (`check`). This is one-time onboarding, not per-feature approval.
   Current activation evidence and remaining onboarding limits are recorded in
   [GitHub safeguards](https://github.com/timbenniks/wuff-todo/blob/main/docs/contributor-github.md).
 - Give each person their own GitHub credentials and no administration or bypass
@@ -141,22 +140,10 @@ excludes `*.integration.test.*`. Adding a unit test must not require editing a
 manual list. Python helper behavior also needs the appropriate local test command.
 Line coverage or a test count alone is not proof of meaningful behavior coverage.
 
-Fill `## Unit tests` with one JSON block:
-
-```json
-{
-  "required": true,
-  "files": ["tests/actual-feature.test.ts"],
-  "verification": "Actual cases, commands and results including boundary/failure behavior"
-}
-```
-
-Tests must be added/updated in this PR; deleted or integration-only files cannot
-satisfy the declaration. For Rust, list the changed source containing actual inline
-tests and record the local test command. Docs/style-only work may use `required:
-false` with a concrete `reason` explaining why no testable behavior changes. Data
-changes cannot waive unit tests. Policy checks file presence and declarations;
-reviewers still inspect the cases and outcomes.
+Describe changed unit test files, meaningful cases, commands and actual results
+in the PR. Integration checks do not replace unit coverage. Docs/style-only
+changes may explain why no testable behavior changes; persisted-data changes
+cannot waive coverage. No machine-readable JSON declaration is required.
 
 Run `pnpm typecheck`, `pnpm test` and relevant integration/UI checks. Keep the PR a
 draft when required checks are blocked/unrun and never claim completion from a
@@ -181,11 +168,9 @@ affected connections, test missing/expired/revoked grants, insufficient scopes,
 explicit consent recovery, disconnect and cross-account credential privacy. MCP
 UI needs actual control checks and tool-only fallback; report the host tested.
 
-Fill `## Verification` with commands/results and the full current source commit:
-
-```text
-Evidence commit: FULL_40_CHARACTER_HEAD_SHA
-```
+Record verification commands/results and identify the source commit tested in
+the PR. No exact `Evidence commit:` string or synchronized full-head SHA is
+required by a metadata gate.
 
 After new code, rerun affected checks and update evidence; do not just relabel old
 results with a new SHA. Under `## Preview`, link the deployment for that commit,
@@ -225,7 +210,7 @@ Codex review is independent of `pnpm` tests, application builds, integration/dev
 proof and the metadata policy. Its no-findings result does not prove those checks
 ran, that the review was exhaustive or that merging is technically prevented.
 As of October 26, main is protected by the active public-repository ruleset and
-hosted Verify/Contributor policy checks run. Inspect the latest head's actual
+hosted Verify runs; the metadata policy was retired on October 28. Inspect the latest head's actual
 results; a prior green run does not cover a new push. If required hosted checks
 become unavailable, run meaningful local checks and retain the honest blocked/draft
 status. The GitHub ruleset supplies enforcement; these instructions/templates do
@@ -239,7 +224,8 @@ Review the entire diff for unintended files, secrets, debug data and regressions
 Match acceptance criteria to observed behavior. Fill `## Remaining work or risks`
 with gaps, consequences, rollout steps and responsible people; explain when no
 known risks remain. Mark ready only when checks pass and evidence is sufficient.
-Policy checks validate delivery declarations and evidence presence, never truth or quality.
+The PR template and Copilot/Codex comments guide delivery descriptions; actual
+tests and review establish evidence. There is no contributor metadata gate.
 
 Give the contributor a plain-language summary, PR/preview links and remaining
 technical help. Do not merge, push main, deploy or mark the feature released. Tim

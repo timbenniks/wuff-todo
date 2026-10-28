@@ -1,6 +1,6 @@
 # Contributor GitHub safeguards
 
-Updated October 26, 2026. This is the GitHub foundation for contributors implementing real
+Updated October 28, 2026. This is the GitHub foundation for contributors implementing real
 features. `/docs` is the implementation guide and `wuff-contributor` is the single
 feature skill; the old standalone prototype workflow is retired.
 
@@ -10,13 +10,13 @@ feature skill; the old standalone prototype workflow is retired.
 **Main contributor safeguards**, ruleset **25908933**, on October 26. Stored and
 effective main-branch API readback confirms it is active: PRs, resolved review
 threads, squash-only merges,
-current-branch passing `check` and `Contributor policy` from GitHub Actions app
+current-branch passing Verify (`check`) from GitHub Actions app
 15368, plus force-push/deletion protection. Only Tim has a PR-only bypass;
 contributors have none. A contributor-identity rejection attempt is not yet proven.
 
 `.github/CODEOWNERS` designates Tim for every file, including workflows,
-instructions and migrations. GitHub now requires that approval through the active
-ruleset. Instructions alone are not this enforcement. The previous private-plan
+instructions and migrations. CODEOWNERS is advisory; the autonomous merge decision below removed required
+human approvals. Instructions alone are not enforcement. The previous private-plan
 403 responses below are historical and no longer describe protection availability.
 
 A fresh retry of main Verify run 40387514693 (attempt 2) after public conversion
@@ -31,8 +31,8 @@ merge their own PRs. Ruleset 25908933 now requires zero approving reviews, no
 code-owner approval, no last-push approval and no extra approval for unattributed
 changes. Stored and effective main-branch readback confirmed these values. Their
 current roles are admin and write respectively; no new bypass was granted.
-CODEOWNERS remains advisory. PRs, strict passing Verify (`check`)/Contributor
-policy checks, resolved review threads, squash merging, deletion/force-push blocks
+CODEOWNERS remains advisory. PRs, strict passing Verify (`check`),
+resolved review threads, squash merging, deletion/force-push blocks
 and existing bypass configuration remain unchanged.
 
 Codex review and fixing actionable findings remain the contributor workflow.
@@ -72,10 +72,9 @@ and [custom repository review rules](https://developers.openai.com/blog/custom-c
 `github-main-ruleset.json` is the reviewed activation payload. Actual activation
 and effective-rule readback are recorded above and in the activation evidence.
 It requires PRs, resolved review threads, squash merging and current-branch
-passing `check` and `Contributor policy`
-checks. It blocks deletion and force pushes. The existing Verify name and GitHub
-Actions app ID 15368 were read from actual check runs; the new policy context
-is verified on live PRs as recorded in the activation evidence.
+passing Verify (`check`). It blocks deletion and force pushes. The existing Verify name and GitHub
+Actions app ID 15368 were read from actual check runs; the retired policy context
+is historical in the activation evidence.
 
 ## Lightweight CI and local compilation
 
@@ -88,7 +87,7 @@ evidence, recorded by Tim before shipping affected clients.
 
 Native test builds were disabled and are removed as part of the web/PWA-only
 retirement. All 37 artifacts and 3 test releases were removed at Tim's request.
-There are no native CI/release gates. Only Verify and Contributor policy remain
+There are no native CI/release gates. Only Verify remains
 required; see [retirement](native-retirement.md).
 
 ## Independent contribution and delivery policy
@@ -100,34 +99,18 @@ is required. Keep a proportional brief and actual verification evidence in the P
 Tim and Josibe84 may merge their own PRs after the required checks and Codex
 fix/review loop. See [the October 25 decision](contributor-autonomy.md).
 
-`contributor-policy.yml` executes only the policy script checked out from main.
-It never checks out PR code, installs dependencies or evaluates content as code.
-Pinned checkout/setup actions and its token read PR metadata and write checks;
-no production credentials are provided. `pull_request_target` evaluates PR changes.
-The job no longer reads comments or requires issue-comment permissions/events.
-Existing scope-approval comments have no effect on the new policy.
+On October 28, Tim requested removal of the contributor metadata gate. The
+workflow, script and dedicated tests are retired, and `Contributor policy` is
+removed from the checked-in and live main ruleset. See
+[retirement evidence](contributor-policy-retirement.md).
 
-The policy checks the feature branch/target, concrete PR sections, acceptance
-criteria, surface/test declarations, changed-file inventory and current-head
-verification evidence. It rejects common credential filenames and invalid paths,
-including rename sources, and fails closed on incomplete inventories or API
-errors. It does not scan arbitrary contents for secrets or establish evidence
-truth. Large diffs can pass without special approval; reviewers can still ask for
-a smaller change when that improves review.
-
-Likely high-risk paths (safeguards/instructions, schema/migrations, key access/auth
-services and production configuration) appear as
-informational review hints. They do not block implementation or require approval
-comments. Ordinary UI, CSS, design tokens, dependencies and contracts have no
-path-based gate. Path hints cannot identify every semantic risk: the PR must also
-explain changes to admission, authorization, sharing/privacy and consent.
-
-Every PR retains the API/MCP/connection JSON declaration and Unit tests declaration.
-Data-changing capabilities need implemented shared-domain/API/MCP mappings and
-actual adapter evidence; MCP UI and affected connections need appropriate checks.
-Unit coverage must name added/updated unit files and actual cases/results; data
-changes cannot waive it. Policy validates declarations and file presence, while
-passing tests and human review assess actual quality.
+The PR template guides useful descriptions; exact heading formats, JSON
+schemas and a manually synchronized evidence SHA are no longer machine gates.
+Copilot/Codex comments help improve PRs. Actual tests, API/MCP parity, connection
+checks, current-source evidence and fixing actionable review findings remain
+required by the contributor workflow. Reviewers must inspect access/privacy,
+schema, safeguards and credentials directly; the removed filename filter and
+path hints no longer run. Review comments do not establish passing tests.
 
 Writing code is distinct from executing operations. Migration execution,
 provisioning, production changes/deployments, release publication, destructive
@@ -138,8 +121,8 @@ writes. Never borrow Tim's credentials or weaken safeguards to pass checks.
 Use upstream read access plus private forks where supported. A collaborator with
 upstream write access can create other workflows and similarly named Actions
 checks. Binding a check to the Actions app does not uniquely identify its workflow.
-Owner review and restricted credentials remain essential; the metadata policy is
-a guardrail for cooperative contributors, not an adversarial security boundary.
+Careful review and restricted credentials remain essential; check names alone
+are not an adversarial security boundary.
 
 The active ruleset gives only Tim (GitHub user ID 121096) a PR-only bypass, so
 he can merge his own PRs, including overriding failed checks through a PR.
@@ -147,8 +130,8 @@ Contributors have no bypass. Its activation is separately read back from GitHub;
 file contents alone are not evidence of enforcement. Do not expose the owner's credentials to contributor agents.
 
 For future updates, inspect ruleset 25908933 before changing anything. Do not
-create duplicate rulesets or grant contributor bypass. The trusted workflow/script
-and CODEOWNERS are on main. Tim authorizes operational setting changes; ordinary
+create duplicate rulesets or grant contributor bypass. Verify and advisory CODEOWNERS
+remain on main. Tim authorizes operational setting changes; ordinary
 feature implementation continues without preliminary approval.
 
 ## Verification and remaining gates

@@ -14,21 +14,15 @@ changes for Tim's final review. Routine implementation choices need no approval.
 
 ## API, MCP and connections
 
-<!-- Include exactly one JSON block following docs/guide/surfaces.md.
-Declare dataChanges, operations, mcpUi and connections. Every persisted mutation
-needs action/domain/api/mcp/status/verification; status must be implemented.
-No-data changes use dataChanges:false, operations:[] and noDataChangesReason.
-MCP UI: implemented with verification, or not-needed with reason.
-Connections: affected boolean and review; affected connections need verification.
-Map existing or new routes/tools; no web-only writes or silent deferral. -->
+<!-- Describe affected shared domain operations, authorized HTTP API routes and
+MCP tools, adapter verification, MCP UI decision and connection/scope/consent/
+revocation impact. Explain when unaffected. Plain language or a table is enough. -->
 
 ## Unit tests
 
-<!-- Include one JSON block. Behavior changes require:
-{"required":true,"files":["tests/actual-feature.test.ts"],"verification":"Actual cases, command and results including boundary/failure behavior"}
-Files must be added/updated in this PR. Integration-only files do not substitute.
-Docs/style-only changes can use required:false with a concrete reason. Data
-changes cannot waive coverage. Do not add empty tests just to pass this check. -->
+<!-- List changed test files, meaningful cases, commands and actual results.
+Behavior changes need unit coverage; bug fixes need regression coverage.
+Docs/style-only changes may explain why no behavior test applies. -->
 
 ## Preview
 
@@ -38,7 +32,7 @@ explain the blocker and local evidence. Do not write to an unverified backend. -
 
 ## Verification
 
-<!-- Include Evidence commit: FULL_CURRENT_HEAD_SHA and actual commands/results.
+<!-- Identify the source commit tested and actual commands/results.
 UI: 320/390px and desktop screenshots, keyboard/focus, labels, long content,
 overflow and relevant loading/empty/error/denied/conflict/retry behavior.
 Server: relevant permission, idempotency, concurrency and API/MCP regression proof.

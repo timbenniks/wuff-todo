@@ -11,7 +11,9 @@
   ],
   "conditions": {
     "ref_name": {
-      "include": ["refs/heads/main"],
+      "include": [
+        "refs/heads/main"
+      ],
       "exclude": []
     }
   },
@@ -30,7 +32,9 @@
         "require_last_push_approval": false,
         "required_approving_review_count": 0,
         "required_review_thread_resolution": true,
-        "allowed_merge_methods": ["squash"],
+        "allowed_merge_methods": [
+          "squash"
+        ],
         "require_extra_approval_for_unattributed_changes": false
       }
     },
@@ -41,10 +45,6 @@
         "required_status_checks": [
           {
             "context": "check",
-            "integration_id": 15368
-          },
-          {
-            "context": "Contributor policy",
             "integration_id": 15368
           }
         ]

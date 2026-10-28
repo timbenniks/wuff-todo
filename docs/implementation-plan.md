@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Contributor metadata gate retired (October 28):** Tim requested removal of
+  the policy script/workflow and required status. Verify, meaningful test coverage,
+  API/MCP parity and review remain. The PR template and Copilot/Codex comments
+  guide descriptions without a JSON/SHA gate. [Evidence](contributor-policy-retirement.md).
+
+
 - **Web/PWA/MCP only (October 26):** Tim retired native apps and Tauri. Native
   workspace/SDK/release tooling are removed; legacy registration and API paths
   return retirement responses and native OAuth identities/resources are denied.
