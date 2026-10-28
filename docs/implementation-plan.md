@@ -8,6 +8,11 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Contributor metadata gate retired (October 28):** Tim requested removal of
+  the policy script/workflow and required status. Verify, meaningful test coverage,
+  API/MCP parity and review remain. The PR template and Copilot/Codex comments
+  guide descriptions without a JSON/SHA gate. [Evidence](contributor-policy-retirement.md).
+
 - **Web/PWA/MCP only (October 26):** Tim retired native apps and Tauri. Native
   workspace/SDK/release tooling are removed; legacy registration and API paths
   return retirement responses and native OAuth identities/resources are denied.
@@ -87,19 +92,17 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   [decision and verification](contributor-autonomy.md). GitHub safeguards were subsequently activated on October 26; isolated
   workspace/preview setup remains separate. See the activation evidence below.
 
-- **Contributor GitHub safeguards (October 26):** after Tim made the repository
-  public and explicitly authorized activation, main ruleset 25908933 is active:
-  PRs, Tim's code-owner approval, resolved threads, current required Verify and
-  Contributor policy checks, stale approval dismissal, squash-only merges, and
-  force-push/deletion protection. Only Tim has a PR-only bypass. Public hosted
-  Verify now runs and passes; the trusted Contributor policy has executed on a
-  live PR. [Activation evidence](public-safeguards-activation.md) distinguishes
-  API/readback/PR-state proof from an unperformed contributor-identity rejection test.
-  Automatic CI remains one Ubuntu typecheck/unit-test job; native compilation is
-  local/manual and no new installed artifacts are implied. The contributor
-  workflow, hosted guide and portable skill require the review/fix loop and
-  API/MCP/connection evidence. Isolated contributor/test environments remain
-  separate onboarding gates; public visibility does not establish backend isolation.
+- **Contributor GitHub safeguards (activated October 26, current October 28):**
+  main ruleset 25908933 requires PRs, resolved threads, current Verify (`check`),
+  squash merging and force-push/deletion protection. Human/code-owner approvals
+  are advisory following Tim's October 26 autonomy decision; only Tim has a
+  PR-only bypass. Contributor policy was removed from required checks and its
+  workflow disabled on October 28. The source deletion is tracked in the
+  [retirement evidence](contributor-policy-retirement.md). The earlier
+  [activation evidence](public-safeguards-activation.md) is historical.
+  The contributor workflow, hosted guide and portable skill retain the review/fix
+  loop and API/MCP/connection evidence. Isolated contributor/test environments
+  remain separate onboarding gates; public visibility does not establish backend isolation.
 
 - **Wishlist app workspace (October 24):** WUFF-120–123 implement logo-to-Home,
   aligned desktop list titles and account Settings/Docs in the existing app shell.

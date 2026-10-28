@@ -40,7 +40,7 @@ Start with `docs/implementation-plan.md` for current status and the next planned
   checks. Unit tests do not replace actual API/MCP parity, connection recovery or
   browser evidence. Use synthetic data; never run integration writes on production.
 - List test files, cases and actual command/results in the PR's `Unit tests`
-  declaration. Do not weaken/remove tests, skip cases or change test/CI settings to
+  section. Do not weaken/remove tests, skip cases or change test/CI settings to
   get green checks. Docs/style-only work may explain why no behavior test applies;
   data-changing features cannot waive unit coverage.
 - A blocked/unrun check is incomplete verification. Keep the PR a draft, record

@@ -75,44 +75,13 @@ Builds and JSON declarations alone never prove this behavior.
 
 ## Record the surface contract in every PR
 
-The required `## API, MCP and connections` section contains one JSON block. An
-agent fills it; contributors do not need to hand-write technical mappings.
+Describe persisted operations with their shared domain function, authorized HTTP
+route, MCP tool and actual adapter verification. Explain the MCP App UI decision
+and connection/scope/consent/revocation impact. For changes with no persisted-data
+behavior, explain why these surfaces are unaffected.
 
-```json
-{
-  "dataChanges": true,
-  "operations": [
-    {
-      "action": "Save the actor's task preference",
-      "domain": "Name the existing shared domain function and source file",
-      "api": "PUT /api/v1/example",
-      "mcp": "update_example",
-      "status": "implemented",
-      "verification": "Actual isolated adapter tests and their results for both write/read directions"
-    }
-  ],
-  "mcpUi": {
-    "decision": "not-needed",
-    "reason": "Explain why complete tool-only interaction is sufficient"
-  },
-  "connections": {
-    "affected": false,
-    "review": "Explain which connection, scope, consent, privacy and revocation behavior was checked and why it is unaffected"
-  }
-}
-```
-
-Replace example paths/names with the actual implementation. For implemented MCP
-UI, set `decision` to `implemented` and include a `verification` string. For
-affected connections set `affected` to true and include a `verification` string.
-For documentation/visual changes with no persisted-data behavior, use
-`dataChanges: false`, `operations: []` and a `noDataChangesReason` explaining why.
-Connection/UI decisions still need explicit reasoning.
-
-Keep capability mappings and UI/connection decisions current as implementation
-evolves; changing them does not require preliminary approval. A draft can contain
-planned operations, but its delivery check stays red until implementation and
-verification are complete. Policy checks reject missing declarations, unmapped
-writes, unimplemented operations, missing connection evidence or an unresolved
-MCP UI decision. They validate declarations, not their truth; Tim reviews the code
-and actual adapter evidence before merge.
+Keep this proportional and current as implementation evolves. Plain language or a
+table is sufficient; no JSON schema or metadata check is required. Drafts may
+contain planned operations, but implementation and verification must be complete
+before claiming delivery. Copilot/Codex review comments help identify omissions;
+reviewers still inspect actual code and adapter evidence.

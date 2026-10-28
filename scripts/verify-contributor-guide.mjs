@@ -22,7 +22,15 @@ for (const file of [
 const reference = await (await fetch(`${origin}/docs/agent-context.md`)).text();
 assert.ok(!reference.includes("/wuff-scope"));
 assert.ok(reference.includes("Build and iterate independently"));
-assert.ok(reference.includes("Evidence commit:"));
+const workflowResponse = await fetch(
+  `${origin}/contributor-kit/contributor-workflow.md`,
+);
+assert.equal(workflowResponse.status, 200);
+const workflow = await workflowResponse.text();
+assert.ok(
+  reference.includes(workflow.replace(/^#/gm, "##").trim()),
+  "The raw agent reference must include the current downloadable contributor workflow",
+);
 assert.ok(reference.includes("implementation reference"));
 assert.ok(
   reference.includes("API, MCP and connections are core product surfaces"),

@@ -30,7 +30,7 @@ Read `docs/guide/surfaces.md` for every feature. Map every persisted mutation to
 the shared domain service, HTTP API and MCP tool, including authorized reads and
 cross-surface verification. Assess MCP App UI and delegated/provider connection
 scopes, consent, missing/expired/revoked states and personal credential isolation.
-Keep the PR's surface-contract JSON current before final review. Do not ship
+Keep the PR's surface mappings current before final review; prose or a table is enough. Do not ship
 web-only writes, placeholder tools or silent parity/UI/connection deferrals.
 
 Understand the problem and intended users, offer small product choices, show the
@@ -51,13 +51,14 @@ on real data or paid runs; those need Tim's explicit operational authorization.
 Follow the workflow's quality rules and verification matrix. Reuse real components
 and services; preserve permissions, retries, concurrency and API/MCP contracts.
 Maintain the brief, acceptance criteria and current-commit evidence in the PR.
-Inspect the actual diff and behavior: green policy checks validate declarations,
-not truth or quality.
+Inspect the actual diff and behavior; the metadata policy is retired. Use the
+PR template and Copilot/Codex comments to improve descriptions, and actual tests
+and review to assess quality.
 
 Every changed behavior needs meaningful unit tests and bug fixes need regression
 coverage. Test outcomes and relevant boundary/failure cases, not code text or
 incidental markup. Put JS/TS tests under `tests/` for automatic `pnpm test`
-discovery. Fill the PR's Unit tests declaration with changed files and actual
+discovery. Fill the PR's Unit tests section with changed files and actual
 cases/commands/results. Integration checks do not replace unit coverage; data
 changes cannot waive it. Run local language-specific tests for Python
 changes. Keep the PR a draft when required checks are blocked or unrun.

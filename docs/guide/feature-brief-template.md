@@ -22,7 +22,7 @@ Who can see and change each part? What happens after archive or access removal?
 Inventory persisted mutations and authorized reads. Name the shared domain
 operation, API route and MCP tool for each, whether an MCP App UI is needed, and
 affected connection types/scopes/consent/revocation/privacy. Include cross-surface
-adapter verification. Use the surface-contract JSON in the PR template.
+adapter verification. Describe mappings in prose or a table in the PR template.
 
 ## Design reference
 

@@ -41,8 +41,8 @@ main's former policy and passes with this change. Retirement units cover denied
 identities/audiences/scopes, preserved MCP defaults/opt-in scopes/redirect safety,
 and explicit non-cacheable 410 responses. Web Push units cover unchanged payloads
 and expired subscriptions, retired registration/delivery and endpoint safety.
-Contributor policy still flags retired paths against accidental reintroduction;
-new OAuth/retirement policy paths also receive sensitive-change review hints.
+Reviewers should flag retired paths and OAuth identities against accidental
+reintroduction; automated policy path hints were retired on October 28.
 
 The smaller unit count (231 to 204) reflects deletion of native-only app, SDK,
 auth and adapter tests with their implementation. Supported account/privacy,
