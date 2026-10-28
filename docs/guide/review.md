@@ -16,7 +16,7 @@ PR. The conversation supports that record; Tim should not need to reconstruct it
 - List commands actually run, results, mocked behavior, unverified checks and
   rollout/device gates. A green check is not proof that evidence is true.
 - Include meaningful unit cases for all changed behavior, regression tests for
-  fixes and the PR's Unit tests declaration. Verify new tests are discovered by
+  fixes and the PR's Unit tests section. Verify new tests are discovered by
   `pnpm test`; integration-only coverage or empty assertions do not substitute.
 - For every data-changing operation, include shared domain/API/MCP mappings and
   actual cross-surface adapter evidence. Record the MCP App UI decision and
