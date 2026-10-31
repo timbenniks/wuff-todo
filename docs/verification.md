@@ -1304,3 +1304,9 @@ reader compatibility, browser zoom or a named ChatGPT host. Human usability revi
 and production release remain separate. No schema, scope/consent, provider or
 production configuration change. Unrelated package/workspace/lockfile edits remain
 outside feature commits.
+
+Final adapter rerun after the catalog recovery fix: four domain cases passed; the
+HTTP nesting write returned managed-auth 429 and navigation consent SSR returned
+500 with `auth_unavailable`/429 in the local server log. Those two cases remain
+blocked for current-source full-adapter verification. The earlier all-six pass and
+updated real SDK recovery pass remain separate evidence. Keep PR #45 draft.
