@@ -178,3 +178,8 @@ choice when active; later OS changes are ignored while another module is active.
 A new unit case verifies shell tokens, native scheme, marker/action cleanup and
 unrelated metadata preservation. All 205 units and TypeScript pass. The SDK fixture
 can deliver real read-only tool results to verify Dark/System → Empire transitions.
+
+The e27a95c SDK transition run passed with no page errors: Todo Dark and System
+with a dark OS both return Empire/native controls to light, clear Todo-owned
+state and ignore later OS changes. Existing navigation and real task-mutation
+checks also pass. Hosted Verify passes. Fresh Codex review was requested.

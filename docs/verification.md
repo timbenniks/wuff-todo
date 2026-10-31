@@ -1340,3 +1340,14 @@ The serial view/favorites/nesting/navigation integration rerun passed all six
 cases with no skips (72.7 seconds), including the two previously throttled adapter
 cases. The earlier blocked combined dense-flow runs remain explicitly historical;
 updated menu/appearance, drawer and navigation/actual SDK checks all pass.
+
+## Embedded appearance handoff — October 31, 2026
+
+Implementation e27a95c fixes review finding discussion_r4431716077: the shared
+MCP render reset restores light native controls and clears Todo-owned appearance
+state before another module renders. All 205 units and workspace TypeScript pass.
+The updated actual SDK browser suite passes Dark/System → Empire settings, cleared
+appearance/action overrides and subsequent OS changes leaving Empire light, with
+zero page errors. The existing full navigation/resize/retry/real-mutation checks
+also pass in that run. No server/domain behavior changed; the latest six-case
+authorized adapter run remains valid. Hosted Verify passes for e27a95c.
