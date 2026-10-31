@@ -120,9 +120,11 @@ export function ListApp({
       if (!creating) {
         const nav = el.querySelector<HTMLElement>(".workspace-list-nav");
         if (nav) nav.scrollTop = navigationScroll.current;
-        el.querySelector<HTMLElement>('[aria-current="page"]')?.focus({
-          preventScroll: true,
-        });
+        const current = el.querySelector<HTMLElement>('[aria-current="page"]');
+        // The child selection effect can run while the sheet is still closed.
+        // Reveal only after showModal, once the sheet has a real scroll area.
+        current?.scrollIntoView({ block: "nearest" });
+        current?.focus({ preventScroll: true });
       }
     } else if (el.open) el.close();
   }, [mobile, navigationOpen, creating]);

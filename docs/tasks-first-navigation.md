@@ -100,3 +100,9 @@ viewport) and passes for direct and directory navigation after the fix. The two
 scripts now assert document scrolling, non-scrolling navigation and reachable
 footer controls instead of the retired independent-scroller layout. They remain
 unrun against a backend; their assertions are not integration evidence.
+
+The extended phone case initially failed because child effects attempted to
+reveal the selected row before the dialog opened. Revealing it after showModal
+preserves deep selection visibility. The case failed before this timing fix and
+now all eight focused tests pass, including the 40-child phone sheet. Fresh full
+checks/review after these fixes are recorded on PR #47, separate from prior heads.
