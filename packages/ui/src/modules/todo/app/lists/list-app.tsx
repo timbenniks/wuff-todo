@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import {
   Archive,
@@ -18,6 +19,7 @@ import {
   Plus,
   Settings2,
   Trash2,
+  MoreHorizontal,
 } from "lucide-react";
 import type { ListOrder, ListSummary, TodoList } from "@wuff/contracts";
 import { Button } from "../../../../button";
@@ -31,14 +33,18 @@ import { useActorApi } from "../../../../features/actor-api";
 import { LiveUpdates } from "../../live-updates";
 import type { LiveLists } from "@wuff/ui/live-types";
 import { LiveRefreshQueue } from "@wuff/client/live-refresh";
+import { TodoAppearanceControl } from "../../components/appearance-control";
 import { ListTheme } from "../../components/list-theme";
-import { listThemeVariables } from "../../lib/list-theme";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
 import { HomeDashboard } from "./home-dashboard";
 import { listSelectionHref } from "../../lib/list-navigation";
 import { CreateListForm } from "./create-list-form";
 import { SidebarLists } from "./sidebar-lists";
+import { ViewPopover } from "./view-popover";
+import { SidebarResize, useSidebarWidth } from "./sidebar-resize";
+import { ListContext } from "./list-context";
+import { ListPersonalActions } from "./list-personal-actions";
 import { mergeVisibleOrder } from "../../lib/reorder";
 
 type PendingCreate = {
@@ -71,6 +77,7 @@ export function ListApp({
   liveConfig: LiveLists | null;
   workspace?: { navigation: ReactNode; content: ReactNode };
 }) {
+  const sidebarWidth = useSidebarWidth(userId);
   const startupHome = useRef(!initialList);
   const api = useActorApi();
   const runtime = useRuntime();
@@ -89,6 +96,7 @@ export function ListApp({
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
+  const [catalogError, setCatalogError] = useState("");
   const [readFailure, setReadFailure] = useState("");
   const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
@@ -267,26 +275,33 @@ export function ListApp({
       const epoch = summaryEpoch.current;
       try {
         await Promise.all([
-          api<ListSummary[]>("/api/v1/lists").then((next) => {
-            if (!active || mutating.current || summaryEpoch.current !== epoch)
-              return;
-            // Preserve the visibly pending create until its own request settles.
-            const pendingList =
-              pending.current && cache.get(pending.current.id);
-            setSummaries(pendingList ? [...next, pendingList] : next);
-            for (const current of summariesRef.current)
+          api<ListSummary[]>("/api/v1/lists")
+            .catch((error) => {
+              if (active && summaryEpoch.current === epoch)
+                setCatalogError("We couldn’t refresh your lists.");
+              throw error;
+            })
+            .then((next) => {
+              if (!active || mutating.current || summaryEpoch.current !== epoch)
+                return;
+              // Preserve the visibly pending create until its own request settles.
+              const pendingList =
+                pending.current && cache.get(pending.current.id);
+              setSummaries(pendingList ? [...next, pendingList] : next);
+              setCatalogError("");
+              for (const current of summariesRef.current)
+                if (
+                  current.id !== pending.current?.id &&
+                  !next.some((s) => s.id === current.id)
+                )
+                  cache.forget(current.id);
               if (
-                current.id !== pending.current?.id &&
-                !next.some((s) => s.id === current.id)
+                selected.current &&
+                selected.current !== pending.current?.id &&
+                !next.some((s) => s.id === selected.current)
               )
-                cache.forget(current.id);
-            if (
-              selected.current &&
-              selected.current !== pending.current?.id &&
-              !next.some((s) => s.id === selected.current)
-            )
-              chooseList("");
-          }),
+                chooseList("");
+            }),
           selected.current ? reload(selected.current) : Promise.resolve(),
         ]);
       } catch (e) {
@@ -588,6 +603,23 @@ export function ListApp({
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, [cache, workspace]);
+  const setFavorite = (id: string, enabled: boolean) =>
+    saveSidebar((order) => ({
+      favoriteListIds: [
+        ...(order.favoriteListIds ?? []).filter((value) => value !== id),
+        ...(enabled ? [id] : []),
+      ],
+    }));
+  const setParent = (id: string, parentId: string | null) =>
+    saveSidebar((order) => ({
+      nesting: [
+        ...(order.nesting ?? []).filter((entry) => entry.listId !== id),
+        ...(parentId ? [{ listId: id, parentListId: parentId }] : []),
+      ],
+      collapsedListIds: (order.collapsedListIds ?? []).filter(
+        (value) => value !== parentId,
+      ),
+    }));
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
   const navigationContent = (
     <>
@@ -613,9 +645,7 @@ export function ListApp({
             <>
               <div className="sidebar-section-heading">
                 <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                  {showArchive
-                    ? wuffCopy.archiveHeading
-                    : wuffCopy.listsHeading}
+                  {showArchive ? wuffCopy.archiveHeading : "Your lists"}
                 </span>
                 <Button
                   size="icon"
@@ -633,6 +663,17 @@ export function ListApp({
           archived={showArchive}
           selectedId={selectedId}
           disabled={busy || !!pendingCreate || !!sidebarRetry}
+          actions={(item) => (
+            <ListPersonalActions
+              key={`${item.id}:${item.parentListId}`}
+              compact
+              list={item}
+              lists={summaries}
+              busy={busy || !!pendingCreate || !!sidebarRetry}
+              favorite={setFavorite}
+              move={setParent}
+            />
+          )}
           pending={pendingCreate}
           choose={(id) => {
             chooseList(id);
@@ -705,6 +746,7 @@ export function ListApp({
             <Settings2 size={17} aria-hidden="true" />
             Settings
           </a>
+          <TodoAppearanceControl />
           {workspace?.navigation}
         </div>
         <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
@@ -727,7 +769,11 @@ export function ListApp({
   return (
     <div
       className="workspace-shell todo-workspace bg-background text-foreground"
-      style={listThemeVariables(list?.color ?? "blue")}
+      style={
+        {
+          "--app-sidebar-width": `${sidebarWidth.width}px`,
+        } as CSSProperties
+      }
     >
       <ListTheme color={list?.color ?? "blue"} />
       <a className="skip-link" href="#list-content">
@@ -744,7 +790,10 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="workspace-sidebar app-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
+      <aside
+        id="todo-sidebar"
+        className="workspace-sidebar app-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col"
+      >
         <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
           <a
             className="workspace-brand-link flex gap-2.5 items-center"
@@ -767,6 +816,22 @@ export function ListApp({
           >
             <span className="wordmark text-xl font-bold">Wuff Todo</span>
           </a>
+          {!mobile && (
+            <ViewPopover
+              label={<MoreHorizontal size={17} aria-hidden="true" />}
+              ariaLabel="Sidebar options"
+              panelLabel="Sidebar options"
+              variant="ghost"
+              className="sidebar-options"
+            >
+              <Button
+                variant="ghost"
+                onClick={() => sidebarWidth.setWidth(null)}
+              >
+                Reset width
+              </Button>
+            </ViewPopover>
+          )}
           <Button
             ref={navigationTrigger}
             type="button"
@@ -789,6 +854,7 @@ export function ListApp({
             {navigationContent}
           </div>
         )}
+        {!mobile && <SidebarResize {...sidebarWidth} />}
       </aside>
       <dialog
         onKeyDown={containDialogFocus}
@@ -918,6 +984,24 @@ export function ListApp({
                 {readFailure}
               </p>
             )}
+            {sidebarRetry && (
+              <div
+                role="alert"
+                className="rounded-xl border border-border p-4 mb-4"
+              >
+                <p>
+                  Your list organization change wasn’t confirmed. Retry to check
+                  the same save.
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => saveSidebar(null)}
+                >
+                  Retry list organization
+                </Button>
+              </div>
+            )}
             {(selectedId || showArchive) && (error || retryWrite) && (
               <div
                 role="alert"
@@ -968,7 +1052,10 @@ export function ListApp({
               <HomeDashboard
                 name={name}
                 lists={summaries}
-                busy={busy}
+                favorite={setFavorite}
+                catalogError={catalogError}
+                retryCatalog={() => void liveRefresh.current?.notify()}
+                busy={busy || !!pendingCreate || !!sidebarRetry}
                 change={change}
                 taskError={error}
                 retryTask={
@@ -1025,125 +1112,174 @@ export function ListApp({
             {list && (
               <>
                 <header className="list-heading">
-                  <h1 title={list.title}>{list.title}</h1>
-                  <div className="list-management flex flex-wrap items-center gap-2">
-                    {!isPending && (
-                      <ListSettings
-                        key={`settings:${list.id}`}
-                        list={list}
-                        userId={userId}
-                        busy={busy}
-                        change={change}
-                        people={(active, setBusy) => (
-                          <SharingDialog
+                  <div className="list-identity">
+                    <h1 title={list.title}>{list.title}</h1>
+                    <p className="list-description">{list.description}</p>
+                    <p className="list-task-count">
+                      {
+                        list.tasks.filter(
+                          (task) => !task.parentTaskId && !task.completed,
+                        ).length
+                      }{" "}
+                      remaining ·{" "}
+                      {
+                        list.tasks.filter(
+                          (task) => !task.parentTaskId && task.completed,
+                        ).length
+                      }{" "}
+                      completed
+                    </p>
+                  </div>
+                  {!list.archived && !isPending && (
+                    <Button
+                      className="task-capture-trigger"
+                      variant="primary"
+                      disabled={busy || !!retryWrite}
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent("wuff:todo:capture", {
+                            detail: { listId: list.id },
+                          }),
+                        )
+                      }
+                    >
+                      <Plus size={17} aria-hidden="true" />
+                      Add task
+                    </Button>
+                  )}
+                  <ViewPopover
+                    label={<MoreHorizontal size={20} aria-hidden="true" />}
+                    ariaLabel="List actions"
+                    panelLabel="List actions"
+                    variant="ghost"
+                    className="list-overflow-trigger"
+                  >
+                    <div className="list-management">
+                      {!isPending &&
+                        !list.archived &&
+                        !catalogError &&
+                        summaries.find((item) => item.id === list.id) && (
+                          <ListPersonalActions
                             embedded
-                            onBusyChange={setBusy}
-                            active={active}
-                            list={list}
-                            userId={userId}
-                            disabled={busy}
-                            onChanged={sharingChanged}
+                            key={`${list.id}:${summaries.find((item) => item.id === list.id)?.parentListId}`}
+                            list={summaries.find(
+                              (item) => item.id === list.id,
+                            )!}
+                            lists={summaries}
+                            busy={busy || !!pendingCreate || !!sidebarRetry}
+                            favorite={setFavorite}
+                            move={setParent}
                           />
                         )}
-                        actions={
-                          <>
-                            {list.ownerId === userId && !isPending && (
-                              <div className="contents">
-                                <Button
-                                  variant="danger"
-                                  className="list-delete"
-                                  disabled={busy}
-                                  aria-label="Delete list"
-                                  onClick={async () => {
-                                    if (
-                                      !window.confirm(
-                                        `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+
+                      {!isPending && (
+                        <ListSettings
+                          labelled
+                          key={`settings:${list.id}`}
+                          list={list}
+                          userId={userId}
+                          busy={busy}
+                          change={change}
+                          people={(active, setBusy) => (
+                            <SharingDialog
+                              embedded
+                              onBusyChange={setBusy}
+                              active={active}
+                              list={list}
+                              userId={userId}
+                              disabled={busy}
+                              onChanged={sharingChanged}
+                            />
+                          )}
+                          actions={
+                            <>
+                              {list.ownerId === userId && !isPending && (
+                                <div className="contents">
+                                  <Button
+                                    variant="danger"
+                                    className="list-delete"
+                                    disabled={busy}
+                                    aria-label="Delete list"
+                                    onClick={async () => {
+                                      if (
+                                        !window.confirm(
+                                          `Paws before deleting: delete “${list.title}” and all its tasks for everyone? This cannot be undone.`,
+                                        )
                                       )
-                                    )
-                                      return;
-                                    if (mutating.current) return;
-                                    setBusy(true);
-                                    mutating.current = true;
-                                    summaryEpoch.current++;
-                                    cache.supersede(list.id);
-                                    try {
-                                      await api(
-                                        `/api/v1/lists/${list.id}`,
-                                        "DELETE",
-                                        {
-                                          version: list.version,
-                                          operationId: crypto.randomUUID(),
-                                        },
-                                      );
-                                      cache.forget(list.id);
-                                      const next = summariesRef.current.filter(
-                                        (item) => item.id !== list.id,
-                                      );
-                                      setSummaries(next);
-                                      if (selected.current === list.id)
-                                        chooseList(next[0]?.id ?? "");
-                                    } catch (e) {
-                                      setError(wuffError((e as Error).message));
-                                    } finally {
-                                      mutating.current = false;
-                                      setBusy(false);
-                                      void liveRefresh.current?.flush();
-                                    }
-                                  }}
-                                >
-                                  <Trash2 size={17} aria-hidden="true" /> Delete
-                                  list
-                                </Button>
-                              </div>
-                            )}
-                          </>
-                        }
-                        sidebar={{
-                          lists: summaries,
-                          disabled: busy || !!pendingCreate || !!sidebarRetry,
-                          error,
-                          retry: sidebarRetry
-                            ? () => saveSidebar(null)
-                            : undefined,
-                          favorite: (id, enabled) =>
-                            saveSidebar((order) => ({
-                              favoriteListIds: [
-                                ...(order.favoriteListIds ?? []).filter(
-                                  (value) => value !== id,
-                                ),
-                                ...(enabled ? [id] : []),
-                              ],
-                            })),
-                          move: (id, parentId) =>
-                            saveSidebar((order) => ({
-                              nesting: [
-                                ...(order.nesting ?? []).filter(
-                                  (entry) => entry.listId !== id,
-                                ),
-                                ...(parentId
-                                  ? [{ listId: id, parentListId: parentId }]
-                                  : []),
-                              ],
-                              collapsedListIds: (
-                                order.collapsedListIds ?? []
-                              ).filter((value) => value !== parentId),
-                            })),
-                        }}
-                        retry={
-                          retryWrite
-                            ? () =>
-                                change(
-                                  retryWrite.path,
-                                  retryWrite.method,
-                                  retryWrite.body,
-                                  true,
-                                )
-                            : undefined
-                        }
-                      />
-                    )}
-                  </div>
+                                        return;
+                                      if (mutating.current) return;
+                                      setBusy(true);
+                                      mutating.current = true;
+                                      summaryEpoch.current++;
+                                      cache.supersede(list.id);
+                                      try {
+                                        await api(
+                                          `/api/v1/lists/${list.id}`,
+                                          "DELETE",
+                                          {
+                                            version: list.version,
+                                            operationId: crypto.randomUUID(),
+                                          },
+                                        );
+                                        cache.forget(list.id);
+                                        const next =
+                                          summariesRef.current.filter(
+                                            (item) => item.id !== list.id,
+                                          );
+                                        setSummaries(next);
+                                        if (selected.current === list.id)
+                                          chooseList(next[0]?.id ?? "");
+                                      } catch (e) {
+                                        setError(
+                                          wuffError((e as Error).message),
+                                        );
+                                      } finally {
+                                        mutating.current = false;
+                                        setBusy(false);
+                                        void liveRefresh.current?.flush();
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={17} aria-hidden="true" />{" "}
+                                    Delete list
+                                  </Button>
+                                </div>
+                              )}
+                            </>
+                          }
+                          sidebar={{
+                            lists: summaries,
+                            disabled: busy || !!pendingCreate || !!sidebarRetry,
+                            error,
+                            retry: sidebarRetry
+                              ? () => saveSidebar(null)
+                              : undefined,
+                            favorite: setFavorite,
+                            move: setParent,
+                          }}
+                          retry={
+                            retryWrite
+                              ? () =>
+                                  change(
+                                    retryWrite.path,
+                                    retryWrite.method,
+                                    retryWrite.body,
+                                    true,
+                                  )
+                              : undefined
+                          }
+                        />
+                      )}
+                    </div>
+                  </ViewPopover>
                 </header>
+                {!isPending && !list.archived && !catalogError && (
+                  <ListContext
+                    lists={summaries}
+                    id={list.id}
+                    choose={(id) => chooseList(id)}
+                  />
+                )}
                 {isPending ? (
                   <div className="mt-6 text-sm text-muted-foreground">
                     {pendingCreate?.status === "saving" ? (

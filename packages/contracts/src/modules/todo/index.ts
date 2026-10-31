@@ -297,9 +297,7 @@ export function accessibleListNesting(ids: string[], nesting: ListNesting[]) {
   );
 }
 export function sidebarGroups(lists: ListSummary[], archived: boolean) {
-  const visible = lists.filter(
-    (list) => list.archived === archived && (archived || !list.favorite),
-  );
+  const visible = lists.filter((list) => list.archived === archived);
   const visibleIds = new Set(visible.map((list) => list.id));
   const parent = (list: ListSummary) =>
     list.parentListId && visibleIds.has(list.parentListId)
@@ -311,6 +309,33 @@ export function sidebarGroups(lists: ListSummary[], archived: boolean) {
       list,
       children: visible.filter((child) => parent(child) === list.id),
     }));
+}
+
+// Filter the authorized catalog without detaching a matching child from its parent.
+export function findListGroups(lists: ListSummary[], query: string) {
+  const term = query.trim().toLowerCase();
+  return sidebarGroups(lists, false).flatMap((group) => {
+    if (!term || group.list.title.toLowerCase().includes(term)) return [group];
+    const children = group.children.filter((child) =>
+      child.title.toLowerCase().includes(term),
+    );
+    return children.length ? [{ ...group, children }] : [];
+  });
+}
+
+export function listNavigationContext(lists: ListSummary[], id: string) {
+  const group = sidebarGroups(lists, false).find(
+    (group) =>
+      group.list.id === id || group.children.some((child) => child.id === id),
+  );
+  return {
+    parent: group && group.list.id !== id ? group.list : null,
+    children: group?.list.id === id ? group.children : [],
+    siblings:
+      group && group.list.id !== id
+        ? group.children.filter((child) => child.id !== id)
+        : [],
+  };
 }
 
 export const viewSorts = ["manual", "priority", "due", "updated"] as const;
@@ -349,7 +374,7 @@ export const listViewSettingsSchema = z
         "Columns must be unique",
       )
       .default([...viewColumns]),
-    rowStyle: z.enum(["list", "columns"]).default("columns"),
+    rowStyle: z.enum(["list", "columns"]).default("list"),
   })
   .strict();
 export const viewPresetSchema = z

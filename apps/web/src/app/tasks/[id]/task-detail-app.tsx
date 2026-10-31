@@ -1,8 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TaskDetail, TodoList } from "@wuff/contracts";
+import { TodoAppearanceControl } from "@wuff/ui/modules/todo/components/appearance-control";
 import { ListTheme } from "@/components/list-theme";
-import { listThemeVariables } from "@/lib/list-theme";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { ApiError } from "@/lib/api";
@@ -136,10 +136,7 @@ export function TaskDetailApp({
       </main>
     );
   return (
-    <main
-      className="task-detail task-page min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8"
-      style={listThemeVariables(list.color)}
-    >
+    <main className="task-detail task-page min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8">
       <ListTheme color={list.color} />
       {liveConfig && (
         <LiveUpdates
@@ -149,7 +146,8 @@ export function TaskDetailApp({
           onStatus={() => {}}
         />
       )}
-      <nav className="flex items-center justify-between mb-3 min-h-11">
+      <nav className="flex flex-wrap items-center justify-between gap-2 mb-3 min-h-11">
+        <TodoAppearanceControl />
         <a
           href={`/lists?listId=${list.id}`}
           className="text-sm text-primary underline"
@@ -181,6 +179,11 @@ export function TaskDetailApp({
         {busy ? "Saving…" : notice}
       </p>
       <TaskDetailContent
+        retry={
+          retry
+            ? () => change(retry.path, retry.method, retry.body, true)
+            : undefined
+        }
         task={task}
         list={list}
         userId={userId}

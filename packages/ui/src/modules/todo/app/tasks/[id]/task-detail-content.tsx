@@ -19,6 +19,7 @@ import type { ListChange } from "../../lists/list-settings";
 import { GithubTask } from "./github-task";
 import { AgentTask } from "./agent-task";
 import { WorkMetadata } from "./work-metadata";
+import { formatDueDate } from "../../../lib/due-date";
 import { useRuntime } from "../../../../../features/runtime";
 export function TaskDetailContent({
   task,
@@ -30,7 +31,9 @@ export function TaskDetailContent({
   onNotice,
   onError,
   onOpenTask,
+  retry,
 }: {
+  retry?: () => Promise<boolean>;
   task: Task;
   list: TodoList;
   userId: string;
@@ -58,7 +61,7 @@ export function TaskDetailContent({
   const body = { listId: list.id, version: list.version, taskId: task.id };
   return (
     <div className="task-detail task-detail-content">
-      <div className="flex items-center gap-0 text-xs text-muted-foreground mb-2">
+      <div className="task-identifier flex items-center gap-0 text-xs text-muted-foreground mb-2">
         <span className="font-semibold tracking-wide">{task.key}</span>
         <Button
           size="icon"
@@ -79,24 +82,11 @@ export function TaskDetailContent({
         </Button>
         {list.archived && <span>Archived · Read only</span>}
       </div>
-      <InlineName
-        value={task.title}
-        label="Task name"
-        editLabel="Rename task"
-        heading="h1"
-        completed={task.completed}
-        editable={!list.archived}
-        disabled={busy}
-        onSave={(title) => change("/api/v1/tasks", "PATCH", { ...body, title })}
-      />
-      <div className="flex flex-wrap gap-2 items-center mt-3">
-        {list.mode === "work" && <StatusTag status={task.status} />}
-        <DueDateBadge task={task} today={today} />
-      </div>
-      <div className="flex flex-wrap gap-2 items-center mt-4 mb-6">
-        <Button
+      <div className="task-detail-title">
+        <button
+          className="task-complete"
           disabled={busy || list.archived}
-          variant="primary"
+          aria-label={task.completed ? "Reopen task" : "Complete task"}
           onClick={() =>
             change("/api/v1/tasks", "PATCH", {
               ...body,
@@ -104,40 +94,56 @@ export function TaskDetailContent({
             })
           }
         >
-          <Check size={16} />
-          {task.completed ? "Reopen task" : "Complete task"}
-        </Button>
-        {list.mode === "work" && (
-          <Button
-            ref={statusTrigger}
-            type="button"
-            variant="outline"
-            disabled={busy || list.archived}
-            aria-expanded={workEditing}
-            onClick={() => setWorkEditing(true)}
+          <span
+            className={`task-checkbox ${task.completed ? "task-checkbox-done" : ""}`}
           >
-            Change status
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          disabled={busy || list.archived}
-          onClick={() => setDateOpen(!dateOpen)}
-          ref={dateTrigger}
-          aria-expanded={dateOpen}
-        >
-          {task.dueDate ? "Change due date" : "Set due date"}
-        </Button>
-        <Button
-          variant="outline"
+            {task.completed && <Check size={13} aria-hidden="true" />}
+          </span>
+        </button>
+        <InlineName
+          value={task.title}
+          label="Task name"
+          editLabel="Rename task"
+          heading="h1"
+          completed={task.completed}
+          editable={!list.archived}
           disabled={busy}
-          aria-expanded={reminderOpen}
-          onClick={() => setReminderOpen(!reminderOpen)}
-        >
-          Remind me
-        </Button>
+          onSave={(title) =>
+            change("/api/v1/tasks", "PATCH", { ...body, title })
+          }
+        />
       </div>
-
+      <dl className="task-properties">
+        <div>
+          <dt>Due date</dt>
+          <dd>
+            <Button
+              variant="ghost"
+              disabled={busy || list.archived}
+              ref={dateTrigger}
+              aria-label={task.dueDate ? "Change due date" : "Set due date"}
+              aria-expanded={dateOpen}
+              onClick={() => setDateOpen(!dateOpen)}
+            >
+              {task.dueDate ? formatDueDate(task.dueDate) : "Not set"}
+            </Button>
+          </dd>
+        </div>
+        <div>
+          <dt>Reminder</dt>
+          <dd>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              aria-label="Remind me"
+              aria-expanded={reminderOpen}
+              onClick={() => setReminderOpen(!reminderOpen)}
+            >
+              Personal reminder
+            </Button>
+          </dd>
+        </div>
+      </dl>
       {reminderOpen && (
         <div className="mb-6">
           <TaskReminder
@@ -174,9 +180,9 @@ export function TaskDetailContent({
           onEditingChange={setWorkEditing}
           returnFocus={statusTrigger}
         />
-        <section className="task-detail-notes rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
+        <section className="task-detail-notes">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">Notes</h2>
+            <h2 className="text-sm font-semibold">Notes</h2>
             {!notesOpen && !list.archived && (
               <Button
                 variant="ghost"
@@ -205,16 +211,20 @@ export function TaskDetailContent({
           ) : task.content ? (
             <TaskMarkdown content={task.content} />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              A little context for your next step.
-            </p>
+            <button
+              className="task-empty-note"
+              disabled={busy || list.archived}
+              onClick={() => setNotesOpen(true)}
+            >
+              Add a note…
+            </button>
           )}
         </section>
         <div className="task-detail-context min-w-0">
           {!task.parentTaskId && (
-            <section className="rounded-xl border border-border bg-surface p-4 sm:p-5 min-w-0">
-              <h2 className="text-lg font-bold">Subtasks</h2>
-              <p className="text-xs text-muted-foreground mb-4">
+            <section className="task-detail-subtasks">
+              <h2 className="text-sm font-semibold">Subtasks</h2>
+              <p className="subtask-progress">
                 {
                   list.tasks.filter(
                     (t) => t.parentTaskId === task.id && t.completed,
@@ -224,6 +234,7 @@ export function TaskDetailContent({
                 done
               </p>
               <Subtasks
+                retry={retry}
                 focusNewTask={false}
                 detailed
                 onOpenTask={onOpenTask}

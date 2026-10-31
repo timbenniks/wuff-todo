@@ -180,7 +180,12 @@ test("personal presets validate unique bounded names, selected IDs and display s
   });
   assert.equal(view.presets[0].name, "Focus");
   assert.deepEqual(view.presets[0].settings.columns, ["status", "due"]);
-  assert.equal(viewSettings(view).rowStyle, "columns");
+  assert.equal(viewSettings(view).rowStyle, "list");
+  assert.equal(
+    viewSettings(listViewSchema.parse({ ...view, rowStyle: "columns" }))
+      .rowStyle,
+    "columns",
+  );
   assert.equal("presets" in viewSettings(view), false);
   assert.throws(() =>
     listViewSchema.parse({

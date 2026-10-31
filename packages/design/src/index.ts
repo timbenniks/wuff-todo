@@ -48,3 +48,45 @@ export function listThemeVariables(
     "--wuff-control": mix(accent, "#ffffff", 0.22),
   };
 }
+
+// Preserve the selected list palette in light mode; derive a tinted dark variant.
+export function todoThemeVariables(
+  color: ListColor,
+  dark = false,
+): Record<`--wuff-${string}`, string> {
+  const accent = listPalette[color].accent;
+  if (!dark) return { ...listThemeVariables(color), "--wuff-action": accent };
+  return {
+    ...listThemeVariables(color),
+    "--wuff-primary": dark ? mix(accent, "#ffffff", 0.5) : accent,
+    "--wuff-primary-hover": dark
+      ? mix(accent, "#ffffff", 0.6)
+      : mix(accent, "#000000", 0.12),
+    "--wuff-action": accent,
+    "--wuff-background": mix(accent, "#171b20", 0.9),
+    "--wuff-surface": mix(accent, "#1c2026", 0.88),
+    "--wuff-sidebar": mix(accent, "#13171b", 0.92),
+    "--wuff-accent": mix(accent, "#2b323b", 0.8),
+    "--wuff-foreground": dark ? "#edf0f3" : "#252b33",
+    "--wuff-muted": dark ? "#a2abb6" : "#626c78",
+    "--wuff-border": mix(accent, "#343b45", 0.8),
+    "--wuff-control": dark ? "#697786" : "#89939e",
+  };
+}
+
+// Restore the shared shell before another product renders its own theme.
+export function resetListTheme(target: {
+  style: {
+    setProperty: (name: string, value: string) => void;
+    removeProperty: (name: string) => unknown;
+    colorScheme: string;
+  };
+  dataset: Record<string, string | undefined>;
+}) {
+  for (const [key, value] of Object.entries(listThemeVariables("blue")))
+    target.style.setProperty(key, value);
+  target.style.removeProperty("--wuff-action");
+  target.style.colorScheme = "light";
+  target.dataset.listTheme = "blue";
+  delete target.dataset.todoAppearance;
+}

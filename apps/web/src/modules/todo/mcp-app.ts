@@ -1,4 +1,15 @@
 import {
+  todoDayPanels,
+  moveTodoDayPanel,
+  resetTodoDayPanels,
+} from "@wuff/ui/modules/todo/lib/dashboard-panels";
+import {
+  readTodoAppearance,
+  setTodoAppearance,
+  todoAppearanceEvent,
+  type TodoAppearance,
+} from "@wuff/ui/modules/todo/lib/appearance";
+import {
   calendarDay,
   dueDatePresentation,
   formatDueDate,
@@ -8,6 +19,8 @@ import {
   type Dashboard,
   type DashboardSettings,
   sidebarGroups,
+  findListGroups,
+  listNavigationContext,
   defaultListView,
   starterViews,
   viewSettings,
@@ -36,6 +49,32 @@ import { ToolError, type McpViewRuntime } from "@/mcp-app/runtime";
 
 export function createTodoMcpView(runtime: McpViewRuntime) {
   const { root, status, request, call, show } = runtime;
+  const refreshAppearance = (event?: Event) => {
+    readTodoAppearance(event);
+    if (document.documentElement.dataset.todoActive === "true")
+      applyListTheme(current?.color ?? "blue", document.documentElement, true);
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener(
+    "change",
+    refreshAppearance,
+  );
+  window.addEventListener(todoAppearanceEvent, refreshAppearance);
+  window.addEventListener("storage", refreshAppearance);
+  function appearancePicker() {
+    const label = element("label", "Appearance"),
+      select = element("select");
+    select.setAttribute("aria-label", "Appearance");
+    for (const value of ["light", "dark", "system"]) {
+      const option = element("option", value[0].toUpperCase() + value.slice(1));
+      option.value = value;
+      select.append(option);
+    }
+    select.value = readTodoAppearance();
+    select.onchange = () => setTodoAppearance(select.value as TodoAppearance);
+    label.append(select);
+    return label;
+  }
+  let catalogUnavailable = false;
   let fieldSequence = 0;
   const githubExpanded = new Set<string>();
   let current: TodoList | undefined,
@@ -1938,8 +1977,13 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     return toolbar;
   }
   function beforeShow(data: Record<string, unknown>) {
+    document.documentElement.dataset.todoActive = String(
+      Boolean(data.list || data.lists || data.dashboard),
+    );
     if (!data.list && !data.lists && !data.dashboard) current = undefined;
     if (data.viewerId && viewerId && data.viewerId !== viewerId) {
+      catalog = [];
+      catalogUnavailable = false;
       pendingHome = null;
       noteDrafts.clear();
       subtaskDrafts.clear();
@@ -1962,25 +2006,30 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       dashboard?: Dashboard;
       list?: TodoList;
       lists?: ListSummary[];
+      catalogUnavailable?: boolean;
       viewerId?: string;
       webOrigin?: string;
     };
+    if (data.lists) {
+      catalog = data.lists;
+      catalogUnavailable = data.catalogUnavailable === true;
+    }
     if (data.dashboard) {
       current = undefined;
-      applyListTheme("blue", document.documentElement);
+      applyListTheme("blue", document.documentElement, true);
       renderDashboard(data.dashboard);
       return;
     }
-    if (data.lists) {
+    if (data.lists && !data.list) {
       catalog = data.lists;
       current = undefined;
-      applyListTheme("blue", document.documentElement);
+      applyListTheme("blue", document.documentElement, true);
       renderCatalog();
       return;
     }
     if (!data.list) return;
     current = data.list;
-    applyListTheme(current.color, document.documentElement);
+    applyListTheme(current.color, document.documentElement, true);
     for (const [id, draft] of noteDrafts)
       if (
         draft.listId === current.id &&
@@ -1997,6 +2046,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
         () => void call("show_dashboard", { today: calendarDay() }),
       ),
       button("← Your lists", () => void call("show_lists", {})),
+      appearancePicker(),
     );
     const header = element("div");
     header.className = "list-header";
@@ -2026,6 +2076,61 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
         ),
       );
     root.append(header);
+    if (catalogUnavailable) {
+      const recovery = element("section");
+      recovery.setAttribute("aria-label", "List navigation unavailable");
+      recovery.append(
+        element("p", "Your list is available. Navigation couldn’t refresh."),
+        button(
+          "Refresh list navigation",
+          () => void call("show_list", { listId: current!.id }),
+        ),
+      );
+      root.append(recovery);
+    }
+    const context = listNavigationContext(catalog, current.id);
+    if (context.parent) {
+      const location = element("nav");
+      location.setAttribute("aria-label", "List location");
+      location.append(
+        button(
+          `← ${context.parent.title}`,
+          () => void call("show_list", { listId: context.parent!.id }),
+        ),
+      );
+      if (context.siblings.length) {
+        const label = element("label", "Sibling lists"),
+          select = element("select");
+        const empty = element("option", "Open another child list");
+        empty.value = "";
+        select.append(empty);
+        for (const sibling of context.siblings) {
+          const option = element("option", sibling.title);
+          option.value = sibling.id;
+          select.append(option);
+        }
+        select.onchange = () => {
+          if (select.value) void call("show_list", { listId: select.value });
+        };
+        label.append(select);
+        location.append(label);
+      }
+      root.append(location);
+    }
+    if (context.children.length) {
+      const children = element("section");
+      children.append(
+        element("h2", `Child lists (${context.children.length})`),
+      );
+      for (const child of context.children)
+        children.append(
+          button(
+            `${child.title}${child.shared ? " · Shared" : ""}`,
+            () => void call("show_list", { listId: child.id }),
+          ),
+        );
+      root.append(children, element("h2", "Tasks in this list"));
+    }
     if (owner) {
       const settings = element("details"),
         summary = element("summary", "List settings");
@@ -2216,6 +2321,67 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     settings: DashboardSettings;
     operationId: string;
   } | null = null;
+  function catalogBrowser() {
+    const section = element("section");
+    section.setAttribute("aria-label", "Your lists");
+    if (catalogUnavailable) {
+      section.append(
+        element("h2", "Your lists"),
+        element("p", "We couldn’t refresh your lists."),
+        button("Retry lists", () => void call("show_lists", {})),
+      );
+      return section;
+    }
+    const label = element("label", "Find a list"),
+      search = element("input"),
+      results = element("div");
+    search.type = "search";
+    label.append(search);
+    section.append(element("h2", "Your lists"), label, results);
+    const render = () => {
+      results.replaceChildren();
+      const groups = findListGroups(catalog, search.value);
+      for (const group of groups) {
+        const card = element("section");
+        card.append(
+          button(
+            group.list.title,
+            () => void call("show_list", { listId: group.list.id }),
+          ),
+        );
+        if (group.children.length) {
+          const children = element("ul");
+          for (const child of group.children) {
+            const item = element("li");
+            item.append(
+              button(
+                child.title,
+                () => void call("show_list", { listId: child.id }),
+              ),
+            );
+            children.append(item);
+          }
+          card.append(
+            element("p", `${group.children.length} child lists`),
+            children,
+          );
+        }
+        results.append(card);
+      }
+      if (!groups.length)
+        results.append(
+          element(
+            "p",
+            search.value.trim()
+              ? "No lists match your search."
+              : "No active lists.",
+          ),
+        );
+    };
+    search.oninput = render;
+    render();
+    return section;
+  }
   function renderDashboard(data: Dashboard) {
     clearViewEditors();
     root.replaceChildren(
@@ -2223,13 +2389,15 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       element("p", `Welcome back, ${data.name}.`),
       button("Your lists", () => void call("show_lists", {})),
     );
+    root.append(appearancePicker());
     const labels = {
       today: "Today",
       upcoming: "Coming up",
       favorites: "Favorites",
     };
     for (const section of data.preferences.settings.sections.filter(
-      (id) => !data.preferences.settings.hidden.includes(id),
+      (id): boolean =>
+        id !== "favorites" && !data.preferences.settings.hidden.includes(id),
     )) {
       const card = element("section"),
         heading = element("h2", labels[section]);
@@ -2300,7 +2468,12 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       }
       root.append(card);
     }
-    if (data.preferences.settings.hidden.length === 3)
+    root.append(catalogBrowser());
+    if (
+      ["today", "upcoming"].every((id) =>
+        data.preferences.settings.hidden.includes(id as "today" | "upcoming"),
+      )
+    )
       root.append(
         element(
           "p",
@@ -2319,7 +2492,8 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       saving = false;
     function controls() {
       fields.replaceChildren(element("legend", "Your Home sections"));
-      for (const [i, id] of draft.sections.entries()) {
+      const panels = todoDayPanels(draft.sections);
+      for (const [i, id] of panels.entries()) {
         const row = element("div"),
           label = element("label", labels[id]),
           check = element("input");
@@ -2338,15 +2512,13 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
             button(
               `Move ${labels[id]} ${delta < 0 ? "up" : "down"}`,
               () => {
-                const sections = [...draft.sections];
-                [sections[i], sections[i + delta]] = [
-                  sections[i + delta],
-                  sections[i],
-                ];
-                draft = { ...draft, sections };
+                draft = {
+                  ...draft,
+                  sections: moveTodoDayPanel(draft.sections, id, delta),
+                };
                 controls();
               },
-              i + delta < 0 || i + delta >= 3,
+              i + delta < 0 || i + delta >= panels.length,
             ),
           );
         }
@@ -2370,7 +2542,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       fields.append(
         label,
         button("Reset to default", () => {
-          draft = structuredClone(defaultDashboardSettings);
+          draft = resetTodoDayPanels(draft);
           controls();
         }),
       );
@@ -2472,34 +2644,35 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     const visible = catalog.filter((l) => l.archived === archive);
     const groups = sidebarGroups(catalog, archive);
     if (favoriteSection && groups.length)
-      root.append(element("h2", "Other lists"));
-    const rows = [
-      ...(!archive
-        ? favorites.map((list) => ({
-            list,
-            siblings: favorites,
-            depth: 0,
+      root.append(element("h2", "Your lists"));
+    const project = (
+      group: { list: ListSummary; children: ListSummary[] },
+      shortcut: boolean,
+    ) => [
+      {
+        list: group.list,
+        siblings: groups.map((g) => g.list),
+        depth: 0,
+        children: group.children,
+        shortcut,
+      },
+      ...(!group.list.sidebarCollapsed
+        ? group.children.map((child) => ({
+            list: child,
+            siblings: group.children,
+            depth: 1,
             children: [] as ListSummary[],
+            shortcut,
           }))
         : []),
-      ...groups.flatMap(({ list, children }) => [
-        {
-          list,
-          siblings: groups.map((group) => group.list),
-          depth: 0,
-          children,
-        },
-        ...(!list.sidebarCollapsed
-          ? children.map((child) => ({
-              list: child,
-              siblings: children,
-              depth: 1,
-              children: [] as ListSummary[],
-            }))
-          : []),
-      ]),
     ];
-    for (const { list, siblings, depth, children } of rows) {
+    const rows = [
+      ...(!archive
+        ? favorites.flatMap((list) => project({ list, children: [] }, true))
+        : []),
+      ...groups.flatMap((group) => project(group, false)),
+    ];
+    for (const { list, siblings, depth, children, shortcut } of rows) {
       const i = siblings.findIndex((item) => item.id === list.id);
       const row = element("div");
       row.className = "catalog-row";
@@ -2536,6 +2709,14 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
         shared.style.marginLeft = "8px";
         open.append(shared);
         open.title = "Shared list";
+      }
+      if (shortcut) {
+        main.append(open);
+        const parent = listNavigationContext(catalog, list.id).parent;
+        if (parent && !depth)
+          main.append(element("small", `In ${parent.title}`));
+        favoriteSection?.append(row);
+        continue;
       }
       const actions = element("details"),
         menu = element("div"),
@@ -2623,7 +2804,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
           "Only your sidebar changes. Tasks, subtasks and sharing stay with each list.",
         ),
       );
-      (list.favorite && favoriteSection ? favoriteSection : root).append(row);
+      root.append(row);
     }
     if (!visible.length)
       root.append(

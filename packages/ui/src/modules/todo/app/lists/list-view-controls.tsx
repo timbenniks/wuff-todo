@@ -7,6 +7,7 @@ import {
   ArrowDownWideNarrow,
   Layers,
   Columns3,
+  Settings2,
   X,
 } from "lucide-react";
 import {
@@ -56,7 +57,7 @@ export function ListViewControls({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [viewPage, setViewPage] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
-  const sheet = mobile ? { active: viewPage, select: setViewPage } : undefined;
+  const sheet = undefined;
   useEffect(() => {
     const query = window.matchMedia("(max-width: 767px)");
     const update = () => {
@@ -172,7 +173,7 @@ export function ListViewControls({
     });
   if (draft.sections.length)
     chips.push({
-      label: `Section: ${draft.sections.map((id) => list.sections.find((s) => s.id === id)?.title ?? "No section").join(", ")}`,
+      label: `Section: ${draft.sections.map((id) => list.sections.find((s) => s.id === id)?.title ?? "Tasks").join(", ")}`,
       clear: () => edit({ sections: [] }),
     });
   if (draft.statuses.length)
@@ -239,6 +240,7 @@ export function ListViewControls({
       <ViewPopover
         sheet={sheet}
         panelLabel="Filter"
+        variant="ghost"
         label={
           <>
             <SlidersHorizontal size={16} />
@@ -254,7 +256,7 @@ export function ListViewControls({
           draft.sections[0] ?? (draft.sections.length ? "none" : "all"),
           [
             ["all", "All sections"],
-            ["none", "No section"],
+            ["none", "Tasks"],
             ...list.sections.map((s) => [s.id, s.title] as [string, string]),
           ],
           (v) =>
@@ -330,281 +332,278 @@ export function ListViewControls({
         )}
       </ViewPopover>
       <ViewPopover
-        sheet={sheet}
-        panelLabel="Sort"
         label={
           <>
-            <ArrowDownWideNarrow size={16} />
-            Sort
-          </>
-        }
-        disabled={busy}
-      >
-        {select(
-          "Sort by",
-          draft.sortBy,
-          [
-            ["manual", "Manual"],
-            ...(list.mode === "work"
-              ? [["priority", "Priority"] as [string, string]]
-              : []),
-            ["due", "Due date"],
-            ["updated", "Recently updated"],
-          ],
-          (v) => edit({ sortBy: v as ListView["sortBy"] }),
-        )}
-        {draft.groupBy === "section" && (
-          <details>
-            <summary className="min-h-11 py-3 text-sm">
-              Sorting per section
-            </summary>
-            <div className="grid gap-3">
-              {[{ id: null, title: "No section" }, ...list.sections].map(
-                (s) => (
-                  <div key={s.id ?? "none"}>
-                    {select(
-                      `Sort ${s.title}`,
-                      draft.sectionSorts.find((o) => o.sectionId === s.id)
-                        ?.sortBy ?? "inherit",
-                      [["inherit", "Use list sorting"], ...options(viewSorts)],
-                      (v) =>
-                        edit({
-                          sectionSorts: [
-                            ...draft.sectionSorts.filter(
-                              (o) => o.sectionId !== s.id,
-                            ),
-                            ...(v === "inherit"
-                              ? []
-                              : [
-                                  {
-                                    sectionId: s.id,
-                                    sortBy: v as ListView["sortBy"],
-                                  },
-                                ]),
-                          ],
-                        }),
-                    )}
-                  </div>
-                ),
-              )}
-            </div>
-          </details>
-        )}
-      </ViewPopover>
-      <ViewPopover
-        sheet={sheet}
-        panelLabel="Group"
-        label={
-          <>
-            <Layers size={16} />
-            Group
-          </>
-        }
-        disabled={busy}
-      >
-        {select(
-          "Group by",
-          draft.groupBy,
-          [
-            ["section", "Section"],
-            ...(list.mode === "work"
-              ? [["status", "Status"] as [string, string]]
-              : []),
-            ["date", "Due date"],
-          ],
-          (v) => edit({ groupBy: v as ListView["groupBy"] }),
-        )}
-      </ViewPopover>
-      <ViewPopover
-        sheet={sheet}
-        panelLabel="Display"
-        label={
-          <>
-            <Columns3 size={16} />
-            Display
-          </>
-        }
-        disabled={busy}
-      >
-        {select(
-          "Row density",
-          draft.layout,
-          [
-            ["compact", "Compact"],
-            ["detailed", "Comfortable"],
-          ],
-          (v) => edit({ layout: v as ListView["layout"] }),
-        )}
-        {list.mode === "work" && !mobile && (
-          <>
-            {select(
-              "Row layout",
-              draft.rowStyle,
-              [
-                ["columns", "Columns"],
-                ["list", "Simple rows"],
-              ],
-              (v) => edit({ rowStyle: v as ListView["rowStyle"] }),
+            <Settings2 size={16} aria-hidden="true" /> View
+            {(modified || dirty) && (
+              <span className="view-draft-dot" aria-label="Custom view" />
             )}
-            <fieldset className="grid gap-1">
-              <legend className="text-sm mb-1">Visible columns</legend>
-              {viewColumns.map((column) => (
-                <label
-                  key={column}
-                  className="flex items-center gap-2 min-h-11 text-sm capitalize"
-                >
-                  <input
-                    type="checkbox"
-                    checked={draft.columns.includes(column)}
-                    onChange={(e) =>
-                      edit({
-                        columns: viewColumns.filter((c) =>
-                          c === column
-                            ? e.target.checked
-                            : draft.columns.includes(c),
-                        ),
-                      })
-                    }
-                  />
-                  {column === "due" ? "Due date" : column}
-                </label>
-              ))}
-            </fieldset>
           </>
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() =>
-            edit({
-              ...viewSettings(defaultListView()),
-              activePresetId: "default",
-            })
-          }
-        >
-          Reset to defaults
-        </Button>
-      </ViewPopover>
-      <ViewPopover sheet={sheet} label="Saved views" disabled={busy}>
-        <p className="text-xs text-muted-foreground">
-          Saved views are just for you on this list. Save up to 20.
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={draft.presets.length >= 20}
-          onClick={() => {
-            setName("");
-            setNaming("new");
-            setDeleting(false);
-          }}
-        >
-          Save as new view…
-        </Button>
-        {!!custom && (
-          <>
+        }
+        panelLabel="View settings"
+        ariaLabel="View settings"
+        variant="ghost"
+        disabled={busy}
+        className="view-configuration-trigger"
+      >
+        <div className="view-configuration">
+          <h2>View settings</h2>
+          {presetPicker}
+          <section className="view-config-section" aria-label="Sorting">
+            <h3>Sorting</h3>
+            {select(
+              "Sort by",
+              draft.sortBy,
+              [
+                ["manual", "Manual"],
+                ...(list.mode === "work"
+                  ? [["priority", "Priority"] as [string, string]]
+                  : []),
+                ["due", "Due date"],
+                ["updated", "Recently updated"],
+              ],
+              (v) => edit({ sortBy: v as ListView["sortBy"] }),
+            )}
+            {draft.groupBy === "section" && (
+              <details>
+                <summary className="min-h-11 py-3 text-sm">
+                  Sorting per section
+                </summary>
+                <div className="grid gap-3">
+                  {[{ id: null, title: "Tasks" }, ...list.sections].map((s) => (
+                    <div key={s.id ?? "none"}>
+                      {select(
+                        `Sort ${s.title}`,
+                        draft.sectionSorts.find((o) => o.sectionId === s.id)
+                          ?.sortBy ?? "inherit",
+                        [
+                          ["inherit", "Use list sorting"],
+                          ...options(viewSorts),
+                        ],
+                        (v) =>
+                          edit({
+                            sectionSorts: [
+                              ...draft.sectionSorts.filter(
+                                (o) => o.sectionId !== s.id,
+                              ),
+                              ...(v === "inherit"
+                                ? []
+                                : [
+                                    {
+                                      sectionId: s.id,
+                                      sortBy: v as ListView["sortBy"],
+                                    },
+                                  ]),
+                            ],
+                          }),
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </section>
+          <section className="view-config-section" aria-label="Grouping">
+            <h3>Grouping</h3>
+            {select(
+              "Group by",
+              draft.groupBy,
+              [
+                ["section", "Section"],
+                ...(list.mode === "work"
+                  ? [["status", "Status"] as [string, string]]
+                  : []),
+                ["date", "Due date"],
+              ],
+              (v) => edit({ groupBy: v as ListView["groupBy"] }),
+            )}
+          </section>
+          <section className="view-config-section" aria-label="Display">
+            <h3>Display</h3>
+            {select(
+              "Row density",
+              draft.layout,
+              [
+                ["compact", "Compact"],
+                ["detailed", "Comfortable"],
+              ],
+              (v) => edit({ layout: v as ListView["layout"] }),
+            )}
+            {list.mode === "work" && !mobile && (
+              <>
+                {select(
+                  "Row layout",
+                  draft.rowStyle,
+                  [
+                    ["columns", "Columns"],
+                    ["list", "Simple rows"],
+                  ],
+                  (v) => edit({ rowStyle: v as ListView["rowStyle"] }),
+                )}
+                <fieldset className="grid gap-1">
+                  <legend className="text-sm mb-1">Visible columns</legend>
+                  {viewColumns.map((column) => (
+                    <label
+                      key={column}
+                      className="flex items-center gap-2 min-h-11 text-sm capitalize"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={draft.columns.includes(column)}
+                        onChange={(e) =>
+                          edit({
+                            columns: viewColumns.filter((c) =>
+                              c === column
+                                ? e.target.checked
+                                : draft.columns.includes(c),
+                            ),
+                          })
+                        }
+                      />
+                      {column === "due" ? "Due date" : column}
+                    </label>
+                  ))}
+                </fieldset>
+              </>
+            )}
             <Button
               type="button"
               variant="ghost"
-              onClick={() => {
-                setName(custom.name);
-                setNaming("rename");
-                setDeleting(false);
-              }}
-            >
-              Rename saved view
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setDeleting(true);
-                setNaming(null);
-              }}
-            >
-              Delete saved view
-            </Button>
-          </>
-        )}
-        {naming && (
-          <form
-            className="grid gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const trimmed = name.trim();
-              if (
-                !trimmed ||
-                draft.presets.some(
-                  (p) =>
-                    p.name.toLowerCase() === trimmed.toLowerCase() &&
-                    (naming !== "rename" || p.id !== custom?.id),
-                )
-              ) {
-                setNotice("Choose a unique saved view name.");
-                return;
-              }
-              const id =
-                naming === "rename" && custom ? custom.id : crypto.randomUUID();
-              void save({
-                ...draft,
-                activePresetId: id,
-                presets: [
-                  ...draft.presets.filter((p) => p.id !== id),
-                  { id, name: trimmed, settings: viewSettings(draft) },
-                ],
-              });
-            }}
-          >
-            <label className="grid gap-1 text-sm">
-              View name
-              <Input
-                aria-label="View name"
-                value={name}
-                maxLength={60}
-                required
-                onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-            <Button variant="primary" disabled={busy || conflict}>
-              {naming === "rename" ? "Save view name" : "Save new view"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setNaming(null)}
-            >
-              Cancel
-            </Button>
-          </form>
-        )}
-        {deleting && custom && (
-          <div className="grid gap-2">
-            <p className="text-sm">
-              Delete “{custom.name}”? Your tasks stay here.
-            </p>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={busy || conflict}
               onClick={() =>
-                void save({
-                  ...draft,
-                  presets: draft.presets.filter((p) => p.id !== custom.id),
-                  activePresetId: null,
+                edit({
+                  ...viewSettings(defaultListView()),
+                  activePresetId: "default",
                 })
               }
             >
-              Confirm delete saved view
+              Reset to defaults
             </Button>
+          </section>
+          <section className="view-config-section" aria-label="Saved views">
+            <h3>Saved views</h3>
+            <p className="text-xs text-muted-foreground">
+              Saved views are just for you on this list. Save up to 20.
+            </p>
             <Button
               type="button"
-              variant="ghost"
-              onClick={() => setDeleting(false)}
+              variant="outline"
+              disabled={draft.presets.length >= 20}
+              onClick={() => {
+                setName("");
+                setNaming("new");
+                setDeleting(false);
+              }}
             >
-              Cancel
+              Save as new view…
             </Button>
-          </div>
-        )}
+            {!!custom && (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setName(custom.name);
+                    setNaming("rename");
+                    setDeleting(false);
+                  }}
+                >
+                  Rename saved view
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setDeleting(true);
+                    setNaming(null);
+                  }}
+                >
+                  Delete saved view
+                </Button>
+              </>
+            )}
+            {naming && (
+              <form
+                className="grid gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = name.trim();
+                  if (
+                    !trimmed ||
+                    draft.presets.some(
+                      (p) =>
+                        p.name.toLowerCase() === trimmed.toLowerCase() &&
+                        (naming !== "rename" || p.id !== custom?.id),
+                    )
+                  ) {
+                    setNotice("Choose a unique saved view name.");
+                    return;
+                  }
+                  const id =
+                    naming === "rename" && custom
+                      ? custom.id
+                      : crypto.randomUUID();
+                  void save({
+                    ...draft,
+                    activePresetId: id,
+                    presets: [
+                      ...draft.presets.filter((p) => p.id !== id),
+                      { id, name: trimmed, settings: viewSettings(draft) },
+                    ],
+                  });
+                }}
+              >
+                <label className="grid gap-1 text-sm">
+                  View name
+                  <Input
+                    aria-label="View name"
+                    value={name}
+                    maxLength={60}
+                    required
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </label>
+                <Button variant="primary" disabled={busy || conflict}>
+                  {naming === "rename" ? "Save view name" : "Save new view"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setNaming(null)}
+                >
+                  Cancel
+                </Button>
+              </form>
+            )}
+            {deleting && custom && (
+              <div className="grid gap-2">
+                <p className="text-sm">
+                  Delete “{custom.name}”? Your tasks stay here.
+                </p>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={busy || conflict}
+                  onClick={() =>
+                    void save({
+                      ...draft,
+                      presets: draft.presets.filter((p) => p.id !== custom.id),
+                      activePresetId: null,
+                    })
+                  }
+                >
+                  Confirm delete saved view
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setDeleting(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </section>
+        </div>
       </ViewPopover>
     </div>
   );
@@ -650,10 +649,7 @@ export function ListViewControls({
     <div className="view-toolbar-state">
       {filterChips}
       <p role="status" className="text-xs text-muted-foreground">
-        {shown} of {total} tasks shown ·{" "}
-        {draft.sortBy === "manual"
-          ? "Manual order"
-          : "Sorted view · Dragging off"}
+        {shown !== total ? `${shown} of ${total} tasks` : ""}
         {modified ? " · Modified saved view" : ""}
         {dirty ? " · Unsaved changes" : ""}
       </p>
@@ -733,7 +729,7 @@ export function ListViewControls({
       aria-label="List toolbar"
     >
       <div className="view-toolbar-line">
-        {!mobile && presetPicker}
+        {(list.mode === "work" || draft.presets.length > 0) && presetPicker}
         <label className="view-search">
           <Search size={16} aria-hidden="true" />
           <Input
@@ -742,95 +738,12 @@ export function ListViewControls({
             value={draft.search}
             maxLength={300}
             readOnly={busy}
-            onChange={(e) => edit({ search: e.target.value })}
+            onChange={(event) => edit({ search: event.target.value })}
           />
         </label>
-        {mobile ? (
-          <Button
-            type="button"
-            variant="outline"
-            className="mobile-view-trigger"
-            onClick={() => {
-              optionsDialog.current?.showModal();
-              setOptionsOpen(true);
-            }}
-          >
-            <SlidersHorizontal size={16} aria-hidden="true" />
-            View{chips.length ? ` · ${chips.length}` : ""}
-            {dirty && (
-              <span aria-label="Unsaved changes" className="view-draft-dot" />
-            )}
-          </Button>
-        ) : (
-          viewTools
-        )}
-        <TaskCapture
-          list={list}
-          busy={busy}
-          change={change}
-          error={error}
-          retry={retry}
-          onCreated={onCreated}
-        />
+        {viewTools}
       </div>
-      {mobile ? (
-        <>
-          {!!chips.length && !optionsOpen && (
-            <div className="mobile-filter-recovery">{filterChips}</div>
-          )}
-          {(shown !== total || dirty) && (
-            <p role="status" className="mobile-view-summary">
-              {shown} of {total} tasks{dirty ? " · View changes not saved" : ""}
-            </p>
-          )}
-          <dialog
-            onKeyDown={containDialogFocus}
-            ref={optionsDialog}
-            aria-labelledby="mobile-view-title"
-            className="mobile-view-dialog"
-            onClose={() => {
-              setOptionsOpen(false);
-              setViewPage(null);
-            }}
-            onCancel={(e) => {
-              if (busy) e.preventDefault();
-            }}
-          >
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 id="mobile-view-title" className="text-xl font-bold">
-                Your view
-              </h2>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Close view options"
-                disabled={busy}
-                onClick={() => optionsDialog.current?.close()}
-              >
-                <X size={20} />
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Filters, sorting and display. Only changes your view.
-            </p>
-            {!viewPage && presetPicker}
-            {viewTools}
-            {viewState}
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full mt-3"
-              disabled={busy}
-              onClick={() => optionsDialog.current?.close()}
-            >
-              Done
-            </Button>
-          </dialog>
-        </>
-      ) : (
-        viewState
-      )}
+      {viewState}
       {shown === 0 && (
         <p className="list-empty-message" role="status">
           {total === 0

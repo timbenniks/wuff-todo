@@ -40,3 +40,14 @@ The migration passed on the existing isolated development branch, then productio
 GitHub Actions could not start because account billing/spending limits blocked runners (runs `40020000501` and `40019999828`); local checks and the Vercel build passed. Updated downloadable native artifacts and installed-device checks are not certified by this web/MCP release.
 
 All 87 unit tests, five focused integration cases, TypeScript, web/MCP and native frontend builds passed. Responsive web flows and the real local MCP Apps SDK host passed; see [verification commands, screenshots and limits](verification.md#personal-list-nesting--october-23-2026).
+
+## Visible list context — October 31, 2026
+
+Implemented on `codex/todo-ux-maturity`; release is separate. Parent pages expose
+Child lists above their own tasks. Child pages expose the current viewer's parent
+and a sibling selector. These links derive from the authorized active catalog;
+missing/archived/inaccessible parents yield no title or link. Parent tasks remain
+independent. Favorites preserve the canonical tree and do not promote children.
+List actions exposes existing personal favorite/move operations without changing
+shared metadata or permissions. Root titles align regardless of child controls.
+See [implementation and evidence](todo-ux-maturity-plan.md).

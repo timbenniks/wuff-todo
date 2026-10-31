@@ -1,14 +1,14 @@
 # List workspace — October 24, 2026
 
-The user selected one compact view toolbar for both Basic and Work lists. Work lists default to richer columns on wide screens; Basic lists remain simple. There is no global Advanced mode.
+The user selected one compact view toolbar for both Basic and Work lists. New unsaved views default to simple rows in both modes. Explicit saved Work column layouts remain supported; no stored view is rewritten. There is no global Advanced mode.
 
 ## Interaction
 
-Search, saved preset, Filter, Sort, Group, Display and Presets live in a compact toolbar. Focused native popovers replace the full-width Your view form. Web filtering previews locally; Save view persists explicitly and Revert restores the latest saved version. Filter chips expose active restrictions. Dirty changes prevent silently switching presets. Sort-per-section remains under Sort. Display contains density and, for Work lists, Columns/Simple rows and status/priority/assignee/due visibility.
+Search, the relevant saved preset picker, Filter and View live in a compact toolbar. View groups sorting, grouping, display and saved presets in one configuration popover. Focused native popovers replace the full-width Your view form. Web filtering previews locally; Save view persists explicitly and Revert restores the latest saved version. Filter chips expose active restrictions. Dirty changes prevent silently switching presets. Sort-per-section remains under View → Sorting. Display contains density and, for Work lists, Columns/Simple rows and status/priority/assignee/due visibility.
 
 Starter choices are Default, Open tasks and By due date, plus My open tasks and Blocked on Work lists. The date starter sorts/groups existing due dates rather than inventing a new calendar window. People may save, update, rename and explicitly delete up to 20 named presets per list. Names are trimmed, bounded and case-insensitively unique. A named preset snapshots filters/search, grouping/sorting, density, collapsed groups and display choices; it belongs only to the current account/list. Reset preserves the preset collection.
 
-Wide Work rows align task title, status, priority, assignee and due date. Metadata cells have small explicit Save/Cancel editors. They use the shared list version and existing task permissions; a stale save retains its draft and requires explicit reload. Rows reveal notes/subtask quick actions on hover or keyboard focus, retain the overflow menu and delete confirmation, and retain normal completion and task-drawer navigation. Column drafts survive filtering/display changes in the mounted list, just like note/date drafts. Basic lists do not show unused Work fields. Columns collapse below a 1000px content width; quick actions require 800px. Phone toolbars wrap, use viewport-bounded popovers and retain existing row metadata/menu controls. Dragging remains unavailable under computed sorting.
+Wide Work rows align task title, status, priority, assignee and due date. Metadata cells have small explicit Save/Cancel editors. They use the shared list version and existing task permissions; a stale save retains its draft and requires explicit reload. Rows reveal contextual overflow actions on hover or keyboard focus, including notes/subtasks and delete confirmation. Completion remains independent of title-to-drawer navigation. Column drafts survive filtering/display changes in the mounted list, just like note/date drafts. Basic lists do not show unused Work fields. Optional columns with no populated root-task values do not reserve empty space; saved choices remain intact. Columns collapse below a 1000px content width. Phone toolbars wrap, use viewport-bounded popovers and retain existing row metadata/menu controls. Dragging remains unavailable under computed sorting.
 
 ## Persistence and compatibility
 
@@ -21,3 +21,17 @@ HTTP, native and MCP use the same domain function and public contracts. The MCP 
 ## Verification
 
 See `verification.md` for completed evidence. Use isolated development with `tests/list-view.integration.test.ts`, then the optimized website and `scripts/verify-list-workspace-ui.ts` separately. Synthetic fixtures are deleted afterward. Build output, local SDK-host checks, production browser checks and installed native behavior are distinct evidence.
+
+## Focused productivity redesign — October 31, 2026
+
+The [redesign contract](todo-productivity-redesign.md) defines the current header,
+inline capture, lightweight section headings and 520px drawer. The task name/count
+anchors the page, Add task opens a list-scoped inline composer, and each section
+has a collapsed composer for its own destination. Enter adds and retains the
+input; Escape cancels and returns focus. Uncertain replies retain the exact retry
+and draft. The unsectioned heading is Tasks; Completed remains collapsible.
+
+The drawer keeps list context/task ID in the header, completion beside the title,
+quiet editable properties, notes formatting only while editing and a subtask
+checklist. Existing dirty-change guards, focus restoration, full-page route and
+independent scrolling remain. No new mutation endpoint, scope or connection.

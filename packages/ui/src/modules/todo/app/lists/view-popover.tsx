@@ -157,7 +157,10 @@ export function ViewPopover({
             type="button"
             variant="ghost"
             className="mt-3 w-full"
-            onClick={() => panel.current?.hidePopover()}
+            onClick={() => {
+              panel.current?.hidePopover();
+              trigger.current?.focus();
+            }}
           >
             Done
           </Button>

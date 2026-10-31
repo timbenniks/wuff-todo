@@ -2,6 +2,79 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Todo appearance/menu follow-up — October 31, 2026
+
+Tim’s local feedback restores the original themed light surfaces, with explicit
+Light (default), Dark and System choices in the sidebar/task page and embedded
+Todo. The choice is device-local and still works in the current document if
+storage is blocked. No synced-data/API/scopes/consent changes. Dark remains tinted
+by the list palette; all seven light/dark token contrasts pass. The photographed
+list menu now uses named action rows and Move to… disclosure rather than a form
+and unlabelled icons.
+
+All 204 units, workspace TypeScript and optimized guide/MCP/web build passed.
+Actual 27-task browser checks pass explicit Light over a dark OS, Dark/System
+selection, reload persistence and the menu’s labels/progressive parent controls.
+The updated navigation/real MCP Apps SDK suite passes, including two day-panel
+customization controls, reorder/Cancel, no dead Favorites toggle, and post-write
+read recovery. Unit cases verify day-panel move/reset preserves Favorites’ saved
+visibility/position; this fixes Codex finding discussion_r4431682832.
+
+[Light menu](screenshots/todo-productivity-list-actions-light.png) ·
+[Dark menu](screenshots/todo-productivity-list-actions-dark.png).
+Earlier test runs and managed-auth limits below remain scoped to their recorded
+source; final follow-up drawer/adapter results are recorded in the PR.
+
+## Todo productivity redesign — October 31, 2026
+
+[Draft PR #45](https://github.com/timbenniks/wuff-todo/pull/45),
+[component inventory, contract and detailed evidence](todo-productivity-redesign.md).
+This follow-up supersedes the earlier list-first/favorite-expansion presentation.
+
+- TypeScript, all **201 unit tests** (no skips), guide/MCP bundling and optimized
+  web build passed. Tests cover simple-row defaults/explicit saved columns,
+  260px resize defaults, seven-palette light/dark contrast, populated optional
+  columns and inline payload/validation/list-isolation boundaries.
+- Actual Chrome populated flow passed against loopback and isolated development:
+  27 initial tasks/three sections, long titles, dates, completed items, subtasks,
+  assignment and notes. Scoped/repeated inline creation, Enter/Escape/focus, exact
+  lost-response retry without duplicates, filters/grouping/saved columns/reset,
+  completion/reopening, notes dirty-exit/save, property focus, subtask/parent
+  drawer navigation and origin focus/list scroll passed. Light/dark and
+  320/390/1024/1366 Overview checks reported no page errors.
+- Serial `tests/list-view.integration.test.ts`,
+  `tests/list-favorites.integration.test.ts`, `tests/list-nesting.integration.test.ts`
+  and `tests/todo-navigation.integration.test.ts` passed **all six cases**, no
+  skips (72.3 seconds). Permissions, personal isolation, legacy preservation,
+  stale/concurrent versions, exact retries, real HTTP/MCP scope/origin boundaries
+  and revoked-connection rejection remain intact.
+- A settings-portal hydration error was corrected; modal open/close/focus passed
+  afterward. Separate repeat runs encountered existing managed-auth 503/429
+  responses; failure preserved drafts. These failed runs are not counted as passes.
+
+Representative rendered evidence: [workspace](screenshots/todo-productivity-workspace-light.png),
+[dark workspace](screenshots/todo-productivity-workspace-dark.png),
+[saved columns](screenshots/todo-productivity-workspace-columns.png),
+[drawer](screenshots/todo-productivity-drawer-light.png),
+[dark drawer](screenshots/todo-productivity-drawer-dark.png),
+[Overview](screenshots/todo-productivity-overview-1366.png),
+[phone Overview](screenshots/todo-productivity-overview-390.png).
+
+Codex review identified a post-commit MCP catalog-refresh failure that masked a
+successful write. The fix retains the authorized operation result, clears stale
+navigation and offers a read-only refresh. The new regression failed against the
+old helper (exit 1) and the fixed navigation unit file passed all eight cases;
+all 201 units pass. The updated actual SDK browser suite passed this degraded-response recovery
+after one real task write, with no page errors; backend exception text is not
+returned. A separate current-source 27-task empty-drawer check passed at 390px,
+including no drawer overflow and Escape/origin focus. Later complete dense-flow
+repetitions encountered managed-auth 429 even with pacing; they are blocked, not
+current-head full-suite passes. The earlier full flow remains separately recorded.
+
+No production operations, migrations, new dependencies or scope/consent changes.
+Physical-device, assistive-technology and human usability acceptance remain
+separate from local viewport/keyboard proof; PR stays draft for review.
+
 ## QStash publisher ID regression — October 25, 2026
 
 Included in [draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35) at
@@ -1203,3 +1276,113 @@ billing/spending limits blocked runners. These are incomplete remote checks,
 not passing code verification. Keep the PR draft. Vercel preview status and final
 PR metadata are recorded separately; preview backend isolation is unconfirmed,
 so no preview writes or medical-data smoke are claimed.
+
+## Todo navigation maturity — October 31, 2026
+
+Implemented on draft [PR #45](https://github.com/timbenniks/wuff-todo/pull/45).
+Application source `9acccc9f8820ab84bf270217d089eee350a8e9a5`; later delivery
+commits record evidence and tighten browser synchronization/capture only.
+[Behavior, scope and review record](todo-ux-maturity-plan.md).
+
+- `pnpm typecheck` passed all workspace packages, web and root scripts/tests.
+- `pnpm test` passed **195 unit tests**, zero failures/skips. Changed tests:
+  `tests/list-nesting.test.ts` retains canonical favorite hierarchy and archive
+  fallback; `tests/todo-navigation.test.ts` covers list-search/context, current
+  access/archive filtering, finite width/viewport bounds, malformed/blocked
+  storage, account isolation/reset and current authorized MCP response catalogs,
+  including missing read scope and post-mutation read failure. A controlled
+  rollback of the original favorites projection failed the two relevant
+  hierarchy regressions; restoring the implementation passed.
+- `pnpm preview:local` passed guide generation, MCP packaging and optimized Next
+  build, then served the local app on port 3000. No Vercel deployment was run.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1
+tests/todo-navigation.integration.test.ts tests/list-nesting.integration.test.ts
+tests/list-favorites.integration.test.ts` passed **all 4 integration tests**.
+  Actual adapters prove HTTP-write/MCP-read and MCP-write/HTTP-read, personal
+  hierarchy/favorites isolation, unchanged task snapshots, stale/concurrent writes,
+  exact-payload retries, read-only denial, private-list exclusion, sharing and
+  membership revocation, catalogs in reads and mutation replies, and revoked
+  connection rejection. Fixtures use the documented isolated development branch
+  and synthetic accounts; created data/connections are cleaned up.
+- `node --env-file=.env.local --import tsx scripts/verify-todo-navigation.ts`
+  passed the optimized web app and **actual local MCP Apps SDK host**, with no
+  page errors. Web checks include 320/390/1024/1280/1366/1440px document overflow,
+  phone Lists/Escape, root alignment, undated/nonfavorite discovery, search and
+  no-match recovery, restored expansion, hidden day panels with lists retained,
+  pointer/keyboard width persistence/reset and window bounds, direct personal move
+  out/back, parent/child/sibling navigation and Back. A committed favorite save
+  with a lost reply retries the identical payload. Catalog failure has an explicit
+  retry; a detail-only 503 preserves successful catalog/context. Embedded checks
+  cover list-first Home/search, canonical/favorite navigation and retained parent/
+  child/sibling context after actual task mutations.
+- First Codex review found two recovery defects; `9acccc9` fixed both with
+  regressions and evidence replies. Fresh review of that application source
+  completed with no findings. Latest delivery-head review/check status is kept in
+  the PR. Review completion is separate from test results.
+
+Browser connector startup failed because its service module was missing; the
+repository's headless Chrome/Playwright harness supplied rendered browser proof.
+Phone viewport checks do not establish physical touch/device behavior, screen
+reader compatibility, browser zoom or a named ChatGPT host. Human usability review
+and production release remain separate. No schema, scope/consent, provider or
+production configuration change. Unrelated package/workspace/lockfile edits remain
+outside feature commits.
+
+Final adapter rerun after the catalog recovery fix: four domain cases passed; the
+HTTP nesting write returned managed-auth 429 and navigation consent SSR returned
+500 with `auth_unavailable`/429 in the local server log. Those two cases remain
+blocked for current-source full-adapter verification. The earlier all-six pass and
+updated real SDK recovery pass remain separate evidence. Keep PR #45 draft.
+
+Appearance/menu follow-up at 44ba668: the separate themed drawer check passed
+light/dark surface changes, 390px empty notes/subtasks, Escape and origin focus.
+The serial view/favorites/nesting/navigation integration rerun passed all six
+cases with no skips (72.7 seconds), including the two previously throttled adapter
+cases. The earlier blocked combined dense-flow runs remain explicitly historical;
+updated menu/appearance, drawer and navigation/actual SDK checks all pass.
+
+## Embedded appearance handoff — October 31, 2026
+
+Implementation e27a95c fixes review finding discussion_r4431716077: the shared
+MCP render reset restores light native controls and clears Todo-owned appearance
+state before another module renders. All 205 units and workspace TypeScript pass.
+The updated actual SDK browser suite passes Dark/System → Empire settings, cleared
+appearance/action overrides and subsequent OS changes leaving Empire light, with
+zero page errors. The existing full navigation/resize/retry/real-mutation checks
+also pass in that run. No server/domain behavior changed; the latest six-case
+authorized adapter run remains valid. Hosted Verify passes for e27a95c.
+
+## Phone views and capture retry isolation — October 31, 2026
+
+Codex finding discussion_r4431733523 is fixed by hiding only the toolbar-level
+preset picker. A new actual 390px regression failed against the old served CSS
+and passes with a real seeded named view: due-today filtering, Revert, starter
+selection and no document overflow. [Rendered picker](screenshots/todo-productivity-mobile-view-picker.png).
+A second actual-browser regression reproduced stale capture retry ownership after
+a known rejected capture followed by another task’s uncertain completion. Settling
+the rejected attempt now relinquishes its retry ownership. The failing-before /
+passing-after case verifies global byte-identical PATCH retry leaves the uncreated
+capture draft intact. Its injected HTTP 400 is expected. Both runs report no page
+errors; all 205 units, workspace/root TypeScript and optimized build pass. Existing
+payload/receipt units remain; these UI regressions exercise rendered outcomes.
+No backend/domain/auth/HTTP/MCP contract changed; the latest six adapter cases
+remain passing for the same server implementation.
+
+The readable-but-unwritable appearance regression failed against the old helper
+and passes with the fix. The actual browser test overrides writes with a quota
+error: Light/Dark still switch in the current document and reload keeps the prior
+saved preference. Unit coverage also verifies persistence resumes after storage
+recovers. All 205 units, TypeScript and optimized build pass; no page errors.
+Codex review of a4fb748 reported no major issues
+([receipt](https://github.com/timbenniks/wuff-todo/pull/45#issuecomment-6543664439));
+the additional storage boundary correction receives a fresh review separately.
+
+Final cross-tab recovery correction: relevant appearance storage events (including
+clear-all) release the failed-write latch, while local failure notifications and
+unrelated keys retain the current document choice. Sidebar, document theme, drawer
+and embedded listeners forward the event. The unit regression fails against the
+old helper; all nine productivity unit cases and the full 205-case suite pass.
+Actual Chrome verifies a second same-origin tab changes the first tab’s appearance
+after its writes fail, plus reload persistence; no page errors. TypeScript and the
+optimized build pass. Tim explicitly requested approval and merge after this fix;
+finish required GitHub checks and merge rather than starting another design cycle.

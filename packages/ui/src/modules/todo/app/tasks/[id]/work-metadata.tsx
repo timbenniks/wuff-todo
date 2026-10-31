@@ -40,17 +40,25 @@ export function WorkMetadata({
   returnFocus?: RefObject<HTMLButtonElement | null>;
 }) {
   const trigger = useRef<HTMLButtonElement>(null);
+  const section = useRef<HTMLElement>(null);
+  const [returnLabel, setReturnLabel] = useState("");
   function close() {
     onEditingChange(false);
     requestAnimationFrame(() =>
-      (returnFocus?.current ?? trigger.current)?.focus(),
+      (
+        returnFocus?.current ??
+        section.current?.querySelector<HTMLButtonElement>(
+          `[aria-label="${returnLabel}"]`,
+        ) ??
+        trigger.current
+      )?.focus(),
     );
   }
   if (list.mode !== "work" && !editing) return null;
   return (
-    <section className="work-details rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <section ref={section} className="work-details">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="text-lg font-bold">Work details</h2>
+        <h2 className="text-sm font-semibold">Properties</h2>
         {!list.archived && !editing && (
           <Button
             type="button"
@@ -60,7 +68,7 @@ export function WorkMetadata({
             ref={trigger}
             onClick={() => onEditingChange(true)}
           >
-            <Pencil size={16} aria-hidden="true" /> Edit details
+            <Pencil size={15} aria-hidden="true" /> Edit
           </Button>
         )}
       </div>
@@ -78,45 +86,75 @@ export function WorkMetadata({
             <div>
               <dt className="text-muted-foreground text-xs mb-1">Status</dt>
               <dd>
-                <StatusTag status={task.status} />
+                <Button
+                  variant="ghost"
+                  disabled={busy || list.archived}
+                  aria-label="Change status"
+                  onClick={() => {
+                    setReturnLabel("Change status");
+                    onEditingChange(true);
+                  }}
+                >
+                  <StatusTag status={task.status} />
+                </Button>
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground text-xs mb-1">Priority</dt>
               <dd className="capitalize">
-                {task.priority === "none" ? "No priority" : task.priority}
+                <Button
+                  variant="ghost"
+                  disabled={busy || list.archived}
+                  aria-label="Change priority"
+                  onClick={() => {
+                    setReturnLabel("Change priority");
+                    onEditingChange(true);
+                  }}
+                >
+                  {task.priority === "none" ? "No priority" : task.priority}
+                </Button>
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground text-xs mb-1">Assignee</dt>
               <dd>
-                {list.assignees.find((p) => p.id === task.assigneeId)?.name ??
-                  "Unassigned"}
+                <Button
+                  variant="ghost"
+                  disabled={busy || list.archived}
+                  aria-label="Change assignee"
+                  onClick={() => {
+                    setReturnLabel("Change assignee");
+                    onEditingChange(true);
+                  }}
+                >
+                  {list.assignees.find((p) => p.id === task.assigneeId)?.name ??
+                    "Unassigned"}
+                </Button>
               </dd>
             </div>
           </dl>
-          <h3 className="text-xs text-muted-foreground mt-5 mb-2">
-            References
-          </h3>
-          {task.references.length ? (
-            <ul className="grid gap-2 text-sm">
-              {task.references.map((ref, i) => (
-                <li key={i} className="min-w-0">
-                  <a
-                    href={ref.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline break-all py-2 inline-block"
-                  >
-                    {ref.title || ref.url}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Link an issue, pull request or document.
-            </p>
+          {task.references.length > 0 && (
+            <div className="task-references">
+              <h3 className="text-xs text-muted-foreground mt-5 mb-2">
+                References
+              </h3>
+              {task.references.length ? (
+                <ul className="grid gap-2 text-sm">
+                  {task.references.map((ref, i) => (
+                    <li key={i} className="min-w-0">
+                      <a
+                        href={ref.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline break-all py-2 inline-block"
+                      >
+                        {ref.title || ref.url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           )}
         </>
       )}

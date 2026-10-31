@@ -8,6 +8,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Todo productivity redesign (October 31, draft PR #45):** attention-first
+  Overview with a compact list browser, flat favorite shortcuts and canonical
+  hierarchy, resizable 260px sidebar, consolidated workspace controls, inline task
+  capture and focused task drawer. Existing services/scopes are reused; no migration
+  or production operation. The focused [redesign contract](todo-productivity-redesign.md)
+  supersedes the earlier [navigation plan](todo-ux-maturity-plan.md).
+
 - **Contributor metadata gate retired (October 28):** Tim requested removal of
   the policy script/workflow and required status. Verify, meaningful test coverage,
   API/MCP parity and review remain. The PR template and Copilot/Codex comments

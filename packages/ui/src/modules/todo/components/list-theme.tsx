@@ -1,14 +1,28 @@
 "use client";
 import { useEffect } from "react";
 import type { ListColor } from "@wuff/contracts";
+import { todoAppearanceEvent, readTodoAppearance } from "../lib/appearance";
 import { applyListTheme } from "../lib/list-theme";
 
 // The selected, authorized list is the source of truth. No task data or offline
 // state is stored. Document scope also colors native dialogs and the page gutter.
 export function ListTheme({ color }: { color: ListColor }) {
   useEffect(() => {
-    applyListTheme(color, document.documentElement);
-    return () => applyListTheme("blue", document.documentElement);
+    const update = (event?: Event) => {
+      readTodoAppearance(event);
+      applyListTheme(color, document.documentElement, true);
+    };
+    const query = matchMedia("(prefers-color-scheme: dark)");
+    update();
+    query.addEventListener("change", update);
+    window.addEventListener(todoAppearanceEvent, update);
+    window.addEventListener("storage", update);
+    return () => {
+      query.removeEventListener("change", update);
+      window.removeEventListener(todoAppearanceEvent, update);
+      window.removeEventListener("storage", update);
+      applyListTheme("blue", document.documentElement);
+    };
   }, [color]);
   return null;
 }

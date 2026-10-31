@@ -44,14 +44,26 @@ import {
 } from "@wuff/contracts";
 import * as domain from "@wuff/domain/modules/todo";
 import type { ModuleMcpContext } from "@/lib/mcp-context";
+import { todoNavigationResponse } from "./navigation-response";
 export function registerTodoMcp({
   actor,
   registerTool,
   uri,
   read,
   write,
-  result,
+  result: moduleResult,
 }: ModuleMcpContext) {
+  // Every list render gets fresh authorized navigation or an explicit unavailable
+  // state, including mutation replies/receipt replays. A failed optional refresh
+  // must not mask a committed result or revive stale parent/sibling access.
+  const result: ModuleMcpContext["result"] = (action) =>
+    moduleResult(async () =>
+      todoNavigationResponse(
+        await action(),
+        actor.scopes.includes("lists:read"),
+        () => domain.listLists(actor),
+      ),
+    );
   const githubReads = [
     [
       "get_github_connections",
@@ -266,7 +278,9 @@ export function registerTodoMcp({
       _meta: { ui: { resourceUri: uri } },
     },
     async ({ listId }) =>
-      result(async () => ({ list: await domain.getList(actor, listId) })),
+      result(async () => ({
+        list: await domain.getList(actor, listId),
+      })),
   );
   registerTool(
     "list_lists",
@@ -286,7 +300,9 @@ export function registerTodoMcp({
       annotations: read,
     },
     async ({ listId }) =>
-      result(async () => ({ list: await domain.getList(actor, listId) })),
+      result(async () => ({
+        list: await domain.getList(actor, listId),
+      })),
   );
   registerTool(
     "get_task",

@@ -32,10 +32,6 @@ export function CompletedTasks({
       {!!ids.size && (
         <details className="completed-task-group">
           <summary className="section-summary">Completed ({ids.size})</summary>
-          <p className="text-xs text-muted-foreground mb-2">
-            Open details or reopen a task. Recently completed rows stay above
-            until you leave this list.
-          </p>
           {groups.map((group) => {
             const tasks = group.tasks.filter((task) => ids.has(task.id));
             if (!tasks.length) return null;
@@ -43,7 +39,7 @@ export function CompletedTasks({
               <div key={group.id}>
                 {(list.sections.length > 0 || groups.length > 1) && (
                   <h3 className="text-xs text-muted-foreground mt-3">
-                    {group.title}
+                    {group.id === "section:none" ? "Tasks" : group.title}
                   </h3>
                 )}
                 {tasks.map((task) => (

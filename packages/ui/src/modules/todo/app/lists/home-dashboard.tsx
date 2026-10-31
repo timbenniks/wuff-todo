@@ -27,10 +27,16 @@ import { formatDueDate } from "../../lib/due-date";
 import { listPalette } from "../../lib/list-colors";
 import { Button } from "../../../../button";
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
+import { ListBrowser } from "./list-browser";
 import { TaskCapture } from "./task-capture";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { useHomeTasks } from "./use-home-tasks";
 import type { ListChange } from "./list-settings";
+import {
+  todoDayPanels,
+  moveTodoDayPanel,
+  resetTodoDayPanels,
+} from "../../lib/dashboard-panels";
 import { NativeSelect } from "../../../../native-select";
 
 const labels = {
@@ -50,6 +56,9 @@ export function HomeDashboard({
   change,
   taskError = "",
   retryTask,
+  favorite,
+  catalogError,
+  retryCatalog,
 }: {
   userId: string;
   name: string;
@@ -62,6 +71,9 @@ export function HomeDashboard({
   change: ListChange;
   taskError?: string;
   retryTask?: () => Promise<boolean>;
+  favorite: (id: string, enabled: boolean) => Promise<boolean>;
+  catalogError: string;
+  retryCatalog: () => void;
 }) {
   const viewName = "Overview";
   const api = useActorApi(),
@@ -213,12 +225,10 @@ export function HomeDashboard({
     }
   }
   function reorder(section: DashboardSection, delta: number) {
-    setDraft((old) => {
-      const sections = [...old.sections],
-        i = sections.indexOf(section);
-      [sections[i], sections[i + delta]] = [sections[i + delta], sections[i]];
-      return { ...old, sections };
-    });
+    setDraft((old) => ({
+      ...old,
+      sections: moveTodoDayPanel(old.sections, section, delta),
+    }));
   }
   async function completeTask(
     task: Pick<DashboardTask, "id" | "title" | "path" | "list">,
@@ -256,7 +266,7 @@ export function HomeDashboard({
               {greeting}
               {`, ${name}`}
             </p>
-            <h1 className="text-2xl font-bold tracking-tight">Your day</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Todo overview</h1>
           </div>
         </div>
         <div className="home-header-actions">
@@ -395,14 +405,15 @@ export function HomeDashboard({
         </div>
       ) : !data ? (
         <p role="status" className="text-muted-foreground">
-          Sniffing out your day…
+          Loading your day…
         </p>
       ) : (
         <>
           <div className="home-cards">
             {data.preferences.settings.sections
               .filter(
-                (section) =>
+                (section): boolean =>
+                  section !== "favorites" &&
                   !data.preferences.settings.hidden.includes(section),
               )
               .map((section) => (
@@ -574,7 +585,7 @@ export function HomeDashboard({
                       ).length && (
                         <p className="px-5 pb-5 text-sm text-muted-foreground">
                           {section === "today"
-                            ? "Nothing due today. A little breathing room for your pack."
+                            ? "Nothing due today."
                             : "No tasks dated for the next seven days. Add a due date to see one here."}
                         </p>
                       )}
@@ -605,27 +616,33 @@ export function HomeDashboard({
                 </section>
               ))}
           </div>
-          {data.preferences.settings.hidden.length === 3 && (
+          {["today", "upcoming"].every((section) =>
+            data.preferences.settings.hidden.includes(
+              section as DashboardSection,
+            ),
+          ) && (
             <div className="rounded-2xl border border-border p-6">
-              <h2 className="text-xl font-bold">
-                A quiet corner for your pack.
-              </h2>
+              <h2 className="text-xl font-bold">Your day panels are hidden.</h2>
               <p className="text-muted-foreground mt-2">
                 Choose Customize {viewName} to bring a section back.
               </p>
             </div>
           )}
-          <p className="text-sm text-muted-foreground mt-6">
-            Need a fresh list?{" "}
-            <button
-              type="button"
-              className="text-primary font-semibold underline min-h-11"
-              onClick={createList}
-            >
-              Create a list
-            </button>
-          </p>
         </>
+      )}
+      {catalogError ? (
+        <div role="alert" className="list-browser-empty">
+          <p>We couldn’t refresh your lists. Try again to see current lists.</p>
+          <Button onClick={retryCatalog}>Retry lists</Button>
+        </div>
+      ) : (
+        <ListBrowser
+          lists={lists}
+          choose={chooseList}
+          create={createList}
+          favorite={favorite}
+          busy={locked}
+        />
       )}
       <dialog
         onKeyDown={containDialogFocus}
@@ -662,7 +679,7 @@ export function HomeDashboard({
           </p>
           <fieldset disabled={saving || !!retry} className="min-w-0">
             <legend className="text-sm font-bold mb-2">Sections</legend>
-            {draft.sections.map((section, i) => (
+            {todoDayPanels(draft.sections).map((section, i) => (
               <div
                 key={section}
                 className="flex items-center gap-1 py-2 border-b border-border"
@@ -696,7 +713,7 @@ export function HomeDashboard({
                   type="button"
                   size="icon"
                   variant="ghost"
-                  disabled={i === 2}
+                  disabled={i === 1}
                   aria-label={`Move ${labels[section]} down`}
                   onClick={() => reorder(section, 1)}
                 >
@@ -729,9 +746,7 @@ export function HomeDashboard({
               type="button"
               variant="ghost"
               className="mt-3"
-              onClick={() =>
-                setDraft(structuredClone(defaultDashboardSettings))
-              }
+              onClick={() => setDraft(resetTodoDayPanels(draft))}
             >
               Reset to default
             </Button>

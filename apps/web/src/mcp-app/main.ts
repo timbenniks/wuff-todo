@@ -1,5 +1,5 @@
 import { App } from "@modelcontextprotocol/ext-apps";
-import { listThemeVariables } from "@wuff/design";
+import { resetListTheme } from "@wuff/design";
 import type { EmpireSettings } from "@wuff/contracts";
 import { wuffCopy, wuffError } from "@wuff/ui/features/lib/copy";
 import { ToolError, type McpViewRuntime, type McpView } from "./runtime";
@@ -64,9 +64,7 @@ function show(value: unknown) {
   for (const module of moduleViews) module.beforeShow?.(data);
   root.replaceChildren();
   root.classList.remove("totake-view");
-  for (const [key, value] of Object.entries(listThemeVariables("blue")))
-    document.documentElement.style.setProperty(key, value);
-  document.documentElement.dataset.listTheme = "blue";
+  resetListTheme(document.documentElement);
   view.render(data);
 }
 app.ontoolresult = (result) => show(result.structuredContent);
