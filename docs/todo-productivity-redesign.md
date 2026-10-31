@@ -167,3 +167,14 @@ The serial view/favorites/nesting/navigation integration rerun passed all six
 cases with no skips (72.7 seconds), including the two previously throttled adapter
 cases. The earlier blocked combined dense-flow runs remain explicitly historical;
 updated menu/appearance, drawer and navigation/actual SDK checks all pass.
+
+## Cross-product appearance reset
+
+Review of 44ba668 found that MCP’s shared render transition reset palette tokens
+but retained Todo’s `color-scheme: dark`. The shared design reset now restores
+light native controls, removes Todo’s appearance marker/action override and applies
+the existing blue shell before the next module renders. Todo reapplies its explicit
+choice when active; later OS changes are ignored while another module is active.
+A new unit case verifies shell tokens, native scheme, marker/action cleanup and
+unrelated metadata preservation. All 205 units and TypeScript pass. The SDK fixture
+can deliver real read-only tool results to verify Dark/System → Empire transitions.

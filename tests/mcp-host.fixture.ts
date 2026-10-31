@@ -25,3 +25,17 @@ await bridge.connect(
   new PostMessageTransport(iframe.contentWindow!, iframe.contentWindow!),
 );
 iframe.srcdoc = await (await fetch("/app-html")).text();
+
+// Read-only host tool-result delivery for cross-product rendering regressions.
+Object.assign(window, {
+  wuffFixtureShowTool: async (name: string, args: Record<string, unknown>) => {
+    const response = await fetch("/mcp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, arguments: args }),
+    });
+    const result = await response.json();
+    if (result.isError) throw Error("Synthetic host tool result failed");
+    await bridge.sendToolResult(result);
+  },
+});

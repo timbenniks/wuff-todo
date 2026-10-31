@@ -572,6 +572,63 @@ try {
   evidence.push(
     "Actual local MCP Apps SDK host: dashboard catalog search, parent/child/sibling navigation, contextual favorites and canonical tree",
   );
+  await host.emulateMedia({ colorScheme: "dark" });
+  for (const mode of ["dark", "system"]) {
+    await host.evaluate(async (listId: string) => {
+      await (window as any).wuffFixtureShowTool("show_list", { listId });
+    }, parent.id);
+    const appearance = frame.getByRole("combobox", {
+      name: "Appearance",
+      exact: true,
+    });
+    await appearance.selectOption(mode);
+    await expect
+      .poll(() =>
+        frame
+          .locator("html")
+          .evaluate((el: HTMLElement) => getComputedStyle(el).colorScheme),
+      )
+      .toBe("dark");
+    await host.evaluate(async () => {
+      await (window as any).wuffFixtureShowTool("show_empire_settings", {});
+    });
+    await expect(
+      frame.getByRole("heading", { name: "Your Wuff Empire", exact: true }),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        frame
+          .locator("html")
+          .evaluate((el: HTMLElement) => getComputedStyle(el).colorScheme),
+      )
+      .toBe("light");
+    assert.equal(
+      await frame
+        .locator("html")
+        .evaluate((el: HTMLElement) => el.dataset.todoAppearance),
+      undefined,
+    );
+    assert.equal(
+      await frame
+        .locator("html")
+        .evaluate((el: HTMLElement) =>
+          el.style.getPropertyValue("--wuff-action"),
+        ),
+      "",
+    );
+  }
+  await host.emulateMedia({ colorScheme: "light" });
+  await host.emulateMedia({ colorScheme: "dark" });
+  await expect
+    .poll(() =>
+      frame
+        .locator("html")
+        .evaluate((el: HTMLElement) => getComputedStyle(el).colorScheme),
+    )
+    .toBe("light");
+  evidence.push(
+    "Real SDK host switches Todo Dark and System to Empire settings: native controls return to light, Todo-owned theme state is cleared, later OS changes leave Empire unaffected",
+  );
   assert.deepEqual(errors, []);
   await writeFile(
     `${out}/verification.json`,

@@ -73,3 +73,20 @@ export function todoThemeVariables(
     "--wuff-control": dark ? "#697786" : "#89939e",
   };
 }
+
+// Restore the shared shell before another product renders its own theme.
+export function resetListTheme(target: {
+  style: {
+    setProperty: (name: string, value: string) => void;
+    removeProperty: (name: string) => unknown;
+    colorScheme: string;
+  };
+  dataset: Record<string, string | undefined>;
+}) {
+  for (const [key, value] of Object.entries(listThemeVariables("blue")))
+    target.style.setProperty(key, value);
+  target.style.removeProperty("--wuff-action");
+  target.style.colorScheme = "light";
+  target.dataset.listTheme = "blue";
+  delete target.dataset.todoAppearance;
+}

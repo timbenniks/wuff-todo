@@ -880,3 +880,10 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   border: 0;
   font-size: 13px;
 }
+
+@media (max-width: 767px) {
+  .todo-workspace .todo-appearance-control select,
+  .todo-workspace .list-move-fields select {
+    font-size: 16px;
+  }
+}

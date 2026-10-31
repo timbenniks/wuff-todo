@@ -21,5 +21,8 @@ export function applyListTheme(
   target.dataset.listTheme = color;
   target.style.colorScheme = dark ? "dark" : "light";
   if (productivity) target.dataset.todoAppearance = dark ? "dark" : "light";
-  else delete target.dataset.todoAppearance;
+  else {
+    delete target.dataset.todoAppearance;
+    target.style.removeProperty("--wuff-action");
+  }
 }

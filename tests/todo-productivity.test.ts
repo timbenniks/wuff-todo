@@ -41,7 +41,7 @@ const luminance = (hex: string) => {
 const contrast = (a: string, b: string) =>
   (Math.max(luminance(a), luminance(b)) + 0.05) /
   (Math.min(luminance(a), luminance(b)) + 0.05);
-test("Todo neutral light/dark text, metadata, links and primary actions retain contrast in every palette", () => {
+test("Todo light/dark text, metadata, links and primary actions retain contrast in every palette", () => {
   for (const color of listColors)
     for (const dark of [false, true]) {
       const theme = todoThemeVariables(color, dark);
@@ -277,4 +277,33 @@ test("Todo day controls preserve hidden favorite preferences and cannot move out
     startPage: "home",
   });
   assert.deepEqual(settings.hidden, ["favorites", "today"]);
+});
+
+test("leaving Todo restores the shared shell and native controls without its dark-mode state", async () => {
+  const { resetListTheme, listThemeVariables } =
+    await import("../packages/design/src/index");
+  const values = new Map(Object.entries(todoThemeVariables("rose", true)));
+  const target = {
+    style: {
+      colorScheme: "dark",
+      setProperty: (key: string, value: string) => {
+        values.set(key, value);
+      },
+      removeProperty: (key: string) => {
+        values.delete(key);
+      },
+    },
+    dataset: {
+      listTheme: "rose",
+      todoAppearance: "dark",
+      otherModule: "retained",
+    } as Record<string, string | undefined>,
+  };
+  resetListTheme(target);
+  assert.equal(target.style.colorScheme, "light");
+  assert.equal(target.dataset.todoAppearance, undefined);
+  assert.equal(values.has("--wuff-action"), false);
+  assert.deepEqual(Object.fromEntries(values), listThemeVariables("blue"));
+  assert.equal(target.dataset.otherModule, "retained");
+  assert.equal(target.dataset.listTheme, "blue");
 });
