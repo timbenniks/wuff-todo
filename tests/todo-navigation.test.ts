@@ -150,3 +150,57 @@ test("width storage isolates accounts, resets and tolerates invalid/blocked stor
   assert.doesNotThrow(() => saveSidebarWidth(blocked, "one", 400));
   assert.doesNotThrow(() => saveSidebarWidth(blocked, "one", null));
 });
+
+test("MCP list edits retain fresh authorized navigation instead of dropping it or reviving stale parents", async () => {
+  const { todoNavigationResponse } =
+    await import("../apps/web/src/modules/todo/navigation-response");
+  const edited = { id: "a", version: 8, title: "Edited child" };
+  const accessible = lists.filter((list) => list.id !== "p");
+  const response = await todoNavigationResponse(
+    { list: edited, lists },
+    true,
+    async () => accessible,
+  );
+  assert.deepEqual(response.list, edited);
+  assert.deepEqual(response.lists, accessible);
+  assert.equal(
+    listNavigationContext(response.lists as ListSummary[], "a").parent,
+    null,
+  );
+  const home = await todoNavigationResponse(
+    { dashboard: { today: "2026-10-31" } },
+    true,
+    async () => lists,
+  );
+  assert.deepEqual(home.lists, lists);
+});
+test("MCP catalog enrichment respects read scope, non-list results and read failure after a mutation", async () => {
+  const { todoNavigationResponse } =
+    await import("../apps/web/src/modules/todo/navigation-response");
+  const unreadable = async () => {
+    throw Error("Reader must not run");
+  };
+  assert.deepEqual(
+    await todoNavigationResponse({ list: { id: "a" } }, false, unreadable),
+    { list: { id: "a" } },
+  );
+  assert.deepEqual(
+    await todoNavigationResponse({ sharing: { version: 8 } }, true, unreadable),
+    { sharing: { version: 8 } },
+  );
+  await assert.rejects(
+    todoNavigationResponse(
+      { list: { id: "a", version: 8 } },
+      true,
+      async () => {
+        throw Error("Catalog temporarily unavailable");
+      },
+    ),
+    /Catalog temporarily unavailable/,
+  );
+  assert.deepEqual(
+    (await todoNavigationResponse({ list: { id: "a" } }, true, async () => []))
+      .lists,
+    [],
+  );
+});

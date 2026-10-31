@@ -44,14 +44,26 @@ import {
 } from "@wuff/contracts";
 import * as domain from "@wuff/domain/modules/todo";
 import type { ModuleMcpContext } from "@/lib/mcp-context";
+import { todoNavigationResponse } from "./navigation-response";
 export function registerTodoMcp({
   actor,
   registerTool,
   uri,
   read,
   write,
-  result,
+  result: moduleResult,
 }: ModuleMcpContext) {
+  // Every server-produced list render gets current, authorized navigation context,
+  // including mutation replies and receipt replays. Local draft rerenders can then
+  // retain that catalog without reviving revoked parent/sibling access.
+  const result: ModuleMcpContext["result"] = (action) =>
+    moduleResult(async () =>
+      todoNavigationResponse(
+        await action(),
+        actor.scopes.includes("lists:read"),
+        () => domain.listLists(actor),
+      ),
+    );
   const githubReads = [
     [
       "get_github_connections",
@@ -268,7 +280,6 @@ export function registerTodoMcp({
     async ({ listId }) =>
       result(async () => ({
         list: await domain.getList(actor, listId),
-        lists: await domain.listLists(actor),
       })),
   );
   registerTool(
@@ -291,7 +302,6 @@ export function registerTodoMcp({
     async ({ listId }) =>
       result(async () => ({
         list: await domain.getList(actor, listId),
-        lists: await domain.listLists(actor),
       })),
   );
   registerTool(
@@ -319,7 +329,6 @@ export function registerTodoMcp({
     async (input) =>
       result(async () => ({
         dashboard: await domain.getDashboard(actor, input),
-        lists: await domain.listLists(actor),
       })),
   );
   registerTool(
@@ -333,7 +342,6 @@ export function registerTodoMcp({
     async (input) =>
       result(async () => ({
         dashboard: await domain.getDashboard(actor, input),
-        lists: await domain.listLists(actor),
       })),
   );
   registerTool(

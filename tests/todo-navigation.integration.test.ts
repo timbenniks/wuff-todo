@@ -51,7 +51,10 @@ test("Todo navigation adapters retain favorite hierarchy, show authorized contex
   });
   const grants: Awaited<ReturnType<typeof empireGrant>>[] = [];
   try {
-    const grant = await empireGrant(cookie, "lists:read lists:manage");
+    const grant = await empireGrant(
+      cookie,
+      "lists:read lists:manage tasks:write",
+    );
     grants.push(grant);
     const order = await getListOrder(actor);
     let response = await fetch(origin + "/api/v1/list-order", {
@@ -111,6 +114,23 @@ test("Todo navigation adapters retain favorite hierarchy, show authorized contex
         ),
       );
     }
+    const mutation = await empireMcp(grant.access_token, "create_task", {
+      listId: child.id,
+      version: (await getList(actor, child.id)).version,
+      title: "Navigation survives mutation",
+      operationId: op(),
+    });
+    assert(!mutation.result.isError);
+    assert(
+      mutation.result.structuredContent.lists.some(
+        (list: any) => list.id === parent.id,
+      ),
+    );
+    assert(
+      !mutation.result.structuredContent.lists.some(
+        (list: any) => list.id === privateList.id,
+      ),
+    );
     const readOnly = await empireGrant(cookie, "lists:read");
     grants.push(readOnly);
     result = await empireMcp(readOnly.access_token, "show_list", {

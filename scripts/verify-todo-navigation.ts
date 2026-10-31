@@ -337,6 +337,32 @@ try {
   evidence.push(
     "320/390/1024/1280/1366/1440px overflow and navigation checks; catalog failure/retry",
   );
+  await page.goto(`http://localhost:3000/lists?listId=${parent.id}`);
+  await page.route(`**/api/v1/lists/${parent.id}`, (route: any) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: { code: "unavailable", message: "Synthetic detail failure" },
+      }),
+    }),
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(
+    page.getByRole("status").filter({ hasText: "Synthetic detail failure" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Child lists (7)", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Retry lists", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await expect(catalog).toBeVisible();
+  await page.unroute(`**/api/v1/lists/${parent.id}`);
+  evidence.push(
+    "A selected-list detail failure preserves the successful catalog and parent context",
+  );
   // The existing SDK fixture serves real tool results to the actual embedded app.
   fixture = spawn(
     process.execPath,
@@ -382,8 +408,37 @@ try {
     frame.getByRole("heading", { name: "Child lists (7)", exact: true }),
   ).toBeVisible();
   await frame
+    .getByRole("textbox", { name: /^New task/ })
+    .first()
+    .fill("MCP parent navigation regression");
+  await frame.getByRole("button", { name: "Add", exact: true }).first().click();
+  await expect(
+    frame.getByRole("button", {
+      name: "Open task: MCP parent navigation regression",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    frame.getByRole("heading", { name: "Child lists (7)", exact: true }),
+  ).toBeVisible();
+  await frame
     .getByRole("button", { name: children[0].title, exact: true })
     .click();
+  await frame
+    .getByRole("textbox", { name: /^New task/ })
+    .first()
+    .fill("MCP child navigation regression");
+  await frame.getByRole("button", { name: "Add", exact: true }).first().click();
+  await expect(
+    frame.getByRole("button", {
+      name: "Open task: MCP child navigation regression",
+      exact: true,
+    }),
+  ).toBeVisible();
+  evidence.push(
+    "MCP parent and child context survive actual task mutation responses",
+  );
+
   await expect(
     frame.getByRole("navigation", { name: "List location" }),
   ).toBeVisible();

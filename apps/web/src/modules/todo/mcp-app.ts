@@ -1968,7 +1968,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       viewerId?: string;
       webOrigin?: string;
     };
-    catalog = data.lists ?? [];
+    if (data.lists) catalog = data.lists;
     if (data.dashboard) {
       current = undefined;
       applyListTheme("blue", document.documentElement);

@@ -273,31 +273,36 @@ export function ListApp({
       const epoch = summaryEpoch.current;
       try {
         await Promise.all([
-          api<ListSummary[]>("/api/v1/lists").then((next) => {
-            if (!active || mutating.current || summaryEpoch.current !== epoch)
-              return;
-            // Preserve the visibly pending create until its own request settles.
-            const pendingList =
-              pending.current && cache.get(pending.current.id);
-            setSummaries(pendingList ? [...next, pendingList] : next);
-            setCatalogError("");
-            for (const current of summariesRef.current)
+          api<ListSummary[]>("/api/v1/lists")
+            .catch((error) => {
+              if (active && summaryEpoch.current === epoch)
+                setCatalogError("We couldn’t refresh your lists.");
+              throw error;
+            })
+            .then((next) => {
+              if (!active || mutating.current || summaryEpoch.current !== epoch)
+                return;
+              // Preserve the visibly pending create until its own request settles.
+              const pendingList =
+                pending.current && cache.get(pending.current.id);
+              setSummaries(pendingList ? [...next, pendingList] : next);
+              setCatalogError("");
+              for (const current of summariesRef.current)
+                if (
+                  current.id !== pending.current?.id &&
+                  !next.some((s) => s.id === current.id)
+                )
+                  cache.forget(current.id);
               if (
-                current.id !== pending.current?.id &&
-                !next.some((s) => s.id === current.id)
+                selected.current &&
+                selected.current !== pending.current?.id &&
+                !next.some((s) => s.id === selected.current)
               )
-                cache.forget(current.id);
-            if (
-              selected.current &&
-              selected.current !== pending.current?.id &&
-              !next.some((s) => s.id === selected.current)
-            )
-              chooseList("");
-          }),
+                chooseList("");
+            }),
           selected.current ? reload(selected.current) : Promise.resolve(),
         ]);
       } catch (e) {
-        setCatalogError("We couldn’t refresh your lists.");
         readError(selected.current, e);
       }
     };
