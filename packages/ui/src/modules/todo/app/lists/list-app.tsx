@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import {
   Archive,
@@ -39,6 +40,9 @@ import { HomeDashboard } from "./home-dashboard";
 import { listSelectionHref } from "../../lib/list-navigation";
 import { CreateListForm } from "./create-list-form";
 import { SidebarLists } from "./sidebar-lists";
+import { SidebarResize, useSidebarWidth } from "./sidebar-resize";
+import { ListContext } from "./list-context";
+import { ListPersonalActions } from "./list-personal-actions";
 import { mergeVisibleOrder } from "../../lib/reorder";
 
 type PendingCreate = {
@@ -71,6 +75,7 @@ export function ListApp({
   liveConfig: LiveLists | null;
   workspace?: { navigation: ReactNode; content: ReactNode };
 }) {
+  const sidebarWidth = useSidebarWidth(userId);
   const startupHome = useRef(!initialList);
   const api = useActorApi();
   const runtime = useRuntime();
@@ -89,6 +94,7 @@ export function ListApp({
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
+  const [catalogError, setCatalogError] = useState("");
   const [readFailure, setReadFailure] = useState("");
   const liveRefresh = useRef<LiveRefreshQueue | null>(null);
   const [summaries, setSummaries] = useState(initialLists),
@@ -274,6 +280,7 @@ export function ListApp({
             const pendingList =
               pending.current && cache.get(pending.current.id);
             setSummaries(pendingList ? [...next, pendingList] : next);
+            setCatalogError("");
             for (const current of summariesRef.current)
               if (
                 current.id !== pending.current?.id &&
@@ -290,6 +297,7 @@ export function ListApp({
           selected.current ? reload(selected.current) : Promise.resolve(),
         ]);
       } catch (e) {
+        setCatalogError("We couldn’t refresh your lists.");
         readError(selected.current, e);
       }
     };
@@ -588,6 +596,23 @@ export function ListApp({
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, [cache, workspace]);
+  const setFavorite = (id: string, enabled: boolean) =>
+    saveSidebar((order) => ({
+      favoriteListIds: [
+        ...(order.favoriteListIds ?? []).filter((value) => value !== id),
+        ...(enabled ? [id] : []),
+      ],
+    }));
+  const setParent = (id: string, parentId: string | null) =>
+    saveSidebar((order) => ({
+      nesting: [
+        ...(order.nesting ?? []).filter((entry) => entry.listId !== id),
+        ...(parentId ? [{ listId: id, parentListId: parentId }] : []),
+      ],
+      collapsedListIds: (order.collapsedListIds ?? []).filter(
+        (value) => value !== parentId,
+      ),
+    }));
   const visibleLists = summaries.filter((s) => s.archived === showArchive);
   const navigationContent = (
     <>
@@ -613,9 +638,7 @@ export function ListApp({
             <>
               <div className="sidebar-section-heading">
                 <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                  {showArchive
-                    ? wuffCopy.archiveHeading
-                    : wuffCopy.listsHeading}
+                  {showArchive ? wuffCopy.archiveHeading : "Your lists"}
                 </span>
                 <Button
                   size="icon"
@@ -679,6 +702,15 @@ export function ListApp({
           </p>
         )}
       </div>
+      {!mobile && (
+        <Button
+          variant="ghost"
+          className="sidebar-reset-width"
+          onClick={() => sidebarWidth.setWidth(null)}
+        >
+          Reset width
+        </Button>
+      )}
       <div className="workspace-footer mt-4 md:mt-auto pt-3 text-sm flex flex-wrap md:block items-center justify-between gap-1">
         <div className="sidebar-utilities flex flex-wrap md:grid items-center gap-0.5">
           <Button
@@ -727,7 +759,12 @@ export function ListApp({
   return (
     <div
       className="workspace-shell todo-workspace bg-background text-foreground"
-      style={listThemeVariables(list?.color ?? "blue")}
+      style={
+        {
+          ...listThemeVariables(list?.color ?? "blue"),
+          "--app-sidebar-width": `${sidebarWidth.width}px`,
+        } as CSSProperties
+      }
     >
       <ListTheme color={list?.color ?? "blue"} />
       <a className="skip-link" href="#list-content">
@@ -744,7 +781,10 @@ export function ListApp({
           onStatus={setLiveStatus}
         />
       )}
-      <aside className="workspace-sidebar app-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col">
+      <aside
+        id="todo-sidebar"
+        className="workspace-sidebar app-sidebar bg-sidebar border-b md:border-b-0 md:border-r border-border px-4 py-4 md:py-5 flex flex-col"
+      >
         <div className="sidebar-brand flex gap-2.5 items-center md:mb-5">
           <a
             className="workspace-brand-link flex gap-2.5 items-center"
@@ -789,6 +829,7 @@ export function ListApp({
             {navigationContent}
           </div>
         )}
+        {!mobile && <SidebarResize {...sidebarWidth} />}
       </aside>
       <dialog
         onKeyDown={containDialogFocus}
@@ -968,7 +1009,10 @@ export function ListApp({
               <HomeDashboard
                 name={name}
                 lists={summaries}
-                busy={busy}
+                favorite={setFavorite}
+                catalogError={catalogError}
+                retryCatalog={() => void liveRefresh.current?.notify()}
+                busy={busy || !!pendingCreate || !!sidebarRetry}
                 change={change}
                 taskError={error}
                 retryTask={
@@ -1027,6 +1071,20 @@ export function ListApp({
                 <header className="list-heading">
                   <h1 title={list.title}>{list.title}</h1>
                   <div className="list-management flex flex-wrap items-center gap-2">
+                    {!isPending &&
+                      !list.archived &&
+                      !catalogError &&
+                      summaries.find((item) => item.id === list.id) && (
+                        <ListPersonalActions
+                          key={`${list.id}:${summaries.find((item) => item.id === list.id)?.parentListId}`}
+                          list={summaries.find((item) => item.id === list.id)!}
+                          lists={summaries}
+                          busy={busy || !!pendingCreate || !!sidebarRetry}
+                          favorite={setFavorite}
+                          move={setParent}
+                        />
+                      )}
+
                     {!isPending && (
                       <ListSettings
                         key={`settings:${list.id}`}
@@ -1105,29 +1163,8 @@ export function ListApp({
                           retry: sidebarRetry
                             ? () => saveSidebar(null)
                             : undefined,
-                          favorite: (id, enabled) =>
-                            saveSidebar((order) => ({
-                              favoriteListIds: [
-                                ...(order.favoriteListIds ?? []).filter(
-                                  (value) => value !== id,
-                                ),
-                                ...(enabled ? [id] : []),
-                              ],
-                            })),
-                          move: (id, parentId) =>
-                            saveSidebar((order) => ({
-                              nesting: [
-                                ...(order.nesting ?? []).filter(
-                                  (entry) => entry.listId !== id,
-                                ),
-                                ...(parentId
-                                  ? [{ listId: id, parentListId: parentId }]
-                                  : []),
-                              ],
-                              collapsedListIds: (
-                                order.collapsedListIds ?? []
-                              ).filter((value) => value !== parentId),
-                            })),
+                          favorite: setFavorite,
+                          move: setParent,
                         }}
                         retry={
                           retryWrite
@@ -1144,6 +1181,13 @@ export function ListApp({
                     )}
                   </div>
                 </header>
+                {!isPending && !list.archived && !catalogError && (
+                  <ListContext
+                    lists={summaries}
+                    id={list.id}
+                    choose={(id) => chooseList(id)}
+                  />
+                )}
                 {isPending ? (
                   <div className="mt-6 text-sm text-muted-foreground">
                     {pendingCreate?.status === "saving" ? (
@@ -1165,6 +1209,13 @@ export function ListApp({
                   </div>
                 ) : (
                   <>
+                    {summaries.some(
+                      (item) => item.parentListId === list.id && !item.archived,
+                    ) && (
+                      <h2 className="list-own-tasks-heading">
+                        Tasks in this list
+                      </h2>
+                    )}
                     <TaskGroups
                       key={list.id}
                       list={list}

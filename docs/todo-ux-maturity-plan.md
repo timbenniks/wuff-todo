@@ -1,6 +1,6 @@
 # Todo UX maturity proposal
 
-October 31, 2026. Research and implementation plan; no product behavior changed.
+October 31, 2026. Approved for implementation; draft PR #45 on `codex/todo-ux-maturity`. Local implementation and verification are recorded below; production release is separate.
 
 ## Outcome
 
@@ -48,13 +48,13 @@ remain in force until implementation adopts and updates them explicitly.
 
 These sources establish patterns, not proof that a specific Wuff layout will work.
 
-| Reference | Relevant pattern | Recommendation for Wuff |
-| --- | --- | --- |
-| [Todoist favorites](https://www.todoist.com/help/todoist/features/add-a-project-label-or-filter-to-favorites-in-todoist-zezDfvSK) | Dedicated shortcuts; favorite order follows source order | Keep shortcuts tied to the existing personal order; make favoriting visibly separate from moving a list. |
-| [Todoist sub-projects](https://www.todoist.com/help/todoist/features/create-a-sub-project-in-todoist-aTA15C70) | Explicit indented project hierarchy | Reserve identical columns for all roots, indent children consistently, and expose parent context. Wuff keeps its existing one-level model. |
-| [Microsoft To Do list organization](https://support.microsoft.com/en-us/todo/organize-your-lists) | Groups organize independent lists; removing a group preserves its lists | Communicate organization independently of content/permissions. Wuff parents remain real lists with their own tasks. |
-| [W3C disclosure navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/) | Nested semantic lists and separate disclosure controls | Use links plus labeled expand buttons, visible keyboard focus and nested list semantics. A full ARIA tree widget is unnecessary unless its complete keyboard model is implemented. |
-| [W3C window splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) | Named, focusable separator with size state and keyboard resizing | Offer pointer and keyboard resize, bounds and a reset. The APG pattern notes incomplete example/review work; validate the implementation with assistive technology. |
+| Reference                                                                                                                         | Relevant pattern                                                        | Recommendation for Wuff                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Todoist favorites](https://www.todoist.com/help/todoist/features/add-a-project-label-or-filter-to-favorites-in-todoist-zezDfvSK) | Dedicated shortcuts; favorite order follows source order                | Keep shortcuts tied to the existing personal order; make favoriting visibly separate from moving a list.                                                                           |
+| [Todoist sub-projects](https://www.todoist.com/help/todoist/features/create-a-sub-project-in-todoist-aTA15C70)                    | Explicit indented project hierarchy                                     | Reserve identical columns for all roots, indent children consistently, and expose parent context. Wuff keeps its existing one-level model.                                         |
+| [Microsoft To Do list organization](https://support.microsoft.com/en-us/todo/organize-your-lists)                                 | Groups organize independent lists; removing a group preserves its lists | Communicate organization independently of content/permissions. Wuff parents remain real lists with their own tasks.                                                                |
+| [W3C disclosure navigation](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/)                  | Nested semantic lists and separate disclosure controls                  | Use links plus labeled expand buttons, visible keyboard focus and nested list semantics. A full ARIA tree widget is unnecessary unless its complete keyboard model is implemented. |
+| [W3C window splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/)                                                   | Named, focusable separator with size state and keyboard resizing        | Offer pointer and keyboard resize, bounds and a reset. The APG pattern notes incomplete example/review work; validate the implementation with assistive technology.                |
 
 ## 1. Make the Todo overview list-first
 
@@ -167,12 +167,12 @@ member sees only their own organization and authorized lists.
 
 ## Delivery order and surface contract
 
-| Slice | Reviewable result | HTTP/MCP and connection implications |
-| --- | --- | --- |
-| A: hierarchy and sidebar | Canonical tree, contextual favorites, aligned rows, quieter icons, resize | Reuse `listLists`, `getListOrder`/`reorderLists`; `/api/v1/lists`, `/api/v1/list-order`; `list_lists`, `get_list_order`, `reorder_lists`. Update shared projection and embedded `show_lists` together. Width is browser-local layout state. |
-| B: overview | Your lists first, title search, child navigation, dated panels below | Existing authorized catalog and dashboard reads suffice. Keep synced dashboard settings unchanged; make Your lists a structural section initially. Extend `show_dashboard` with list browsing and retain tool-only catalog discovery. Do not silently alter Empire's portal widget. |
-| C: list context and management | Child navigation, breadcrumbs, sibling switcher and direct personal actions | Reuse authorized catalog plus `get_list` and existing personal-order mutations. Extend `show_list` context where the host supports it. Design composite child creation separately before implementation. |
-| D: usability refinement | Adjust geometry, labels and density from observed laptop/phone use | No new persistence by default. Any later metric, preference or mutation gets shared contracts/domain/API/MCP coverage before delivery. |
+| Slice                          | Reviewable result                                                           | HTTP/MCP and connection implications                                                                                                                                                                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A: hierarchy and sidebar       | Canonical tree, contextual favorites, aligned rows, quieter icons, resize   | Reuse `listLists`, `getListOrder`/`reorderLists`; `/api/v1/lists`, `/api/v1/list-order`; `list_lists`, `get_list_order`, `reorder_lists`. Update shared projection and embedded `show_lists` together. Width is browser-local layout state.                                         |
+| B: overview                    | Your lists first, title search, child navigation, dated panels below        | Existing authorized catalog and dashboard reads suffice. Keep synced dashboard settings unchanged; make Your lists a structural section initially. Extend `show_dashboard` with list browsing and retain tool-only catalog discovery. Do not silently alter Empire's portal widget. |
+| C: list context and management | Child navigation, breadcrumbs, sibling switcher and direct personal actions | Reuse authorized catalog plus `get_list` and existing personal-order mutations. Extend `show_list` context where the host supports it. Design composite child creation separately before implementation.                                                                            |
+| D: usability refinement        | Adjust geometry, labels and density from observed laptop/phone use          | No new persistence by default. Any later metric, preference or mutation gets shared contracts/domain/API/MCP coverage before delivery.                                                                                                                                              |
 
 No new database schema, OAuth scope, consent expansion, provider connection or
 paid execution is proposed for A–C. Read-only grants remain read-only. Existing
@@ -224,3 +224,26 @@ layout from observed failures before calling the UX mature.
 
 Planning verification: source/document inspection and read-only live MCP catalog
 and order reads only. Product tests/builds were not run for this proposal.
+
+## Implementation record
+
+The approved A–C slices are implemented in Todo shared UI and MCP rendering.
+The canonical tree and favorites reuse current personal order services; overview
+search and page context use shared pure projections. A compact List actions menu
+adds direct favorite and explicit parent/move controls while retaining the existing
+settings controls. Composite New child list remains deferred as planned.
+
+`show_list`/`get_list` and `show_dashboard`/`get_dashboard` additionally return the
+current authorized catalog, allowing contextual navigation without depending on a
+separately enabled catalog tool or another account's cached catalog. No existing
+fields/tools/routes are removed. HTTP continues exposing the same catalog through
+`GET /api/v1/lists`. Mutation behavior and OAuth grants remain unchanged.
+
+No dependency, schema, provider, consent, global safeguard or production
+configuration change. Todo-scoped shared CSS changes use existing tokens. Existing
+unrelated package/workspace/lockfile edits are excluded from feature commits.
+
+The browser connector failed to load its service module. Rendered behavior is
+verified using the repository's Playwright harness against the optimized local
+application and actual MCP Apps SDK host, with isolated synthetic accounts.
+Current detailed verification results will be recorded after the final checks.

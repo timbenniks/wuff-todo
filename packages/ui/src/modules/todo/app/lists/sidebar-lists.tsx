@@ -1,7 +1,11 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronRight, ListTodo, Star, Users } from "lucide-react";
-import { sidebarGroups, type ListSummary } from "@wuff/contracts";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Users } from "lucide-react";
+import {
+  sidebarGroups,
+  listNavigationContext,
+  type ListSummary,
+} from "@wuff/contracts";
 import { Button } from "../../../../button";
 import { SortableItem, SortableList } from "../../components/sortable";
 import { listPalette } from "../../lib/list-colors";
@@ -29,35 +33,42 @@ export function SidebarLists({
   toggle: (id: string, collapsed: boolean) => Promise<boolean>;
   pending?: { id: string; status: "saving" | "failed" } | null;
 }) {
+  const tree = useRef<HTMLElement>(null);
   const groups = sidebarGroups(lists, archived);
+  useEffect(() => {
+    tree.current
+      ?.querySelector<HTMLElement>('[aria-current="page"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedId]);
   const [collapsedSelection, setCollapsedSelection] = useState("");
   useEffect(() => setCollapsedSelection(""), [selectedId]);
-  function row(list: ListSummary, children: ListSummary[] = []) {
-    // Keep a directly opened child discoverable even if its parent was collapsed.
+  function row(
+    list: ListSummary,
+    children: ListSummary[] = [],
+    shortcut = false,
+    nested = false,
+  ): ReactNode {
     const expanded =
       !list.sidebarCollapsed ||
       (collapsedSelection !== selectedId &&
         children.some((child) => child.id === selectedId));
-    return (
-      <SortableItem
-        key={list.id}
-        id={list.id}
-        title={`list ${list.title}`}
-        disabled={disabled}
-      >
-        {({ ref, style, handle }) => (
-          <div ref={ref} style={style} className="min-w-0">
-            <div className="sidebar-list-row flex min-w-0 items-center gap-0.5">
+    const groupId = `${shortcut ? "favorite" : "tree"}-children-${list.id}`;
+    const parent =
+      shortcut && !nested ? listNavigationContext(lists, list.id).parent : null;
+    function content(handle?: ReactNode) {
+      return (
+        <>
+          <div className="sidebar-list-row">
+            <span className="sidebar-disclosure">
               {children.length > 0 && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="shrink-0"
                   disabled={disabled}
                   aria-label={`${expanded ? "Collapse" : "Expand"} ${list.title}`}
                   aria-expanded={expanded}
-                  aria-controls={`child-lists-${list.id}`}
+                  aria-controls={groupId}
                   onClick={() => {
                     setCollapsedSelection(expanded ? selectedId : "");
                     void toggle(list.id, expanded);
@@ -70,134 +81,118 @@ export function SidebarLists({
                   )}
                 </Button>
               )}
-              <button
-                type="button"
-                title={list.title}
-                onClick={() => choose(list.id)}
-                onPointerEnter={() => preload(list.id)}
-                onFocus={() => preload(list.id)}
-                aria-current={list.id === selectedId ? "page" : undefined}
-                className={`flex flex-1 min-w-0 items-center gap-2 text-left rounded-lg min-h-11 px-3 py-2 text-sm ${list.id === selectedId ? "font-semibold" : "hover:bg-surface/60"}`}
-                style={{
-                  background:
-                    list.id === selectedId
-                      ? listPalette[list.color].tint
-                      : undefined,
-                }}
-              >
-                <ListTodo
-                  size={17}
-                  className="shrink-0"
-                  style={{ color: listPalette[list.color].accent }}
-                />
-                <span className="truncate">{list.title}</span>
-                {pending?.id === list.id && (
-                  <span className="text-xs text-muted-foreground">
-                    {pending.status === "saving" ? "Saving…" : "Retry"}
-                  </span>
-                )}
-                {list.shared && (
-                  <span
-                    className="ml-auto inline-flex shrink-0 text-muted-foreground"
-                    title="Shared list"
-                  >
-                    <Users size={16} aria-hidden="true" />
-                    <span className="sr-only">Shared list</span>
-                  </span>
-                )}
-              </button>
-              {handle}
-            </div>
-            {children.length > 0 && (
-              <div
-                id={`child-lists-${list.id}`}
-                hidden={!expanded}
-                className="ml-4 border-l border-border pl-1"
-              >
+            </span>
+            <button
+              type="button"
+              title={list.title}
+              onClick={() => choose(list.id)}
+              onPointerEnter={() => preload(list.id)}
+              onFocus={() => preload(list.id)}
+              aria-current={list.id === selectedId ? "page" : undefined}
+              className="sidebar-list-link"
+              style={{
+                background:
+                  list.id === selectedId
+                    ? listPalette[list.color].tint
+                    : undefined,
+              }}
+            >
+              <span
+                className="list-color-marker"
+                style={{ background: listPalette[list.color].accent }}
+                aria-hidden="true"
+              />
+              <span className="sidebar-list-name">
+                <span>{list.title}</span>
+                {parent && <small>In {parent.title}</small>}
+              </span>
+              {pending?.id === list.id && (
+                <span className="text-xs text-muted-foreground">
+                  {pending.status === "saving" ? "Saving…" : "Retry"}
+                </span>
+              )}
+              {list.shared && (
+                <span className="sidebar-shared" title="Shared list">
+                  <Users size={15} aria-hidden="true" />
+                  <span className="sr-only">Shared list</span>
+                </span>
+              )}
+            </button>
+            {handle && <span className="sidebar-reorder">{handle}</span>}
+          </div>
+          {children.length > 0 && (
+            <div id={groupId} hidden={!expanded} className="sidebar-children">
+              {shortcut ? (
+                <div role="group" aria-label={`Lists under ${list.title}`}>
+                  {children.map((child) => row(child, [], true, true))}
+                </div>
+              ) : (
                 <SortableList
                   items={children}
                   disabled={disabled}
                   onReorder={reorder}
                 >
-                  <div
-                    className="grid gap-1"
-                    role="group"
-                    aria-label={`Lists under ${list.title}`}
-                  >
-                    {children.map((child) => row(child))}
+                  <div role="group" aria-label={`Lists under ${list.title}`}>
+                    {children.map((child) => row(child, [], false, true))}
                   </div>
                 </SortableList>
-              </div>
-            )}
+              )}
+            </div>
+          )}
+        </>
+      );
+    }
+    if (shortcut)
+      return (
+        <div key={list.id} className="sidebar-shortcut">
+          {content()}
+        </div>
+      );
+    return (
+      <SortableItem
+        key={list.id}
+        id={list.id}
+        title={`list ${list.title}`}
+        disabled={disabled}
+      >
+        {({ ref, style, handle }) => (
+          <div ref={ref} style={style} className="min-w-0">
+            {content(handle)}
           </div>
         )}
       </SortableItem>
     );
   }
+  const favorites = lists.filter((list) => list.favorite && !list.archived);
   return (
     <>
-      {!archived && lists.some((list) => list.favorite && !list.archived) && (
+      {!archived && favorites.length > 0 && (
         <section
           className="sidebar-favorites mb-4"
           aria-labelledby="favorite-lists-heading"
         >
-          <h3
-            id="favorite-lists-heading"
-            className="sidebar-group-label text-xs font-semibold text-muted-foreground px-3 mb-1"
-          >
+          <h3 id="favorite-lists-heading" className="sidebar-group-label">
             Favorites
           </h3>
-          <nav aria-label="Favorite lists" className="grid gap-1">
-            {lists
-              .filter((list) => list.favorite && !list.archived)
-              .map((list) => (
-                <button
-                  key={list.id}
-                  type="button"
-                  title={list.title}
-                  onClick={() => choose(list.id)}
-                  onPointerEnter={() => preload(list.id)}
-                  onFocus={() => preload(list.id)}
-                  aria-current={list.id === selectedId ? "page" : undefined}
-                  className={`flex min-w-0 items-center gap-2 rounded-lg min-h-11 px-3 py-2 text-left text-sm ${list.id === selectedId ? "font-semibold" : "hover:bg-surface/60"}`}
-                  style={{
-                    background:
-                      list.id === selectedId
-                        ? listPalette[list.color].tint
-                        : undefined,
-                  }}
-                >
-                  <Star
-                    size={17}
-                    className="shrink-0"
-                    style={{ color: listPalette[list.color].accent }}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{list.title}</span>
-                  {list.shared && (
-                    <span
-                      className="ml-auto inline-flex shrink-0 text-muted-foreground"
-                      title="Shared list"
-                    >
-                      <Users size={16} aria-hidden="true" />
-                      <span className="sr-only">Shared list</span>
-                    </span>
-                  )}
-                </button>
-              ))}
+          <nav aria-label="Favorite lists">
+            {favorites.map((list) =>
+              row(
+                list,
+                groups.find((g) => g.list.id === list.id)?.children ?? [],
+                true,
+              ),
+            )}
           </nav>
         </section>
       )}
       {controls}
-      <nav aria-label={archived ? "Archived lists" : "Lists"}>
+      <nav ref={tree} aria-label={archived ? "Archived lists" : "Lists"}>
         <SortableList
           items={groups.map((group) => group.list)}
           disabled={disabled}
           onReorder={reorder}
         >
-          <div className="grid gap-1">
-            {groups.map((group) => row(group.list, group.children))}
-          </div>
+          <div>{groups.map((group) => row(group.list, group.children))}</div>
         </SortableList>
       </nav>
     </>

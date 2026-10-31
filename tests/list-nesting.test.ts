@@ -79,7 +79,7 @@ test("older reorder payloads omit hierarchy rather than clearing it", () => {
   assert.equal(value.collapsedListIds, undefined);
 });
 
-test("active favorites appear only in Favorites while remaining children stay reachable", () => {
+test("favorites preserve the complete canonical hierarchy and archive fallback", () => {
   const lists = [entry("parent"), entry("child", "parent"), entry("other")];
   lists[1].favorite = true;
   assert.deepEqual(
@@ -88,7 +88,7 @@ test("active favorites appear only in Favorites while remaining children stay re
       g.children.map((c) => c.id),
     ]),
     [
-      ["parent", []],
+      ["parent", ["child"]],
       ["other", []],
     ],
   );
@@ -96,7 +96,7 @@ test("active favorites appear only in Favorites while remaining children stay re
   lists[1].favorite = false;
   assert.deepEqual(
     sidebarGroups(lists, false).map((g) => g.list.id),
-    ["child", "other"],
+    ["parent", "other"],
   );
   assert.equal(lists[1].parentListId, "parent");
   lists[0].favorite = false;

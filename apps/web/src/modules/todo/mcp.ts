@@ -266,7 +266,10 @@ export function registerTodoMcp({
       _meta: { ui: { resourceUri: uri } },
     },
     async ({ listId }) =>
-      result(async () => ({ list: await domain.getList(actor, listId) })),
+      result(async () => ({
+        list: await domain.getList(actor, listId),
+        lists: await domain.listLists(actor),
+      })),
   );
   registerTool(
     "list_lists",
@@ -286,7 +289,10 @@ export function registerTodoMcp({
       annotations: read,
     },
     async ({ listId }) =>
-      result(async () => ({ list: await domain.getList(actor, listId) })),
+      result(async () => ({
+        list: await domain.getList(actor, listId),
+        lists: await domain.listLists(actor),
+      })),
   );
   registerTool(
     "get_task",
@@ -313,6 +319,7 @@ export function registerTodoMcp({
     async (input) =>
       result(async () => ({
         dashboard: await domain.getDashboard(actor, input),
+        lists: await domain.listLists(actor),
       })),
   );
   registerTool(
@@ -326,6 +333,7 @@ export function registerTodoMcp({
     async (input) =>
       result(async () => ({
         dashboard: await domain.getDashboard(actor, input),
+        lists: await domain.listLists(actor),
       })),
   );
   registerTool(

@@ -27,6 +27,7 @@ import { formatDueDate } from "../../lib/due-date";
 import { listPalette } from "../../lib/list-colors";
 import { Button } from "../../../../button";
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
+import { ListBrowser } from "./list-browser";
 import { TaskCapture } from "./task-capture";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { useHomeTasks } from "./use-home-tasks";
@@ -50,6 +51,9 @@ export function HomeDashboard({
   change,
   taskError = "",
   retryTask,
+  favorite,
+  catalogError,
+  retryCatalog,
 }: {
   userId: string;
   name: string;
@@ -62,6 +66,9 @@ export function HomeDashboard({
   change: ListChange;
   taskError?: string;
   retryTask?: () => Promise<boolean>;
+  favorite: (id: string, enabled: boolean) => Promise<boolean>;
+  catalogError: string;
+  retryCatalog: () => void;
 }) {
   const viewName = "Overview";
   const api = useActorApi(),
@@ -256,7 +263,7 @@ export function HomeDashboard({
               {greeting}
               {`, ${name}`}
             </p>
-            <h1 className="text-2xl font-bold tracking-tight">Your day</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Todo overview</h1>
           </div>
         </div>
         <div className="home-header-actions">
@@ -381,6 +388,20 @@ export function HomeDashboard({
         <p role="status" className="mb-4 text-sm text-muted-foreground">
           {notice}
         </p>
+      )}
+      {catalogError ? (
+        <div role="alert" className="list-browser-empty">
+          <p>We couldn’t refresh your lists. Try again to see current lists.</p>
+          <Button onClick={retryCatalog}>Retry lists</Button>
+        </div>
+      ) : (
+        <ListBrowser
+          lists={lists}
+          choose={chooseList}
+          create={createList}
+          favorite={favorite}
+          busy={locked}
+        />
       )}
       {error ? (
         <div role="alert" className="rounded-xl border border-border p-5">

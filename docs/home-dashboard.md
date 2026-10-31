@@ -35,3 +35,16 @@ Customization, section order/visibility, startup preferences and account isolati
 remain independent. This UI work adds no schema, API or MCP tool contract. See
 [Phase 3 decisions](ux-improvement-spec.md#phase-3--actionable-home-and-completion-flow)
 and [verification](verification.md#ux-improvement-phase-3--october-24-2026).
+
+## List-first Todo overview — October 31, 2026
+
+Implemented on `codex/todo-ux-maturity`; release is separate. Todo Overview starts
+with Your lists, New list and title search over the authorized active catalog.
+Undated/nonfavorite lists appear too; matching children retain parent context.
+Today/Coming up/Favorites retain their synced visibility/order settings below this
+structural catalog. All-hidden dated sections cannot hide the catalog. Search and
+overview expansion are transient UI state, with no schema/settings migration.
+The Empire portal widget remains unchanged. Existing Home capture/completion and
+last-list startup behavior remain. Embedded Home receives an authorized catalog
+with its dashboard response; tool-only discovery still uses list_lists.
+See [implementation and evidence](todo-ux-maturity-plan.md).

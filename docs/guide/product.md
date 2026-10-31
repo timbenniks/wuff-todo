@@ -72,3 +72,12 @@ grant and are separate from menu visibility. Connection controls stay available
 when authorized. AI clients can turn tools off; the owner re-enables them in
 Settings. After saving, refresh the client tool catalog; cached disabled calls
 are blocked immediately. Newly added optional tools stay off after a selection.
+
+## Todo discovery and personal hierarchy
+
+Todo Overview puts the complete active list catalog before dated-task sections.
+Favorites supplement the canonical tree: do not remove starred lists from their
+parent or promote children solely because their parent is a favorite. Parent
+pages expose child lists; child pages expose only the current viewer's authorized
+parent/siblings. List nesting is personal organization, never permission or task
+inheritance. The desktop width is an account-specific device layout preference.

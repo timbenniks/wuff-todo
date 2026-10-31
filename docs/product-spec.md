@@ -7,7 +7,6 @@ grants. No database/auth-managed table changes. See [retirement](native-retireme
 Earlier dated native implementation/release sections are historical and do not
 instruct current development.
 
-
 Status: working specification, version 0.1
 
 Updated: October 25, 2026
@@ -83,6 +82,12 @@ Each user has their own identity and session. New accounts require a valid invit
 The first two users use an operator-only bootstrap: managed identities are provisioned through the Neon CLI, then admitted to Wuff. Each recipient requests an email code at `/set-password` and chooses their own password. Public registration stays disabled. Subsequent login uses email/password; the same email-code page handles recovery. Existing admitted accounts can now receive and accept in-app list invitations. Inviting a new person into Wuff itself remains separate operator provisioning.
 
 ### Lists
+
+October 31 Todo UX update (feature branch, not production): Overview is list-first;
+favorites supplement a complete canonical tree; parent/child pages expose personal
+navigation context; desktop sidebar width is device-local and adjustable. Existing
+Today/Coming up/Favorites preferences and Empire portal behavior remain. See
+[the implementation plan and evidence](todo-ux-maturity-plan.md).
 
 Users can create and view private lists, rename their own lists, share them, and manually order lists. Shared lists display who owns them and who has access.
 

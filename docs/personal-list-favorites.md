@@ -15,3 +15,14 @@ Web and Tauri use the same sidebar/settings components and existing HTTP/native 
 ## Verification and release
 
 Development migration applied through the existing direct connection, with exact pre-existing users/lists/tasks/members and all old preference fields preserved. Focused domain coverage verifies account isolation, editor access, invalid favorites, unchanged task/subtask snapshots and shared versions, retry safety, concurrency, legacy preservation, archive/restore and access revocation/deletion. Browser and authenticated production release evidence is recorded in `verification.md`; WUFF-86 is done. Installed native distribution remains a separate check.
+
+## Todo navigation update — October 31, 2026
+
+Implemented on `codex/todo-ux-maturity`; release is separate. Favorites are now
+additional navigation references: active favorites remain in the complete Your
+lists tree, and favoriting no longer promotes children or hides their parent.
+Favorite parents expose their children with the existing personal collapse state;
+favorite children include authorized parent context. Canonical sibling groups
+alone own reorder controls, so duplicate shortcuts never duplicate reorder IDs.
+The existing account revision, omission semantics, permissions and exact retries
+are unchanged. See [implementation and evidence](todo-ux-maturity-plan.md).

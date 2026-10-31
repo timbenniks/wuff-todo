@@ -115,7 +115,7 @@
     "components": [
       {
         "name": "HomeDashboard",
-        "signature": "export function HomeDashboard({\n  userId,\n  name,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n}: {\n  userId: string;\n  name: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n})"
+        "signature": "export function HomeDashboard({\n  userId,\n  name,\n  revision,\n  chooseList,\n  createList,\n  initialEntry,\n  lists = [],\n  busy = false,\n  change,\n  taskError = \"\",\n  retryTask,\n  favorite,\n  catalogError,\n  retryCatalog,\n}: {\n  userId: string;\n  name: string;\n  revision: string;\n  chooseList: (id: string) => void;\n  createList: () => void;\n  initialEntry: boolean;\n  lists?: ListSummary[];\n  busy?: boolean;\n  change: ListChange;\n  taskError?: string;\n  retryTask?: () => Promise<boolean>;\n  favorite: (id: string, enabled: boolean) => Promise<boolean>;\n  catalogError: string;\n  retryCatalog: () => void;\n})"
       }
     ]
   },
@@ -136,6 +136,36 @@
       {
         "name": "ListApp",
         "signature": "export function ListApp({\n  userId,\n  name,\n  initialLists,\n  initialList,\n  initialInvitations,\n  liveConfig,\n  workspace,\n}: {\n  userId: string;\n  name: string;\n  initialLists: ListSummary[];\n  initialList: TodoList | null;\n  initialInvitations: IncomingInvitation[];\n  liveConfig: LiveLists | null;\n  workspace?: { navigation: ReactNode; content: ReactNode };\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-browser.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-browser",
+    "components": [
+      {
+        "name": "ListBrowser",
+        "signature": "export function ListBrowser({\n  lists,\n  choose,\n  create,\n  favorite,\n  busy,\n}: {\n  lists: ListSummary[];\n  choose: (id: string) => void;\n  create: () => void;\n  favorite: (id: string, enabled: boolean) => Promise<boolean>;\n  busy: boolean;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-context.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-context",
+    "components": [
+      {
+        "name": "ListContext",
+        "signature": "export function ListContext({\n  lists,\n  id,\n  choose,\n}: {\n  lists: ListSummary[];\n  id: string;\n  choose: (id: string) => void;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/list-personal-actions.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/list-personal-actions",
+    "components": [
+      {
+        "name": "ListPersonalActions",
+        "signature": "export function ListPersonalActions({\n  list,\n  lists,\n  busy,\n  favorite,\n  move,\n}: {\n  list: ListSummary;\n  lists: ListSummary[];\n  busy: boolean;\n  favorite: (id: string, enabled: boolean) => Promise<boolean>;\n  move: (id: string, parent: string | null) => Promise<boolean>;\n})"
       }
     ]
   },
@@ -180,6 +210,16 @@
       {
         "name": "SidebarLists",
         "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/app/lists/sidebar-resize.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/sidebar-resize",
+    "components": [
+      {
+        "name": "SidebarResize",
+        "signature": "export function SidebarResize({\n  width,\n  setWidth,\n  bounds,\n}: ReturnType<typeof useSidebarWidth>)"
       }
     ]
   },

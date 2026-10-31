@@ -17,3 +17,16 @@ Use `node --env-file=.env.local --import tsx scripts/verify-desktop-workspace.ts
 ## Sidebar spacing refinement — October 24
 
 Favorites now precede the list-pack heading so shortcuts and the complete tree have separate, adjacent labels. Brand-to-Home spacing is 20px, Home-to-scrollable groups 12px, and rows have 44px minimum targets with tighter vertical padding. Icons/text use a shared left rail; favorite sharing cues reserve the reorder-control column used by the tree. Labels truncate with full-title tooltips. Selection uses a tinted row and inset accent rather than a raised shadow. Archive and Settings share utility-row typography and icons; the account row sits beneath a compact divider. Desktop scrolling/pinned footer and phone collapse behavior remain intact.
+
+## Todo sidebar sizing — October 31, 2026
+
+Implemented on `codex/todo-ux-maturity`; release is separate. Todo uses a 320px
+default desktop sidebar, adjustable from 260 to 440px while retaining at least
+480px for the main canvas when the viewport allows. The separator supports
+pointer dragging, Left/Right in 16px steps, Home/End, and Reset width. A valid
+numeric preference is stored per account/device in localStorage; storage failure
+falls back gracefully. Window resizing clamps the rendered width without
+overwriting the preferred width. Phones keep the existing Lists sheet.
+Sidebar titles use a stable disclosure/color/title/action rail, retaining shared
+indicators and non-drag reordering. No database or synced preference is added.
+See [implementation and evidence](todo-ux-maturity-plan.md).
