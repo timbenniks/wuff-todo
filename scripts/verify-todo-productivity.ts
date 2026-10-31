@@ -148,6 +148,16 @@ try {
     },
   );
   assert.equal(login.status(), 200);
+  // Pace synthetic API traffic to the managed development auth service. This
+  // changes only the runner; every request still reaches the real authorization.
+  let nextApiAt = 0;
+  await context.route("**/api/v1/**", async (route: any) => {
+    const now = Date.now(),
+      wait = Math.max(0, nextApiAt - now);
+    nextApiAt = Math.max(now, nextApiAt) + 2000;
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+    await route.continue();
+  });
   page = await context.newPage();
   page.on("response", (response: any) => {
     if (response.status() >= 400)
@@ -207,7 +217,7 @@ try {
   checks.push(
     "27 tasks including 24 roots, 3 sections, subtasks, completion, dates, assignment, priority and notes; light/dark and phone sidebar",
   );
-  if (stage !== "foundations-sidebar") {
+  if (!["foundations-sidebar", "drawer-only", "drawer-empty"].includes(stage)) {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page
       .getByRole("button", { name: "List actions", exact: true })
@@ -242,6 +252,12 @@ try {
     });
     await expect(name).toBeFocused();
     await name.fill("Repeated capture one");
+    await page
+      .getByRole("button", { name: "Add task", exact: true })
+      .first()
+      .click();
+    await expect(name).toBeFocused();
+    await expect(name).toHaveValue("Repeated capture one");
     await name.press("Enter");
     await expect(name).toHaveValue("");
     await expect(name).toBeEditable();
@@ -431,7 +447,7 @@ try {
       "Committed response loss preserves the draft and retries an identical request without duplicate creation",
     );
   }
-  if (stage === "drawer" || stage === "full") {
+  if (["drawer", "full", "drawer-only"].includes(stage)) {
     await page.setViewportSize({ width: 1366, height: 900 });
     const titleLink = page
       .locator(`[data-task-id="${parentTask.id}"] .task-name a`)
@@ -550,7 +566,7 @@ try {
     );
     await page
       .getByRole("link", {
-        name: "Open task: Repeated capture one",
+        name: "Open task: Buy coffee beans",
         exact: true,
       })
       .click();
@@ -573,6 +589,39 @@ try {
     await page.setViewportSize({ width: 1366, height: 900 });
     checks.push(
       "520px drawer, independent light/dark surfaces, notes dirty-exit/save, metadata focus, inline subtasks, subtask/parent navigation without page changes, Escape/focus/scroll restoration",
+    );
+  }
+  if (stage === "drawer-empty") {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const origin = page.getByRole("link", {
+      name: "Open task: Buy coffee beans",
+      exact: true,
+    });
+    await origin.click();
+    const drawer = page.getByRole("dialog", {
+      name: "Task details",
+      exact: true,
+    });
+    await expect(
+      drawer.getByRole("button", { name: "Add a note…", exact: true }),
+    ).toBeVisible();
+    await expect(
+      drawer.getByRole("button", { name: "Add subtask", exact: true }),
+    ).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert(
+      await drawer.evaluate(
+        (el: HTMLElement) => el.scrollWidth <= el.clientWidth,
+      ),
+    );
+    await page.screenshot({ path: `${out}/drawer-phone-empty.png` });
+    await drawer
+      .getByRole("button", { name: "Close task details", exact: true })
+      .press("Escape");
+    await expect(drawer).toHaveCount(0);
+    await expect(origin).toBeFocused();
+    checks.push(
+      "Empty notes/subtasks at 390px, no drawer overflow, Escape and originating task focus",
     );
   }
   if (stage === "full") {

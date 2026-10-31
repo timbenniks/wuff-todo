@@ -232,3 +232,15 @@ optional text copying. Linked-note content/private images are never copied.
 Trash is reversible; physical image purge/permanent deletion, public sharing,
 collaborative live editing are outside this scope.
 See [Notes delivery evidence](wuff-notes.md) and [module guide](guide/modules.md).
+
+## Todo productivity redesign — October 31
+
+The [focused redesign](todo-productivity-redesign.md), in draft PR #45, keeps
+Today/Coming up and a complete compact list browser on Overview; flat Favorites
+shortcuts supplement the canonical hierarchical tree. The desktop sidebar defaults
+to 260px with remembered local resizing. Task workspaces emphasize title/count and
+Add task, with Search/Filter/View exposing every existing advanced capability.
+New unsaved views default to simple rows uniformly across web/API/MCP; explicit
+saved column layouts remain supported. Inline task capture and a 520px detail
+drawer retain list/section/parent relationships, exact retries, explicit saves and
+unsaved-change protections. No schema, permissions, scopes or connection changes.

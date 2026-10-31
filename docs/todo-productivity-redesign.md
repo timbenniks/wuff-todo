@@ -54,12 +54,12 @@ This is an additive presentation-default change, with no migration or data rewri
 
 ## Implemented interactions and surface mapping
 
-| Interaction | Shared service and existing adapters | Boundary preserved |
-| --- | --- | --- |
-| Task/section/subtask inline capture, completion, title/notes/metadata | createTask/updateTask; HTTP `/api/v1/tasks`; MCP create_task/update_task | Actor membership, current list version, exact operation receipts; section/parent validation |
-| View filters/sorts/grouping/display/presets | updateListView/queryListView; HTTP list view; MCP update_list_view/query_list_view | Personal view revision, conflict drafts, saved presets and explicit columns |
-| Favorites, nesting, collapse/order | getListOrder/reorderLists; HTTP list-order; MCP get_list_order/reorder_lists | Personal organization; no task/list ownership changes |
-| Notes, due dates, reminders, sharing, integrations | Existing detail components/services/adapters | Current authorized behavior and explicit save/cancel retained |
+| Interaction                                                           | Shared service and existing adapters                                               | Boundary preserved                                                                          |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Task/section/subtask inline capture, completion, title/notes/metadata | createTask/updateTask; HTTP `/api/v1/tasks`; MCP create_task/update_task           | Actor membership, current list version, exact operation receipts; section/parent validation |
+| View filters/sorts/grouping/display/presets                           | updateListView/queryListView; HTTP list view; MCP update_list_view/query_list_view | Personal view revision, conflict drafts, saved presets and explicit columns                 |
+| Favorites, nesting, collapse/order                                    | getListOrder/reorderLists; HTTP list-order; MCP get_list_order/reorder_lists       | Personal organization; no task/list ownership changes                                       |
+| Notes, due dates, reminders, sharing, integrations                    | Existing detail components/services/adapters                                       | Current authorized behavior and explicit save/cancel retained                               |
 
 No schema, auth, scope, consent, connection or provider changes. A new unsaved
 view’s public rowStyle default changes to list uniformly; explicit saved columns
@@ -69,7 +69,7 @@ attention-first Overview; its existing tool-backed detail/view controls remain.
 ## Local verification checkpoint
 
 - `pnpm typecheck` passed after the dialog hydration/focus corrections.
-- `pnpm test`: 200 passed, no skips. New `tests/todo-productivity.test.ts` covers
+- `pnpm test`: 201 passed, no skips. New `tests/todo-productivity.test.ts` covers
   all seven light/dark palette contrasts, empty/populated optional columns without
   changing saved preferences, task payload/version/section/parent inheritance,
   invalid/archived/removed destinations and capture event list isolation. Existing
@@ -88,5 +88,39 @@ attention-first Overview; its existing tool-backed detail/view controls remain.
   trigger focus. One intervening run encountered existing managed-auth 503 session
   verification failure; the draft retained its content and the next full run passed.
 
-Navigation/actual MCP SDK and serial integration evidence, plus current-head Codex
-review, are recorded below when finished. No production changes or release.
+Navigation/actual MCP SDK also passed: width keyboard/pointer/reset/reload/clamp,
+canonical/flat favorites, child/sibling/Back/direct moves, 320–1440px overflow,
+catalog failure/retry and detail-only failure isolation. Real embedded SDK task
+mutations retained parent/child context. All six serial integration cases passed
+(view/favorites/nesting/navigation adapters), including scopes/origins/revocation,
+concurrency and exact retries. No production changes or release.
+
+## Review correction
+
+Codex review of `b7179d9` found a post-write catalog refresh could mask a committed
+MCP mutation as an error (discussion_r4431651561). Catalog enrichment now preserves
+the authorized operation result, clears stale navigation, marks its availability
+and offers a read-only refresh. Original action failures still propagate normally.
+The regression test proves the committed result survives, stale parents are absent,
+backend exception details are omitted and a later catalog refresh recovers. The
+SDK browser test injects this precise degraded response after one real task write
+and checks capture resets/remains enabled, no duplicate exists, stale context is
+hidden and the read-only refresh restores it. This is supplemental navigation
+presentation; existing mutation services/HTTP contracts/scopes are unchanged.
+
+The catalog regression was executed against the old helper and failed (exit 1);
+with the fix, all eight navigation unit cases pass. The complete unit suite has
+201 passes, no skips. The synthetic browser runner spaces API requests to respect
+the managed development auth rate limit; no production/auth policy was changed.
+
+## Final local boundaries
+
+The updated navigation/actual MCP SDK suite passed with no page errors, including
+the injected post-commit catalog failure and recovery. A separate current-source
+27-task drawer check passed empty notes/subtasks at 390px, no drawer overflow,
+Escape and originating-task focus; its light/dark workspace captures also passed.
+Later full-suite repetitions were blocked by managed-auth 429 responses even with
+runner pacing. The earlier complete dense flow passed; these blocked reruns are
+not treated as current-head full-suite passes. Keep the PR draft for this limit
+and Tim’s usability review. No auth cache/rate policy or service protections were
+changed to obtain test success.

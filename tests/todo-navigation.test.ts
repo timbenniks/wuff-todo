@@ -174,7 +174,7 @@ test("MCP list edits retain fresh authorized navigation instead of dropping it o
   );
   assert.deepEqual(home.lists, lists);
 });
-test("MCP catalog enrichment respects read scope, non-list results and read failure after a mutation", async () => {
+test("MCP catalog enrichment respects read scope, non-list results and empty catalogs", async () => {
   const { todoNavigationResponse } =
     await import("../apps/web/src/modules/todo/navigation-response");
   const unreadable = async () => {
@@ -188,19 +188,38 @@ test("MCP catalog enrichment respects read scope, non-list results and read fail
     await todoNavigationResponse({ sharing: { version: 8 } }, true, unreadable),
     { sharing: { version: 8 } },
   );
-  await assert.rejects(
-    todoNavigationResponse(
-      { list: { id: "a", version: 8 } },
-      true,
-      async () => {
-        throw Error("Catalog temporarily unavailable");
-      },
-    ),
-    /Catalog temporarily unavailable/,
-  );
   assert.deepEqual(
     (await todoNavigationResponse({ list: { id: "a" } }, true, async () => []))
       .lists,
     [],
   );
+});
+
+test("a failed post-write catalog read preserves the committed result and clears stale navigation", async () => {
+  const { todoNavigationResponse } =
+    await import("../apps/web/src/modules/todo/navigation-response");
+  const committed = { id: "a", version: 8, tasks: [{ id: "created-once" }] };
+  const response = await todoNavigationResponse(
+    { list: committed, lists },
+    true,
+    async () => {
+      throw Error("Private backend details");
+    },
+  );
+  assert.equal(response.list, committed);
+  assert.deepEqual(response.lists, []);
+  assert.equal(response.catalogUnavailable, true);
+  assert.equal(
+    listNavigationContext(response.lists as ListSummary[], "a").parent,
+    null,
+  );
+  assert(!JSON.stringify(response).includes("Private backend details"));
+  const recovered = await todoNavigationResponse(
+    { list: committed },
+    true,
+    async () => lists,
+  );
+  assert.equal(recovered.list, committed);
+  assert.deepEqual(recovered.lists, lists);
+  assert.equal(recovered.catalogUnavailable, false);
 });

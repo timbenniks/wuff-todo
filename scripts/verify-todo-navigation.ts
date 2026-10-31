@@ -83,7 +83,24 @@ try {
   assert.equal(login.status(), 200);
   page = await context.newPage();
   page.on("pageerror", (e: Error) => errors.push(e.message));
-  await page.goto("http://localhost:3000/lists?home=1");
+  async function visit(url: string) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await page.goto(url);
+      if (
+        !(await page
+          .getByRole("heading", { name: "Paws a moment.", exact: true })
+          .isVisible())
+      )
+        return;
+      if (attempt === 3)
+        throw Error(
+          "Managed session verification remained unavailable after bounded read-only navigation retries",
+        );
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+
+  await visit("http://localhost:3000/lists?home=1");
   const catalog = page.getByRole("region", { name: "Your lists", exact: true });
   await expect(
     catalog.getByRole("button", { name: root.title, exact: true }),
@@ -96,7 +113,7 @@ try {
     },
     operationId: op(),
   });
-  await page.reload();
+  await visit(page.url());
   await expect(
     page.getByRole("heading", {
       name: "Your day panels are hidden.",
@@ -111,7 +128,7 @@ try {
     settings: originalDashboard.settings,
     operationId: op(),
   });
-  await page.reload();
+  await visit(page.url());
   const geometry = await catalog.boundingBox();
   assert(geometry.y >= 0);
   await expect(
@@ -172,13 +189,13 @@ try {
     .boundingBox();
   assert.equal(parentX.x, rootX.x);
   evidence.push(
-    "Undated/nonfavorite overview lists, search/no matches/context, canonical favorite tree, root title alignment",
+    "Undated/nonfavorite overview lists, search/no matches/context, flat favorite shortcuts/canonical tree, root title alignment",
   );
   const separator = page.getByRole("separator", { name: "Sidebar width" });
   await separator.focus();
   await separator.press("ArrowRight");
   await expect(separator).toHaveAttribute("aria-valuenow", "276");
-  await page.reload();
+  await visit(page.url());
   await expect(separator).toHaveAttribute("aria-valuenow", "276");
   const box = await separator.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + 200);
@@ -186,7 +203,7 @@ try {
   await page.mouse.move(box.x + box.width / 2 + 64, box.y + 200);
   await page.mouse.up();
   await expect(separator).toHaveAttribute("aria-valuenow", "340");
-  await page.reload();
+  await visit(page.url());
   await expect(separator).toHaveAttribute("aria-valuenow", "340");
   await page.setViewportSize({ width: 800, height: 768 });
   await expect(separator).toHaveAttribute("aria-valuenow", "320");
@@ -277,7 +294,7 @@ try {
   evidence.push(
     "Committed-response-loss favorite retry uses identical payload; parent/child/sibling navigation and Back",
   );
-  await page.goto(`http://localhost:3000/lists?listId=${children[0].id}`);
+  await visit(`http://localhost:3000/lists?listId=${children[0].id}`);
   const actions = page.getByRole("dialog", {
     name: "List actions",
     exact: true,
@@ -304,7 +321,7 @@ try {
   );
   for (const width of [320, 390, 1024, 1280, 1366, 1440]) {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 800 });
-    await page.goto("http://localhost:3000/lists?home=1");
+    await visit("http://localhost:3000/lists?home=1");
     await expect(catalog).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Today", exact: true }),
@@ -350,7 +367,7 @@ try {
   evidence.push(
     "320/390/1024/1280/1366/1440px overflow and navigation checks; catalog failure/retry",
   );
-  await page.goto(`http://localhost:3000/lists?listId=${parent.id}`);
+  await visit(`http://localhost:3000/lists?listId=${parent.id}`);
   await page.route(`**/api/v1/lists/${parent.id}`, (route: any) =>
     route.fulfill({
       status: 503,
@@ -420,6 +437,24 @@ try {
   await expect(
     frame.getByRole("heading", { name: "Child lists (7)", exact: true }),
   ).toBeVisible();
+  let degradedReply = false,
+    createCalls = 0;
+  await host.route("**/mcp", async (route: any) => {
+    const request = route.request().postDataJSON();
+    if (request.name !== "create_task" || degradedReply)
+      return route.continue();
+    createCalls++;
+    const response = await route.fetch();
+    const result = await response.json();
+    assert(!result.isError);
+    degradedReply = true;
+    result.structuredContent = {
+      ...result.structuredContent,
+      lists: [],
+      catalogUnavailable: true,
+    };
+    await route.fulfill({ response, json: result });
+  });
   await frame
     .getByRole("textbox", { name: /^New task/ })
     .first()
@@ -433,7 +468,30 @@ try {
   ).toBeVisible();
   await expect(
     frame.getByRole("heading", { name: "Child lists (7)", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    frame.getByRole("textbox", { name: /^New task/ }).first(),
+  ).toHaveValue("");
+  await expect(
+    frame.getByRole("button", { name: "Add", exact: true }).first(),
+  ).toBeEnabled();
+  assert.equal(createCalls, 1);
+  assert.equal(
+    (await getList(actor, parent.id)).tasks.filter(
+      (task) => task.title === "MCP parent navigation regression",
+    ).length,
+    1,
+  );
+  await frame
+    .getByRole("button", { name: "Refresh list navigation", exact: true })
+    .click();
+  await expect(
+    frame.getByRole("heading", { name: "Child lists (7)", exact: true }),
   ).toBeVisible();
+  await host.unroute("**/mcp");
+  evidence.push(
+    "Injected post-commit catalog-read failure acknowledges the one real task, resets/enables capture, hides stale navigation and recovers through a read-only refresh",
+  );
   await frame
     .getByRole("button", { name: children[0].title, exact: true })
     .click();
@@ -489,7 +547,7 @@ try {
   );
   await host.screenshot({ path: `${out}/mcp-catalog.png` });
   evidence.push(
-    "Actual local MCP Apps SDK host: list-first dashboard search, parent/child/sibling navigation, contextual favorites and canonical tree",
+    "Actual local MCP Apps SDK host: dashboard catalog search, parent/child/sibling navigation, contextual favorites and canonical tree",
   );
   assert.deepEqual(errors, []);
   await writeFile(

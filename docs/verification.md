@@ -2,6 +2,56 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Todo productivity redesign — October 31, 2026
+
+[Draft PR #45](https://github.com/timbenniks/wuff-todo/pull/45),
+[component inventory, contract and detailed evidence](todo-productivity-redesign.md).
+This follow-up supersedes the earlier list-first/favorite-expansion presentation.
+
+- TypeScript, all **201 unit tests** (no skips), guide/MCP bundling and optimized
+  web build passed. Tests cover simple-row defaults/explicit saved columns,
+  260px resize defaults, seven-palette light/dark contrast, populated optional
+  columns and inline payload/validation/list-isolation boundaries.
+- Actual Chrome populated flow passed against loopback and isolated development:
+  27 initial tasks/three sections, long titles, dates, completed items, subtasks,
+  assignment and notes. Scoped/repeated inline creation, Enter/Escape/focus, exact
+  lost-response retry without duplicates, filters/grouping/saved columns/reset,
+  completion/reopening, notes dirty-exit/save, property focus, subtask/parent
+  drawer navigation and origin focus/list scroll passed. Light/dark and
+  320/390/1024/1366 Overview checks reported no page errors.
+- Serial `tests/list-view.integration.test.ts`,
+  `tests/list-favorites.integration.test.ts`, `tests/list-nesting.integration.test.ts`
+  and `tests/todo-navigation.integration.test.ts` passed **all six cases**, no
+  skips (72.3 seconds). Permissions, personal isolation, legacy preservation,
+  stale/concurrent versions, exact retries, real HTTP/MCP scope/origin boundaries
+  and revoked-connection rejection remain intact.
+- A settings-portal hydration error was corrected; modal open/close/focus passed
+  afterward. Separate repeat runs encountered existing managed-auth 503/429
+  responses; failure preserved drafts. These failed runs are not counted as passes.
+
+Representative rendered evidence: [workspace](screenshots/todo-productivity-workspace-light.png),
+[dark workspace](screenshots/todo-productivity-workspace-dark.png),
+[saved columns](screenshots/todo-productivity-workspace-columns.png),
+[drawer](screenshots/todo-productivity-drawer-light.png),
+[dark drawer](screenshots/todo-productivity-drawer-dark.png),
+[Overview](screenshots/todo-productivity-overview-1366.png),
+[phone Overview](screenshots/todo-productivity-overview-390.png).
+
+Codex review identified a post-commit MCP catalog-refresh failure that masked a
+successful write. The fix retains the authorized operation result, clears stale
+navigation and offers a read-only refresh. The new regression failed against the
+old helper (exit 1) and the fixed navigation unit file passed all eight cases;
+all 201 units pass. The updated actual SDK browser suite passed this degraded-response recovery
+after one real task write, with no page errors; backend exception text is not
+returned. A separate current-source 27-task empty-drawer check passed at 390px,
+including no drawer overflow and Escape/origin focus. Later complete dense-flow
+repetitions encountered managed-auth 429 even with pacing; they are blocked, not
+current-head full-suite passes. The earlier full flow remains separately recorded.
+
+No production operations, migrations, new dependencies or scope/consent changes.
+Physical-device, assistive-technology and human usability acceptance remain
+separate from local viewport/keyboard proof; PR stays draft for review.
+
 ## QStash publisher ID regression — October 25, 2026
 
 Included in [draft PR #35](https://github.com/timbenniks/wuff-todo/pull/35) at

@@ -489,13 +489,13 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .todo-workspace .task-row > .task-actions,
-  .todo-workspace .section-heading .inline-name-actions {
+  .todo-workspace .section-heading .section-management-actions {
     opacity: 0;
   }
   .todo-workspace .task-row:hover > .task-actions,
   .todo-workspace .task-row:focus-within > .task-actions,
-  .todo-workspace .section-heading:hover .inline-name-actions,
-  .todo-workspace .section-heading:focus-within .inline-name-actions {
+  .todo-workspace .section-heading:hover .section-management-actions,
+  .todo-workspace .section-heading:focus-within .section-management-actions {
     opacity: 1;
   }
 }
@@ -804,4 +804,13 @@
 .task-detail-title .task-complete {
   flex-basis: 44px;
   width: 44px;
+}
+
+@media (max-width: 767px) {
+  .todo-workspace input,
+  .todo-workspace select,
+  .task-drawer input,
+  .task-drawer select {
+    font-size: 16px;
+  }
 }

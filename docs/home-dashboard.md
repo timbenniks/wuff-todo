@@ -48,3 +48,13 @@ The Empire portal widget remains unchanged. Existing Home capture/completion and
 last-list startup behavior remain. Embedded Home receives an authorized catalog
 with its dashboard response; tool-only discovery still uses list_lists.
 See [implementation and evidence](todo-ux-maturity-plan.md).
+
+## Focused productivity update — October 31, 2026
+
+The [focused redesign](todo-productivity-redesign.md) supersedes the list-first
+ordering above: Today/Coming up precede a compact complete list browser. Favorites
+remain flat sidebar shortcuts rather than a duplicate Overview card. The existing
+three-field settings schema is retained without migration; Todo UI shows/reorders
+the two day panels while preserving the old favorite field. The independent Empire
+portal summary keeps its current settings behavior. Search expands only on demand
+for six or fewer lists; catalog errors and empty states remain visible.

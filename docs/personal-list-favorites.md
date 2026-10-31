@@ -21,8 +21,10 @@ Development migration applied through the existing direct connection, with exact
 Implemented on `codex/todo-ux-maturity`; release is separate. Favorites are now
 additional navigation references: active favorites remain in the complete Your
 lists tree, and favoriting no longer promotes children or hides their parent.
-Favorite parents expose their children with the existing personal collapse state;
-favorite children include authorized parent context. Canonical sibling groups
+The focused productivity redesign makes Favorites flat shortcuts: children and
+collapse controls appear only in the canonical tree. Favorite children include
+authorized parent context. Canonical sibling groups
 alone own reorder controls, so duplicate shortcuts never duplicate reorder IDs.
 The existing account revision, omission semantics, permissions and exact retries
-are unchanged. See [implementation and evidence](todo-ux-maturity-plan.md).
+are unchanged. See [current redesign and evidence](todo-productivity-redesign.md); the earlier
+[navigation iteration](todo-ux-maturity-plan.md) remains historical.

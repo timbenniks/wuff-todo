@@ -42,6 +42,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     if (document.documentElement.dataset.todoActive === "true")
       applyListTheme(current?.color ?? "blue", document.documentElement, true);
   });
+  let catalogUnavailable = false;
   let fieldSequence = 0;
   const githubExpanded = new Set<string>();
   let current: TodoList | undefined,
@@ -1950,6 +1951,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     if (!data.list && !data.lists && !data.dashboard) current = undefined;
     if (data.viewerId && viewerId && data.viewerId !== viewerId) {
       catalog = [];
+      catalogUnavailable = false;
       pendingHome = null;
       noteDrafts.clear();
       subtaskDrafts.clear();
@@ -1972,10 +1974,14 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       dashboard?: Dashboard;
       list?: TodoList;
       lists?: ListSummary[];
+      catalogUnavailable?: boolean;
       viewerId?: string;
       webOrigin?: string;
     };
-    if (data.lists) catalog = data.lists;
+    if (data.lists) {
+      catalog = data.lists;
+      catalogUnavailable = data.catalogUnavailable === true;
+    }
     if (data.dashboard) {
       current = undefined;
       applyListTheme("blue", document.documentElement, true);
@@ -2037,6 +2043,18 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
         ),
       );
     root.append(header);
+    if (catalogUnavailable) {
+      const recovery = element("section");
+      recovery.setAttribute("aria-label", "List navigation unavailable");
+      recovery.append(
+        element("p", "Your list is available. Navigation couldn’t refresh."),
+        button(
+          "Refresh list navigation",
+          () => void call("show_list", { listId: current!.id }),
+        ),
+      );
+      root.append(recovery);
+    }
     const context = listNavigationContext(catalog, current.id);
     if (context.parent) {
       const location = element("nav");
@@ -2273,6 +2291,14 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
   function catalogBrowser() {
     const section = element("section");
     section.setAttribute("aria-label", "Your lists");
+    if (catalogUnavailable) {
+      section.append(
+        element("h2", "Your lists"),
+        element("p", "We couldn’t refresh your lists."),
+        button("Retry lists", () => void call("show_lists", {})),
+      );
+      return section;
+    }
     const label = element("label", "Find a list"),
       search = element("input"),
       results = element("div");

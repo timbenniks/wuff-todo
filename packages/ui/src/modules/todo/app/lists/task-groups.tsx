@@ -88,9 +88,12 @@ export function TaskGroups({
     const capture = (event: Event) => {
       if (!captureMatchesList((event as CustomEvent).detail, list.id)) return;
       setGlobalCapture(true);
-      requestAnimationFrame(() =>
-        captureAnchor.current?.scrollIntoView({ block: "nearest" }),
-      );
+      requestAnimationFrame(() => {
+        captureAnchor.current?.scrollIntoView({ block: "nearest" });
+        captureAnchor.current
+          ?.querySelector<HTMLInputElement>("input")
+          ?.focus();
+      });
     };
     window.addEventListener("wuff:todo:capture", capture);
     return () => window.removeEventListener("wuff:todo:capture", capture);
@@ -428,7 +431,7 @@ export function TaskGroups({
                         renderActions={
                           owner && !list.archived
                             ? ({ edit, editing, trigger }) => (
-                                <div className="flex items-center">
+                                <div className="section-management-actions flex items-center">
                                   <Button
                                     ref={trigger}
                                     type="button"

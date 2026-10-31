@@ -53,9 +53,9 @@ export function registerTodoMcp({
   write,
   result: moduleResult,
 }: ModuleMcpContext) {
-  // Every server-produced list render gets current, authorized navigation context,
-  // including mutation replies and receipt replays. Local draft rerenders can then
-  // retain that catalog without reviving revoked parent/sibling access.
+  // Every list render gets fresh authorized navigation or an explicit unavailable
+  // state, including mutation replies/receipt replays. A failed optional refresh
+  // must not mask a committed result or revive stale parent/sibling access.
   const result: ModuleMcpContext["result"] = (action) =>
     moduleResult(async () =>
       todoNavigationResponse(
