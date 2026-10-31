@@ -1273,13 +1273,6 @@ export function ListApp({
                     </div>
                   </ViewPopover>
                 </header>
-                {!isPending && !list.archived && !catalogError && (
-                  <ListContext
-                    lists={summaries}
-                    id={list.id}
-                    choose={(id) => chooseList(id)}
-                  />
-                )}
                 {isPending ? (
                   <div className="mt-6 text-sm text-muted-foreground">
                     {pendingCreate?.status === "saving" ? (
@@ -1300,7 +1293,15 @@ export function ListApp({
                     )}
                   </div>
                 ) : (
-                  <>
+                  <ListContext
+                    key={list.id}
+                    lists={list.archived || catalogError ? [] : summaries}
+                    id={list.id}
+                    choose={(id) => chooseList(id)}
+                    taskCount={
+                      list.tasks.filter((task) => !task.parentTaskId).length
+                    }
+                  >
                     <TaskGroups
                       key={list.id}
                       list={list}
@@ -1321,7 +1322,7 @@ export function ListApp({
                           : undefined
                       }
                     />
-                  </>
+                  </ListContext>
                 )}
               </>
             )}

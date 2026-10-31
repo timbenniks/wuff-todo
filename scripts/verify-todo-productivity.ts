@@ -752,9 +752,7 @@ try {
       .locator(`[data-task-id="${parentTask.id}"] .task-name a`)
       .first();
     await titleLink.scrollIntoViewIfNeeded();
-    const mainScroll = await page
-      .locator(".workspace-main")
-      .evaluate((el: HTMLElement) => el.scrollTop);
+    const mainScroll = await page.evaluate(() => window.scrollY);
     await titleLink.click();
     const drawer = page.getByRole("dialog", {
       name: "Task details",
@@ -866,12 +864,7 @@ try {
     await expect(drawer).toHaveCount(0);
     await expect(titleLink).toBeFocused();
     assert(
-      Math.abs(
-        mainScroll -
-          (await page
-            .locator(".workspace-main")
-            .evaluate((el: HTMLElement) => el.scrollTop)),
-      ) <= 2,
+      Math.abs(mainScroll - (await page.evaluate(() => window.scrollY))) <= 2,
     );
     await page
       .getByRole("link", {

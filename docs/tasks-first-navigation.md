@@ -22,12 +22,14 @@ app), wuff-contributor and the module/surface/design/accessibility guides apply.
 
 ## Surfaces and scope
 
-Shared Todo web/PWA/MCP App components and presentation CSS. Existing authorized
+Shared Todo web/PWA React components and Todo-scoped presentation CSS. Existing authorized
 catalogs and list/task/view HTTP/MCP domain operations remain the data source.
 No persisted mutation, API contract, schema, scope, consent, connection lifecycle,
-provider, dependency or safeguard change. MCP App gets the same tabs/directory
-through ListApp; tool-only capabilities are unchanged. No production writes or
-deployment are authorized by this work.
+provider, dependency or safeguard change. The MCP App has a separate, compact DOM
+renderer (it does not use React ListApp). Its existing parent/child navigation and
+tool capabilities remain complete; these website layout changes do not require
+new embedded controls or change connection recovery/revocation. No production
+writes or deployment are authorized by this work.
 
 Unit plan: list-local tab selection, no-child/removed-child fallback, capture
 event isolation and accessible catalog filtering. Browser checks must exercise
@@ -38,5 +40,40 @@ independently confirmed.
 
 ## Evidence
 
-Implementation and verification pending. Preserve pre-existing local edits to
-docs/development.md and docs/verification.md outside this feature's commits.
+- `pnpm install --frozen-lockfile` restored this checkout's stale dependency links;
+  no manifest/lockfile change. The initial typecheck failed on missing React links.
+- `pnpm typecheck` passed after moving obsolete generated `.next/dev` cache into
+  ignored `test-results/pre-pull-next-dev`; the old validator referenced retired
+  pre-pull route locations. No application source was changed to suppress errors.
+- `pnpm build` passed: generated guide, MCP bundle and optimized Next web build.
+- `node --import tsx --test tests/tasks-first.test.ts`: all six browser component
+  tests pass, no skips. The actual React components run on a loopback-only host
+  with a synthetic runtime that rejects every persisted write. Cases cover default
+  and keyboard tab selection, seven-child directory, draft retention, matching
+  and unrelated capture events, missing/archived catalogs, parent/sibling routing,
+  header capture and saved views, 320/390/768/1280px overflow, long titles, dark
+  appearance, reachable sidebar footer, coarse-pointer 44px navigation and 25-task
+  document scrolling with drawer focus/position restoration. No page errors in the
+  responsive workspace case. This is component evidence, not authenticated parity.
+- Regression proof: temporarily substituting main's old ListContext makes the
+  first component case fail (exit 1, missing Tasks tab); restoring the feature
+  component passes all six cases.
+- `pnpm test` ran: the initial full run had 191 passes and three existing Windows
+  failures. `empire-modules.test.ts` and `mcp-tool-choices.test.ts` dynamically
+  import raw `C:` paths, rejected by Node's ESM loader; `unit-discovery.test.mjs`
+  compares Windows separators with literal POSIX paths. These unchanged tests are
+  not weakened/skipped here. Hosted Linux results are recorded in the PR.
+- Existing isolated integration scripts now target the web tabs and document
+  scroll. They were not run: this checkout documents main-data credentials, with
+  no confirmed isolated backend. No integration writes or production mutations.
+- No new persistence/auth adapter behavior; embedded MCP's independent DOM
+  navigation and existing tool contracts stay unchanged. Physical-device,
+  screen-reader and live backend integration proof remain separate.
+
+[Desktop](screenshots/tasks-first-desktop.png) ·
+[Phone sublists](screenshots/tasks-first-phone.png) ·
+[Dark directory](screenshots/tasks-first-dark.png). Screenshots use synthetic data.
+
+Preserved pre-existing local edits to docs/development.md and docs/verification.md
+outside this feature's commits. PR remains draft while full local verification and
+current-head review are incomplete; merge/release require separate instructions.

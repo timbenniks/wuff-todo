@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Tasks-first navigation (October 31, draft PR #47):** Tim selected Tasks /
+  Sublists tabs, aligned sublist rows, document-flow desktop navigation without a
+  nested sidebar scrollbar and tighter workspace spacing. Web/PWA presentation
+  only; existing HTTP/MCP and embedded navigation capabilities remain unchanged.
+  See [brief and current evidence](tasks-first-navigation.md).
+
 - **Todo productivity redesign (October 31, draft PR #45):** attention-first
   Overview with a compact list browser, flat favorite shortcuts and canonical
   hierarchy, resizable 260px sidebar, consolidated workspace controls, inline task
