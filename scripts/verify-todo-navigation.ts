@@ -296,6 +296,9 @@ try {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 800 });
     await page.goto("http://localhost:3000/lists?home=1");
     await expect(catalog).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Today", exact: true }),
+    ).toBeVisible();
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -424,6 +427,12 @@ try {
   await frame
     .getByRole("button", { name: children[0].title, exact: true })
     .click();
+  await expect(
+    frame.getByRole("heading", { name: children[0].title, exact: true }),
+  ).toBeVisible();
+  await expect(
+    frame.getByRole("navigation", { name: "List location" }),
+  ).toBeVisible();
   await frame
     .getByRole("textbox", { name: /^New task/ })
     .first()

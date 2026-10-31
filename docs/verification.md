@@ -1203,3 +1203,54 @@ billing/spending limits blocked runners. These are incomplete remote checks,
 not passing code verification. Keep the PR draft. Vercel preview status and final
 PR metadata are recorded separately; preview backend isolation is unconfirmed,
 so no preview writes or medical-data smoke are claimed.
+
+## Todo navigation maturity — October 31, 2026
+
+Implemented on draft [PR #45](https://github.com/timbenniks/wuff-todo/pull/45).
+Application source `9acccc9f8820ab84bf270217d089eee350a8e9a5`; later delivery
+commits record evidence and tighten browser synchronization/capture only.
+[Behavior, scope and review record](todo-ux-maturity-plan.md).
+
+- `pnpm typecheck` passed all workspace packages, web and root scripts/tests.
+- `pnpm test` passed **195 unit tests**, zero failures/skips. Changed tests:
+  `tests/list-nesting.test.ts` retains canonical favorite hierarchy and archive
+  fallback; `tests/todo-navigation.test.ts` covers list-search/context, current
+  access/archive filtering, finite width/viewport bounds, malformed/blocked
+  storage, account isolation/reset and current authorized MCP response catalogs,
+  including missing read scope and post-mutation read failure. A controlled
+  rollback of the original favorites projection failed the two relevant
+  hierarchy regressions; restoring the implementation passed.
+- `pnpm preview:local` passed guide generation, MCP packaging and optimized Next
+  build, then served the local app on port 3000. No Vercel deployment was run.
+- `node --env-file=.env.local --import tsx --test --test-concurrency=1
+tests/todo-navigation.integration.test.ts tests/list-nesting.integration.test.ts
+tests/list-favorites.integration.test.ts` passed **all 4 integration tests**.
+  Actual adapters prove HTTP-write/MCP-read and MCP-write/HTTP-read, personal
+  hierarchy/favorites isolation, unchanged task snapshots, stale/concurrent writes,
+  exact-payload retries, read-only denial, private-list exclusion, sharing and
+  membership revocation, catalogs in reads and mutation replies, and revoked
+  connection rejection. Fixtures use the documented isolated development branch
+  and synthetic accounts; created data/connections are cleaned up.
+- `node --env-file=.env.local --import tsx scripts/verify-todo-navigation.ts`
+  passed the optimized web app and **actual local MCP Apps SDK host**, with no
+  page errors. Web checks include 320/390/1024/1280/1366/1440px document overflow,
+  phone Lists/Escape, root alignment, undated/nonfavorite discovery, search and
+  no-match recovery, restored expansion, hidden day panels with lists retained,
+  pointer/keyboard width persistence/reset and window bounds, direct personal move
+  out/back, parent/child/sibling navigation and Back. A committed favorite save
+  with a lost reply retries the identical payload. Catalog failure has an explicit
+  retry; a detail-only 503 preserves successful catalog/context. Embedded checks
+  cover list-first Home/search, canonical/favorite navigation and retained parent/
+  child/sibling context after actual task mutations.
+- First Codex review found two recovery defects; `9acccc9` fixed both with
+  regressions and evidence replies. Fresh review of that application source
+  completed with no findings. Latest delivery-head review/check status is kept in
+  the PR. Review completion is separate from test results.
+
+Browser connector startup failed because its service module was missing; the
+repository's headless Chrome/Playwright harness supplied rendered browser proof.
+Phone viewport checks do not establish physical touch/device behavior, screen
+reader compatibility, browser zoom or a named ChatGPT host. Human usability review
+and production release remain separate. No schema, scope/consent, provider or
+production configuration change. Unrelated package/workspace/lockfile edits remain
+outside feature commits.

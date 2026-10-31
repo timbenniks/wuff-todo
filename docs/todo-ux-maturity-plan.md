@@ -9,10 +9,10 @@ overview canvas, hierarchy remains stable when favoriting, and a parent page
 visibly connects to its child lists. Keep Wuff's DM Sans, palettes, shared controls,
 44px interaction targets and concise language.
 
-This proposal follows the current web/PWA/HTTP/MCP decision. It complements the
-October 24 UX programme and proposes replacing its Today-first overview priority
-and the favorites contract's single-appearance rule. Those existing decisions
-remain in force until implementation adopts and updates them explicitly.
+This implementation follows the current web/PWA/HTTP/MCP decision. It complements
+the October 24 UX programme and replaces its Today-first overview priority and
+the favorites contract's single-appearance rule with Tim's approved list-first
+overview and canonical hierarchy. Related feature contracts are updated below.
 
 ## Evidence and limits
 
@@ -246,4 +246,53 @@ unrelated package/workspace/lockfile edits are excluded from feature commits.
 The browser connector failed to load its service module. Rendered behavior is
 verified using the repository's Playwright harness against the optimized local
 application and actual MCP Apps SDK host, with isolated synthetic accounts.
-Current detailed verification results will be recorded after the final checks.
+Verification against optimized application source `9acccc9`:
+
+- `pnpm typecheck`: passed all packages, web and root scripts/tests.
+- `pnpm test`: 195 passed, no failures/skips. `tests/list-nesting.test.ts` changes
+  the favorite projection expectation while retaining saved-parent/archive checks.
+  `tests/todo-navigation.test.ts` covers search/context, missing/archived parents,
+  width boundaries and invalid/blocked storage, account keys/reset, fresh MCP
+  mutation catalogs, revoked-parent exclusion and scope/read-failure boundaries.
+- A controlled rollback of the original favorite filter made two relevant tests
+  fail; restoring the fix passed. No test/CI settings or safeguards changed.
+- `pnpm preview:local`: optimized guide/MCP/web build passed and serves on
+  `http://localhost:3000`. No deployment command was run.
+- `node --env-file=.env.local --import tsx scripts/verify-todo-navigation.ts`:
+  passed with no page errors. Exercises all six widths listed above, search and
+  collapse restoration, all-hidden day panels with the catalog retained, aligned
+  roots, favorites/children, pointer/keyboard width and reload/window clamping,
+  reset, direct move out/back, parent/child/sibling/Back, lost committed favorite
+  response with an identical retry, catalog failure/retry and isolated detail-503
+  recovery. Actual MCP Apps SDK host checks list-first Home, search, catalog,
+  favorites and parent/child/sibling navigation, including retained context after
+  real task mutations on parent and child lists.
+- Final adapter suite runs the new `tests/todo-navigation.integration.test.ts`
+  with existing nesting/favorites integration suites, serially on synthetic users.
+  It verifies actual HTTP-write/MCP-read and MCP-write/HTTP-read, read-only scope
+  denial, unrelated private-list exclusion, sharing/revocation, fresh navigation
+  in read/mutation replies, and revoked-connection rejection. Results are recorded
+  in [verification](verification.md#todo-navigation-maturity--october-31-2026).
+- First Codex review found two valid recovery defects: mutation replies lost MCP
+  navigation, and detail-read failures hid successful catalog reads. Both were
+  fixed in `9acccc9` with unit/adapter/SDK/browser regressions. Fresh review of that
+  commit completed with no findings; [review summary](https://github.com/timbenniks/wuff-todo/pull/45#issuecomment-6542553561).
+
+Visual refinements from browser inspection: overview groups start compact to keep
+other roots above the fold; search reveals matching children without altering
+expansion state. Desktop parent pages show all child links, while phones use a
+three-link preview and expansion. Resize positioning is desktop-only to avoid the
+Empire mobile header offset. Selected sidebar rows scroll into view. Uncertain
+organization saves have a main-canvas retry as well as the sidebar retry.
+
+Local browser/SDK verification does not establish physical touch-device,
+screen-reader, 200% browser zoom, production or named ChatGPT-host behavior.
+A task-based review by Tim/another person remains a usability acceptance step.
+The PR stays draft for that review; no merge or production release was performed.
+
+Representative synthetic screenshots from the final local browser run:
+[Overview on laptop](screenshots/todo-ux-overview-laptop.png),
+[Overview on phone](screenshots/todo-ux-overview-phone.png),
+[parent list on laptop](screenshots/todo-ux-parent-laptop.png).
+The full generated capture set and machine-readable outcome remain local under
+`artifacts/todo-navigation/`; only these representative images are tracked.
