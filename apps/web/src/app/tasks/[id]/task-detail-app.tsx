@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TaskDetail, TodoList } from "@wuff/contracts";
+import { TodoAppearanceControl } from "@wuff/ui/modules/todo/components/appearance-control";
 import { ListTheme } from "@/components/list-theme";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
@@ -145,7 +146,8 @@ export function TaskDetailApp({
           onStatus={() => {}}
         />
       )}
-      <nav className="flex items-center justify-between mb-3 min-h-11">
+      <nav className="flex flex-wrap items-center justify-between gap-2 mb-3 min-h-11">
+        <TodoAppearanceControl />
         <a
           href={`/lists?listId=${list.id}`}
           className="text-sm text-primary underline"

@@ -185,7 +185,7 @@
     "components": [
       {
         "name": "ListSettings",
-        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy: writing,\n  change,\n  retry,\n  sidebar,\n  actions,\n  people,\n}: {\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;\n})"
+        "signature": "export function ListSettings({\n  list,\n  userId,\n  busy: writing,\n  change,\n  retry,\n  sidebar,\n  actions,\n  people,\n  labelled = false,\n}: {\n  labelled?: boolean;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  sidebar?: SidebarLocation;\n  actions?: ReactNode;\n  people?: (active: boolean, setBusy: (busy: boolean) => void) => ReactNode;\n})"
       }
     ]
   },
@@ -388,6 +388,16 @@
       {
         "name": "WorkMetadata",
         "signature": "export function WorkMetadata({\n  task,\n  list,\n  busy,\n  change,\n  editing,\n  onEditingChange,\n  returnFocus,\n}: {\n  task: Task;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  editing: boolean;\n  onEditingChange: (editing: boolean) => void;\n  returnFocus?: RefObject<HTMLButtonElement | null>;\n})"
+      }
+    ]
+  },
+  {
+    "source": "packages/ui/src/modules/todo/components/appearance-control.tsx",
+    "module": "@wuff/ui/modules/todo/components/appearance-control",
+    "components": [
+      {
+        "name": "TodoAppearanceControl",
+        "signature": "export function TodoAppearanceControl()"
       }
     ]
   },

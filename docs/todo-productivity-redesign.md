@@ -4,6 +4,36 @@ October 31, 2026. Tim's focused redesign supersedes the previous list-first
 Overview and expandable favorite shortcuts. Continue draft PR #45; no merge or
 production operation is authorized.
 
+## Latest feedback: appearance and action menus
+
+Tim requested an explicit appearance toggle and restoration of the original list
+themes after trying the local redesign. This supersedes the neutral/system-only
+direction below: Light is the default and uses the original listThemeVariables
+unchanged; Dark derives tinted surfaces from the same selected list; System is an
+explicit optional choice. The Appearance control is in the sidebar footer and
+full task page, with an equivalent control in embedded Todo. Only the appearance
+choice is stored on this device; blocked storage still supports changes in the
+current document. No synced account data, new HTTP/MCP mutation, scopes or consent.
+
+The photographed List actions menu is corrected: named List settings and People
+& sharing rows replace unlabelled icon buttons, Move to… progressively discloses
+the parent selector/action, and redundant status/explanation is removed from the
+normal menu. Existing move/favorite permissions and exact retries are unchanged.
+
+Codex review of 123372d also found a dead Favorites toggle in embedded Customize
+Home. Web and MCP now share the same day-panel projection/reorder/reset helper: only
+Today/Coming up controls appear, and saved Favorites visibility and its position
+are preserved. Existing tool contracts and Empire portal preferences remain.
+
+New unit cases cover explicit Light overriding a dark OS, Dark overriding a light
+OS, System following either, original light palette retention, tinted dark
+palettes, local persistence/events/storage failure and day-panel bounds/preference
+preservation. All 204 unit tests and TypeScript pass. Optimized guide/MCP/web build
+passed. Updated actual browser checks pass Light overriding a dark OS, explicit
+Dark/System switching, Dark after reload, visible menu action labels and progressive
+parent controls. Updated navigation/actual MCP SDK checks also pass, including the
+visible two-panel customization controls, reorder bounds and Cancel.
+
 ## Component inventory and implementation sequence
 
 | Stage          | Reuse                                                                                  | Necessary changes                                                                                                                                                            |

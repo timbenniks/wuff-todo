@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import type { ListColor } from "@wuff/contracts";
+import { todoAppearanceEvent } from "../lib/appearance";
 import { applyListTheme } from "../lib/list-theme";
 
 // The selected, authorized list is the source of truth. No task data or offline
@@ -11,8 +12,12 @@ export function ListTheme({ color }: { color: ListColor }) {
     const query = matchMedia("(prefers-color-scheme: dark)");
     update();
     query.addEventListener("change", update);
+    window.addEventListener(todoAppearanceEvent, update);
+    window.addEventListener("storage", update);
     return () => {
       query.removeEventListener("change", update);
+      window.removeEventListener(todoAppearanceEvent, update);
+      window.removeEventListener("storage", update);
       applyListTheme("blue", document.documentElement);
     };
   }, [color]);

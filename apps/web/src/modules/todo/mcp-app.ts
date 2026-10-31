@@ -1,4 +1,15 @@
 import {
+  todoDayPanels,
+  moveTodoDayPanel,
+  resetTodoDayPanels,
+} from "@wuff/ui/modules/todo/lib/dashboard-panels";
+import {
+  readTodoAppearance,
+  setTodoAppearance,
+  todoAppearanceEvent,
+  type TodoAppearance,
+} from "@wuff/ui/modules/todo/lib/appearance";
+import {
   calendarDay,
   dueDatePresentation,
   formatDueDate,
@@ -38,10 +49,30 @@ import { ToolError, type McpViewRuntime } from "@/mcp-app/runtime";
 
 export function createTodoMcpView(runtime: McpViewRuntime) {
   const { root, status, request, call, show } = runtime;
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  const refreshAppearance = () => {
     if (document.documentElement.dataset.todoActive === "true")
       applyListTheme(current?.color ?? "blue", document.documentElement, true);
-  });
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener(
+    "change",
+    refreshAppearance,
+  );
+  window.addEventListener(todoAppearanceEvent, refreshAppearance);
+  window.addEventListener("storage", refreshAppearance);
+  function appearancePicker() {
+    const label = element("label", "Appearance"),
+      select = element("select");
+    select.setAttribute("aria-label", "Appearance");
+    for (const value of ["light", "dark", "system"]) {
+      const option = element("option", value[0].toUpperCase() + value.slice(1));
+      option.value = value;
+      select.append(option);
+    }
+    select.value = readTodoAppearance();
+    select.onchange = () => setTodoAppearance(select.value as TodoAppearance);
+    label.append(select);
+    return label;
+  }
   let catalogUnavailable = false;
   let fieldSequence = 0;
   const githubExpanded = new Set<string>();
@@ -2014,6 +2045,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
         () => void call("show_dashboard", { today: calendarDay() }),
       ),
       button("← Your lists", () => void call("show_lists", {})),
+      appearancePicker(),
     );
     const header = element("div");
     header.className = "list-header";
@@ -2356,6 +2388,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       element("p", `Welcome back, ${data.name}.`),
       button("Your lists", () => void call("show_lists", {})),
     );
+    root.append(appearancePicker());
     const labels = {
       today: "Today",
       upcoming: "Coming up",
@@ -2458,7 +2491,8 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       saving = false;
     function controls() {
       fields.replaceChildren(element("legend", "Your Home sections"));
-      for (const [i, id] of draft.sections.entries()) {
+      const panels = todoDayPanels(draft.sections);
+      for (const [i, id] of panels.entries()) {
         const row = element("div"),
           label = element("label", labels[id]),
           check = element("input");
@@ -2477,15 +2511,13 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
             button(
               `Move ${labels[id]} ${delta < 0 ? "up" : "down"}`,
               () => {
-                const sections = [...draft.sections];
-                [sections[i], sections[i + delta]] = [
-                  sections[i + delta],
-                  sections[i],
-                ];
-                draft = { ...draft, sections };
+                draft = {
+                  ...draft,
+                  sections: moveTodoDayPanel(draft.sections, id, delta),
+                };
                 controls();
               },
-              i + delta < 0 || i + delta >= 3,
+              i + delta < 0 || i + delta >= panels.length,
             ),
           );
         }
@@ -2509,7 +2541,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       fields.append(
         label,
         button("Reset to default", () => {
-          draft = structuredClone(defaultDashboardSettings);
+          draft = resetTodoDayPanels(draft);
           controls();
         }),
       );

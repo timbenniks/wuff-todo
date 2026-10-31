@@ -173,3 +173,108 @@ test("global capture events cannot open a composer for another list", () => {
   for (const value of [null, undefined, "list-a", { listId: "list-b" }, {}])
     assert.equal(captureMatchesList(value, "list-a"), false);
 });
+
+test("appearance choice defaults to light, overrides the OS and retains all list palettes", async () => {
+  const { parseTodoAppearance, isTodoDark } =
+    await import("../packages/ui/src/modules/todo/lib/appearance");
+  const { listThemeVariables, listPalette } =
+    await import("../packages/design/src/index");
+  for (const input of [null, undefined, "invalid", "light"])
+    assert.equal(parseTodoAppearance(input), "light");
+  assert.equal(isTodoDark("light", true), false);
+  assert.equal(isTodoDark("dark", false), true);
+  assert.equal(isTodoDark("system", true), true);
+  assert.equal(isTodoDark("system", false), false);
+  for (const color of listColors)
+    assert.deepEqual(todoThemeVariables(color, false), {
+      ...listThemeVariables(color),
+      "--wuff-action": listPalette[color].accent,
+    });
+  assert.notEqual(
+    todoThemeVariables("rose", true)["--wuff-background"],
+    todoThemeVariables("sage", true)["--wuff-background"],
+  );
+});
+test("appearance persists locally and remains usable when browser storage is blocked", async () => {
+  const {
+    readTodoAppearance,
+    setTodoAppearance,
+    todoAppearanceKey,
+    todoAppearanceEvent,
+  } = await import("../packages/ui/src/modules/todo/lib/appearance");
+  const descriptors = ["localStorage", "window"].map(
+    (key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const,
+  );
+  const values = new Map<string, string>(),
+    events: string[] = [];
+  try {
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+      },
+    });
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: {
+        dispatchEvent: (event: Event) => {
+          events.push(event.type);
+          return true;
+        },
+      },
+    });
+    assert.equal(readTodoAppearance(), "light");
+    setTodoAppearance("dark");
+    assert.equal(values.get(todoAppearanceKey), "dark");
+    assert.equal(readTodoAppearance(), "dark");
+    assert.deepEqual(events, [todoAppearanceEvent]);
+    values.set(todoAppearanceKey, "system");
+    assert.equal(readTodoAppearance(), "system");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw Error("blocked");
+      },
+    });
+    assert.doesNotThrow(() => setTodoAppearance("light"));
+    assert.equal(readTodoAppearance(), "light");
+    setTodoAppearance("dark");
+    assert.equal(readTodoAppearance(), "dark");
+  } finally {
+    for (const [key, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+  }
+});
+test("Todo day controls preserve hidden favorite preferences and cannot move outside their visible bounds", async () => {
+  const { todoDayPanels, moveTodoDayPanel, resetTodoDayPanels } =
+    await import("../packages/ui/src/modules/todo/lib/dashboard-panels");
+  const sections = ["today", "favorites", "upcoming"] as (
+    "today" | "favorites" | "upcoming"
+  )[];
+  assert.deepEqual(todoDayPanels(sections), ["today", "upcoming"]);
+  assert.deepEqual(moveTodoDayPanel(sections, "today", 1), [
+    "upcoming",
+    "favorites",
+    "today",
+  ]);
+  for (const [id, delta] of [
+    ["today", -1],
+    ["upcoming", 1],
+    ["favorites", 1],
+  ] as const)
+    assert.deepEqual(moveTodoDayPanel(sections, id, delta), sections);
+  const settings = {
+    sections: ["upcoming", "favorites", "today"] as typeof sections,
+    hidden: ["favorites", "today"] as typeof sections,
+    startPage: "last_list" as const,
+  };
+  assert.deepEqual(resetTodoDayPanels(settings), {
+    sections,
+    hidden: ["favorites"],
+    startPage: "home",
+  });
+  assert.deepEqual(settings.hidden, ["favorites", "today"]);
+});

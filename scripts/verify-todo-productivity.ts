@@ -4,6 +4,7 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { database, members } from "@wuff/db";
 import { scopes } from "@wuff/contracts";
+import { todoThemeVariables } from "../packages/design/src/index";
 import {
   createList,
   getList,
@@ -195,9 +196,32 @@ try {
         () => getComputedStyle(document.documentElement).colorScheme,
       ),
     )
+    .toBe("light");
+  await page
+    .getByRole("combobox", { name: "Appearance", exact: true })
+    .selectOption("dark");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => getComputedStyle(document.documentElement).colorScheme,
+      ),
+    )
     .toBe("dark");
   await page.screenshot({ path: `${out}/workspace-dark.png` });
+  await page
+    .getByRole("combobox", { name: "Appearance", exact: true })
+    .selectOption("system");
   await page.emulateMedia({ colorScheme: "light" });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => getComputedStyle(document.documentElement).colorScheme,
+      ),
+    )
+    .toBe("light");
+  await page
+    .getByRole("combobox", { name: "Appearance", exact: true })
+    .selectOption("light");
   await page.setViewportSize({ width: 390, height: 844 });
   assert(
     await page.evaluate(
@@ -217,7 +241,14 @@ try {
   checks.push(
     "27 tasks including 24 roots, 3 sections, subtasks, completion, dates, assignment, priority and notes; light/dark and phone sidebar",
   );
-  if (!["foundations-sidebar", "drawer-only", "drawer-empty"].includes(stage)) {
+  if (
+    ![
+      "foundations-sidebar",
+      "drawer-only",
+      "drawer-empty",
+      "appearance-menu",
+    ].includes(stage)
+  ) {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page
       .getByRole("button", { name: "List actions", exact: true })
@@ -447,6 +478,73 @@ try {
       "Committed response loss preserves the draft and retries an identical request without duplicate creation",
     );
   }
+  if (stage === "appearance-menu") {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const appearance = page.getByRole("combobox", {
+      name: "Appearance",
+      exact: true,
+    });
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(appearance).toHaveValue("light");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+      )
+      .toBe("light");
+    await page
+      .getByRole("button", { name: "List actions", exact: true })
+      .click();
+    const menu = page.getByRole("dialog", {
+      name: "List actions",
+      exact: true,
+    });
+    await expect(
+      menu.getByRole("button", { name: "List settings", exact: true }),
+    ).toContainText("List settings");
+    await expect(
+      menu.getByRole("button", { name: "People & sharing", exact: true }),
+    ).toBeVisible();
+    await expect(
+      menu.getByRole("combobox", { name: "Parent list", exact: true }),
+    ).not.toBeVisible();
+    await page.screenshot({ path: `${out}/list-actions-light.png` });
+    await menu.locator(".list-move-menu > summary").click();
+    await expect(
+      menu.getByRole("combobox", { name: "Parent list", exact: true }),
+    ).toBeDisabled();
+    await menu.getByRole("button", { name: "Done", exact: true }).click();
+    await appearance.selectOption("dark");
+    await page
+      .getByRole("button", { name: "List actions", exact: true })
+      .click();
+    if (
+      await menu
+        .getByRole("combobox", { name: "Parent list", exact: true })
+        .isVisible()
+    )
+      await menu.locator(".list-move-menu > summary").click();
+    await page.screenshot({ path: `${out}/list-actions-dark.png` });
+    await menu.getByRole("button", { name: "Done", exact: true }).click();
+    await page.reload();
+    await expect(
+      page.getByRole("combobox", { name: "Appearance", exact: true }),
+    ).toHaveValue("dark");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+      )
+      .toBe("dark");
+    await page
+      .getByRole("combobox", { name: "Appearance", exact: true })
+      .selectOption("light");
+    checks.push(
+      "Explicit Light overrides a dark OS; Light/Dark/System control updates themes, Dark survives reload; named compact actions with progressively disclosed move controls",
+    );
+  }
   if (["drawer", "full", "drawer-only"].includes(stage)) {
     await page.setViewportSize({ width: 1366, height: 900 });
     const titleLink = page
@@ -473,16 +571,22 @@ try {
       drawer.getByRole("group", { name: "Text formatting", exact: true }),
     ).toHaveCount(0);
     await page.screenshot({ path: `${out}/drawer-light.png` });
-    await page.emulateMedia({ colorScheme: "dark" });
+    await page.evaluate(() => {
+      localStorage.setItem("wuff:todo:appearance:v1", "dark");
+      window.dispatchEvent(new Event("storage"));
+    });
     await expect
       .poll(() =>
-        drawer.evaluate(
-          (el: HTMLElement) => getComputedStyle(el).backgroundColor,
+        drawer.evaluate((el: HTMLElement) =>
+          getComputedStyle(el).getPropertyValue("--wuff-background").trim(),
         ),
       )
-      .toBe("rgb(23, 27, 32)");
+      .toBe(todoThemeVariables(list.color, true)["--wuff-background"]);
     await page.screenshot({ path: `${out}/drawer-dark.png` });
-    await page.emulateMedia({ colorScheme: "light" });
+    await page.evaluate(() => {
+      localStorage.setItem("wuff:todo:appearance:v1", "light");
+      window.dispatchEvent(new Event("storage"));
+    });
     await drawer
       .getByRole("button", { name: "Edit task notes", exact: true })
       .click();
@@ -608,6 +712,23 @@ try {
     await expect(
       drawer.getByRole("button", { name: "Add subtask", exact: true }),
     ).toBeVisible();
+    await page.screenshot({ path: `${out}/drawer-light.png` });
+    await page.evaluate(() => {
+      localStorage.setItem("wuff:todo:appearance:v1", "dark");
+      window.dispatchEvent(new Event("storage"));
+    });
+    await expect
+      .poll(() =>
+        drawer.evaluate((el: HTMLElement) =>
+          getComputedStyle(el).getPropertyValue("--wuff-background").trim(),
+        ),
+      )
+      .toBe(todoThemeVariables(list.color, true)["--wuff-background"]);
+    await page.screenshot({ path: `${out}/drawer-dark.png` });
+    await page.evaluate(() => {
+      localStorage.setItem("wuff:todo:appearance:v1", "light");
+      window.dispatchEvent(new Event("storage"));
+    });
     await page.setViewportSize({ width: 390, height: 844 });
     assert(
       await drawer.evaluate(

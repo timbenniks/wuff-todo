@@ -281,6 +281,10 @@ try {
       .getByRole("button", { name: children[6].title, exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "List actions", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "List actions", exact: true })
+    .locator(".list-move-menu > summary")
+    .click();
   await expect(
     page
       .getByRole("dialog", { name: "List actions", exact: true })
@@ -300,6 +304,7 @@ try {
     exact: true,
   });
   await page.getByRole("button", { name: "List actions", exact: true }).click();
+  await actions.locator(".list-move-menu > summary").click();
   await actions
     .getByRole("combobox", { name: "Parent list", exact: true })
     .selectOption("");
@@ -309,6 +314,7 @@ try {
   ).toHaveCount(0);
   await actions.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("button", { name: "List actions", exact: true }).click();
+  await actions.locator(".list-move-menu > summary").click();
   await actions
     .getByRole("combobox", { name: "Parent list", exact: true })
     .selectOption(parent.id);
@@ -429,6 +435,23 @@ try {
   await expect(
     frame.getByRole("region", { name: "Your lists", exact: true }),
   ).toBeVisible();
+  await frame.locator(".home-customize > summary").click();
+  await expect(
+    frame.getByRole("checkbox", { name: "Favorites", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    frame.getByRole("checkbox", { name: "Today", exact: true }),
+  ).toBeVisible();
+  await expect(
+    frame.getByRole("checkbox", { name: "Coming up", exact: true }),
+  ).toBeVisible();
+  await frame
+    .getByRole("button", { name: "Move Today down", exact: true })
+    .click();
+  await expect(
+    frame.getByRole("button", { name: "Move Today down", exact: true }),
+  ).toBeDisabled();
+  await frame.getByRole("button", { name: "Cancel", exact: true }).click();
   await frame.getByLabel("Find a list").fill("art direction");
   await frame
     .getByRole("region", { name: "Your lists", exact: true })

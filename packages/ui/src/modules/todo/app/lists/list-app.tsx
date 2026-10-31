@@ -33,6 +33,7 @@ import { useActorApi } from "../../../../features/actor-api";
 import { LiveUpdates } from "../../live-updates";
 import type { LiveLists } from "@wuff/ui/live-types";
 import { LiveRefreshQueue } from "@wuff/client/live-refresh";
+import { TodoAppearanceControl } from "../../components/appearance-control";
 import { ListTheme } from "../../components/list-theme";
 import { ListSettings } from "./list-settings";
 import { TaskGroups } from "./task-groups";
@@ -745,6 +746,7 @@ export function ListApp({
             <Settings2 size={17} aria-hidden="true" />
             Settings
           </a>
+          <TodoAppearanceControl />
           {workspace?.navigation}
         </div>
         <div className="sidebar-account flex min-w-0 items-center justify-between pl-3 md:pt-2 md:border-t border-border md:mt-2">
@@ -1152,7 +1154,7 @@ export function ListApp({
                     variant="ghost"
                     className="list-overflow-trigger"
                   >
-                    <div className="list-management flex flex-wrap items-center gap-2">
+                    <div className="list-management">
                       {!isPending &&
                         !list.archived &&
                         !catalogError &&
@@ -1172,6 +1174,7 @@ export function ListApp({
 
                       {!isPending && (
                         <ListSettings
+                          labelled
                           key={`settings:${list.id}`}
                           list={list}
                           userId={userId}

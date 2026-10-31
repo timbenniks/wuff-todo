@@ -6,6 +6,11 @@ import { ExternalLink, X, Copy } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { useRuntime } from "../../../../features/runtime";
 import type { TodoList } from "@wuff/contracts";
+import {
+  readTodoAppearance,
+  isTodoDark,
+  todoAppearanceEvent,
+} from "../../lib/appearance";
 import { todoThemeVariables } from "@wuff/design";
 import { Button } from "../../../../button";
 import { TaskActions } from "./task-actions";
@@ -42,10 +47,17 @@ export function TaskDetailDrawer({
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const query = matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setDark(query.matches);
+    const update = () =>
+      setDark(isTodoDark(readTodoAppearance(), query.matches));
     update();
     query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
+    window.addEventListener(todoAppearanceEvent, update);
+    window.addEventListener("storage", update);
+    return () => {
+      query.removeEventListener("change", update);
+      window.removeEventListener(todoAppearanceEvent, update);
+      window.removeEventListener("storage", update);
+    };
   }, []);
   const dialog = useRef<HTMLDialogElement>(null);
   const more = useRef<HTMLButtonElement>(null);

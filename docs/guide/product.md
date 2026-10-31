@@ -55,7 +55,7 @@ Personal reminders and Settings are implemented. Scheduling, delivery-provider c
 
 The responsive website and MCP tools use the same authorized backend; the MCP App adds an embedded interface. Installable PWAs use the responsive web application. Tauri/native apps are retired. Browser checks do not prove physical-device push delivery or a named MCP-host integration.
 
-No offline list cache or queued offline edits. Todo follows system light/dark appearance with its approved palettes. No arbitrary palette colors, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
+No offline list cache or queued offline edits. Todo offers Light (default), Dark and System appearance with its original approved list palettes; the appearance choice stays on this device. No arbitrary palette colors, recurring tasks, multi-level subtasks or new admission model by default. These can be proposed as new scope, with their implications explained rather than presented as already supported.
 
 Preserve these defaults unless the feature deliberately changes them. Explain proposed product changes in the PR; admission, access and privacy changes need explicit review in the PR before merge. Contributors can prepare and test code without preliminary approval.
 

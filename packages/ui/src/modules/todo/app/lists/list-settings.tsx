@@ -187,7 +187,9 @@ export function ListSettings({
   sidebar,
   actions,
   people,
+  labelled = false,
 }: {
+  labelled?: boolean;
   list: TodoList;
   userId: string;
   busy: boolean;
@@ -252,24 +254,28 @@ export function ListSettings({
     <>
       <Button
         variant="ghost"
-        size="icon"
+        size={labelled ? "default" : "icon"}
+        className={labelled ? "list-menu-action" : undefined}
         aria-label="List settings"
         title="List settings"
         disabled={busy}
         onClick={(e) => open("details", e.currentTarget)}
       >
-        <Settings size={20} aria-hidden="true" />
+        <Settings size={17} aria-hidden="true" />
+        {labelled && "List settings"}
       </Button>
       {people && (
         <Button
           variant="ghost"
-          size="icon"
-          aria-label="People"
+          size={labelled ? "default" : "icon"}
+          className={labelled ? "list-menu-action" : undefined}
+          aria-label={labelled ? undefined : "People"}
           title="People"
           disabled={busy}
           onClick={(e) => open("people", e.currentTarget)}
         >
-          <Users size={20} aria-hidden="true" />
+          <Users size={17} aria-hidden="true" />
+          {labelled && "People & sharing"}
         </Button>
       )}
       {mounted &&

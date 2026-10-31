@@ -2,6 +2,29 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Todo appearance/menu follow-up — October 31, 2026
+
+Tim’s local feedback restores the original themed light surfaces, with explicit
+Light (default), Dark and System choices in the sidebar/task page and embedded
+Todo. The choice is device-local and still works in the current document if
+storage is blocked. No synced-data/API/scopes/consent changes. Dark remains tinted
+by the list palette; all seven light/dark token contrasts pass. The photographed
+list menu now uses named action rows and Move to… disclosure rather than a form
+and unlabelled icons.
+
+All 204 units, workspace TypeScript and optimized guide/MCP/web build passed.
+Actual 27-task browser checks pass explicit Light over a dark OS, Dark/System
+selection, reload persistence and the menu’s labels/progressive parent controls.
+The updated navigation/real MCP Apps SDK suite passes, including two day-panel
+customization controls, reorder/Cancel, no dead Favorites toggle, and post-write
+read recovery. Unit cases verify day-panel move/reset preserves Favorites’ saved
+visibility/position; this fixes Codex finding discussion_r4431682832.
+
+[Light menu](screenshots/todo-productivity-list-actions-light.png) ·
+[Dark menu](screenshots/todo-productivity-list-actions-dark.png).
+Earlier test runs and managed-auth limits below remain scoped to their recorded
+source; final follow-up drawer/adapter results are recorded in the PR.
+
 ## Todo productivity redesign — October 31, 2026
 
 [Draft PR #45](https://github.com/timbenniks/wuff-todo/pull/45),

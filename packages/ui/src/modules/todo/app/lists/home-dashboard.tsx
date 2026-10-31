@@ -32,6 +32,11 @@ import { TaskCapture } from "./task-capture";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { useHomeTasks } from "./use-home-tasks";
 import type { ListChange } from "./list-settings";
+import {
+  todoDayPanels,
+  moveTodoDayPanel,
+  resetTodoDayPanels,
+} from "../../lib/dashboard-panels";
 import { NativeSelect } from "../../../../native-select";
 
 const labels = {
@@ -220,16 +225,10 @@ export function HomeDashboard({
     }
   }
   function reorder(section: DashboardSection, delta: number) {
-    setDraft((old) => {
-      const visible = old.sections.filter((id) => id !== "favorites"),
-        i = visible.indexOf(section as "today" | "upcoming");
-      [visible[i], visible[i + delta]] = [visible[i + delta], visible[i]];
-      let at = 0;
-      const sections = old.sections.map((id) =>
-        id === "favorites" ? id : visible[at++],
-      );
-      return { ...old, sections };
-    });
+    setDraft((old) => ({
+      ...old,
+      sections: moveTodoDayPanel(old.sections, section, delta),
+    }));
   }
   async function completeTask(
     task: Pick<DashboardTask, "id" | "title" | "path" | "list">,
@@ -680,50 +679,48 @@ export function HomeDashboard({
           </p>
           <fieldset disabled={saving || !!retry} className="min-w-0">
             <legend className="text-sm font-bold mb-2">Sections</legend>
-            {draft.sections
-              .filter((section): boolean => section !== "favorites")
-              .map((section, i) => (
-                <div
-                  key={section}
-                  className="flex items-center gap-1 py-2 border-b border-border"
+            {todoDayPanels(draft.sections).map((section, i) => (
+              <div
+                key={section}
+                className="flex items-center gap-1 py-2 border-b border-border"
+              >
+                <label className="flex flex-1 min-w-0 items-center gap-3 min-h-11 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={!draft.hidden.includes(section)}
+                    onChange={(e) =>
+                      setDraft((old) => ({
+                        ...old,
+                        hidden: e.target.checked
+                          ? old.hidden.filter((s) => s !== section)
+                          : [...old.hidden, section],
+                      }))
+                    }
+                  />
+                  {labels[section]}
+                </label>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={i === 0}
+                  aria-label={`Move ${labels[section]} up`}
+                  onClick={() => reorder(section, -1)}
                 >
-                  <label className="flex flex-1 min-w-0 items-center gap-3 min-h-11 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={!draft.hidden.includes(section)}
-                      onChange={(e) =>
-                        setDraft((old) => ({
-                          ...old,
-                          hidden: e.target.checked
-                            ? old.hidden.filter((s) => s !== section)
-                            : [...old.hidden, section],
-                        }))
-                      }
-                    />
-                    {labels[section]}
-                  </label>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    disabled={i === 0}
-                    aria-label={`Move ${labels[section]} up`}
-                    onClick={() => reorder(section, -1)}
-                  >
-                    <ArrowUp size={16} />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    disabled={i === 1}
-                    aria-label={`Move ${labels[section]} down`}
-                    onClick={() => reorder(section, 1)}
-                  >
-                    <ArrowDown size={16} />
-                  </Button>
-                </div>
-              ))}
+                  <ArrowUp size={16} />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={i === 1}
+                  aria-label={`Move ${labels[section]} down`}
+                  onClick={() => reorder(section, 1)}
+                >
+                  <ArrowDown size={16} />
+                </Button>
+              </div>
+            ))}
             <label
               className="block mt-5 mb-2 text-sm font-bold"
               htmlFor="home-start"
@@ -749,9 +746,7 @@ export function HomeDashboard({
               type="button"
               variant="ghost"
               className="mt-3"
-              onClick={() =>
-                setDraft(structuredClone(defaultDashboardSettings))
-              }
+              onClick={() => setDraft(resetTodoDayPanels(draft))}
             >
               Reset to default
             </Button>

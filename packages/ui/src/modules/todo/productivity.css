@@ -144,22 +144,21 @@
     width: 44px;
   }
 }
-@media (prefers-color-scheme: dark) {
-  .todo-workspace .text-red-800,
-  .todo-workspace .text-red-700,
-  .task-drawer .text-red-800 {
-    color: #fca5a5;
-  }
-  .todo-workspace .bg-red-50,
-  .task-drawer .bg-red-50 {
-    background: #352125;
-  }
-  .todo-workspace .bg-amber-50,
-  .task-drawer .bg-amber-50 {
-    background: #332d20;
-    color: #f5dc9d;
-  }
+html[data-todo-appearance="dark"] .todo-workspace .text-red-800,
+html[data-todo-appearance="dark"] .todo-workspace .text-red-700,
+html[data-todo-appearance="dark"] .task-drawer .text-red-800 {
+  color: #fca5a5;
 }
+html[data-todo-appearance="dark"] .todo-workspace .bg-red-50,
+html[data-todo-appearance="dark"] .task-drawer .bg-red-50 {
+  background: #352125;
+}
+html[data-todo-appearance="dark"] .todo-workspace .bg-amber-50,
+html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
+  background: #332d20;
+  color: #f5dc9d;
+}
+
 @media (max-width: 767px) {
   .todo-workspace .app-sidebar {
     padding: 4px 12px;
@@ -813,4 +812,71 @@
   .task-drawer select {
     font-size: 16px;
   }
+}
+
+/* Menus use named rows; move fields are shown only when requested. */
+.todo-workspace .list-heading .list-management {
+  display: grid;
+  width: 260px;
+  max-width: 100%;
+  gap: 4px;
+}
+.list-management .list-menu-action,
+.list-personal-menu > .wuff-button {
+  justify-content: flex-start;
+  width: 100%;
+  font-weight: 500;
+}
+.list-management .list-personal-menu {
+  gap: 4px;
+}
+.list-management .list-menu-action {
+  padding-inline: 12px;
+}
+.list-move-menu > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 8px;
+}
+.list-move-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.list-move-menu > summary:hover {
+  background: var(--wuff-accent);
+}
+.list-move-menu[open] > summary {
+  font-weight: 600;
+}
+.list-move-fields {
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+.list-move-fields label {
+  font-size: 12px;
+}
+.list-move-fields select {
+  font-size: 14px;
+}
+.todo-appearance-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+.todo-appearance-control select {
+  width: auto;
+  min-width: 90px;
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  font-size: 13px;
 }

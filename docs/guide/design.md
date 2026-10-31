@@ -4,7 +4,7 @@ Wuff is calm, compact and warm. Waffles is a small companion, not a corporate ma
 
 ## Use the actual tokens
 
-Import `listPalette` and `listThemeVariables` from `@wuff/design`, or render `ListTheme` from the shared UI. For Todo, `ListTheme` uses `todoThemeVariables`: neutral light/dark page, sidebar and surface roles follow system appearance, while the selected list supplies restrained link/focus/action accents. Other modules retain their existing palette derivation. Todo’s filled actions use `--wuff-action` for white-label contrast; the lighter dark-mode link accent is separate. Settings drafts do not silently save or preview a new list color. Auth and contexts with no selected list use Blue.
+Import `listPalette` and `listThemeVariables` from `@wuff/design`, or render `ListTheme` from the shared UI. For Todo, `ListTheme` uses `todoThemeVariables`: Light (the default) preserves the original list-colored page/sidebar/surface roles; Dark derives tinted surfaces from the selected list. Appearance offers Light, Dark and System, remembers the device choice and follows system appearance only when requested. Other modules retain their existing palette derivation. Todo’s filled actions use `--wuff-action` for white-label contrast; the lighter dark-mode link accent is separate. Settings drafts do not silently save or preview a new list color. Auth and contexts with no selected list use Blue.
 
 <!-- PALETTE_TABLE -->
 
@@ -41,7 +41,7 @@ Labels such as Save notes, Cancel, Delete list and Allow connection stay literal
 Todo’s shared `productivity.css` builds on these primitives with a 4px spacing
 scale, 28px page titles, 14px section/body text, 12px metadata, 8px radii and
 48px task rows. Retain 44px action hit areas; compact sidebar disclosure/drag
-controls expand on coarse pointers. Selection uses a quiet neutral surface.
+controls expand on coarse pointers. Selection uses the palette’s quiet accent surface.
 Favorites are flat shortcuts; the canonical Your lists tree owns nesting. Sidebar
 width defaults to 260px and remains device-local; reset lives in Sidebar options.
 
