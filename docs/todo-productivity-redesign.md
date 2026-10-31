@@ -212,3 +212,22 @@ retry action, then passed after ownership settles: the global retry has byte-ide
 PATCH payloads, the retained capture draft remains, and no task with that draft
 title exists. HTTP 400 in this test is an intentional injected known rejection.
 All 205 units, workspace/root TypeScript and optimized build pass.
+
+## Appearance storage failure
+
+An additional unit boundary caught storage that permits reads but rejects writes
+(for example, quota restrictions): rereading its old value overrode the current
+choice. A failed write now retains the selected appearance in document memory; a
+successful later write resumes persistence. Successful reads retain the last-known
+choice for a later read failure. The regression fails against the old helper and
+all 205 units pass with the fix. Only the cosmetic device preference is affected;
+no account data or server authorization changes.
+
+The readable-but-unwritable appearance regression failed against the old helper
+and passes with the fix. The actual browser test overrides writes with a quota
+error: Light/Dark still switch in the current document and reload keeps the prior
+saved preference. Unit coverage also verifies persistence resumes after storage
+recovers. All 205 units, TypeScript and optimized build pass; no page errors.
+Codex review of a4fb748 reported no major issues
+([receipt](https://github.com/timbenniks/wuff-todo/pull/45#issuecomment-6543664439));
+the additional storage boundary correction receives a fresh review separately.

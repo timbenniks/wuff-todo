@@ -269,6 +269,7 @@ try {
       "appearance-menu",
       "mobile-views",
       "retry-isolation",
+      "appearance-storage",
     ].includes(stage)
   ) {
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -498,6 +499,43 @@ try {
     await name.press("Escape");
     checks.push(
       "Committed response loss preserves the draft and retries an identical request without duplicate creation",
+    );
+  }
+  if (stage === "appearance-storage") {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException("Synthetic quota limit", "QuotaExceededError");
+      };
+    });
+    const appearance = page.getByRole("combobox", {
+      name: "Appearance",
+      exact: true,
+    });
+    await appearance.selectOption("dark");
+    await expect(appearance).toHaveValue("dark");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+      )
+      .toBe("dark");
+    await appearance.selectOption("light");
+    await expect(appearance).toHaveValue("light");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+      )
+      .toBe("light");
+    await page.reload();
+    await expect(
+      page.getByRole("combobox", { name: "Appearance", exact: true }),
+    ).toHaveValue("light");
+    checks.push(
+      "Readable storage with failed writes keeps Light/Dark switching functional in the current document; reload retains the prior saved preference",
     );
   }
   if (stage === "retry-isolation") {

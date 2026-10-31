@@ -1367,3 +1367,12 @@ errors; all 205 units, workspace/root TypeScript and optimized build pass. Exist
 payload/receipt units remain; these UI regressions exercise rendered outcomes.
 No backend/domain/auth/HTTP/MCP contract changed; the latest six adapter cases
 remain passing for the same server implementation.
+
+The readable-but-unwritable appearance regression failed against the old helper
+and passes with the fix. The actual browser test overrides writes with a quota
+error: Light/Dark still switch in the current document and reload keeps the prior
+saved preference. Unit coverage also verifies persistence resumes after storage
+recovers. All 205 units, TypeScript and optimized build pass; no page errors.
+Codex review of a4fb748 reported no major issues
+([receipt](https://github.com/timbenniks/wuff-todo/pull/45#issuecomment-6543664439));
+the additional storage boundary correction receives a fresh review separately.

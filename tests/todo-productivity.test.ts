@@ -233,6 +233,21 @@ test("appearance persists locally and remains usable when browser storage is blo
     assert.equal(readTodoAppearance(), "system");
     Object.defineProperty(globalThis, "localStorage", {
       configurable: true,
+      value: {
+        getItem: () => "system",
+        setItem: () => {
+          throw Error("quota exceeded");
+        },
+      },
+    });
+    setTodoAppearance("dark");
+    assert.equal(
+      readTodoAppearance(),
+      "dark",
+      "a readable but unwritable store must retain the current document choice",
+    );
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
       get() {
         throw Error("blocked");
       },
@@ -241,6 +256,21 @@ test("appearance persists locally and remains usable when browser storage is blo
     assert.equal(readTodoAppearance(), "light");
     setTodoAppearance("dark");
     assert.equal(readTodoAppearance(), "dark");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+      },
+    });
+    setTodoAppearance("light");
+    assert.equal(values.get(todoAppearanceKey), "light");
+    values.set(todoAppearanceKey, "system");
+    assert.equal(
+      readTodoAppearance(),
+      "system",
+      "a recovered store resumes reading persisted choices",
+    );
   } finally {
     for (const [key, descriptor] of descriptors) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);

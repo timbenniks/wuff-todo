@@ -8,9 +8,12 @@ export function isTodoDark(appearance: TodoAppearance, systemDark: boolean) {
   return appearance === "dark" || (appearance === "system" && systemDark);
 }
 let fallback: TodoAppearance = "light";
+let writeUnavailable = false;
 export function readTodoAppearance(): TodoAppearance {
+  if (writeUnavailable) return fallback;
   try {
-    return parseTodoAppearance(localStorage.getItem(todoAppearanceKey));
+    fallback = parseTodoAppearance(localStorage.getItem(todoAppearanceKey));
+    return fallback;
   } catch {
     return fallback;
   }
@@ -19,8 +22,9 @@ export function setTodoAppearance(value: TodoAppearance) {
   fallback = value;
   try {
     localStorage.setItem(todoAppearanceKey, value);
+    writeUnavailable = false;
   } catch {
-    /* Current document remains usable. */
+    writeUnavailable = true;
   }
   window.dispatchEvent(new Event(todoAppearanceEvent));
 }
