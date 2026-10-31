@@ -49,6 +49,11 @@ export function InlineTaskComposer({
   useEffect(() => {
     if (open) input.current?.focus();
   }, [open]);
+  useEffect(() => {
+    // A known rejection ends this attempt. A later uncertain write elsewhere
+    // must never let its receipt confirm or clear this retained capture draft.
+    if (!saving && !retry) setOwnsRetry(false);
+  }, [saving, retry]);
   const locked = busy || saving || !!retry;
   function update(value: string) {
     setTitle(value);

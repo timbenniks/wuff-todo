@@ -1351,3 +1351,19 @@ appearance/action overrides and subsequent OS changes leaving Empire light, with
 zero page errors. The existing full navigation/resize/retry/real-mutation checks
 also pass in that run. No server/domain behavior changed; the latest six-case
 authorized adapter run remains valid. Hosted Verify passes for e27a95c.
+
+## Phone views and capture retry isolation — October 31, 2026
+
+Codex finding discussion_r4431733523 is fixed by hiding only the toolbar-level
+preset picker. A new actual 390px regression failed against the old served CSS
+and passes with a real seeded named view: due-today filtering, Revert, starter
+selection and no document overflow. [Rendered picker](screenshots/todo-productivity-mobile-view-picker.png).
+A second actual-browser regression reproduced stale capture retry ownership after
+a known rejected capture followed by another task’s uncertain completion. Settling
+the rejected attempt now relinquishes its retry ownership. The failing-before /
+passing-after case verifies global byte-identical PATCH retry leaves the uncreated
+capture draft intact. Its injected HTTP 400 is expected. Both runs report no page
+errors; all 205 units, workspace/root TypeScript and optimized build pass. Existing
+payload/receipt units remain; these UI regressions exercise rendered outcomes.
+No backend/domain/auth/HTTP/MCP contract changed; the latest six adapter cases
+remain passing for the same server implementation.

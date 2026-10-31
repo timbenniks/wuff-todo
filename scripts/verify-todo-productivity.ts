@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { database, members } from "@wuff/db";
-import { scopes } from "@wuff/contracts";
+import { scopes, defaultListView, viewSettings } from "@wuff/contracts";
 import { todoThemeVariables } from "../packages/design/src/index";
 import {
   createList,
@@ -13,6 +13,7 @@ import {
   createTask,
   getListOrder,
   reorderLists,
+  updateListView,
 } from "@wuff/domain";
 if (
   !process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l") ||
@@ -136,6 +137,25 @@ try {
     ],
     operationId: op(),
   });
+  const mobilePresetId = crypto.randomUUID();
+  if (stage === "mobile-views") {
+    const view = defaultListView();
+    list = await updateListView(actor, {
+      listId: list.id,
+      viewVersion: 0,
+      view: {
+        ...view,
+        presets: [
+          {
+            id: mobilePresetId,
+            name: "Weekend focus",
+            settings: { ...viewSettings(view), due: "today" },
+          },
+        ],
+      },
+      operationId: op(),
+    });
+  }
   const context = await browser.newContext({
     viewport: { width: 1366, height: 900 },
     colorScheme: "light",
@@ -247,6 +267,8 @@ try {
       "drawer-only",
       "drawer-empty",
       "appearance-menu",
+      "mobile-views",
+      "retry-isolation",
     ].includes(stage)
   ) {
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -476,6 +498,129 @@ try {
     await name.press("Escape");
     checks.push(
       "Committed response loss preserves the draft and retries an identical request without duplicate creation",
+    );
+  }
+  if (stage === "retry-isolation") {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.route("**/api/v1/tasks", async (route: any) => {
+      if (route.request().method() !== "POST") return route.continue();
+      return route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            code: "invalid_input",
+            message: "Synthetic known rejection",
+          },
+        }),
+      });
+    });
+    await page
+      .getByRole("button", { name: "Add task", exact: true })
+      .first()
+      .click();
+    const capture = page.getByRole("form", {
+        name: "Add task inline",
+        exact: true,
+      }),
+      input = capture.getByRole("textbox", { name: "Task name", exact: true });
+    await input.fill("A retained uncreated draft");
+    await input.press("Enter");
+    await expect(capture.getByRole("status")).toContainText("draft is kept");
+    await page.unroute("**/api/v1/tasks");
+    const bodies: string[] = [];
+    let lost = false;
+    await page.route("**/api/v1/tasks", async (route: any) => {
+      if (route.request().method() !== "PATCH") return route.continue();
+      bodies.push(route.request().postData());
+      if (!lost) {
+        lost = true;
+        const result = await route.fetch();
+        assert.equal(result.status(), 200);
+        return route.abort("failed");
+      }
+      return route.continue();
+    });
+    await page
+      .getByRole("button", { name: "Complete Buy coffee beans", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Keep current state", exact: true }),
+    ).toBeVisible();
+    await expect(
+      capture.getByRole("button", { name: "Retry same request", exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Retry same request", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Keep current state", exact: true }),
+    ).toHaveCount(0);
+    await expect(input).toHaveValue("A retained uncreated draft");
+    assert.equal(bodies.length, 2);
+    assert.equal(bodies[0], bodies[1]);
+    assert(
+      !(await getList(actor, list.id)).tasks.some(
+        (task) => task.title === "A retained uncreated draft",
+      ),
+    );
+    await page.unroute("**/api/v1/tasks");
+    await input.press("Escape");
+    checks.push(
+      "Known capture rejection retains draft; another task's uncertain completion cannot claim capture ownership; exact global retry preserves the uncreated draft",
+    );
+  }
+  if (stage === "mobile-views") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page
+      .getByRole("button", { name: "View settings", exact: true })
+      .click();
+    const view = page.getByRole("dialog", {
+      name: "View settings",
+      exact: true,
+    });
+    const picker = view.getByRole("combobox", {
+      name: "Saved view",
+      exact: true,
+    });
+    await expect(picker).toBeVisible();
+    await picker.selectOption(mobilePresetId);
+    await view.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(
+      page.getByRole("link", {
+        name: "Open task: Book a table for Saturday",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", {
+        name: "Open task: Pick up groceries",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Revert to saved view", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "View settings", exact: true })
+      .click();
+    await picker.selectOption("default");
+    await page.screenshot({ path: `${out}/mobile-view-picker.png` });
+    await view.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(
+      page.getByRole("link", {
+        name: "Open task: Pick up groceries",
+        exact: true,
+      }),
+    ).toBeVisible();
+    assert(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      "selected mobile view must fit the viewport",
+    );
+    checks.push(
+      "390px View settings exposes named and starter selectors; named due-today filtering, explicit reversion and starter selection preserve task access",
     );
   }
   if (stage === "appearance-menu") {

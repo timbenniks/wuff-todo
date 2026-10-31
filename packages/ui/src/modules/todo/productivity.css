@@ -510,7 +510,7 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   .todo-workspace .view-toolbar-line {
     flex-wrap: nowrap;
   }
-  .todo-workspace .view-preset-picker {
+  .todo-workspace .view-toolbar-line > .view-preset-picker {
     display: none;
   }
   .todo-workspace .view-toolbar-tools button {

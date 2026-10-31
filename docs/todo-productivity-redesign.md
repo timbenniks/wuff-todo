@@ -183,3 +183,32 @@ The e27a95c SDK transition run passed with no page errors: Todo Dark and System
 with a dark OS both return Empire/native controls to light, clear Todo-owned
 state and ignore later OS changes. Existing navigation and real task-mutation
 checks also pass. Hosted Verify passes. Fresh Codex review was requested.
+
+## Mobile saved-view reachability
+
+Review of e27a95c found that the compact toolbar rule also hid the picker inside
+View. It now hides only the toolbar’s direct picker; the View configuration copy
+remains interactive at phone widths. A rendered browser regression seeds a named
+due-today view, chooses it at 390px, verifies filtered task outcomes, reverts and
+chooses a starter view. This is responsive CSS behavior; existing view units cover
+the underlying settings/projection, and no static class/source assertions are used.
+
+## Capture retry isolation
+
+A populated browser fault-injection check also reproduced a stale ownership flag:
+a known rejected capture retained its draft, then a different task’s uncertain
+completion exposed that operation’s retry inside the capture form. Settling an
+attempt without an uncertain receipt now relinquishes capture ownership, preserving
+the draft. The regression fails before the fix at the wrongly exposed retry action;
+after the fix it must use the global exact retry and leave the uncreated draft
+untouched. No receipt/service/auth semantics change. Existing request/payload/receipt
+unit coverage remains; this component interaction is exercised in the real browser.
+
+Both rendered regressions now pass against the optimized app with no page errors.
+The mobile picker test failed while the old broad selector was served, then passed
+after the scoped rule: named due-today filtering, Revert, starter selection and no
+horizontal overflow. The retry-isolation test failed with the stale capture-owned
+retry action, then passed after ownership settles: the global retry has byte-identical
+PATCH payloads, the retained capture draft remains, and no task with that draft
+title exists. HTTP 400 in this test is an intentional injected known rejection.
+All 205 units, workspace/root TypeScript and optimized build pass.
