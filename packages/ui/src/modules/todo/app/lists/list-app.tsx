@@ -230,6 +230,7 @@ export function ListApp({
       )
         window.history.pushState(null, "", destination);
     }
+    if (navigate && id !== selected.current) window.scrollTo(0, 0);
     selected.current = id;
     setSelectedId(id);
     const cached = cache.get(id);

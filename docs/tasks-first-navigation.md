@@ -90,3 +90,13 @@ the pre-fix source (exit 1, expected main focus) and passes with the fix; all se
 focused component cases pass. The original head's hosted Linux check passed 211
 tests with no failures/skips; it does not cover this correction. Current-head
 checks and fresh Codex review are tracked in PR #47.
+
+The next review found [viewport jumps for deep sidebar selections](https://github.com/timbenniks/wuff-todo/pull/47#discussion_r4432004030)
+and [obsolete scrolling assertions in two verification scripts](https://github.com/timbenniks/wuff-todo/pull/47#discussion_r4432004033).
+Selection now auto-reveals only inside a genuinely scrollable navigation sheet;
+explicit list changes start the document at the top, leaving history restoration
+alone. A 40-child regression fails on the previous source (heading below the
+viewport) and passes for direct and directory navigation after the fix. The two
+scripts now assert document scrolling, non-scrolling navigation and reachable
+footer controls instead of the retired independent-scroller layout. They remain
+unrun against a backend; their assertions are not integration evidence.

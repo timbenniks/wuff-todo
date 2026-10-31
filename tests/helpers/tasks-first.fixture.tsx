@@ -28,6 +28,14 @@ const parent: ListSummary = {
   version: 1,
   favorite: true,
 };
+if (location.search.includes("long")) {
+  titles.push(
+    ...Array.from(
+      { length: 33 },
+      (_, index) => `Extended sublist ${index + 8}`,
+    ),
+  );
+}
 const children = titles.map((title, index): ListSummary => ({
   ...parent,
   id: `child-${index}`,
@@ -164,7 +172,9 @@ createRoot(document.getElementById("root")!).render(
         userId="synthetic"
         name="Synthetic preview"
         initialLists={catalog}
-        initialList={lists[0]}
+        initialList={
+          location.search.includes("deep") ? lists.at(-1)! : lists[0]
+        }
         initialInvitations={[]}
         liveConfig={null}
       />

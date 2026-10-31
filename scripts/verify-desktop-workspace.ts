@@ -275,32 +275,38 @@ try {
     main.getByRole("heading", { name: "Plant care", exact: true }),
   ).toBeVisible();
   const footer = page.getByRole("button", { name: "Sign out", exact: true });
-  assert.ok((await footer.boundingBox()).y + 44 <= 500);
+  await footer.scrollIntoViewIfNeeded();
+  await expect(footer).toBeInViewport();
+  await page.evaluate(() => window.scrollTo(0, 0));
   const sidebarTop = await page
     .locator(".workspace-sidebar")
     .evaluate((e: HTMLElement) => e.getBoundingClientRect().top);
   await page.locator(".workspace-main").hover();
   await page.mouse.wheel(0, 900);
   await expect
-    .poll(() =>
-      page.locator(".workspace-main").evaluate((e: HTMLElement) => e.scrollTop),
-    )
+    .poll(() => page.evaluate(() => window.scrollY))
     .toBeGreaterThan(0);
-  assert.equal(
-    await page
+  assert.ok(
+    (await page
       .locator(".workspace-sidebar")
-      .evaluate((e: HTMLElement) => e.getBoundingClientRect().top),
-    sidebarTop,
+      .evaluate((e: HTMLElement) => e.getBoundingClientRect().top)) <
+      sidebarTop,
   );
   assert.ok(
     await page
       .locator(".workspace-list-nav")
-      .evaluate((e: HTMLElement) => e.scrollHeight > e.clientHeight),
+      .evaluate(
+        (e: HTMLElement) =>
+          e.scrollHeight <= e.clientHeight + 1 &&
+          getComputedStyle(e).overflowY === "visible",
+      ),
   );
-  assert.ok((await footer.boundingBox()).y + 44 <= 500);
-  assert.equal(
-    await page.evaluate(() => document.documentElement.scrollHeight),
-    500,
+  await footer.scrollIntoViewIfNeeded();
+  await expect(footer).toBeInViewport();
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollHeight > innerHeight,
+    ),
   );
   await page.screenshot({
     path: "docs/screenshots/desktop-list-scroll.png",

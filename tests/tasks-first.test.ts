@@ -267,6 +267,34 @@ test("dense lists scroll the document and restore drawer focus and position", as
   }
 });
 
+test("deep sidebar selections cannot pull the selected list below the viewport", async () => {
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+  });
+  try {
+    await page.goto(`${origin}/?long&deep`);
+    const heading = page.getByRole("heading", {
+      name: "Extended sublist 40",
+      exact: true,
+    });
+    await expect(heading).toBeInViewport();
+    assert.equal(await page.evaluate(() => window.scrollY), 0);
+    await page
+      .getByRole("navigation", { name: "List location" })
+      .getByRole("button")
+      .click();
+    await page.getByRole("tab", { name: "Sublists 40" }).click();
+    await page
+      .getByRole("list", { name: "Sublists", exact: true })
+      .getByRole("button", { name: "Extended sublist 40", exact: true })
+      .click();
+    await expect(heading).toBeInViewport();
+    assert.equal(await page.evaluate(() => window.scrollY), 0);
+  } finally {
+    await page.close();
+  }
+});
+
 test("touch navigation retains 44px targets and opens children without clipping", async () => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -302,6 +330,13 @@ test("touch navigation retains 44px targets and opens children without clipping"
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
+    await page.goto(`${origin}/?long&deep`);
+    await page.getByRole("button", { name: "Lists", exact: true }).click();
+    await expect(
+      page
+        .getByRole("dialog", { name: "Lists", exact: true })
+        .getByRole("button", { name: "Extended sublist 40", exact: true }),
+    ).toBeInViewport();
   } finally {
     await context.close();
   }
