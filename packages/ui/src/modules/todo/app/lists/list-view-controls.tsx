@@ -729,7 +729,6 @@ export function ListViewControls({
       aria-label="List toolbar"
     >
       <div className="view-toolbar-line">
-        {(list.mode === "work" || draft.presets.length > 0) && presetPicker}
         <label className="view-search">
           <Search size={16} aria-hidden="true" />
           <Input

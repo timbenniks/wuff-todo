@@ -253,8 +253,9 @@ try {
     .getByRole("button", { name: parent.title, exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Child lists (7)", exact: true }),
+    page.getByRole("tab", { name: "Sublists 7", exact: true }),
   ).toBeVisible();
+  await page.getByRole("tab", { name: "Sublists 7", exact: true }).click();
   await page
     .getByRole("button", { name: children[0].title, exact: true })
     .filter({ visible: true })
@@ -275,9 +276,10 @@ try {
     .getByRole("navigation", { name: "List location" })
     .getByRole("button", { name: `← ${parent.title}`, exact: true })
     .click();
+  await page.getByRole("tab", { name: "Sublists 7", exact: true }).click();
   await expect(
     page
-      .locator(".list-context")
+      .locator(".sublist-directory")
       .getByRole("button", { name: children[6].title, exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "List actions", exact: true }).click();
@@ -388,7 +390,7 @@ try {
     page.getByRole("status").filter({ hasText: "Synthetic detail failure" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Child lists (7)", exact: true }),
+    page.getByRole("tab", { name: "Sublists 7", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Retry lists", exact: true }),

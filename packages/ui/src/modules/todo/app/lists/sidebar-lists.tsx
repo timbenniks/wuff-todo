@@ -38,6 +38,14 @@ export function SidebarLists({
   const tree = useRef<HTMLElement>(null);
   const groups = sidebarGroups(lists, archived);
   useEffect(() => {
+    const scroller = tree.current?.closest<HTMLElement>(".workspace-list-nav");
+    // The desktop tree flows with the page. Only reveal selection inside an
+    // actual navigation scroller (the phone sheet), never move the document.
+    if (
+      !scroller ||
+      !["auto", "scroll"].includes(getComputedStyle(scroller).overflowY)
+    )
+      return;
     tree.current
       ?.querySelector<HTMLElement>('[aria-current="page"]')
       ?.scrollIntoView({ block: "nearest" });

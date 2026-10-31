@@ -120,9 +120,11 @@ export function ListApp({
       if (!creating) {
         const nav = el.querySelector<HTMLElement>(".workspace-list-nav");
         if (nav) nav.scrollTop = navigationScroll.current;
-        el.querySelector<HTMLElement>('[aria-current="page"]')?.focus({
-          preventScroll: true,
-        });
+        const current = el.querySelector<HTMLElement>('[aria-current="page"]');
+        // The child selection effect can run while the sheet is still closed.
+        // Reveal only after showModal, once the sheet has a real scroll area.
+        current?.scrollIntoView({ block: "nearest" });
+        current?.focus({ preventScroll: true });
       }
     } else if (el.open) el.close();
   }, [mobile, navigationOpen, creating]);
@@ -230,6 +232,7 @@ export function ListApp({
       )
         window.history.pushState(null, "", destination);
     }
+    if (navigate && id !== selected.current) window.scrollTo(0, 0);
     selected.current = id;
     setSelectedId(id);
     const cached = cache.get(id);
@@ -1273,13 +1276,6 @@ export function ListApp({
                     </div>
                   </ViewPopover>
                 </header>
-                {!isPending && !list.archived && !catalogError && (
-                  <ListContext
-                    lists={summaries}
-                    id={list.id}
-                    choose={(id) => chooseList(id)}
-                  />
-                )}
                 {isPending ? (
                   <div className="mt-6 text-sm text-muted-foreground">
                     {pendingCreate?.status === "saving" ? (
@@ -1300,7 +1296,15 @@ export function ListApp({
                     )}
                   </div>
                 ) : (
-                  <>
+                  <ListContext
+                    key={list.id}
+                    lists={list.archived || catalogError ? [] : summaries}
+                    id={list.id}
+                    choose={(id) => chooseList(id)}
+                    taskCount={
+                      list.tasks.filter((task) => !task.parentTaskId).length
+                    }
+                  >
                     <TaskGroups
                       key={list.id}
                       list={list}
@@ -1321,7 +1325,7 @@ export function ListApp({
                           : undefined
                       }
                     />
-                  </>
+                  </ListContext>
                 )}
               </>
             )}

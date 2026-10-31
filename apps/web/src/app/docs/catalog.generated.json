@@ -165,7 +165,7 @@
     "components": [
       {
         "name": "ListContext",
-        "signature": "export function ListContext({\n  lists,\n  id,\n  choose,\n}: {\n  lists: ListSummary[];\n  id: string;\n  choose: (id: string) => void;\n})"
+        "signature": "export function ListContext({\n  lists,\n  id,\n  choose,\n  taskCount,\n  children: tasks,\n}: {\n  lists: ListSummary[];\n  id: string;\n  choose: (id: string) => void;\n  taskCount: number;\n  children: ReactNode;\n})"
       }
     ]
   },

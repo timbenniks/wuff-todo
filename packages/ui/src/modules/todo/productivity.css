@@ -196,10 +196,12 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
 @media (hover: hover) and (pointer: fine) {
   .sidebar-row-actions {
     opacity: 0;
+    pointer-events: none;
   }
   .sidebar-list-row:hover .sidebar-row-actions,
   .sidebar-list-row:focus-within .sidebar-row-actions {
     opacity: 1;
+    pointer-events: auto;
   }
 }
 @media (pointer: coarse) {
@@ -214,8 +216,8 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 84px;
-  padding: 8px 0 16px;
+  min-height: 72px;
+  padding: 0 0 16px;
   border-bottom: 0;
   position: static;
 }
@@ -224,9 +226,12 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   min-width: 0;
 }
 .todo-workspace .list-heading h1 {
-  font-size: var(--todo-title);
-  line-height: 36px;
+  font-size: 24px;
+  line-height: 32px;
   letter-spacing: -0.6px;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .list-description {
   font-size: 13px;
@@ -344,7 +349,7 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   font-size: 13px;
 }
 .todo-workspace .task-section {
-  margin-top: 20px;
+  margin-top: 12px;
   border: 0;
   padding: 0;
 }
@@ -879,6 +884,212 @@ html[data-todo-appearance="dark"] .task-drawer .bg-amber-50 {
   background: transparent;
   border: 0;
   font-size: 13px;
+}
+
+/* One document scroll keeps expanded navigation and footer controls reachable. */
+@media (min-width: 768px) {
+  .todo-workspace.workspace-shell {
+    height: auto;
+    overflow: visible;
+    align-items: stretch;
+  }
+  .todo-workspace .workspace-sidebar {
+    height: auto;
+  }
+  .todo-workspace .workspace-list-nav {
+    flex: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+  .todo-workspace .workspace-main {
+    height: auto;
+    overflow: visible;
+    scrollbar-gutter: auto;
+    padding: 20px 28px 32px;
+  }
+}
+.todo-workspace .sidebar-home {
+  margin-bottom: 8px;
+}
+.todo-workspace .sidebar-section-heading {
+  margin-top: 8px;
+}
+.todo-workspace .workspace-footer {
+  padding-top: 16px;
+}
+@media (pointer: fine) {
+  .todo-workspace .sidebar-list-row {
+    position: relative;
+  }
+  .todo-workspace .sidebar-list-row,
+  .todo-workspace .sidebar-list-row button {
+    min-height: 36px;
+  }
+  .todo-workspace .sidebar-reorder > button,
+  .todo-workspace .sidebar-disclosure > button,
+  .todo-workspace .sidebar-row-actions .sidebar-list-actions {
+    height: 36px;
+  }
+  .todo-workspace .sidebar-children .sidebar-disclosure:empty {
+    display: none;
+  }
+  .todo-workspace .sidebar-reorder,
+  .todo-workspace .sidebar-row-actions {
+    position: absolute;
+    top: 0;
+    background: var(--wuff-sidebar);
+  }
+  .todo-workspace .sidebar-reorder {
+    right: 28px;
+    pointer-events: none;
+  }
+  .todo-workspace .sidebar-list-row:is(:hover, :focus-within) .sidebar-reorder {
+    pointer-events: auto;
+  }
+  .todo-workspace .sidebar-row-actions {
+    right: 0;
+  }
+  .todo-workspace
+    .sidebar-list-row:has(.sidebar-row-actions):is(:hover, :focus-within)
+    .sidebar-list-link {
+    padding-right: 60px;
+  }
+  .todo-workspace .sidebar-list-link {
+    padding-block: 6px;
+  }
+  .todo-workspace .task-summary {
+    margin-top: 0;
+    padding-bottom: 4px;
+  }
+}
+.todo-workspace .list-content-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--wuff-border);
+}
+.list-content-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 0;
+  color: var(--wuff-muted);
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+}
+.list-content-tabs > button[aria-selected="true"] {
+  color: var(--wuff-foreground);
+  border-bottom-color: var(--wuff-primary);
+  font-weight: 600;
+}
+.list-content-tabs > button > span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--wuff-muted);
+}
+.todo-workspace .sublist-directory ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  margin-top: 8px;
+}
+.sublist-directory li {
+  min-width: 0;
+}
+.sublist-directory button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 8px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid var(--wuff-border);
+}
+.sublist-directory button:hover {
+  background: var(--wuff-accent);
+}
+.sublist-directory button > svg {
+  flex-shrink: 0;
+  color: var(--wuff-muted);
+}
+.sublist-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sublist-color {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.todo-workspace .list-location {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+}
+.list-location .list-parent-link {
+  padding-inline: 0;
+  color: var(--wuff-muted);
+}
+.list-location label {
+  min-width: 0;
+  max-width: 100%;
+}
+.list-location select {
+  border: 0;
+  background: transparent;
+}
+.todo-workspace .workspace-view-toolbar {
+  padding-block: 4px 8px;
+  margin-bottom: 8px;
+}
+.todo-workspace .view-search {
+  max-width: none;
+}
+/* Explicit panels must stay hidden even when their descendants have layouts. */
+.todo-workspace [role="tabpanel"][hidden],
+.todo-workspace .sublist-directory[hidden] {
+  display: none;
+}
+@container workspace (max-width: 620px) {
+  .todo-workspace .sublist-directory ul {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .todo-workspace .sublist-directory ul {
+    grid-template-columns: 1fr;
+  }
+  .todo-workspace .task-capture-trigger {
+    position: static;
+    min-height: 44px;
+    box-shadow: none;
+  }
+  .todo-workspace .workspace-task-list {
+    padding-bottom: 0;
+  }
+}
+@media (max-width: 599px) {
+  .todo-workspace .list-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+  .todo-workspace .list-identity {
+    grid-column: 1 / -1;
+  }
+  .todo-workspace .task-capture-trigger {
+    justify-self: start;
+  }
+  .todo-workspace .list-overflow-trigger {
+    justify-self: end;
+  }
 }
 
 @media (max-width: 767px) {

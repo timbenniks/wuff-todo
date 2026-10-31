@@ -306,23 +306,18 @@ try {
   await page.setViewportSize({ width: 390, height: 640 });
   await page.evaluate(() => window.scrollTo(0, 500));
   await expect
-    .poll(async () =>
-      Math.round((await page.locator(".list-heading").boundingBox())!.y),
-    )
-    .toBe(0);
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0);
+  assert.ok((await page.locator(".list-heading").boundingBox())!.y < 0);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.setViewportSize({ width: 1440, height: 500 });
   await page.locator(".workspace-main").hover();
   await page.mouse.wheel(0, 800);
   await expect
-    .poll(() =>
-      page
-        .locator(".workspace-main")
-        .evaluate((el: HTMLElement) => el.scrollTop),
-    )
+    .poll(() => page.evaluate(() => window.scrollY))
     .toBeGreaterThan(0);
-  const sticky = await page.evaluate(() => ({
+  const flow = await page.evaluate(() => ({
     toolbar: document
       .querySelector(".workspace-view-toolbar")!
       .getBoundingClientRect()
@@ -334,17 +329,15 @@ try {
     height: document.documentElement.scrollHeight,
   }));
   const listHeader = await page.locator(".list-heading").boundingBox();
-  assert.ok(listHeader && Math.abs(listHeader.y) <= 1);
-  assert.ok(sticky.toolbar.top >= listHeader.y + listHeader.height - 1);
-  assert.ok(sticky.header.top >= sticky.toolbar.bottom - 1);
-  assert.equal(sticky.height, 500);
+  assert.ok(listHeader && listHeader.y < 0);
+  assert.ok(flow.toolbar.top >= listHeader.y + listHeader.height - 1);
+  assert.ok(flow.header.top >= flow.toolbar.bottom - 1);
+  assert.ok(flow.height > 500);
   await page.screenshot({
     path: ".vercel/mobile-task-first/workspace-sticky.png",
     fullPage: true,
   });
-  await page
-    .locator(".workspace-main")
-    .evaluate((el: HTMLElement) => el.scrollTo(0, 0));
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 1440, height: 1000 });
   const original = await getList(actor, work.id);
   let p = await open("Filter");

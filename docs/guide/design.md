@@ -39,11 +39,19 @@ Labels such as Save notes, Cancel, Delete list and Allow connection stay literal
 ## Todo productivity surfaces
 
 Todo’s shared `productivity.css` builds on these primitives with a 4px spacing
-scale, 28px page titles, 14px section/body text, 12px metadata, 8px radii and
+scale, 24px list titles, 14px section/body text, 12px metadata, 8px radii and
 48px task rows. Retain 44px action hit areas; compact sidebar disclosure/drag
 controls expand on coarse pointers. Selection uses the palette’s quiet accent surface.
 Favorites are flat shortcuts; the canonical Your lists tree owns nesting. Sidebar
 width defaults to 260px and remains device-local; reset lives in Sidebar options.
+Desktop navigation flows with the document instead of a nested list scrollbar.
+Fine-pointer sidebar rows use 36px spacing with contextual drag/action controls;
+touch targets remain 44px. Long list titles wrap in the main heading.
+
+Lists open on Tasks. When sublists exist, Tasks / Sublists tabs separate task
+controls from an aligned sublist directory. Switching tabs preserves task drafts;
+Add task returns to Tasks. Parent/sibling navigation stays available for child
+lists. This is transient web/PWA navigation, not a synced preference.
 
 The list title/count and Add task anchor the workspace. Search and Filter remain
 visible; View contains sorting, grouping, display and saved views. Default rows
