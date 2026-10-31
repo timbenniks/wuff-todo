@@ -959,6 +959,24 @@ export function ListApp({
                 {readFailure}
               </p>
             )}
+            {sidebarRetry && (
+              <div
+                role="alert"
+                className="rounded-xl border border-border p-4 mb-4"
+              >
+                <p>
+                  Your list organization change wasn’t confirmed. Retry to check
+                  the same save.
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => saveSidebar(null)}
+                >
+                  Retry list organization
+                </Button>
+              </div>
+            )}
             {(selectedId || showArchive) && (error || retryWrite) && (
               <div
                 role="alert"

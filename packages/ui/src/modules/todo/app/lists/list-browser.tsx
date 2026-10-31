@@ -20,7 +20,7 @@ export function ListBrowser({
   busy: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [collapsed, setCollapsed] = useState(new Set<string>());
+  const [expandedIds, setExpandedIds] = useState(new Set<string>());
   const groups = findListGroups(lists, query);
   function link(list: ListSummary) {
     return (
@@ -62,7 +62,7 @@ export function ListBrowser({
       </label>
       <div className="list-browser-grid">
         {groups.map(({ list, children }) => {
-          const expanded = !!query.trim() || !collapsed.has(list.id);
+          const expanded = !!query.trim() || expandedIds.has(list.id);
           return (
             <article key={list.id} className="list-browser-card">
               <div className="list-browser-card-heading">
@@ -90,7 +90,7 @@ export function ListBrowser({
                     aria-expanded={expanded}
                     aria-controls={`overview-children-${list.id}`}
                     onClick={() =>
-                      setCollapsed((old) => {
+                      setExpandedIds((old) => {
                         const next = new Set(old);
                         if (next.has(list.id)) next.delete(list.id);
                         else next.add(list.id);

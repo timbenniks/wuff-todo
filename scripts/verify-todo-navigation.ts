@@ -13,6 +13,8 @@ import {
   getListOrder,
   reorderLists,
   listLists,
+  getDashboardPreferences,
+  updateDashboard,
 } from "@wuff/domain";
 if (
   !process.env.DATABASE_URL?.includes("ep-snowy-hill-b9wcml7l") ||
@@ -28,6 +30,7 @@ const users = JSON.parse(await readFile(".vercel/dev-users.json", "utf8")),
   user = users[0];
 const actor = { id: user.id, scopes },
   op = () => crypto.randomUUID();
+const originalDashboard = await getDashboardPreferences(actor);
 const original = await getListOrder(actor),
   created: string[] = [];
 const browser = await chromium.launch({ headless: true, channel: "chrome" });
@@ -85,6 +88,30 @@ try {
   await expect(
     catalog.getByRole("button", { name: root.title, exact: true }),
   ).toBeVisible();
+  await updateDashboard(actor, {
+    version: originalDashboard.version,
+    settings: {
+      ...originalDashboard.settings,
+      hidden: ["today", "upcoming", "favorites"],
+    },
+    operationId: op(),
+  });
+  await page.reload();
+  await expect(
+    page.getByRole("heading", {
+      name: "A quiet corner for your pack.",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    catalog.getByRole("button", { name: root.title, exact: true }),
+  ).toBeVisible();
+  await updateDashboard(actor, {
+    version: (await getDashboardPreferences(actor)).version,
+    settings: originalDashboard.settings,
+    operationId: op(),
+  });
+  await page.reload();
   const geometry = await catalog.boundingBox();
   assert(geometry.y < 300);
   await expect(
@@ -98,6 +125,16 @@ try {
           .boundingBox()
       ).y,
   );
+  const childDisclosure = catalog.getByRole("button", {
+    name: "7 child lists",
+    exact: true,
+  });
+  await expect(childDisclosure).toHaveAttribute("aria-expanded", "false");
+  await childDisclosure.click();
+  await expect(
+    catalog.getByRole("button", { name: children[0].title, exact: true }),
+  ).toBeVisible();
+  await childDisclosure.click();
   await catalog.getByLabel("Find a list").fill("art direction");
   await expect(
     catalog.getByRole("button", { name: parent.title, exact: true }),
@@ -113,6 +150,7 @@ try {
     catalog.getByText("No lists match your search. Try another name."),
   ).toBeVisible();
   await catalog.getByLabel("Find a list").fill("");
+  await expect(childDisclosure).toHaveAttribute("aria-expanded", "false");
   const tree = page.getByRole("navigation", { name: "Lists", exact: true }),
     favorites = page.getByRole("navigation", {
       name: "Favorite lists",
@@ -180,7 +218,7 @@ try {
     })
     .click();
   await page
-    .getByRole("button", { name: "Retry sidebar change", exact: true })
+    .getByRole("button", { name: "Retry list organization", exact: true })
     .click();
   await expect(
     catalog.getByRole("button", {
@@ -226,7 +264,7 @@ try {
   await expect(
     page
       .locator(".list-personal-actions")
-      .getByLabel("Parent list", { exact: true }),
+      .getByRole("combobox", { name: "Parent list", exact: true }),
   ).toBeDisabled();
   await page.locator(".list-personal-actions > summary").click();
   await page.screenshot({ path: `${out}/parent-laptop.png` });
@@ -236,14 +274,16 @@ try {
   await page.goto(`http://localhost:3000/lists?listId=${children[0].id}`);
   const actions = page.locator(".list-personal-actions");
   await actions.locator("summary").click();
-  await actions.getByLabel("Parent list", { exact: true }).selectOption("");
+  await actions
+    .getByRole("combobox", { name: "Parent list", exact: true })
+    .selectOption("");
   await actions.getByRole("button", { name: "Move list", exact: true }).click();
   await expect(
     page.getByRole("navigation", { name: "List location" }),
   ).toHaveCount(0);
   await actions.locator("summary").click();
   await actions
-    .getByLabel("Parent list", { exact: true })
+    .getByRole("combobox", { name: "Parent list", exact: true })
     .selectOption(parent.id);
   await actions.getByRole("button", { name: "Move list", exact: true }).click();
   await expect(
@@ -406,6 +446,11 @@ try {
       ...currentIds.filter((id) => !original.listIds.includes(id)),
     ],
     version: (await getListOrder(actor)).version,
+    operationId: op(),
+  });
+  await updateDashboard(actor, {
+    version: (await getDashboardPreferences(actor)).version,
+    settings: originalDashboard.settings,
     operationId: op(),
   });
   await database().pool.end();
