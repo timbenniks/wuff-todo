@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ChevronRight, Users } from "lucide-react";
 import { listNavigationContext, type ListSummary } from "@wuff/contracts";
 import { NativeSelect } from "../../../../native-select";
@@ -26,6 +32,28 @@ export function ListContext({
   const active = sublists && selection.id === id ? selection.tab : "tasks";
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const panel = useRef<HTMLDivElement>(null);
+  const navigationFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const remember = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      // Removal may move focus to body before React's effects run. Retain the
+      // removed target, but clear it when the user focuses another real control.
+      if (
+        target === document.body &&
+        navigationFocus.current &&
+        !navigationFocus.current.isConnected
+      )
+        return;
+      navigationFocus.current =
+        panel.current?.contains(target) ||
+        tabs.current.some((tab) => tab === target)
+          ? target
+          : null;
+    };
+    document.addEventListener("focusin", remember);
+    return () => document.removeEventListener("focusin", remember);
+  }, []);
   useEffect(() => {
     const capture = (event: Event) => {
       if (captureMatchesList((event as CustomEvent).detail, id))
@@ -34,11 +62,18 @@ export function ListContext({
     window.addEventListener("wuff:todo:capture", capture);
     return () => window.removeEventListener("wuff:todo:capture", capture);
   }, [id]);
-  useEffect(() => {
-    if (!sublists && selection.tab === "lists") {
-      setSelection({ id, tab: "tasks" });
-      if (panel.current?.contains(document.activeElement))
+  useLayoutEffect(() => {
+    if (!sublists) {
+      const previous = navigationFocus.current;
+      if (
+        previous &&
+        (!previous.isConnected || previous.closest("[hidden]")) &&
+        (document.activeElement === document.body ||
+          document.activeElement === previous)
+      )
         document.querySelector<HTMLElement>("#list-content")?.focus();
+      navigationFocus.current = null;
+      if (selection.tab === "lists") setSelection({ id, tab: "tasks" });
     }
   }, [sublists, id, selection.tab]);
   return (

@@ -77,3 +77,16 @@ independently confirmed.
 Preserved pre-existing local edits to docs/development.md and docs/verification.md
 outside this feature's commits. PR remains draft while full local verification and
 current-head review are incomplete; merge/release require separate instructions.
+
+## Review correction
+
+Codex finding [discussion_r4431991909](https://github.com/timbenniks/wuff-todo/pull/47#discussion_r4431991909)
+identified lost keyboard focus when a live catalog removes the final child while
+its directory button is focused. The component now remembers navigation focus
+before reconciliation and restores main-content focus during layout when that
+control disappears. Focus on an unrelated control is preserved. It also covers
+removal of the focused Tasks tab itself. The added browser regression fails on
+the pre-fix source (exit 1, expected main focus) and passes with the fix; all seven
+focused component cases pass. The original head's hosted Linux check passed 211
+tests with no failures/skips; it does not cover this correction. Current-head
+checks and fresh Codex review are tracked in PR #47.

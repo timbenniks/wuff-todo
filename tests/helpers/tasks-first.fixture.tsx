@@ -1,5 +1,5 @@
 // Browser component fixture: synthetic data only; no network or backend writes.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ListContext } from "../../packages/ui/src/modules/todo/app/lists/list-context";
 import { ListApp } from "../../packages/ui/src/modules/todo/app/lists/list-app";
@@ -96,6 +96,11 @@ const runtime: FeatureRuntime = {
 function ComponentFixture() {
   const [items, setItems] = useState(catalog);
   const [id, setId] = useState("parent");
+  useEffect(() => {
+    const remove = () => setItems([]);
+    window.addEventListener("fixture:remove-catalog", remove);
+    return () => window.removeEventListener("fixture:remove-catalog", remove);
+  }, []);
   return (
     <main
       id="list-content"

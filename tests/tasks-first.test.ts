@@ -107,6 +107,39 @@ test("removed or archived children cannot leave a hidden task panel or revive a 
   }
 });
 
+test("background removal of the final sublists restores focus without stealing external focus", async () => {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${origin}/?component`);
+    await page.getByRole("tab", { name: "Sublists 7" }).click();
+    await page
+      .getByRole("button", { name: "01 · Unreal foundations", exact: true })
+      .focus();
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("fixture:remove-catalog")),
+    );
+    await expect(page.locator("#list-content")).toBeFocused();
+    await expect(page.getByLabel("Task draft")).toBeVisible();
+    await page.getByRole("button", { name: "Restore catalog" }).click();
+    await page.getByRole("tab", { name: "Tasks 2" }).focus();
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("fixture:remove-catalog")),
+    );
+    await expect(page.locator("#list-content")).toBeFocused();
+    await page.getByRole("button", { name: "Restore catalog" }).click();
+    await page.getByRole("tab", { name: "Sublists 7" }).click();
+    const outside = page.getByRole("button", { name: "Unrelated capture" });
+    await outside.focus();
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("fixture:remove-catalog")),
+    );
+    await expect(page.getByRole("tablist")).toHaveCount(0);
+    await expect(outside).toBeFocused();
+  } finally {
+    await page.close();
+  }
+});
+
 test("child selection and parent/sibling navigation preserve list-local task defaults", async () => {
   const page = await browser.newPage();
   try {
