@@ -100,8 +100,8 @@ test("sidebar width clamps finite and invalid input against viewport and content
   assert.equal(clampSidebarWidth(1000, 1280), 440);
   assert.equal(clampSidebarWidth(440, 800), 320);
   assert.equal(clampSidebarWidth(440, 768), 288);
-  assert.equal(clampSidebarWidth(NaN, 1280), 320);
-  assert.equal(clampSidebarWidth(Infinity, 1280), 320);
+  assert.equal(clampSidebarWidth(NaN, 1280), 260);
+  assert.equal(clampSidebarWidth(Infinity, 1280), 260);
   assert.equal(clampSidebarWidth(335.7, 1280), 336);
 });
 test("width storage isolates accounts, resets and tolerates invalid/blocked storage", () => {
@@ -117,7 +117,7 @@ test("width storage isolates accounts, resets and tolerates invalid/blocked stor
   };
   saveSidebarWidth(storage, "one", 400);
   assert.equal(readSidebarWidth(storage, "one"), 400);
-  assert.equal(readSidebarWidth(storage, "two"), 320);
+  assert.equal(readSidebarWidth(storage, "two"), 260);
   for (const invalid of [
     "",
     " ",
@@ -130,11 +130,11 @@ test("width storage isolates accounts, resets and tolerates invalid/blocked stor
     "null",
   ]) {
     storage.setItem(sidebarWidthKey("one"), invalid);
-    assert.equal(readSidebarWidth(storage, "one"), 320, invalid);
+    assert.equal(readSidebarWidth(storage, "one"), 260, invalid);
   }
   saveSidebarWidth(storage, "one", 350);
   saveSidebarWidth(storage, "one", null);
-  assert.equal(readSidebarWidth(storage, "one"), 320);
+  assert.equal(readSidebarWidth(storage, "one"), 260);
   const blocked = {
     getItem() {
       throw Error("blocked");
@@ -146,7 +146,7 @@ test("width storage isolates accounts, resets and tolerates invalid/blocked stor
       throw Error("blocked");
     },
   };
-  assert.equal(readSidebarWidth(blocked, "one"), 320);
+  assert.equal(readSidebarWidth(blocked, "one"), 260);
   assert.doesNotThrow(() => saveSidebarWidth(blocked, "one", 400));
   assert.doesNotThrow(() => saveSidebarWidth(blocked, "one", null));
 });

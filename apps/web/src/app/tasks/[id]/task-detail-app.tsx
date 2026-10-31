@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TaskDetail, TodoList } from "@wuff/contracts";
 import { ListTheme } from "@/components/list-theme";
-import { listThemeVariables } from "@/lib/list-theme";
 import { Button } from "@/components/ui/button";
 import { Corgi } from "@/components/corgi";
 import { ApiError } from "@/lib/api";
@@ -136,10 +135,7 @@ export function TaskDetailApp({
       </main>
     );
   return (
-    <main
-      className="task-detail task-page min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8"
-      style={listThemeVariables(list.color)}
-    >
+    <main className="task-detail task-page min-h-dvh mx-auto px-4 sm:px-8 py-5 sm:py-8">
       <ListTheme color={list.color} />
       {liveConfig && (
         <LiveUpdates
@@ -181,6 +177,11 @@ export function TaskDetailApp({
         {busy ? "Saving…" : notice}
       </p>
       <TaskDetailContent
+        retry={
+          retry
+            ? () => change(retry.path, retry.method, retry.body, true)
+            : undefined
+        }
         task={task}
         list={list}
         userId={userId}

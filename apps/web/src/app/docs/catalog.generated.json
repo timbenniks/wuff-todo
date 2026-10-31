@@ -130,6 +130,16 @@
     ]
   },
   {
+    "source": "packages/ui/src/modules/todo/app/lists/inline-task-composer.tsx",
+    "module": "@wuff/ui/modules/todo/app/lists/inline-task-composer",
+    "components": [
+      {
+        "name": "InlineTaskComposer",
+        "signature": "export function InlineTaskComposer({\n  list,\n  sectionId = null,\n  parentTaskId,\n  busy,\n  change,\n  retry,\n  onCreated,\n  initialOpen = false,\n  onClose,\n  global = false,\n  initialTitle = \"\",\n  onDraft,\n}: {\n  list: TodoList;\n  sectionId?: string | null;\n  parentTaskId?: string;\n  busy: boolean;\n  change: ListChange;\n  retry?: () => Promise<boolean>;\n  onCreated?: (title: string) => void;\n  initialOpen?: boolean;\n  onClose?: () => void;\n  global?: boolean;\n  initialTitle?: string;\n  onDraft?: (title: string) => void;\n})"
+      }
+    ]
+  },
+  {
     "source": "packages/ui/src/modules/todo/app/lists/list-app.tsx",
     "module": "@wuff/ui/modules/todo/app/lists/list-app",
     "components": [
@@ -165,7 +175,7 @@
     "components": [
       {
         "name": "ListPersonalActions",
-        "signature": "export function ListPersonalActions({\n  list,\n  lists,\n  busy,\n  favorite,\n  move,\n}: {\n  list: ListSummary;\n  lists: ListSummary[];\n  busy: boolean;\n  favorite: (id: string, enabled: boolean) => Promise<boolean>;\n  move: (id: string, parent: string | null) => Promise<boolean>;\n})"
+        "signature": "export function ListPersonalActions({\n  list,\n  lists,\n  busy,\n  favorite,\n  move,\n  compact = false,\n  embedded = false,\n}: {\n  compact?: boolean;\n  embedded?: boolean;\n  list: ListSummary;\n  lists: ListSummary[];\n  busy: boolean;\n  favorite: (id: string, enabled: boolean) => Promise<boolean>;\n  move: (id: string, parent: string | null) => Promise<boolean>;\n})"
       }
     ]
   },
@@ -209,7 +219,7 @@
     "components": [
       {
         "name": "SidebarLists",
-        "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n}: {\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
+        "signature": "export function SidebarLists({\n  controls,\n  lists,\n  archived,\n  selectedId,\n  disabled,\n  choose,\n  preload,\n  reorder,\n  toggle,\n  pending,\n  actions,\n}: {\n  actions?: (list: ListSummary) => ReactNode;\n  controls?: ReactNode;\n  lists: ListSummary[];\n  archived: boolean;\n  selectedId: string;\n  disabled: boolean;\n  choose: (id: string) => void;\n  preload: (id: string) => void;\n  reorder: (next: string[], before: string[]) => Promise<boolean>;\n  toggle: (id: string, collapsed: boolean) => Promise<boolean>;\n  pending?: { id: string; status: \"saving\" | \"failed\" } | null;\n})"
       }
     ]
   },
@@ -323,11 +333,11 @@
     "components": [
       {
         "name": "TaskRow",
-        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n  hidden = false,\n}: {\n  workDrafts?: Map<string, WorkCellDraft>;\n  hidden?: boolean;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function TaskRow({\n  task,\n  userId,\n  list,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  today,\n  rowProps,\n  moveControl,\n  rowRef,\n  style,\n  detailed = false,\n  matchedChildren,\n  disableChildDrag = false,\n  onOpenTask,\n  workDrafts,\n  hidden = false,\n  retry,\n}: {\n  retry?: () => Promise<boolean>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  hidden?: boolean;\n  task: Task;\n  userId: string;\n  list: TodoList;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  today: string | null;\n  rowProps?: HTMLAttributes<HTMLElement>;\n  moveControl?: ReactNode;\n  rowRef?: (node: HTMLElement | null) => void;\n  style?: CSSProperties;\n  detailed?: boolean;\n  matchedChildren?: string[];\n  disableChildDrag?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
       },
       {
         "name": "Subtasks",
-        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n}: {\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function Subtasks({\n  parent,\n  items,\n  list,\n  userId,\n  busy,\n  change,\n  drafts,\n  subtaskDrafts,\n  dueDrafts,\n  workDrafts,\n  today,\n  focusNewTask = true,\n  disableDrag = false,\n  retry,\n  onOpenTask,\n  detailed = false,\n}: {\n  retry?: () => Promise<boolean>;\n  parent: Task;\n  items: Task[];\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  drafts: Map<string, NoteDraft>;\n  subtaskDrafts: Map<string, string>;\n  dueDrafts: Map<string, DueDateDraft>;\n  workDrafts?: Map<string, WorkCellDraft>;\n  today: string | null;\n  focusNewTask?: boolean;\n  disableDrag?: boolean;\n  detailed?: boolean;\n  onOpenTask?: (id: string) => void;\n})"
       }
     ]
   },
@@ -367,7 +377,7 @@
     "components": [
       {
         "name": "TaskDetailContent",
-        "signature": "export function TaskDetailContent({\n  task,\n  list,\n  userId,\n  busy,\n  change,\n  refresh,\n  onNotice,\n  onError,\n  onOpenTask,\n}: {\n  task: Task;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  onNotice: (message: string) => void;\n  onError: (message: string) => void;\n  onOpenTask?: (id: string) => void;\n})"
+        "signature": "export function TaskDetailContent({\n  task,\n  list,\n  userId,\n  busy,\n  change,\n  refresh,\n  onNotice,\n  onError,\n  onOpenTask,\n  retry,\n}: {\n  retry?: () => Promise<boolean>;\n  task: Task;\n  list: TodoList;\n  userId: string;\n  busy: boolean;\n  change: ListChange;\n  refresh: () => Promise<void>;\n  onNotice: (message: string) => void;\n  onError: (message: string) => void;\n  onOpenTask?: (id: string) => void;\n})"
       }
     ]
   },

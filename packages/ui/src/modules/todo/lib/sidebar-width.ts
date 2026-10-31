@@ -1,4 +1,4 @@
-export const defaultSidebarWidth = 320;
+export const defaultSidebarWidth = 260;
 export const sidebarWidthKey = (userId: string) =>
   `wuff:todo:sidebar-width:v1:${userId}`;
 export function sidebarWidthBounds(viewport: number) {

@@ -4,11 +4,11 @@ Wuff is calm, compact and warm. Waffles is a small companion, not a corporate ma
 
 ## Use the actual tokens
 
-Import `listPalette` and `listThemeVariables` from `@wuff/design`, or render `ListTheme` from the shared UI. The selected list drives the full experience: page, sidebar, surfaces, controls, text and focus. Settings drafts do not silently save or preview a new list color. Auth and contexts with no selected list use Blue.
+Import `listPalette` and `listThemeVariables` from `@wuff/design`, or render `ListTheme` from the shared UI. For Todo, `ListTheme` uses `todoThemeVariables`: neutral light/dark page, sidebar and surface roles follow system appearance, while the selected list supplies restrained link/focus/action accents. Other modules retain their existing palette derivation. Todo’s filled actions use `--wuff-action` for white-label contrast; the lighter dark-mode link accent is separate. Settings drafts do not silently save or preview a new list color. Auth and contexts with no selected list use Blue.
 
 <!-- PALETTE_TABLE -->
 
-The reference tint is a palette entry, not a substitute for derived page or surface values. The ten CSS roles are `--wuff-primary`, `--wuff-primary-hover`, `--wuff-background`, `--wuff-surface`, `--wuff-sidebar`, `--wuff-accent`, `--wuff-foreground`, `--wuff-muted`, `--wuff-border`, and `--wuff-control`. Use their semantic Tailwind names (`bg-background`, `bg-surface`, `text-foreground`, `text-muted-foreground`, `border-input`, `outline-primary`). Subtle separators and interactive control boundaries are deliberately different colors.
+The reference tint is a palette entry, not a substitute for derived page or surface values. The base CSS roles are `--wuff-primary`, `--wuff-primary-hover`, `--wuff-background`, `--wuff-surface`, `--wuff-sidebar`, `--wuff-accent`, `--wuff-foreground`, `--wuff-muted`, `--wuff-border`, and `--wuff-control`. Use their semantic Tailwind names (`bg-background`, `bg-surface`, `text-foreground`, `text-muted-foreground`, `border-input`, `outline-primary`). Subtle separators and interactive control boundaries are deliberately different colors.
 
 Semantic status colors stay recognizable across list palettes: review violet, blocked/danger red, done green. Reuse StatusTag and shared CSS rather than deriving these from the list accent.
 
@@ -35,3 +35,25 @@ A new shadcn component is a proposal until integrated. Do not run shadcn init or
 ## Voice
 
 Labels such as Save notes, Cancel, Delete list and Allow connection stay literal. A short friendly dog joke can appear in surrounding guidance: “No tasks to fetch,” or “A little more de-tail.” Avoid stacking jokes and never hide failures, permissions or destructive consequences. Keep user-written titles and notes unchanged.
+
+## Todo productivity surfaces
+
+Todo’s shared `productivity.css` builds on these primitives with a 4px spacing
+scale, 28px page titles, 14px section/body text, 12px metadata, 8px radii and
+48px task rows. Retain 44px action hit areas; compact sidebar disclosure/drag
+controls expand on coarse pointers. Selection uses a quiet neutral surface.
+Favorites are flat shortcuts; the canonical Your lists tree owns nesting. Sidebar
+width defaults to 260px and remains device-local; reset lives in Sidebar options.
+
+The list title/count and Add task anchor the workspace. Search and Filter remain
+visible; View contains sorting, grouping, display and saved views. Default rows
+show populated metadata only; explicit saved column layouts remain supported.
+Sections are lightweight disclosure headings. Add task opens a scoped inline
+composer: Enter adds and keeps it available, Escape cancels, uncertain requests
+retain the draft and exact retry.
+
+The 520px task drawer keeps list context and completion beside the editable title.
+Properties are quiet value controls, notes show formatting only while editing,
+and subtasks use the same inline capture. Preserve unsaved-change guards, Escape,
+origin focus and list scroll. Overview presents Today/Coming up before a compact
+list browser. See [the redesign contract](../todo-productivity-redesign.md).

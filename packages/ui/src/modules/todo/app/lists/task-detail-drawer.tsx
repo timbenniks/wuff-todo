@@ -2,12 +2,13 @@
 import { containDialogFocus } from "../../../../features/components/dialog-focus";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, X, Copy } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { useRuntime } from "../../../../features/runtime";
 import type { TodoList } from "@wuff/contracts";
-import { listThemeVariables } from "../../lib/list-theme";
+import { todoThemeVariables } from "@wuff/design";
 import { Button } from "../../../../button";
+import { TaskActions } from "./task-actions";
 import type { ListChange } from "./list-settings";
 
 const TaskDetailContent = lazy(() =>
@@ -38,7 +39,16 @@ export function TaskDetailDrawer({
   navigate: (taskId: string | null) => void;
 }) {
   const runtime = useRuntime();
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const query = matchMedia("(prefers-color-scheme: dark)");
+    const update = () => setDark(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const dialog = useRef<HTMLDialogElement>(null);
+  const more = useRef<HTMLButtonElement>(null);
   const [leave, setLeave] = useState<
     { taskId: string | null } | { href: string } | null
   >(null);
@@ -106,7 +116,7 @@ export function TaskDetailDrawer({
       onKeyDown={containDialogFocus}
       ref={dialog}
       className="task-drawer"
-      style={listThemeVariables(list.color)}
+      style={todoThemeVariables(list.color, dark)}
       aria-label="Task details"
       onCancel={(event) => {
         event.preventDefault();
@@ -138,7 +148,9 @@ export function TaskDetailDrawer({
       <header className="task-drawer-header">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">{list.title}</p>
-          <h2 className="text-sm font-semibold">Task details</h2>
+          <h2 className="text-xs text-muted-foreground">
+            {task?.key ?? "Task details"}
+          </h2>
         </div>
         <div className="flex items-center">
           {task && (
@@ -152,6 +164,29 @@ export function TaskDetailDrawer({
             >
               <ExternalLink size={17} aria-hidden="true" />
             </a>
+          )}
+          {task && (
+            <TaskActions title={task.title} disabled={busy} trigger={more}>
+              {(close) => (
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(
+                        runtime.webOrigin + task.path,
+                      );
+                      setNotice("Task link copied.");
+                    } catch {
+                      setNotice("Couldn’t copy this task link.");
+                    }
+                    close();
+                  }}
+                >
+                  <Copy size={16} />
+                  Copy task link
+                </Button>
+              )}
+            </TaskActions>
           )}
           <Button
             type="button"
@@ -210,6 +245,7 @@ export function TaskDetailDrawer({
           <Suspense fallback={<p role="status">Opening task details…</p>}>
             <TaskDetailContent
               key={task.id}
+              retry={retry}
               task={task}
               list={list}
               userId={userId}

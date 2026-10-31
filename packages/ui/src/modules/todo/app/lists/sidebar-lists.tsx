@@ -21,7 +21,9 @@ export function SidebarLists({
   reorder,
   toggle,
   pending,
+  actions,
 }: {
+  actions?: (list: ListSummary) => ReactNode;
   controls?: ReactNode;
   lists: ListSummary[];
   archived: boolean;
@@ -90,12 +92,6 @@ export function SidebarLists({
               onFocus={() => preload(list.id)}
               aria-current={list.id === selectedId ? "page" : undefined}
               className="sidebar-list-link"
-              style={{
-                background:
-                  list.id === selectedId
-                    ? listPalette[list.color].tint
-                    : undefined,
-              }}
             >
               <span
                 className="list-color-marker"
@@ -119,6 +115,9 @@ export function SidebarLists({
               )}
             </button>
             {handle && <span className="sidebar-reorder">{handle}</span>}
+            {!shortcut && actions && (
+              <span className="sidebar-row-actions">{actions(list)}</span>
+            )}
           </div>
           {children.length > 0 && (
             <div id={groupId} hidden={!expanded} className="sidebar-children">
@@ -175,13 +174,7 @@ export function SidebarLists({
             Favorites
           </h3>
           <nav aria-label="Favorite lists">
-            {favorites.map((list) =>
-              row(
-                list,
-                groups.find((g) => g.list.id === list.id)?.children ?? [],
-                true,
-              ),
-            )}
+            {favorites.map((list) => row(list, [], true))}
           </nav>
         </section>
       )}

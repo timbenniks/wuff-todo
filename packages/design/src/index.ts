@@ -48,3 +48,27 @@ export function listThemeVariables(
     "--wuff-control": mix(accent, "#ffffff", 0.22),
   };
 }
+
+// Todo's productivity surfaces are neutral; list identity remains in its accent.
+export function todoThemeVariables(
+  color: ListColor,
+  dark = false,
+): Record<`--wuff-${string}`, string> {
+  const accent = listPalette[color].accent;
+  return {
+    ...listThemeVariables(color),
+    "--wuff-primary": dark ? mix(accent, "#ffffff", 0.5) : accent,
+    "--wuff-primary-hover": dark
+      ? mix(accent, "#ffffff", 0.6)
+      : mix(accent, "#000000", 0.12),
+    "--wuff-action": accent,
+    "--wuff-background": dark ? "#171b20" : "#ffffff",
+    "--wuff-surface": dark ? "#1c2026" : "#ffffff",
+    "--wuff-sidebar": dark ? "#13171b" : "#f5f6f7",
+    "--wuff-accent": dark ? "#2b323b" : "#eef0f3",
+    "--wuff-foreground": dark ? "#edf0f3" : "#252b33",
+    "--wuff-muted": dark ? "#a2abb6" : "#626c78",
+    "--wuff-border": dark ? "#343b45" : "#e2e6eb",
+    "--wuff-control": dark ? "#697786" : "#89939e",
+  };
+}

@@ -81,3 +81,13 @@ parent or promote children solely because their parent is a favorite. Parent
 pages expose child lists; child pages expose only the current viewer's authorized
 parent/siblings. List nesting is personal organization, never permission or task
 inheritance. The desktop width is an account-specific device layout preference.
+
+## Todo productivity navigation
+
+Favorites are flat shortcuts with parent context where needed, while Your lists
+is the only hierarchical tree. List actions and sidebar width reset use contextual
+popovers. The Overview prioritizes Today/Coming up, then a compact searchable list
+browser. The title-led workspace keeps Search/Filter/View visible and exposes
+advanced view configuration together. Use the scoped inline composer and task
+drawer rather than permanent large forms. See the
+[focused redesign](../todo-productivity-redesign.md) for interaction invariants.

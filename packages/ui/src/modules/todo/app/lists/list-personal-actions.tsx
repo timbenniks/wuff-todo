@@ -1,4 +1,6 @@
 "use client";
+import { MoreHorizontal } from "lucide-react";
+import { ViewPopover } from "./view-popover";
 import { useState } from "react";
 import { type ListSummary } from "@wuff/contracts";
 import { Button } from "../../../../button";
@@ -10,7 +12,11 @@ export function ListPersonalActions({
   busy,
   favorite,
   move,
+  compact = false,
+  embedded = false,
 }: {
+  compact?: boolean;
+  embedded?: boolean;
   list: ListSummary;
   lists: ListSummary[];
   busy: boolean;
@@ -22,69 +28,87 @@ export function ListPersonalActions({
   const hasChildren = lists.some(
     (item) => !item.archived && item.parentListId === list.id,
   );
-  return (
+  const panel = (
+    <div
+      className={
+        compact || embedded
+          ? "list-personal-menu"
+          : "list-personal-actions-panel"
+      }
+    >
+      <p className="text-xs text-muted-foreground">
+        Only changes your organization.
+      </p>
+      <Button
+        variant="ghost"
+        disabled={busy}
+        onClick={async () => {
+          if (await favorite(list.id, !list.favorite))
+            setNotice(
+              list.favorite ? "Removed from favorites." : "Added to favorites.",
+            );
+        }}
+      >
+        {list.favorite ? "Remove from favorites" : "Add to favorites"}
+      </Button>
+      <label>
+        Parent list
+        <NativeSelect
+          value={parent}
+          disabled={busy || hasChildren}
+          onChange={(e) => {
+            setParent(e.target.value);
+            setNotice("");
+          }}
+        >
+          <option value="">Top level</option>
+          {lists
+            .filter(
+              (item) =>
+                !item.archived && item.id !== list.id && !item.parentListId,
+            )
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+        </NativeSelect>
+      </label>
+      {hasChildren && (
+        <p className="text-xs text-muted-foreground">
+          Move this list’s children first to change its parent.
+        </p>
+      )}
+      <Button
+        disabled={busy || hasChildren || parent === (list.parentListId ?? "")}
+        onClick={async () => {
+          if (await move(list.id, parent || null)) setNotice("List moved.");
+        }}
+      >
+        Move list
+      </Button>
+      {notice && (
+        <p role="status" className="text-sm">
+          {notice}
+        </p>
+      )}
+    </div>
+  );
+  if (embedded) return panel;
+  return compact ? (
+    <ViewPopover
+      label={<MoreHorizontal size={16} aria-hidden="true" />}
+      ariaLabel={`Actions for list ${list.title}`}
+      panelLabel={`Actions for list ${list.title}`}
+      variant="ghost"
+      className="sidebar-list-actions"
+    >
+      {panel}
+    </ViewPopover>
+  ) : (
     <details className="list-personal-actions">
       <summary>List actions</summary>
-      <div className="list-personal-actions-panel">
-        <p className="text-xs text-muted-foreground">
-          Only changes your organization.
-        </p>
-        <Button
-          variant="ghost"
-          disabled={busy}
-          onClick={async () => {
-            if (await favorite(list.id, !list.favorite))
-              setNotice(
-                list.favorite
-                  ? "Removed from favorites."
-                  : "Added to favorites.",
-              );
-          }}
-        >
-          {list.favorite ? "Remove from favorites" : "Add to favorites"}
-        </Button>
-        <label>
-          Parent list
-          <NativeSelect
-            value={parent}
-            disabled={busy || hasChildren}
-            onChange={(e) => {
-              setParent(e.target.value);
-              setNotice("");
-            }}
-          >
-            <option value="">Top level</option>
-            {lists
-              .filter(
-                (item) =>
-                  !item.archived && item.id !== list.id && !item.parentListId,
-              )
-              .map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-          </NativeSelect>
-        </label>
-        {hasChildren && (
-          <p className="text-xs text-muted-foreground">
-            Move this list’s children first to change its parent.
-          </p>
-        )}
-        <Button
-          disabled={busy || hasChildren || parent === (list.parentListId ?? "")}
-          onClick={async () => {
-            if (await move(list.id, parent || null)) setNotice("List moved.");
-          }}
-        >
-          Move list
-        </Button>
-        {notice && (
-          <p role="status" className="text-sm">
-            {notice}
-          </p>
-        )}
-      </div>
+      {panel}
     </details>
   );
 }

@@ -374,7 +374,7 @@ export const listViewSettingsSchema = z
         "Columns must be unique",
       )
       .default([...viewColumns]),
-    rowStyle: z.enum(["list", "columns"]).default("columns"),
+    rowStyle: z.enum(["list", "columns"]).default("list"),
   })
   .strict();
 export const viewPresetSchema = z

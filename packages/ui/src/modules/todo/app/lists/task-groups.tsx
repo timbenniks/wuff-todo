@@ -7,7 +7,16 @@ import {
 } from "../../../../input-group";
 import { wuffCopy } from "../../../../features/lib/copy";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Check, ListPlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  Check,
+  ListPlus,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import {
   defaultListView,
   projectListView,
@@ -28,6 +37,11 @@ import { useCalendarDay } from "../../lib/use-calendar-day";
 import type { DueDateDraft } from "./task-due-date";
 import { InlineName } from "./inline-name";
 import { CompletedTasks } from "./completed-tasks";
+import {
+  populatedTaskColumns,
+  captureMatchesList,
+} from "../../lib/task-presentation";
+import { InlineTaskComposer } from "./inline-task-composer";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 
 export function TaskGroups({
@@ -68,6 +82,19 @@ export function TaskGroups({
     for (const id of dueDrafts.current.keys())
       if (!list.tasks.some((t) => t.id === id)) dueDrafts.current.delete(id);
   }, [list.tasks]);
+  const [globalCapture, setGlobalCapture] = useState(false);
+  const captureAnchor = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const capture = (event: Event) => {
+      if (!captureMatchesList((event as CustomEvent).detail, list.id)) return;
+      setGlobalCapture(true);
+      requestAnimationFrame(() =>
+        captureAnchor.current?.scrollIntoView({ block: "nearest" }),
+      );
+    };
+    window.addEventListener("wuff:todo:capture", capture);
+    return () => window.removeEventListener("wuff:todo:capture", capture);
+  }, [list.id]);
   const [addingSection, setAddingSection] = useState(false);
   const [captureNotice, setCaptureNotice] = useState("");
   const owner = list.ownerId === userId,
@@ -77,14 +104,14 @@ export function TaskGroups({
   const [preview, setPreview] = useState<ListView | null>(null);
   const view = preview ?? list.personalView?.view ?? defaultListView();
   const workColumns = list.mode === "work" && view.rowStyle === "columns";
-  const columns = viewColumns.filter((c) => view.columns.includes(c));
+  const columns = populatedTaskColumns(list, view);
   const widths = {
-    status: "130px",
-    priority: "100px",
-    assignee: "140px",
-    due: "140px",
+    status: "112px",
+    priority: "84px",
+    assignee: "112px",
+    due: "112px",
   };
-  const grid = `44px minmax(180px,1fr) ${columns.map((c) => widths[c]).join(" ")} 88px 44px`;
+  const grid = `44px minmax(180px,1fr) ${columns.map((c) => widths[c]).join(" ")} 44px`;
   const groups = projectListView(list, view, today ?? "0001-01-01");
   const folded = new Set(
     view.completed === "all"
@@ -168,6 +195,7 @@ export function TaskGroups({
               >
                 {({ ref, style, rowProps, moveControl }) => (
                   <TaskRow
+                    retry={retry}
                     hidden={folded.has(task.id)}
                     workDrafts={workDrafts.current}
                     userId={userId}
@@ -178,7 +206,7 @@ export function TaskGroups({
                       ...list,
                       personalView: {
                         version: list.personalView?.version ?? 0,
-                        view,
+                        view: { ...view, columns },
                       },
                     }}
                     busy={busy}
@@ -204,66 +232,14 @@ export function TaskGroups({
   }
   function addTask(sectionId: string | null) {
     return (
-      !list.archived && (
-        <form
-          className="task-add grid gap-1 mt-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (disabled) return;
-            const form = e.currentTarget;
-            const title = String(new FormData(form).get("title")).trim();
-            if (!title) return;
-            if (
-              await change("/api/v1/tasks", "POST", {
-                ...body,
-                sectionId,
-                title,
-              })
-            ) {
-              form.reset();
-              created(title);
-            }
-          }}
-        >
-          <label
-            className="text-xs text-muted-foreground"
-            htmlFor={`new-task-${sectionId ?? "none"}`}
-          >
-            New task
-          </label>
-          <InputGroup>
-            <InputGroupInput
-              id={`new-task-${sectionId ?? "none"}`}
-              name="title"
-              aria-label={
-                sectionId
-                  ? `New task in ${list.sections.find((s) => s.id === sectionId)?.title}`
-                  : "New task"
-              }
-              placeholder="What’s next for your pack?"
-              maxLength={300}
-              required
-              className="flex-1"
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                size="sm"
-                variant="primary"
-                disabled={disabled}
-                type="submit"
-                title="Add task"
-                aria-label={
-                  sectionId
-                    ? `Add task to ${list.sections.find((s) => s.id === sectionId)?.title}`
-                    : "Add task"
-                }
-              >
-                <Plus size={18} aria-hidden="true" /> Add
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-        </form>
-      )
+      <InlineTaskComposer
+        list={list}
+        sectionId={sectionId}
+        busy={disabled}
+        change={change}
+        retry={retry}
+        onCreated={created}
+      />
     );
   }
   return (
@@ -325,6 +301,25 @@ export function TaskGroups({
         shown={groups.reduce((n, g) => n + g.tasks.length, 0)}
         total={active.length}
       />
+      {globalCapture && (
+        <div ref={captureAnchor}>
+          <InlineTaskComposer
+            global
+            initialOpen
+            list={list}
+            busy={disabled}
+            change={change}
+            retry={retry}
+            onCreated={created}
+            onClose={() => {
+              setGlobalCapture(false);
+              document
+                .querySelector<HTMLButtonElement>(".task-capture-trigger")
+                ?.focus();
+            }}
+          />
+        </div>
+      )}
       {captureNotice && (
         <p role="status" className="text-sm my-3 break-words">
           Added “{captureNotice}” to {list.title}.
@@ -372,8 +367,7 @@ export function TaskGroups({
             }
           >
             <summary className="section-summary">
-              {list.sections.length ? "No section" : "Tasks"} (
-              {count(groups.find((g) => g.sectionId === null))})
+              Tasks ({count(groups.find((g) => g.sectionId === null))})
             </summary>
             {rows(null)}
             {addTask(null)}
@@ -393,12 +387,30 @@ export function TaskGroups({
                 disabled={busy || !owner || list.archived}
               >
                 {({ ref, style, handle }) => (
-                  <section
-                    ref={ref}
-                    style={style}
-                    className="mt-6 border-t border-border pt-3"
-                  >
-                    <div className="section-heading flex flex-wrap items-center gap-2 [&>div:first-child]:basis-full sm:[&>div:first-child]:basis-0">
+                  <section ref={ref} style={style} className="task-section">
+                    <div className="section-heading">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy}
+                        aria-expanded={
+                          !view.collapsed.includes(`section:${section.id}`)
+                        }
+                        aria-label={`${view.collapsed.includes(`section:${section.id}`) ? "Expand" : "Collapse"} section ${section.title}`}
+                        onClick={() =>
+                          saveCollapsed(
+                            `section:${section.id}`,
+                            view.collapsed.includes(`section:${section.id}`),
+                          )
+                        }
+                      >
+                        {view.collapsed.includes(`section:${section.id}`) ? (
+                          <ChevronRight size={15} />
+                        ) : (
+                          <ChevronDown size={15} />
+                        )}
+                      </Button>
                       <InlineName
                         value={section.title}
                         heading="h2"
@@ -441,7 +453,7 @@ export function TaskGroups({
                                     onClick={() => {
                                       if (
                                         window.confirm(
-                                          `Remove section “${section.title}”? Its tasks will be kept under No section.`,
+                                          `Remove section “${section.title}”? Its tasks will be kept under Tasks.`,
                                         )
                                       )
                                         void change(path, "DELETE", {
@@ -458,33 +470,9 @@ export function TaskGroups({
                             : undefined
                         }
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        aria-expanded={
-                          !view.collapsed.includes(`section:${section.id}`)
-                        }
-                        aria-label={`${view.collapsed.includes(`section:${section.id}`) ? "Expand" : "Collapse"} section ${section.title}`}
-                        onClick={() =>
-                          saveCollapsed(
-                            `section:${section.id}`,
-                            view.collapsed.includes(`section:${section.id}`),
-                          )
-                        }
-                      >
-                        {count(groups.find((g) => g.sectionId === section.id))}{" "}
-                        task
-                        {count(
-                          groups.find((g) => g.sectionId === section.id),
-                        ) === 1
-                          ? ""
-                          : "s"}{" "}
-                        ·{" "}
-                        {view.collapsed.includes(`section:${section.id}`)
-                          ? "Show"
-                          : "Hide"}
-                      </Button>
+                      <span className="section-task-count">
+                        {count(groups.find((g) => g.sectionId === section.id))}
+                      </span>
                     </div>
                     {!view.collapsed.includes(`section:${section.id}`) && (
                       <div className="mt-2">

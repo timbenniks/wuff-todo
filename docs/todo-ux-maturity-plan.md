@@ -1,5 +1,7 @@
 # Todo UX maturity proposal
 
+> October 31 follow-up: Tim’s [focused productivity redesign](todo-productivity-redesign.md) supersedes this iteration’s list-first Overview and expandable Favorites presentation. Historical evidence below remains scoped to the earlier implementation.
+
 October 31, 2026. Approved for implementation; draft PR #45 on `codex/todo-ux-maturity`. Local implementation and verification are recorded below; production release is separate.
 
 ## Outcome

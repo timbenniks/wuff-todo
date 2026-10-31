@@ -1,0 +1,807 @@
+/* Todo's shared visual roles. Controls keep 44px hit areas; empty chrome stays quiet. */
+.todo-workspace,
+.task-drawer,
+.task-page {
+  --todo-space: 4px;
+  --todo-radius: 8px;
+  --todo-row-height: 48px;
+  --todo-title: 28px;
+  --todo-section: 14px;
+  --todo-body: 14px;
+  --todo-meta: 12px;
+  font-size: var(--todo-body);
+  color: var(--wuff-foreground);
+  background: var(--wuff-background);
+}
+.todo-workspace :focus-visible,
+.task-drawer :focus-visible,
+.task-page :focus-visible {
+  outline: 2px solid var(--wuff-primary);
+  outline-offset: 2px;
+}
+.todo-workspace .wuff-button[data-variant="primary"],
+.task-drawer .wuff-button[data-variant="primary"],
+.task-page .wuff-button[data-variant="primary"] {
+  background: var(--wuff-action, var(--wuff-primary));
+  color: #fff;
+}
+.todo-workspace input,
+.todo-workspace select,
+.task-drawer input,
+.task-drawer select {
+  font-size: var(--todo-body);
+  border-color: var(--wuff-border);
+}
+.todo-workspace .workspace-main {
+  padding-top: 24px;
+}
+.todo-workspace .app-sidebar {
+  padding: 16px 8px;
+}
+.todo-workspace .sidebar-brand {
+  min-height: 40px;
+  margin-bottom: 12px;
+  padding-inline: 12px;
+}
+.todo-workspace .sidebar-brand .wordmark {
+  font-size: 16px;
+}
+.todo-workspace .sidebar-nav-item {
+  font-weight: 500;
+}
+.todo-workspace .sidebar-home[aria-current="page"] {
+  background: var(--wuff-accent);
+}
+.todo-workspace .sidebar-list-link[aria-current="page"] {
+  box-shadow: none;
+  background: var(--wuff-accent);
+  font-weight: 600;
+}
+.todo-workspace .sidebar-list-row {
+  min-height: 44px;
+}
+.todo-workspace .sidebar-disclosure {
+  flex-basis: 28px;
+  width: 28px;
+}
+.todo-workspace .sidebar-disclosure button {
+  width: 28px;
+}
+.todo-workspace .sidebar-list-link {
+  padding: 8px 4px;
+  gap: 8px;
+  font-size: 13px;
+}
+.todo-workspace .sidebar-list-name small {
+  font-size: 11px;
+}
+.todo-workspace .sidebar-children {
+  margin-left: 16px;
+  padding-left: 4px;
+  border-left-color: var(--wuff-border);
+}
+.todo-workspace .sidebar-section-heading {
+  margin-top: 12px;
+  min-height: 36px;
+}
+.todo-workspace .sidebar-group-label {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+.todo-workspace .sidebar-reorder {
+  flex-basis: 28px;
+  width: 28px;
+}
+.todo-workspace .sidebar-reorder > button {
+  width: 28px;
+}
+.todo-workspace .sidebar-shortcut .sidebar-disclosure {
+  display: none;
+}
+.todo-workspace .sidebar-shortcut .sidebar-list-link {
+  padding-left: 16px;
+}
+.todo-workspace .sidebar-shortcut .sidebar-list-name {
+  display: flex;
+  flex-direction: column;
+}
+.todo-workspace .workspace-footer {
+  margin-top: auto;
+}
+.sidebar-appearance {
+  align-self: flex-start;
+}
+.sidebar-appearance > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--wuff-muted);
+  list-style: none;
+}
+.sidebar-appearance > div {
+  padding: 4px 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .todo-workspace .sidebar-reorder {
+    opacity: 0;
+  }
+  .todo-workspace .sidebar-list-row:hover .sidebar-reorder,
+  .todo-workspace .sidebar-list-row:focus-within .sidebar-reorder {
+    opacity: 1;
+  }
+}
+@media (pointer: coarse) {
+  .todo-workspace .sidebar-disclosure,
+  .todo-workspace .sidebar-reorder {
+    width: 44px;
+    flex-basis: 44px;
+  }
+  .todo-workspace .sidebar-disclosure button,
+  .todo-workspace .sidebar-reorder > button {
+    width: 44px;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .todo-workspace .text-red-800,
+  .todo-workspace .text-red-700,
+  .task-drawer .text-red-800 {
+    color: #fca5a5;
+  }
+  .todo-workspace .bg-red-50,
+  .task-drawer .bg-red-50 {
+    background: #352125;
+  }
+  .todo-workspace .bg-amber-50,
+  .task-drawer .bg-amber-50 {
+    background: #332d20;
+    color: #f5dc9d;
+  }
+}
+@media (max-width: 767px) {
+  .todo-workspace .app-sidebar {
+    padding: 4px 12px;
+  }
+  .todo-workspace .sidebar-brand {
+    margin-bottom: 0;
+  }
+  .todo-workspace .workspace-main {
+    padding: 16px;
+  }
+}
+.todo-workspace .sidebar-brand .workspace-brand-link {
+  flex: 1;
+}
+.sidebar-options {
+  width: 44px;
+  padding: 0;
+}
+.sidebar-row-actions {
+  flex: 0 0 28px;
+  width: 28px;
+}
+.sidebar-row-actions .sidebar-list-actions {
+  width: 28px;
+  padding: 0;
+}
+.list-personal-menu {
+  display: grid;
+  gap: 12px;
+}
+.list-personal-menu label {
+  display: grid;
+  gap: 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sidebar-row-actions {
+    opacity: 0;
+  }
+  .sidebar-list-row:hover .sidebar-row-actions,
+  .sidebar-list-row:focus-within .sidebar-row-actions {
+    opacity: 1;
+  }
+}
+@media (pointer: coarse) {
+  .sidebar-row-actions,
+  .sidebar-row-actions .sidebar-list-actions {
+    width: 44px;
+    flex-basis: 44px;
+  }
+}
+/* Title, short summary and a single primary action establish the workspace. */
+.todo-workspace .list-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 84px;
+  padding: 8px 0 16px;
+  border-bottom: 0;
+  position: static;
+}
+.list-identity {
+  flex: 1;
+  min-width: 0;
+}
+.todo-workspace .list-heading h1 {
+  font-size: var(--todo-title);
+  line-height: 36px;
+  letter-spacing: -0.6px;
+}
+.list-description {
+  font-size: 13px;
+  color: var(--wuff-muted);
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.list-description:empty {
+  display: none;
+}
+.list-task-count {
+  color: var(--wuff-muted);
+  font-size: var(--todo-meta);
+  margin-top: 4px;
+}
+.list-overflow-trigger {
+  width: 44px;
+  padding: 0;
+}
+.list-management {
+  display: grid;
+  width: 280px;
+  max-width: 100%;
+  gap: 16px;
+}
+.list-management .list-personal-menu {
+  gap: 8px;
+}
+.todo-workspace .list-context {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+.list-context > section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.list-context h2 {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+.list-context-links button {
+  border: 0;
+  padding: 8px;
+  font-size: 12px;
+}
+.todo-workspace .workspace-view-toolbar {
+  padding: 4px 0 12px;
+  margin-bottom: 12px;
+  position: static;
+  background: transparent;
+}
+.todo-workspace .view-toolbar-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.todo-workspace .view-toolbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.todo-workspace .view-search {
+  flex: 1;
+  min-width: 100px;
+  max-width: 360px;
+  background: transparent;
+}
+.todo-workspace .view-search input {
+  border: 0;
+  background: transparent;
+  padding-left: 28px;
+  height: 44px;
+  font-weight: 400;
+}
+.todo-workspace .view-preset-picker {
+  max-width: 180px;
+}
+.todo-workspace .view-preset-picker select {
+  border: 0;
+  background: transparent;
+}
+.todo-workspace .view-toolbar-state {
+  margin-top: 4px;
+  gap: 8px;
+}
+.todo-workspace .view-toolbar-state > p:empty,
+.view-filter-chips:empty {
+  display: none;
+}
+.todo-workspace .view-toolbar-state .wuff-button {
+  min-height: 44px;
+}
+.view-configuration {
+  display: grid;
+  gap: 20px;
+  width: min(380px, calc(100vw - 64px));
+}
+.view-configuration h2 {
+  font-weight: 600;
+  font-size: 16px;
+}
+.view-config-section {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 16px;
+}
+.view-config-section h3 {
+  font-weight: 600;
+  font-size: 13px;
+}
+.todo-workspace .task-section {
+  margin-top: 20px;
+  border: 0;
+  padding: 0;
+}
+.todo-workspace .section-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+.todo-workspace .section-heading > .inline-name {
+  flex: 1;
+  min-width: 0;
+}
+.todo-workspace .section-heading h2,
+.todo-workspace .section-summary {
+  font-size: var(--todo-section);
+  font-weight: 600;
+}
+.section-task-count {
+  font-size: var(--todo-meta);
+  color: var(--wuff-muted);
+  padding-right: 12px;
+}
+.todo-workspace .section-summary {
+  padding: 12px 8px;
+}
+.todo-workspace .workspace-task-list .task-row {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  min-height: var(--todo-row-height);
+  padding-block: 0;
+  border-color: var(--wuff-border);
+  column-gap: 4px;
+}
+.todo-workspace .workspace-task-list .task-actions {
+  grid-column: -2/-1;
+}
+.todo-workspace .task-row:hover {
+  background: var(--wuff-accent);
+  border-radius: var(--todo-radius);
+}
+.todo-workspace .task-checkbox,
+.task-drawer .task-checkbox {
+  width: 20px;
+  height: 20px;
+  border-width: 1.5px;
+}
+.todo-workspace .task-name > span > a {
+  align-items: center;
+  padding-block: 12px;
+  line-height: 20px;
+}
+.todo-workspace .task-name .inline-name-value {
+  -webkit-line-clamp: 2;
+}
+.todo-workspace .task-row[data-density="comfortable"] {
+  padding-block: 4px;
+}
+.todo-workspace .work-column-headings {
+  position: static;
+  font-size: 11px;
+  min-height: 28px;
+  border: 0;
+}
+.todo-workspace .work-actions-heading {
+  grid-column: auto;
+  font-size: 0;
+}
+.todo-workspace .task-summary {
+  font-size: 12px;
+}
+.inline-capture {
+  margin-block: 4px;
+  min-width: 0;
+}
+.inline-capture-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--wuff-muted);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.inline-capture-trigger:hover {
+  background: var(--wuff-accent);
+  color: var(--wuff-foreground);
+}
+.inline-capture form {
+  border: 1px solid var(--wuff-control);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.inline-capture-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.inline-capture-line > input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 8px 0;
+}
+.inline-capture-line .task-checkbox {
+  flex-shrink: 0;
+}
+.inline-capture-options {
+  margin-left: 28px;
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+.inline-capture-options > summary {
+  min-height: 32px;
+  padding-block: 6px;
+  cursor: pointer;
+}
+.inline-capture-options > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+.inline-capture-options label {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+.inline-capture p {
+  font-size: 12px;
+  padding: 8px;
+}
+@container workspace (min-width:1000px) {
+  .todo-workspace .work-columns .task-row,
+  .todo-workspace .work-column-headings {
+    grid-template-columns: var(--work-grid);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .todo-workspace .task-row > .task-actions,
+  .todo-workspace .section-heading .inline-name-actions {
+    opacity: 0;
+  }
+  .todo-workspace .task-row:hover > .task-actions,
+  .todo-workspace .task-row:focus-within > .task-actions,
+  .todo-workspace .section-heading:hover .inline-name-actions,
+  .todo-workspace .section-heading:focus-within .inline-name-actions {
+    opacity: 1;
+  }
+}
+@media (max-width: 767px) {
+  .todo-workspace .list-heading {
+    align-items: flex-start;
+    padding-block: 0 12px;
+  }
+  .todo-workspace .list-heading h1 {
+    font-size: 24px;
+    line-height: 30px;
+  }
+  .todo-workspace .view-toolbar-line {
+    flex-wrap: nowrap;
+  }
+  .todo-workspace .view-preset-picker {
+    display: none;
+  }
+  .todo-workspace .view-toolbar-tools button {
+    padding-inline: 8px;
+  }
+  .inline-capture-line {
+    gap: 4px;
+  }
+  .inline-capture-line .task-checkbox {
+    display: none;
+  }
+  .inline-capture-options {
+    margin-left: 0;
+  }
+}
+/* The drawer is a focused task workspace, with explicit edits and quiet properties. */
+.task-drawer {
+  width: min(520px, 100vw);
+  max-width: 100vw;
+  border-radius: 0;
+  background: var(--wuff-background);
+  border-left: 1px solid var(--wuff-border);
+}
+.task-drawer .task-drawer-header {
+  padding: 12px 20px;
+  min-height: 68px;
+  border-bottom: 1px solid var(--wuff-border);
+  background: var(--wuff-background);
+}
+.task-drawer-header > div:first-child {
+  flex: 1;
+}
+.task-drawer-header p {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.task-drawer-header .task-actions {
+  display: block;
+}
+.task-drawer .task-drawer-body {
+  padding: 24px;
+}
+.task-drawer .task-identifier {
+  display: none;
+}
+.task-detail-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.task-detail-title > .inline-name {
+  flex: 1;
+  min-width: 0;
+}
+.task-detail-title h1 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.4px;
+}
+.task-detail-title .task-complete {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 44px;
+}
+.task-detail-title .inline-name-actions button {
+  width: 44px;
+}
+.task-properties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 20px 0 8px 40px;
+}
+.task-properties dt {
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+.task-properties dd > button {
+  padding-inline: 0;
+  justify-content: flex-start;
+  font-size: 13px;
+  font-weight: 400;
+}
+.task-drawer .task-detail-panels {
+  display: grid;
+  gap: 24px;
+}
+.task-drawer .work-details,
+.task-drawer .task-detail-notes,
+.task-drawer .task-detail-subtasks {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.task-drawer .work-details > div:first-child {
+  margin-bottom: 8px;
+}
+.task-drawer .work-details dl {
+  gap: 8px;
+}
+.task-drawer .work-details dl button {
+  padding-inline: 0;
+  justify-content: flex-start;
+  font-size: 13px;
+  font-weight: 400;
+}
+.task-drawer .work-details dt {
+  margin: 0;
+}
+.task-drawer .task-detail-notes > div:first-child {
+  margin-bottom: 4px;
+}
+.task-drawer .task-notes {
+  border: 0;
+  border-radius: 0;
+}
+.task-empty-note {
+  min-height: 44px;
+  padding: 8px 0;
+  color: var(--wuff-muted);
+  font-size: 14px;
+  text-align: left;
+}
+.task-drawer .task-detail-context {
+  display: grid;
+  gap: 20px;
+}
+.task-drawer .task-detail-context section[aria-label^="Subtasks for"] {
+  border: 0;
+  padding: 0;
+}
+.task-drawer .subtask-progress {
+  font-size: 12px;
+  color: var(--wuff-muted);
+  margin: 4px 0 8px;
+}
+.task-drawer .task-integration {
+  border: 0;
+  border-top: 1px solid var(--wuff-border);
+  border-radius: 0;
+  padding: 8px 0;
+}
+.task-drawer .task-integration > summary {
+  min-height: 44px;
+  font-size: 13px;
+}
+.task-drawer .task-row {
+  min-height: 44px;
+  padding-block: 0;
+  gap: 4px;
+}
+.task-drawer .task-name a {
+  font-size: 13px;
+}
+.task-references {
+  margin-top: 12px;
+}
+@media (max-width: 767px) {
+  .task-drawer .task-drawer-body {
+    padding: 20px 16px;
+  }
+  .task-properties {
+    margin-left: 0;
+  }
+}
+.todo-workspace .work-cell {
+  overflow: hidden;
+}
+.todo-workspace .work-cell .wuff-button {
+  max-width: 100%;
+  overflow: hidden;
+}
+.todo-workspace .work-cell .due-date-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.todo-workspace .task-checkbox-done,
+.task-drawer .task-checkbox-done {
+  background: var(--wuff-action);
+  border-color: var(--wuff-action);
+}
+.task-drawer .task-detail h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.task-drawer .task-detail-panels > .work-details {
+  margin: 0;
+}
+/* Attention first, then a small workspace browser; no stack of competing cards. */
+.todo-workspace .home-daily-header {
+  margin: 8px 0 24px;
+}
+.todo-workspace .home-cards {
+  display: block;
+}
+.todo-workspace .home-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  margin: 0 0 28px;
+}
+.todo-workspace .home-card > div:first-child {
+  border: 0;
+  padding: 0 0 8px;
+}
+.todo-workspace .home-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.todo-workspace .home-card > p {
+  padding: 0 0 4px;
+  font-size: 12px;
+}
+.todo-workspace .home-card > div:not(:first-child) {
+  padding: 0;
+}
+.todo-workspace .home-card .home-task-row {
+  min-height: 44px;
+  border-bottom: 1px solid var(--wuff-border);
+}
+.todo-workspace .home-task-title {
+  padding-block: 8px;
+  font-size: 14px;
+}
+.todo-workspace .list-browser {
+  border-top: 1px solid var(--wuff-border);
+  padding-top: 20px;
+  margin: 8px 0 24px;
+}
+.todo-workspace .list-browser-heading {
+  margin-bottom: 4px;
+}
+.todo-workspace .list-browser-heading h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.todo-workspace .list-browser-heading > button {
+  background: transparent;
+  border: 0;
+  font-size: 13px;
+  padding-inline: 8px;
+}
+.list-browser-find {
+  min-height: 44px;
+  font-size: 12px;
+  color: var(--wuff-muted);
+}
+.todo-workspace .list-browser-search {
+  max-width: 320px;
+  margin: 4px 0 8px;
+}
+.todo-workspace .list-browser-search input {
+  font-weight: 400;
+  background: transparent;
+}
+.todo-workspace .list-browser-grid {
+  display: block;
+}
+.todo-workspace .list-browser-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+.todo-workspace .list-browser-card-heading {
+  border-radius: 8px;
+}
+.todo-workspace .list-browser-card-heading:hover {
+  background: var(--wuff-accent);
+}
+.todo-workspace .list-browser-link {
+  font-size: 14px;
+}
+.todo-workspace .list-browser-link > span:not(.list-color-marker) {
+  font-weight: 400;
+}
+.todo-workspace .list-browser-disclosure {
+  padding-left: 28px;
+  min-height: 36px;
+}
+@media (max-width: 767px) {
+  .todo-workspace .home-daily-header {
+    margin: 0 0 20px;
+  }
+}
+.task-detail-title .task-complete {
+  flex-basis: 44px;
+  width: 44px;
+}

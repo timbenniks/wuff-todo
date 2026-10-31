@@ -84,9 +84,6 @@ export function ListContext({
               </ul>
             </details>
           )}
-          <p className="list-context-note">
-            Each child list has its own tasks and sharing.
-          </p>
         </section>
       )}
     </div>

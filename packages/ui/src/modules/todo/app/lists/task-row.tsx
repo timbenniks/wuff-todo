@@ -36,6 +36,7 @@ import { TaskActions } from "./task-actions";
 import { TaskReminder } from "../../components/reminders/task-reminder";
 import { TaskMetadata } from "./task-metadata";
 import { TaskColumns, type WorkCellDraft } from "./task-columns";
+import { InlineTaskComposer } from "./inline-task-composer";
 import { StatusTag } from "../../../../status-tag";
 
 export function TaskRow({
@@ -58,7 +59,9 @@ export function TaskRow({
   onOpenTask,
   workDrafts,
   hidden = false,
+  retry,
 }: {
+  retry?: () => Promise<boolean>;
   workDrafts?: Map<string, WorkCellDraft>;
   hidden?: boolean;
   task: Task;
@@ -196,7 +199,7 @@ export function TaskRow({
                   setDraftSection(event.target.value || null)
                 }
               >
-                <option value="">No section</option>
+                <option value="">Tasks</option>
                 {list.sections.map((section) => (
                   <option key={section.id} value={section.id}>
                     {section.title}
@@ -327,7 +330,7 @@ export function TaskRow({
                             close();
                         }}
                       >
-                        <option value="">No section</option>
+                        <option value="">Tasks</option>
                         {list.sections.map((section) => (
                           <option key={section.id} value={section.id}>
                             {section.title}
@@ -356,32 +359,6 @@ export function TaskRow({
           </TaskActions>
         )}
       />
-      <div className="task-quick-actions">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Quick ${task.content ? "edit" : "add"} notes for ${task.title}`}
-          title={task.content ? "Edit notes" : "Add notes"}
-          disabled={busy || (list.archived && !task.content)}
-          onClick={() => setNotesOpen(true)}
-        >
-          <FileText size={16} />
-        </Button>
-        {!task.parentTaskId && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`Quick subtasks for ${task.title}`}
-            title="Subtasks"
-            disabled={busy || (list.archived && !children.length)}
-            onClick={() => setExpanded(!subtasksOpen)}
-          >
-            <ListTree size={16} />
-          </Button>
-        )}
-      </div>
       <TaskColumns
         dueDrafts={dueDrafts}
         drafts={workDrafts}
@@ -422,7 +399,8 @@ export function TaskRow({
         task={task}
         list={list}
         today={today}
-        comfortable={detailed}
+        comfortable
+        excludeKinds={detailed ? [] : ["key", "references"]}
         onDetails={openDetails}
         onNotes={() => setNotesOpen(true)}
         onSubtasks={() => setExpanded(!subtasksOpen)}
@@ -497,6 +475,7 @@ export function TaskRow({
       {!task.parentTaskId && subtasksOpen && (
         <div id={`subtasks-${task.id}`} className="task-subtask-panel">
           <Subtasks
+            retry={retry}
             workDrafts={workDrafts}
             parent={task}
             items={children}
@@ -547,7 +526,11 @@ export function Subtasks({
   today,
   focusNewTask = true,
   disableDrag = false,
+  retry,
+  onOpenTask,
+  detailed = false,
 }: {
+  retry?: () => Promise<boolean>;
   parent: Task;
   items: Task[];
   list: TodoList;
@@ -578,10 +561,6 @@ export function Subtasks({
       aria-label={`Subtasks for ${parent.title}`}
       className="border-l-2 border-primary/20 pl-3 sm:pl-4"
     >
-      <p className="hidden sm:block text-xs text-muted-foreground mb-1">
-        Little steps, big tail wags. {items.filter((t) => t.completed).length}{" "}
-        of {items.length} done.
-      </p>
       <SortableList
         items={items}
         disabled={disabled || disableDrag}
@@ -601,6 +580,9 @@ export function Subtasks({
               >
                 {({ ref, style, rowProps, moveControl }) => (
                   <TaskRow
+                    onOpenTask={onOpenTask}
+                    detailed={detailed}
+                    retry={retry}
                     workDrafts={workDrafts}
                     task={task}
                     list={list}
@@ -623,57 +605,19 @@ export function Subtasks({
         )}
       </SortableList>
       {!list.archived && (
-        <form
-          className="task-add grid gap-1 mt-3"
-          data-unsaved={!!title || undefined}
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const sent = title;
-            if (
-              await change("/api/v1/tasks", "POST", { ...body, title: sent })
-            ) {
-              setTitle("");
-              subtaskDrafts.delete(parent.id);
-              requestAnimationFrame(() => input.current?.focus());
-            }
+        <InlineTaskComposer
+          retry={retry}
+          list={list}
+          parentTaskId={parent.id}
+          busy={disabled}
+          change={change}
+          initialTitle={subtaskDrafts.get(parent.id) ?? ""}
+          initialOpen={focusNewTask && !items.length}
+          onDraft={(value) => {
+            if (value) subtaskDrafts.set(parent.id, value);
+            else subtaskDrafts.delete(parent.id);
           }}
-        >
-          <label className="text-xs text-muted-foreground" htmlFor={inputId}>
-            New subtask
-          </label>
-          <InputGroup>
-            <InputGroupInput
-              id={inputId}
-              ref={input}
-              autoFocus={focusNewTask && items.length === 0}
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (e.target.value)
-                  subtaskDrafts.set(parent.id, e.target.value);
-                else subtaskDrafts.delete(parent.id);
-              }}
-              aria-label={`New subtask for ${parent.title}`}
-              placeholder="One little step for your pack…"
-              maxLength={300}
-              required
-              readOnly={busy}
-              className="min-w-0 flex-1"
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                type="submit"
-                variant="primary"
-                size="sm"
-                title="Add subtask"
-                disabled={disabled}
-                aria-label={`Add subtask to ${parent.title}`}
-              >
-                <Plus size={18} aria-hidden="true" /> Add
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-        </form>
+        />
       )}
     </section>
   );

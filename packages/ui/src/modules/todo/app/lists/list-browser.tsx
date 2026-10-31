@@ -20,6 +20,7 @@ export function ListBrowser({
   busy: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [expandedIds, setExpandedIds] = useState(new Set<string>());
   const groups = findListGroups(lists, query);
   function link(list: ListSummary) {
@@ -44,22 +45,33 @@ export function ListBrowser({
       <header className="list-browser-heading">
         <div>
           <h2 id="your-lists-title">Your lists</h2>
-          <p>Everything you’re working on, in one place.</p>
         </div>
         <Button onClick={create} disabled={busy}>
           <Plus size={17} aria-hidden="true" />
           New list
         </Button>
       </header>
-      <label className="list-browser-search">
-        Find a list
-        <Input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search list names"
-        />
-      </label>
+      {lists.length > 6 || searchOpen ? (
+        <>
+          {" "}
+          <label className="list-browser-search">
+            Find a list
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search list names"
+            />
+          </label>
+        </>
+      ) : (
+        <button
+          className="list-browser-find"
+          onClick={() => setSearchOpen(true)}
+        >
+          Find a list
+        </button>
+      )}
       <div className="list-browser-grid">
         {groups.map(({ list, children }) => {
           const expanded = !!query.trim() || expandedIds.has(list.id);

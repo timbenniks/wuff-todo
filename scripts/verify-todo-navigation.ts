@@ -99,7 +99,7 @@ try {
   await page.reload();
   await expect(
     page.getByRole("heading", {
-      name: "A quiet corner for your pack.",
+      name: "Your day panels are hidden.",
       exact: true,
     }),
   ).toBeVisible();
@@ -113,12 +113,12 @@ try {
   });
   await page.reload();
   const geometry = await catalog.boundingBox();
-  assert(geometry.y < 300);
+  assert(geometry.y >= 0);
   await expect(
     page.getByRole("heading", { name: "Today", exact: true }),
   ).toBeVisible();
   assert(
-    geometry.y <
+    geometry.y >
       (
         await page
           .getByRole("heading", { name: "Today", exact: true })
@@ -161,7 +161,7 @@ try {
   ).toBeVisible();
   await expect(
     favorites.getByRole("button", { name: children[0].title, exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   const parentX = await tree
     .getByRole("button", { name: parent.title, exact: true })
     .locator(".sidebar-list-name")
@@ -177,23 +177,26 @@ try {
   const separator = page.getByRole("separator", { name: "Sidebar width" });
   await separator.focus();
   await separator.press("ArrowRight");
-  await expect(separator).toHaveAttribute("aria-valuenow", "336");
+  await expect(separator).toHaveAttribute("aria-valuenow", "276");
   await page.reload();
-  await expect(separator).toHaveAttribute("aria-valuenow", "336");
+  await expect(separator).toHaveAttribute("aria-valuenow", "276");
   const box = await separator.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + 200);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2 + 64, box.y + 200);
   await page.mouse.up();
-  await expect(separator).toHaveAttribute("aria-valuenow", "400");
+  await expect(separator).toHaveAttribute("aria-valuenow", "340");
   await page.reload();
-  await expect(separator).toHaveAttribute("aria-valuenow", "400");
+  await expect(separator).toHaveAttribute("aria-valuenow", "340");
   await page.setViewportSize({ width: 800, height: 768 });
   await expect(separator).toHaveAttribute("aria-valuenow", "320");
   await page.setViewportSize({ width: 1366, height: 768 });
-  await expect(separator).toHaveAttribute("aria-valuenow", "400");
+  await expect(separator).toHaveAttribute("aria-valuenow", "340");
+  await page
+    .getByRole("button", { name: "Sidebar options", exact: true })
+    .click();
   await page.getByRole("button", { name: "Reset width", exact: true }).click();
-  await expect(separator).toHaveAttribute("aria-valuenow", "320");
+  await expect(separator).toHaveAttribute("aria-valuenow", "260");
   evidence.push(
     "Keyboard and pointer resizing, reload persistence, narrow-window clamp, preferred width restoration and reset",
   );
@@ -260,20 +263,26 @@ try {
       .locator(".list-context")
       .getByRole("button", { name: children[6].title, exact: true }),
   ).toBeVisible();
-  await page.locator(".list-personal-actions > summary").click();
+  await page.getByRole("button", { name: "List actions", exact: true }).click();
   await expect(
     page
-      .locator(".list-personal-actions")
+      .getByRole("dialog", { name: "List actions", exact: true })
       .getByRole("combobox", { name: "Parent list", exact: true }),
   ).toBeDisabled();
-  await page.locator(".list-personal-actions > summary").click();
+  await page
+    .getByRole("dialog", { name: "List actions", exact: true })
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
   await page.screenshot({ path: `${out}/parent-laptop.png` });
   evidence.push(
     "Committed-response-loss favorite retry uses identical payload; parent/child/sibling navigation and Back",
   );
   await page.goto(`http://localhost:3000/lists?listId=${children[0].id}`);
-  const actions = page.locator(".list-personal-actions");
-  await actions.locator("summary").click();
+  const actions = page.getByRole("dialog", {
+    name: "List actions",
+    exact: true,
+  });
+  await page.getByRole("button", { name: "List actions", exact: true }).click();
   await actions
     .getByRole("combobox", { name: "Parent list", exact: true })
     .selectOption("");
@@ -281,7 +290,8 @@ try {
   await expect(
     page.getByRole("navigation", { name: "List location" }),
   ).toHaveCount(0);
-  await actions.locator("summary").click();
+  await actions.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: "List actions", exact: true }).click();
   await actions
     .getByRole("combobox", { name: "Parent list", exact: true })
     .selectOption(parent.id);
@@ -470,7 +480,7 @@ try {
   ).toBeVisible();
   await expect(
     favoriteNav.getByRole("button", { name: children[0].title, exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   assert.equal(
     await frame
       .getByRole("button", { name: parent.title, exact: true })

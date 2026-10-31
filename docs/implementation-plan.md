@@ -8,11 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
-- **Todo navigation maturity (October 31, draft PR #45):** list-first Overview,
-  canonical hierarchy with contextual favorite shortcuts, resizable device-local
-  sidebar, parent/child/sibling navigation and direct personal actions. Existing
-  services/scopes are reused; no migration or production operation. Implementation
-  and current local verification: [Todo UX plan](todo-ux-maturity-plan.md).
+- **Todo productivity redesign (October 31, draft PR #45):** attention-first
+  Overview with a compact list browser, flat favorite shortcuts and canonical
+  hierarchy, resizable 260px sidebar, consolidated workspace controls, inline task
+  capture and focused task drawer. Existing services/scopes are reused; no migration
+  or production operation. The focused [redesign contract](todo-productivity-redesign.md)
+  supersedes the earlier [navigation plan](todo-ux-maturity-plan.md).
 
 - **Contributor metadata gate retired (October 28):** Tim requested removal of
   the policy script/workflow and required status. Verify, meaningful test coverage,

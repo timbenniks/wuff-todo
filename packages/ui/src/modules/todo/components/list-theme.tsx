@@ -7,8 +7,14 @@ import { applyListTheme } from "../lib/list-theme";
 // state is stored. Document scope also colors native dialogs and the page gutter.
 export function ListTheme({ color }: { color: ListColor }) {
   useEffect(() => {
-    applyListTheme(color, document.documentElement);
-    return () => applyListTheme("blue", document.documentElement);
+    const update = () => applyListTheme(color, document.documentElement, true);
+    const query = matchMedia("(prefers-color-scheme: dark)");
+    update();
+    query.addEventListener("change", update);
+    return () => {
+      query.removeEventListener("change", update);
+      applyListTheme("blue", document.documentElement);
+    };
   }, [color]);
   return null;
 }

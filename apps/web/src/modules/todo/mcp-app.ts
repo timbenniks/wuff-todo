@@ -38,6 +38,10 @@ import { ToolError, type McpViewRuntime } from "@/mcp-app/runtime";
 
 export function createTodoMcpView(runtime: McpViewRuntime) {
   const { root, status, request, call, show } = runtime;
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (document.documentElement.dataset.todoActive === "true")
+      applyListTheme(current?.color ?? "blue", document.documentElement, true);
+  });
   let fieldSequence = 0;
   const githubExpanded = new Set<string>();
   let current: TodoList | undefined,
@@ -1940,6 +1944,9 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     return toolbar;
   }
   function beforeShow(data: Record<string, unknown>) {
+    document.documentElement.dataset.todoActive = String(
+      Boolean(data.list || data.lists || data.dashboard),
+    );
     if (!data.list && !data.lists && !data.dashboard) current = undefined;
     if (data.viewerId && viewerId && data.viewerId !== viewerId) {
       catalog = [];
@@ -1971,20 +1978,20 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     if (data.lists) catalog = data.lists;
     if (data.dashboard) {
       current = undefined;
-      applyListTheme("blue", document.documentElement);
+      applyListTheme("blue", document.documentElement, true);
       renderDashboard(data.dashboard);
       return;
     }
     if (data.lists && !data.list) {
       catalog = data.lists;
       current = undefined;
-      applyListTheme("blue", document.documentElement);
+      applyListTheme("blue", document.documentElement, true);
       renderCatalog();
       return;
     }
     if (!data.list) return;
     current = data.list;
-    applyListTheme(current.color, document.documentElement);
+    applyListTheme(current.color, document.documentElement, true);
     for (const [id, draft] of noteDrafts)
       if (
         draft.listId === current.id &&
@@ -2323,14 +2330,14 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       element("p", `Welcome back, ${data.name}.`),
       button("Your lists", () => void call("show_lists", {})),
     );
-    root.append(catalogBrowser());
     const labels = {
       today: "Today",
       upcoming: "Coming up",
       favorites: "Favorites",
     };
     for (const section of data.preferences.settings.sections.filter(
-      (id) => !data.preferences.settings.hidden.includes(id),
+      (id): boolean =>
+        id !== "favorites" && !data.preferences.settings.hidden.includes(id),
     )) {
       const card = element("section"),
         heading = element("h2", labels[section]);
@@ -2401,7 +2408,12 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
       }
       root.append(card);
     }
-    if (data.preferences.settings.hidden.length === 3)
+    root.append(catalogBrowser());
+    if (
+      ["today", "upcoming"].every((id) =>
+        data.preferences.settings.hidden.includes(id as "today" | "upcoming"),
+      )
+    )
       root.append(
         element(
           "p",
@@ -2597,15 +2609,7 @@ export function createTodoMcpView(runtime: McpViewRuntime) {
     ];
     const rows = [
       ...(!archive
-        ? favorites.flatMap((list) =>
-            project(
-              groups.find((g) => g.list.id === list.id) ?? {
-                list,
-                children: [],
-              },
-              true,
-            ),
-          )
+        ? favorites.flatMap((list) => project({ list, children: [] }, true))
         : []),
       ...groups.flatMap((group) => project(group, false)),
     ];
