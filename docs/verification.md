@@ -1333,3 +1333,10 @@ HTTP nesting write returned managed-auth 429 and navigation consent SSR returned
 500 with `auth_unavailable`/429 in the local server log. Those two cases remain
 blocked for current-source full-adapter verification. The earlier all-six pass and
 updated real SDK recovery pass remain separate evidence. Keep PR #45 draft.
+
+Appearance/menu follow-up at 44ba668: the separate themed drawer check passed
+light/dark surface changes, 390px empty notes/subtasks, Escape and origin focus.
+The serial view/favorites/nesting/navigation integration rerun passed all six
+cases with no skips (72.7 seconds), including the two previously throttled adapter
+cases. The earlier blocked combined dense-flow runs remain explicitly historical;
+updated menu/appearance, drawer and navigation/actual SDK checks all pass.
