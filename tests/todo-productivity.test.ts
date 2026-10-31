@@ -231,10 +231,11 @@ test("appearance persists locally and remains usable when browser storage is blo
     assert.deepEqual(events, [todoAppearanceEvent]);
     values.set(todoAppearanceKey, "system");
     assert.equal(readTodoAppearance(), "system");
+    let externalChoice = "system";
     Object.defineProperty(globalThis, "localStorage", {
       configurable: true,
       value: {
-        getItem: () => "system",
+        getItem: () => externalChoice,
         setItem: () => {
           throw Error("quota exceeded");
         },
@@ -245,6 +246,16 @@ test("appearance persists locally and remains usable when browser storage is blo
       readTodoAppearance(),
       "dark",
       "a readable but unwritable store must retain the current document choice",
+    );
+    externalChoice = "light";
+    assert.equal(
+      readTodoAppearance({ type: "storage", key: "unrelated" }),
+      "dark",
+    );
+    assert.equal(
+      readTodoAppearance({ type: "storage", key: todoAppearanceKey }),
+      "light",
+      "another tab's relevant storage event resumes persisted reads",
     );
     Object.defineProperty(globalThis, "localStorage", {
       configurable: true,

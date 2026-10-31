@@ -530,12 +530,30 @@ try {
         ),
       )
       .toBe("light");
+    const peer = await context.newPage();
+    await peer.goto("http://localhost:3000/docs");
+    await peer.evaluate(() =>
+      localStorage.setItem("wuff:todo:appearance:v1", "dark"),
+    );
+    await expect(appearance).toHaveValue("dark");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => getComputedStyle(document.documentElement).colorScheme,
+        ),
+      )
+      .toBe("dark");
+    await peer.evaluate(() =>
+      localStorage.setItem("wuff:todo:appearance:v1", "light"),
+    );
+    await expect(appearance).toHaveValue("light");
+    await peer.close();
     await page.reload();
     await expect(
       page.getByRole("combobox", { name: "Appearance", exact: true }),
     ).toHaveValue("light");
     checks.push(
-      "Readable storage with failed writes keeps Light/Dark switching functional in the current document; reload retains the prior saved preference",
+      "Readable storage with failed writes keeps local switching functional; real cross-tab writes resume persisted appearance; reload retains the saved preference",
     );
   }
   if (stage === "retry-isolation") {
@@ -756,7 +774,9 @@ try {
     await page.screenshot({ path: `${out}/drawer-light.png` });
     await page.evaluate(() => {
       localStorage.setItem("wuff:todo:appearance:v1", "dark");
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "wuff:todo:appearance:v1" }),
+      );
     });
     await expect
       .poll(() =>
@@ -768,7 +788,9 @@ try {
     await page.screenshot({ path: `${out}/drawer-dark.png` });
     await page.evaluate(() => {
       localStorage.setItem("wuff:todo:appearance:v1", "light");
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "wuff:todo:appearance:v1" }),
+      );
     });
     await drawer
       .getByRole("button", { name: "Edit task notes", exact: true })
@@ -898,7 +920,9 @@ try {
     await page.screenshot({ path: `${out}/drawer-light.png` });
     await page.evaluate(() => {
       localStorage.setItem("wuff:todo:appearance:v1", "dark");
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "wuff:todo:appearance:v1" }),
+      );
     });
     await expect
       .poll(() =>
@@ -910,7 +934,9 @@ try {
     await page.screenshot({ path: `${out}/drawer-dark.png` });
     await page.evaluate(() => {
       localStorage.setItem("wuff:todo:appearance:v1", "light");
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "wuff:todo:appearance:v1" }),
+      );
     });
     await page.setViewportSize({ width: 390, height: 844 });
     assert(

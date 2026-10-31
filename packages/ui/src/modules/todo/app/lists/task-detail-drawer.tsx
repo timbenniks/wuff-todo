@@ -47,8 +47,8 @@ export function TaskDetailDrawer({
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const query = matchMedia("(prefers-color-scheme: dark)");
-    const update = () =>
-      setDark(isTodoDark(readTodoAppearance(), query.matches));
+    const update = (event?: Event) =>
+      setDark(isTodoDark(readTodoAppearance(event), query.matches));
     update();
     query.addEventListener("change", update);
     window.addEventListener(todoAppearanceEvent, update);

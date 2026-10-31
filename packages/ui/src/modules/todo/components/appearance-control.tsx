@@ -11,7 +11,7 @@ import {
 export function TodoAppearanceControl() {
   const [value, setValue] = useState<TodoAppearance>("light");
   useEffect(() => {
-    const update = () => setValue(readTodoAppearance());
+    const update = (event?: Event) => setValue(readTodoAppearance(event));
     update();
     window.addEventListener(todoAppearanceEvent, update);
     window.addEventListener("storage", update);

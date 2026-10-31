@@ -1376,3 +1376,13 @@ recovers. All 205 units, TypeScript and optimized build pass; no page errors.
 Codex review of a4fb748 reported no major issues
 ([receipt](https://github.com/timbenniks/wuff-todo/pull/45#issuecomment-6543664439));
 the additional storage boundary correction receives a fresh review separately.
+
+Final cross-tab recovery correction: relevant appearance storage events (including
+clear-all) release the failed-write latch, while local failure notifications and
+unrelated keys retain the current document choice. Sidebar, document theme, drawer
+and embedded listeners forward the event. The unit regression fails against the
+old helper; all nine productivity unit cases and the full 205-case suite pass.
+Actual Chrome verifies a second same-origin tab changes the first tab’s appearance
+after its writes fail, plus reload persistence; no page errors. TypeScript and the
+optimized build pass. Tim explicitly requested approval and merge after this fix;
+finish required GitHub checks and merge rather than starting another design cycle.

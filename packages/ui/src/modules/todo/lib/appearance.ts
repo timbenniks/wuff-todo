@@ -9,7 +9,15 @@ export function isTodoDark(appearance: TodoAppearance, systemDark: boolean) {
 }
 let fallback: TodoAppearance = "light";
 let writeUnavailable = false;
-export function readTodoAppearance(): TodoAppearance {
+export function readTodoAppearance(event?: {
+  type: string;
+  key?: string | null;
+}): TodoAppearance {
+  if (
+    event?.type === "storage" &&
+    (event.key === todoAppearanceKey || event.key === null)
+  )
+    writeUnavailable = false;
   if (writeUnavailable) return fallback;
   try {
     fallback = parseTodoAppearance(localStorage.getItem(todoAppearanceKey));

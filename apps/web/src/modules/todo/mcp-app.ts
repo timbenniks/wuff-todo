@@ -49,7 +49,8 @@ import { ToolError, type McpViewRuntime } from "@/mcp-app/runtime";
 
 export function createTodoMcpView(runtime: McpViewRuntime) {
   const { root, status, request, call, show } = runtime;
-  const refreshAppearance = () => {
+  const refreshAppearance = (event?: Event) => {
+    readTodoAppearance(event);
     if (document.documentElement.dataset.todoActive === "true")
       applyListTheme(current?.color ?? "blue", document.documentElement, true);
   };
