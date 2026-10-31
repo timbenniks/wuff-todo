@@ -27,7 +27,7 @@ Database provisioning, project connection, environment retrieval, and deployment
 
 ## Local environment
 
-Use Node 22 and pnpm 10.33.3. Run `pnpm install --frozen-lockfile` from the repository root.
+Use Node 22 and pnpm 12.16.1. Run `pnpm install --frozen-lockfile` from the repository root.
 
 The ignored root `.env.local` holds the isolated development database/auth configuration and a generated cookie secret. The local launcher reads this file before starting Next.js. Production values are separately preserved in ignored `.env.production.local` on the initial development machine. Neither file belongs in Git or a deployment upload.
 
