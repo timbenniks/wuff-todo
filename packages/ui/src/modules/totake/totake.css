@@ -2328,6 +2328,22 @@
 .totake .tracked-item {
   flex-wrap: wrap;
 }
+.totake .registered-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.totake .registered-filter {
+  display: grid;
+  gap: 8px;
+  max-width: 320px;
+}
+.totake .registered-description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .totake dialog {
   color: var(--wuff-foreground);
 }

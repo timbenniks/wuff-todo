@@ -1,7 +1,8 @@
 import type { State } from "./model";
-import type { Treatment } from "./treatments";
+import { treatmentActive, type Treatment } from "./treatments";
 import { forecast, type Forecast } from "./stock";
 export const isLowStock = (t: Treatment) =>
+  treatmentActive(t) &&
   t.inventory.enabled &&
   Number(t.inventory.current) <= Number(t.inventory.threshold);
 export function warningDetails(t: Treatment, f: Forecast, now: number) {

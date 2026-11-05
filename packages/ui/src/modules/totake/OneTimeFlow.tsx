@@ -136,7 +136,12 @@ export function OneTimeFlow({
               aria-label="Registered as-needed medications"
             >
               {state.treatments
-                ?.filter((t) => t.kind === "medication" && t.schedule === "prn")
+                ?.filter(
+                  (t) =>
+                    t.kind === "medication" &&
+                    t.schedule === "prn" &&
+                    (!t.status || t.status === "active"),
+                )
                 .map((t) => (
                   <Button
                     className="one-time-option"

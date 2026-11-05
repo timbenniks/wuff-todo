@@ -47,7 +47,7 @@ export function refreshTotake(
       const r = g.reminders[i.id];
       if ((i.alertInstant ?? Infinity) <= now) {
         r.started = true;
-        r.visible = true;
+        r.visible = (r.snoozedInstant ?? -Infinity) <= now;
       }
     }
   return next;
@@ -69,9 +69,53 @@ export function applyTotakeAction(
   };
   let next: TotakeState;
   switch (action.action) {
+    case "set_treatment_status":
+    case "delete_treatment": {
+      const old = s.treatments!.find((t) => t.id === action.treatmentId);
+      if (!old || old.status === "deleted")
+        fail(
+          "This registered item is no longer available. Load the latest list.",
+        );
+      const status =
+        action.action === "delete_treatment" ? "deleted" : action.status;
+      if ((old!.status ?? "active") === status) {
+        next = s;
+        break;
+      }
+      next = {
+        ...s,
+        treatments: s.treatments!.map((t) =>
+          t.id === old!.id
+            ? {
+                ...t,
+                status,
+                revision: t.revision + 1,
+                ...(status === "active" ? { activeFrom: now } : {}),
+              }
+            : t,
+        ),
+      };
+      // Reconcile removes pending items only, retaining recorded snapshots and
+      // the other items' snooze/repeat state in a shared group.
+      next = e.reconcileClock(next);
+      if (status === "active") {
+        next = e.ensureDay(
+          { ...next, planHorizon: Math.floor(next.now / 1440) - 1 },
+          Math.max(s.planHorizon ?? 0, Math.floor(next.now / 1440) + 31),
+        );
+        next = e.reconcileClock(next);
+      }
+      next = e.syncRefills(next);
+      break;
+    }
     case "save_treatment": {
       const old = s.treatments!.find((t) => t.id === action.draft.id);
-      if (!old && s.treatments!.length >= 100)
+      if (old?.status === "deleted")
+        fail("This item was deleted. Add a new item instead.");
+      if (
+        !old &&
+        s.treatments!.filter((t) => t.status !== "deleted").length >= 100
+      )
         fail("The registered item limit is 100.");
       if (action.draft.startDay > Math.floor(s.now / 1440) + 366)
         fail("Choose a start date within one year.");
@@ -122,6 +166,20 @@ export function applyTotakeAction(
       break;
     }
     case "record_intake":
+      if (
+        action.draft.medicationId &&
+        !s.treatments?.some(
+          (t) => t.id === action.draft.medicationId && e.treatmentActive(t),
+        )
+      )
+        fail(
+          "Choose an active as-needed medication. Resume or restore it first.",
+        );
+      if (
+        !action.draft.medicationId &&
+        s.treatments?.some((t) => t.id === action.draft.medication.id)
+      )
+        fail("This medication ID already exists. Add a new item instead.");
       next = e.recordIntake(s, { ...action.draft, id: operationId });
       break;
     case "undo_intake": {
@@ -134,6 +192,7 @@ export function applyTotakeAction(
       const treatment = s.treatments!.find((t) => t.id === action.treatmentId);
       if (
         !treatment ||
+        treatment.status === "deleted" ||
         !e.stockEligible(treatment) ||
         !treatment.inventory.enabled
       )
@@ -173,7 +232,8 @@ export function applyTotakeAction(
 /** Editing a definition never cancels an already-due unresolved occurrence. */
 export function totakeNeedsScheduler(state: TotakeState) {
   return (
-    !!state.treatments?.some((t) => t.schedule !== "prn") ||
-    state.groups.some((g) => e.pending(g).length > 0)
+    !!state.treatments?.some(
+      (t) => e.treatmentActive(t) && t.schedule !== "prn",
+    ) || state.groups.some((g) => e.pending(g).length > 0)
   );
 }

@@ -25,7 +25,8 @@ import {
 } from "@wuff/contracts/totake/calendar";
 import { SetupWizard } from "./SetupWizard";
 import { OneTimeFlow, IntakeHistory } from "./OneTimeFlow";
-import { StockSummary, StockAdjustment } from "./StockControls";
+import { StockAdjustment } from "./StockControls";
+import { RegisteredItems } from "./RegisteredItems";
 import { RecordedGroups, ItemName, SnoozeControls } from "./components";
 import { ReminderTimeEditor } from "./ReminderTimeEditor";
 import { acceptTotakeRead, createTotakeReadGate } from "./request";
@@ -633,57 +634,38 @@ export function TotakeApp({
                 </>
               )}
               {page === "items" && (
-                <section className="card registered">
-                  <h2>{stockFilter ? "Low stock" : "Registered items"}</h2>
-                  {stockFilter && (
-                    <Button onClick={() => setStockFilter(null)}>
-                      Show all items
-                    </Button>
-                  )}
-                  {!s.treatments?.length && (
-                    <p>No medications or equipment registered yet.</p>
-                  )}
-                  <ul className="item-list">
-                    {s.treatments
-                      ?.filter(
-                        (t) => !stockFilter || stockFilter.includes(t.id),
-                      )
-                      .map((t) => (
-                        <li key={t.id} className="tracked-item">
-                          <div className="registered-description">
-                            <strong>{t.name}</strong>
-                            <p>{e.scheduleLabel(t)}</p>
-                          </div>
-                          <Button
-                            aria-label={`Edit ${t.name}`}
-                            onClick={() => (
-                              (draftVersion.current = live.current.version),
-                              setWizard({
-                                draft: {
-                                  ...structuredClone(t),
-                                  groupIntervals: {},
-                                  groupEdits: {},
-                                },
-                                original: t,
-                              })
-                            )}
-                          >
-                            Edit
-                          </Button>
-                          {t.inventory.enabled && (
-                            <StockSummary
-                              state={s}
-                              treatment={t}
-                              onAdjust={(kind) => {
-                                draftVersion.current = live.current.version;
-                                setStock({ id: t.id, kind });
-                              }}
-                            />
-                          )}
-                        </li>
-                      ))}
-                  </ul>
-                </section>
+                <RegisteredItems
+                  state={s}
+                  stockFilter={stockFilter}
+                  clearStockFilter={() => setStockFilter(null)}
+                  prepare={() => {
+                    draftVersion.current = live.current.version;
+                  }}
+                  close={() => {
+                    draftVersion.current = null;
+                  }}
+                  save={save}
+                  onEdit={(t) => {
+                    draftVersion.current = live.current.version;
+                    const {
+                      status: _status,
+                      activeFrom: _activeFrom,
+                      ...definition
+                    } = structuredClone(t);
+                    setWizard({
+                      draft: {
+                        ...definition,
+                        groupIntervals: {},
+                        groupEdits: {},
+                      },
+                      original: t,
+                    });
+                  }}
+                  onAdjust={(id, kind) => {
+                    draftVersion.current = live.current.version;
+                    setStock({ id, kind });
+                  }}
+                />
               )}
               {page === "settings" && (
                 <section className="card settings-card">

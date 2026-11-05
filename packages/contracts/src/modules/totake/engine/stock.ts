@@ -1,6 +1,6 @@
 import { count, countText } from "./count";
 import type { Item, State } from "./model";
-import { planDay, type Treatment } from "./treatments";
+import { planDay, treatmentActive, type Treatment } from "./treatments";
 import { fullDate } from "./calendar";
 export type StockMovement = {
   id: string;
@@ -78,6 +78,7 @@ export function syncRefills(s: State): State {
     refills = stock.refills.map((r) => ({ ...r }));
   for (const t of s.treatments ?? []) {
     const isLow =
+      treatmentActive(t) &&
       t.inventory.enabled &&
       Number(t.inventory.current) <= Number(t.inventory.threshold);
     if (isLow && !low[t.id])

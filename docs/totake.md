@@ -1,5 +1,10 @@
 # Wuff Totake integration
 
+November 5 follow-up: [Pause, archive and delete registered items](totake-medication-lifecycle.md)
+adds reversible Pause/Resume and Archive/Restore plus confirmed deletion that
+retains historical records. Its verification and review are separate from the
+older release evidence below.
+
 October 25, 2026. Implemented on draft PR #26; verification and release gates below. Source of product behavior: Joreel’s local `wuff-to-take-handover-2026-10-25/BLUEPRINT.html`, sections 2–19. No personal screenshots, conversation exports or medication data are copied into the repository.
 
 ## Brief and acceptance

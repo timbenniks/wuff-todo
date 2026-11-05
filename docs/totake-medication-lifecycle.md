@@ -35,14 +35,46 @@ Totake consent and revocation rules apply to every call and replay.
 
 ## Acceptance and verification
 
-- [ ] Pause/Resume, Archive/Restore and confirmed Delete are reachable by keyboard
-  and at 320px, 390px and desktop, with cancellation and retained failure recovery.
-- [ ] Pending/repeating/snoozed occurrences stop immediately for this item only.
-- [ ] Resume/Restore preserve schedule anchors and records without an inactive backlog.
-- [ ] Deleted entries stay deleted, including after stale edits and exact retries.
-- [ ] History, stock and Undo remain accurate and never revive inactive reminders.
-- [ ] Unit regressions cover transitions, grouped items, PRN, time zones and stock.
-- [ ] Real isolated HTTP/MCP parity covers permissions, conflicts and retries.
+- [x] Pause/Resume, Archive/Restore and confirmed Delete are reachable by keyboard
+      and at 320px, 390px and desktop, with cancellation and retained failure recovery.
+- [x] Pending/repeating/snoozed occurrences stop immediately for this item only.
+- [x] Resume/Restore preserve schedule anchors and records without an inactive backlog.
+- [x] Deleted entries stay deleted, including after stale edits and exact retries.
+- [x] History, stock and Undo remain accurate and never revive inactive reminders.
+- [x] Unit regressions cover transitions, grouped items, PRN, time zones and stock.
+- [x] Real isolated HTTP/MCP parity covers permissions, conflicts and retries.
 
-Verification results and the latest review will be recorded before handoff.
-Use synthetic accounts only. No production data changes or release are included.
+## Local verification — November 5
+
+- New `tests/totake-lifecycle.test.ts`: 12 passing cases. With existing
+  `tests/totake.test.ts`, all 33 targeted cases pass. Grouped snooze regression
+  exposed refresh setting visible before the snooze elapsed; refresh now respects
+  the snoozed instant. The grouped-item regression was verified failing with the
+  old refresh behavior, then passing with the fix restored. Tests assert other-item
+  timers and selection are preserved.
+- `tests/totake.integration.test.ts`: both real isolated development cases pass.
+  Added HTTP-pause/MCP-read and MCP-resume/archive/restore/delete/HTTP-readback;
+  readonly/other-account denial, stale version, changed-payload operation reuse,
+  exact retry, disabled scheduler, retained records/stock and Undo after deletion.
+  Existing callback/provider-mocked delivery regression also passes. No real sends.
+- `pnpm build`: optimized guide/MCP/web build passed. No deployment was performed.
+- `pnpm typecheck`: all workspace and root TypeScript checks passed.
+- Full `pnpm test`: 207 passed, three existing Windows failures remain: absolute
+  dynamic ESM imports in empire-modules/mcp-tool-choices and slash expectations in
+  unit-discovery. These are incomplete baseline checks, not waived or changed.
+- Actual in-app browser at 320/390/1280px: Pause/Resume, Archive/Restore, persisted
+  reload, long names, Delete explanation and Cancel, Escape/opener focus and
+  forward/backward modal focus wrapping passed. No horizontal document overflow.
+  Delete mutation/history/stock is proven by real HTTP/MCP, not a browser deletion.
+  Unknown-reply/conflict recovery continues to use the existing retained request
+  and Modal controls; new dialogs are portaled outside the disabled page fieldset
+  so those controls remain reachable.
+
+[320px](screenshots/totake-lifecycle-320.png) ·
+[390px](screenshots/totake-lifecycle-390.png) ·
+[desktop](screenshots/totake-lifecycle-1280.png).
+
+Screenshots and local try-it entries contain fictional data in the synthetic Alex
+development account. Physical devices, real notification receipt and screen-reader
+use were not tested. No production data changes or release are included. The PR
+remains a draft pending the full baseline and latest-head Codex review.
