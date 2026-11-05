@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
-import { OneTimeFlow } from "../packages/ui/src/modules/totake/OneTimeFlow";
 import {
   totakeEngine as e,
   totakeMutationSchema,
@@ -24,6 +23,7 @@ const now = Date.parse("2026-10-24T06:00:00Z");
 const uiRequire = createRequire(
   new URL("../packages/ui/package.json", import.meta.url),
 );
+const { OneTimeFlow } = uiRequire("./src/modules/totake/OneTimeFlow.tsx");
 const { createElement } = uiRequire("react");
 const { renderToStaticMarkup } = uiRequire("react-dom/server");
 const renderPicker = (s: TotakeState) => {
