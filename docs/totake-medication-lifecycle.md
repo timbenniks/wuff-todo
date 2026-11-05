@@ -108,3 +108,13 @@ before the fix and passes after it: Pause/Resume and Archive/Restore preserve th
 entire stock state, while an actual stock correction resolves the existing refill
 once. Deletion also leaves that history unchanged. All 14 lifecycle and 21 existing
 Totake cases pass (35 total). Full verification is rerun for the new head.
+
+## Daily-overview review fix
+
+Codex review of a54503d identified [the empty overview after inactive Undo](https://github.com/timbenniks/wuff-todo/pull/48#discussion_r4475264474).
+The displayed day now includes only groups with pending or recorded content;
+audit-only placeholders remain in the stored history. A rendered daily-overview
+regression fails before the fix and passes afterward for paused, archived and
+deleted items, also checking retained record/Undo audit and restored stock.
+All 15 lifecycle and 21 existing Totake cases pass (36 total). No domain, API, MCP,
+permission, schema or notification change was needed for this display fix.

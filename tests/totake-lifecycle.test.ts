@@ -24,28 +24,55 @@ const uiRequire = createRequire(
   new URL("../packages/ui/package.json", import.meta.url),
 );
 const { OneTimeFlow } = uiRequire("./src/modules/totake/OneTimeFlow.tsx");
+const { TotakeApp } = uiRequire("./src/modules/totake/totake-app.tsx");
+const { RuntimeContext } = uiRequire("./src/features/runtime.ts");
 const { createElement } = uiRequire("react");
 const { renderToStaticMarkup } = uiRequire("react-dom/server");
-const renderPicker = (s: TotakeState) => {
+const renderUi = (element: unknown) => {
   // The root tsx test runner uses classic JSX; the web build uses automatic JSX.
   // Supply that runtime only during this synchronous render, without changing test config.
   const previous = Reflect.get(globalThis, "React");
   Reflect.set(globalThis, "React", uiRequire("react"));
   try {
-    return renderToStaticMarkup(
-      createElement(OneTimeFlow, {
-        initial: e.newIntake(s),
-        state: s,
-        onBack: () => {},
-        onCancel: () => {},
-        onSave: async () => null,
-      }),
-    );
+    return renderToStaticMarkup(element);
   } finally {
     if (previous === undefined) Reflect.deleteProperty(globalThis, "React");
     else Reflect.set(globalThis, "React", previous);
   }
 };
+const renderPicker = (s: TotakeState) =>
+  renderUi(
+    createElement(OneTimeFlow, {
+      initial: e.newIntake(s),
+      state: s,
+      onBack: () => {},
+      onCancel: () => {},
+      onSave: async () => null,
+    }),
+  );
+const renderOverview = (s: TotakeState) =>
+  renderUi(
+    createElement(
+      RuntimeContext.Provider,
+      {
+        value: {
+          api: async () => {
+            throw Error("Rendering must not contact a backend");
+          },
+        },
+      },
+      createElement(TotakeApp, {
+        initial: {
+          userId: "synthetic-render",
+          version: 0,
+          state: s,
+          delivery: { enabled: false, message: "Synthetic" },
+        },
+        userId: "synthetic-render",
+      }),
+    ),
+  );
+
 const change = (s: TotakeState, action: TotakeAction, at = s.clock!.instant) =>
   applyTotakeAction(s, action, randomUUID(), at);
 function fixture(kind: "medication" | "equipment" = "medication") {
@@ -349,4 +376,35 @@ test("old notification selections are rejected after lifecycle cancellation", ()
   assert.throws(() =>
     validateNotificationAction(next, action, context, context.userId, now),
   );
+});
+
+test("daily overview shows its empty state after Undo leaves only inactive audit placeholders", () => {
+  for (const value of ["paused", "archived", "deleted"] as const) {
+    let { s, t } = fixture();
+    const group = s.groups[0];
+    assert.doesNotMatch(renderOverview(s), /Nothing scheduled for this day/);
+    s = change(s, {
+      action: "record",
+      groupId: group.id,
+      itemIds: [group.items[0].id],
+      outcome: "taken",
+    });
+    const recordId = s.groups.find((g) => g.id === group.id)!.records[0].id;
+    s =
+      value === "deleted"
+        ? change(s, { action: "delete_treatment", treatmentId: t.id })
+        : status(s, t.id, value);
+    s = change(s, { action: "undo", groupId: group.id, recordId });
+    assert(
+      s.groups.some(
+        (g) => g.id === group.id && !g.items.length && !g.records.length,
+      ),
+    );
+    assert.deepEqual(
+      s.audit.map((a) => a.action),
+      ["record", "undo"],
+    );
+    assert.equal(s.treatments![0].inventory.current, "10");
+    assert.match(renderOverview(s), /Nothing scheduled for this day/);
+  }
 });

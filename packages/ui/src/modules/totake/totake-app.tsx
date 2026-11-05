@@ -104,7 +104,11 @@ export function TotakeApp({
     [stockFilter, setStockFilter] = useState<string[] | null>(null);
   const s = data.state,
     today = Math.floor(s.now / 1440),
-    groups = s.groups.filter((g) => Math.floor(g.due / 1440) === day),
+    groups = s.groups.filter(
+      (g) =>
+        Math.floor(g.due / 1440) === day &&
+        (e.pending(g).length > 0 || g.records.length > 0),
+    ),
     group = s.groups.find((g) => g.id === active);
   const warnings = useMemo(() => e.lowStockWarnings(s), [s]),
     strip = e.warningStrip(warnings);
