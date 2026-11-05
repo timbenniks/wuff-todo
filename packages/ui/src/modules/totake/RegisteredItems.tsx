@@ -161,6 +161,7 @@ export function RegisteredItems({
         portal.current &&
         createPortal(
           <Modal
+            className="lifecycle-dialog"
             title={`${labels[confirmation.intent]} ${confirmation.treatment.name}?`}
             onClose={dismiss}
           >

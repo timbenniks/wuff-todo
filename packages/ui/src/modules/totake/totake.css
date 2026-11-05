@@ -2340,6 +2340,32 @@
   gap: 8px;
   max-width: 320px;
 }
+.totake .lifecycle-dialog > .totake-operation-scope {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+.totake .lifecycle-dialog > .totake-operation-scope > p {
+  margin: 0;
+  line-height: 1.6;
+}
+.totake .lifecycle-dialog .registered-actions {
+  justify-content: flex-end;
+  gap: 12px;
+}
+.totake .lifecycle-dialog > [role="alert"],
+.totake .lifecycle-dialog > p[role="status"] {
+  margin: 16px 20px 0;
+}
+@media (max-width: 767px) {
+  .totake .lifecycle-dialog > .totake-operation-scope {
+    padding: 16px;
+  }
+  .totake .lifecycle-dialog > [role="alert"],
+  .totake .lifecycle-dialog > p[role="status"] {
+    margin-inline: 16px;
+  }
+}
 .totake .registered-description {
   min-width: 0;
   overflow-wrap: anywhere;

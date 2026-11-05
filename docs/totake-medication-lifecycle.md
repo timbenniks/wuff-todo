@@ -118,3 +118,19 @@ regression fails before the fix and passes afterward for paused, archived and
 deleted items, also checking retained record/Undo audit and restored stock.
 All 15 lifecycle and 21 existing Totake cases pass (36 total). No domain, API, MCP,
 permission, schema or notification change was needed for this display fix.
+
+## Dialog spacing follow-up
+
+User review found the lifecycle confirmation body had no padding. All lifecycle
+dialogs now use 16px body padding below 768px and 20px on desktop, a 20px
+message/action gap and a 12px button gap. Recovery messages use matching insets.
+Scoped styles do not change other dialogs, persistence or action behavior.
+Measured at 320/390/1280px: text/right-button/bottom-button insets were 17/17/17px
+on phones and 21/21/21px on desktop including the 1px border; no document overflow.
+Optimized build and typecheck pass. Local units remain 210 passed and the three
+unchanged Windows platform failures. No additional unit test is appropriate for
+this spacing-only change; actual rendered measurements/screenshots verify it.
+
+[320px popup](screenshots/totake-lifecycle-dialog-320.png) ·
+[390px popup](screenshots/totake-lifecycle-dialog-390.png) ·
+[Desktop popup](screenshots/totake-lifecycle-dialog-1280.png).
