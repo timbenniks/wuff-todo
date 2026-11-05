@@ -46,8 +46,8 @@ Totake consent and revocation rules apply to every call and replay.
 
 ## Local verification — November 5
 
-- New `tests/totake-lifecycle.test.ts`: 12 passing cases. With existing
-  `tests/totake.test.ts`, all 33 targeted cases pass. Grouped snooze regression
+- New `tests/totake-lifecycle.test.ts`: 13 passing cases. With existing
+  `tests/totake.test.ts`, all 34 targeted cases pass. Grouped snooze regression
   exposed refresh setting visible before the snooze elapsed; refresh now respects
   the snoozed instant. The grouped-item regression was verified failing with the
   old refresh behavior, then passing with the fix restored. Tests assert other-item
@@ -59,7 +59,7 @@ Totake consent and revocation rules apply to every call and replay.
   Existing callback/provider-mocked delivery regression also passes. No real sends.
 - `pnpm build`: optimized guide/MCP/web build passed. No deployment was performed.
 - `pnpm typecheck`: all workspace and root TypeScript checks passed.
-- Full `pnpm test`: 207 passed, three existing Windows failures remain: absolute
+- Full `pnpm test`: 208 passed, three existing Windows failures remain: absolute
   dynamic ESM imports in empire-modules/mcp-tool-choices and slash expectations in
   unit-discovery. These are incomplete baseline checks, not waived or changed.
 - Actual in-app browser at 320/390/1280px: Pause/Resume, Archive/Restore, persisted
@@ -78,3 +78,22 @@ Screenshots and local try-it entries contain fictional data in the synthetic Ale
 development account. Physical devices, real notification receipt and screen-reader
 use were not tested. No production data changes or release are included. The PR
 remains a draft pending the full baseline and latest-head Codex review.
+
+## Review follow-up
+
+Codex reviewed implementation 02abeca and reported [the inactive PRN picker empty
+state](https://github.com/timbenniks/wuff-todo/pull/48#discussion_r4475159319).
+The picker and empty-state now use one active-PRN selector. A rendered React
+regression verifies the accessible empty state for paused/archived/deleted
+registrations and its removal on Resume/Restore; it fails with the old condition.
+The rebuilt in-app browser confirms zero registered choices and the clear
+Resume/Restore/Add explanation. [Empty picker](screenshots/totake-lifecycle-prn-empty.png).
+Final typecheck/build pass; all 13 lifecycle units pass and the full Windows run
+remains 208 passed/three unchanged platform failures. Existing real integration
+results cover the unchanged mutation/permission paths.
+
+An actual local server interruption also kept the Resume confirmation, disabled
+writes while offline and exposed an enabled Load latest data control outside the
+page fieldset. After reconnect, the retained confirmation saved successfully.
+Committed-response loss was not simulated in the browser; exact retry is covered
+by the real adapters. A fresh latest-head review is required after this fix.

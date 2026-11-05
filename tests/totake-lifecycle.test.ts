@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { createRequire } from "node:module";
+import { OneTimeFlow } from "../packages/ui/src/modules/totake/OneTimeFlow";
 import {
   totakeEngine as e,
   totakeMutationSchema,
@@ -19,6 +21,31 @@ import {
 } from "../packages/contracts/src/modules/totake/notification";
 
 const now = Date.parse("2026-10-24T06:00:00Z");
+const uiRequire = createRequire(
+  new URL("../packages/ui/package.json", import.meta.url),
+);
+const { createElement } = uiRequire("react");
+const { renderToStaticMarkup } = uiRequire("react-dom/server");
+const renderPicker = (s: TotakeState) => {
+  // The root tsx test runner uses classic JSX; the web build uses automatic JSX.
+  // Supply that runtime only during this synchronous render, without changing test config.
+  const previous = Reflect.get(globalThis, "React");
+  Reflect.set(globalThis, "React", uiRequire("react"));
+  try {
+    return renderToStaticMarkup(
+      createElement(OneTimeFlow, {
+        initial: e.newIntake(s),
+        state: s,
+        onBack: () => {},
+        onCancel: () => {},
+        onSave: async () => null,
+      }),
+    );
+  } finally {
+    if (previous === undefined) Reflect.deleteProperty(globalThis, "React");
+    else Reflect.set(globalThis, "React", previous);
+  }
+};
 const change = (s: TotakeState, action: TotakeAction, at = s.clock!.instant) =>
   applyTotakeAction(s, action, randomUUID(), at);
 function fixture(kind: "medication" | "equipment" = "medication") {
@@ -245,6 +272,30 @@ test("paused, archived and deleted as-needed entries cannot be used by stale int
     );
     assert.equal(s.intakes!.length, 0);
   }
+});
+
+test("as-needed picker choices are empty when all registrations are inactive and recover on Resume/Restore", () => {
+  let { s, t } = fixture();
+  s = change(s, { action: "save_treatment", draft: { ...t, schedule: "prn" } });
+  assert.deepEqual(
+    e.asNeededMedications(s).map((m) => m.id),
+    [t.id],
+  );
+  assert.doesNotMatch(renderPicker(s), /role="status"/);
+  for (const value of ["paused", "archived"] as const) {
+    s = status(s, t.id, value);
+    assert.deepEqual(e.asNeededMedications(s), []);
+    assert.match(renderPicker(s), /role="status"/);
+    s = status(s, t.id, "active");
+    assert.deepEqual(
+      e.asNeededMedications(s).map((m) => m.id),
+      [t.id],
+    );
+    assert.doesNotMatch(renderPicker(s), /role="status"/);
+  }
+  s = change(s, { action: "delete_treatment", treatmentId: t.id });
+  assert.deepEqual(e.asNeededMedications(s), []);
+  assert.match(renderPicker(s), /role="status"/);
 });
 
 test("old notification selections are rejected after lifecycle cancellation", () => {

@@ -15,6 +15,7 @@ import {
   intakeWall,
   intakeInstant,
   validateIntakeDetails,
+  asNeededMedications,
   type IntakeDraft,
   type Intake,
 } from "@wuff/contracts/totake/oneTime";
@@ -49,6 +50,7 @@ export function OneTimeFlow({
   const medication = d.medicationId
     ? state.treatments?.find((t) => t.id === d.medicationId)
     : d.medication;
+  const registeredMedications = asNeededMedications(state);
   const update = (patch: Partial<IntakeDraft>) =>
     setD((prev) => ({ ...prev, ...patch }));
   const detail = (patch: Partial<IntakeDraft["medication"]>) =>
@@ -135,47 +137,41 @@ export function OneTimeFlow({
               role="group"
               aria-label="Registered as-needed medications"
             >
-              {state.treatments
-                ?.filter(
-                  (t) =>
-                    t.kind === "medication" &&
-                    t.schedule === "prn" &&
-                    (!t.status || t.status === "active"),
-                )
-                .map((t) => (
-                  <Button
-                    className="one-time-option"
-                    key={t.id}
-                    type="button"
-                    variant="outline"
-                    aria-pressed={d.medicationId === t.id}
-                    onClick={() => {
-                      if (t.id !== d.medicationId)
-                        update({
-                          medicationId: t.id,
-                          quantity: t.slots[0]?.quantity ?? "1",
-                          strength: t.detail,
-                        });
-                      setNewSelected(false);
-                    }}
-                  >
-                    <span className="choice-indicator" aria-hidden="true">
-                      {d.medicationId === t.id && <Check size={20} />}
-                    </span>
-                    <span>
-                      <strong>{t.name}</strong>
-                      <small>
-                        {t.form} · {t.slots[0]?.quantity ?? "1"} {t.unit}
-                        {t.detail ? " · " + t.detail : ""}
-                      </small>
-                    </span>
-                  </Button>
-                ))}
+              {registeredMedications.map((t) => (
+                <Button
+                  className="one-time-option"
+                  key={t.id}
+                  type="button"
+                  variant="outline"
+                  aria-pressed={d.medicationId === t.id}
+                  onClick={() => {
+                    if (t.id !== d.medicationId)
+                      update({
+                        medicationId: t.id,
+                        quantity: t.slots[0]?.quantity ?? "1",
+                        strength: t.detail,
+                      });
+                    setNewSelected(false);
+                  }}
+                >
+                  <span className="choice-indicator" aria-hidden="true">
+                    {d.medicationId === t.id && <Check size={20} />}
+                  </span>
+                  <span>
+                    <strong>{t.name}</strong>
+                    <small>
+                      {t.form} · {t.slots[0]?.quantity ?? "1"} {t.unit}
+                      {t.detail ? " · " + t.detail : ""}
+                    </small>
+                  </span>
+                </Button>
+              ))}
             </div>
-            {!state.treatments?.some(
-              (t) => t.kind === "medication" && t.schedule === "prn",
-            ) && (
-              <p className="muted">No as-needed medications registered yet.</p>
+            {!registeredMedications.length && (
+              <p className="muted" role="status">
+                No active as-needed medications. Resume or restore an existing
+                entry, or add a new medication.
+              </p>
             )}
             <Button
               className="one-time-option"

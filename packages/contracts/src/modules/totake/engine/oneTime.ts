@@ -1,5 +1,5 @@
 import type { State, Item, AuditEntry } from "./model";
-import { newTreatment, type SetupDraft } from "./treatments";
+import { newTreatment, treatmentActive, type SetupDraft } from "./treatments";
 import { amount, deduct, restore } from "./stock";
 import { resolveWall, wallAt } from "./timeZone";
 import { isoDay } from "./calendar";
@@ -30,6 +30,13 @@ export type IntakeDraft = {
   initialWall: number;
   initialInstant?: number;
 };
+/** The same eligible choices drive both the picker and its empty state. */
+export function asNeededMedications(s: State) {
+  return (s.treatments ?? []).filter(
+    (t) =>
+      t.kind === "medication" && t.schedule === "prn" && treatmentActive(t),
+  );
+}
 export function newIntake(s: State): IntakeDraft {
   return {
     id: crypto.randomUUID(),
