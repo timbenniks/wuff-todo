@@ -8,6 +8,12 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Totake item lifecycle (November 5, draft PR #48):** separate Pause/Resume,
+  Archive/Restore and confirmed Delete keep past records and stock history, stop
+  inactive reminders and resume the saved schedule without backfill. Existing
+  authorized HTTP/MCP operations are extended without a schema migration.
+  [Brief and verification](totake-medication-lifecycle.md).
+
 - **Tasks-first navigation (October 31, draft PR #47):** Tim selected Tasks /
   Sublists tabs, aligned sublist rows, document-flow desktop navigation without a
   nested sidebar scrollbar and tighter workspace spacing. Web/PWA presentation

@@ -460,6 +460,7 @@ export async function getTotakeSummary(
       ).length,
     lowStock: state.treatments!.filter(
       (t) =>
+        e.treatmentActive(t) &&
         t.inventory.enabled &&
         Number(t.inventory.current) <= Number(t.inventory.threshold),
     ).length,

@@ -13,6 +13,9 @@ export type ScheduleKind =
 export type Slot = { id: string; time: string; quantity: string };
 export type Treatment = {
   id: string;
+  /** Server-owned lifecycle. Missing on existing rows means active. */
+  status?: "active" | "paused" | "archived" | "deleted";
+  activeFrom?: number;
   name: string;
   kind: "medication" | "equipment";
   equipmentType: "sensor" | "catheter" | "custom";
@@ -37,6 +40,8 @@ export type Treatment = {
   };
   revision: number;
 };
+export const treatmentActive = (t: Treatment) =>
+  !t.status || t.status === "active";
 export type SetupDraft = Treatment & {
   startDateText?: string;
   groupIntervals: Record<number, number>;
@@ -202,7 +207,8 @@ function administrations(
   t: Treatment,
   day: number,
 ): { slot: Slot; due: number; index: number }[] {
-  if (day < t.startDay || t.schedule === "prn") return [];
+  if (!treatmentActive(t) || day < t.startDay || t.schedule === "prn")
+    return [];
   const delta = day - t.startDay;
   if (
     t.schedule === "weekdays" &&
@@ -547,6 +553,8 @@ function saveTreatmentCore(s: State, draft: SetupDraft): State {
   } = draft;
   const t = {
     ...input,
+    status: old?.status,
+    activeFrom: old?.activeFrom,
     weekdays: [...new Set(input.weekdays)].sort((x, y) => x - y),
     slots: input.slots.map((slot) =>
       old &&

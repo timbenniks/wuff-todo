@@ -1,5 +1,5 @@
 import type { Occurrence, State } from "./model";
-import { type Treatment, type TimeMove } from "./treatments";
+import { treatmentActive, type Treatment, type TimeMove } from "./treatments";
 import { resolveWall, wallAt, type Clock } from "./timeZone";
 const isHourly = (t: Treatment) =>
   t.schedule === "interval" && t.intervalUnit === "hours";
@@ -26,6 +26,8 @@ export function projectGroups(
     for (const original of g.items) {
       const record = g.records.find((r) => r.itemId === original.id),
         t = treatments.find((t) => t.id === original.treatmentId);
+      // Lifecycle cancellation never records a dose. Recorded snapshots stay intact.
+      if (!record && t && !treatmentActive(t)) continue;
       const active =
         !!record ||
         (g.reminders[original.id]?.started ?? g.alerts > 0) ||
@@ -71,6 +73,8 @@ export function projectGroups(
           due = wallAt(instant, clock.zone);
         } else instant = resolveWall(due, clock.zone).instant;
       }
+      if (!record && t?.activeFrom !== undefined && instant! < t.activeFrom)
+        continue;
       item.alertInstant = instant;
       item.scheduledZone = active
         ? (original.scheduledZone ?? clock.zone)

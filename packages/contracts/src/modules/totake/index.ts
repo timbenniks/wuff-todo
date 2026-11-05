@@ -98,6 +98,19 @@ const group = z.object({
 export const totakeActionSchema = z.discriminatedUnion("action", [
   z
     .object({
+      action: z.literal("set_treatment_status"),
+      treatmentId: z.uuid(),
+      status: z.enum(["active", "paused", "archived"]),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("delete_treatment"),
+      treatmentId: z.uuid(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.literal("save_treatment"),
       draft: totakeTreatmentSchema,
     })

@@ -252,6 +252,127 @@ test("Totake real domain/HTTP/MCP parity, consent, account isolation, receipts a
       (await getTotake(actor)).state.treatments![0].inventory.current,
       "9",
     );
+    // Actual HTTP/MCP lifecycle parity, exact retries and retained medical history.
+    const historyBefore = await getTotake(actor);
+    const history = historyBefore.state.audit;
+    const stock = historyBefore.state.stock!.movements;
+    const pauseItem = {
+      version: historyBefore.version,
+      operationId: op(),
+      change: {
+        action: "set_treatment_status",
+        treatmentId: draft.id,
+        status: "paused",
+      },
+    };
+    assert.equal(
+      (await empireMcp(readonly.access_token, "update_totake", pauseItem))
+        .result.isError,
+      true,
+    );
+    const httpWrite = async (input: unknown) =>
+      fetch(origin + "/api/v1/totake", {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(input),
+      });
+    assert.equal((await httpWrite(pauseItem)).status, 200);
+    let lifecycle = (await empireMcp(grant.access_token, "get_totake")).result
+      .structuredContent.totake;
+    assert.equal(lifecycle.state.treatments[0].status, "paused");
+    assert.equal(lifecycle.state.groups.flatMap(e.pending).length, 0);
+    assert.deepEqual(lifecycle.state.audit, history);
+    assert.deepEqual(lifecycle.state.stock.movements, stock);
+    assert.equal(
+      (await (await httpWrite(pauseItem)).json()).version,
+      lifecycle.version,
+    );
+    assert.equal(
+      (
+        await httpWrite({
+          ...pauseItem,
+          change: { ...pauseItem.change, status: "archived" },
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (await httpWrite({ ...pauseItem, operationId: op() })).status,
+      409,
+    );
+    const [pausedJob] = await db
+      .select()
+      .from(totakeJobs)
+      .where(eq(totakeJobs.userId, actor.id));
+    assert.equal(pausedJob.enabled, false);
+    await assert.rejects(
+      updateTotake(other, {
+        version: otherBefore.version,
+        operationId: op(),
+        change: pauseItem.change,
+      }),
+      { code: "invalid_totake_action" },
+    );
+    for (const status of ["active", "archived", "active"] as const) {
+      const result = await empireMcp(grant.access_token, "update_totake", {
+        version: lifecycle.version,
+        operationId: op(),
+        change: { ...pauseItem.change, status },
+      });
+      assert.equal(result.result.isError, undefined);
+      const response = await fetch(origin + "/api/v1/totake", { headers });
+      lifecycle = await response.json();
+      assert.equal(lifecycle.state.treatments[0].status, status);
+      assert.deepEqual(lifecycle.state.audit, history);
+    }
+    const deletion = {
+      version: lifecycle.version,
+      operationId: op(),
+      change: { action: "delete_treatment", treatmentId: draft.id },
+    };
+    const deleted = await empireMcp(
+      grant.access_token,
+      "update_totake",
+      deletion,
+    );
+    assert.equal(deleted.result.isError, undefined);
+    lifecycle = await (
+      await fetch(origin + "/api/v1/totake", { headers })
+    ).json();
+    assert.equal(lifecycle.state.treatments[0].status, "deleted");
+    assert.equal(lifecycle.state.groups.flatMap(e.pending).length, 0);
+    assert.deepEqual(lifecycle.state.audit, history);
+    assert.deepEqual(lifecycle.state.stock.movements, stock);
+    assert.equal(
+      (await empireMcp(grant.access_token, "update_totake", deletion)).result
+        .structuredContent.totake.version,
+      lifecycle.version,
+    );
+    assert.equal(
+      (
+        await httpWrite({
+          version: lifecycle.version,
+          operationId: op(),
+          change: { action: "save_treatment", draft },
+        })
+      ).status,
+      400,
+    );
+    const retained = lifecycle.state.groups.find((g: any) => g.records.length);
+    assert(retained, "Delete retains scheduled record snapshots");
+    const undoDeleted = await httpWrite({
+      version: lifecycle.version,
+      operationId: op(),
+      change: {
+        action: "undo",
+        groupId: retained.id,
+        recordId: retained.records[0].id,
+      },
+    });
+    assert.equal(undoDeleted.status, 200);
+    const afterUndo = await undoDeleted.json();
+    assert.equal(afterUndo.state.treatments[0].inventory.current, "10");
+    assert.equal(afterUndo.state.groups.flatMap(e.pending).length, 0);
     const otherAfter = await getTotake(other);
     assert.equal(otherAfter.version, otherBefore.version);
     assert.deepEqual(otherAfter.state.treatments, otherBefore.state.treatments);

@@ -2325,8 +2325,53 @@
 .totake .groups {
   margin-top: 16px;
 }
+.totake .totake-main > p[role="status"]:not(:empty) {
+  margin-bottom: 16px;
+}
 .totake .tracked-item {
   flex-wrap: wrap;
+}
+.totake .registered-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.totake .registered-filter {
+  display: grid;
+  gap: 8px;
+  max-width: 320px;
+}
+.totake .lifecycle-dialog > .totake-operation-scope {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+.totake .lifecycle-dialog > .totake-operation-scope > p {
+  margin: 0;
+  line-height: 1.6;
+}
+.totake .lifecycle-dialog .registered-actions {
+  justify-content: flex-end;
+  gap: 12px;
+}
+.totake .lifecycle-dialog > [role="alert"],
+.totake .lifecycle-dialog > p[role="status"] {
+  margin: 16px 20px 0;
+}
+@media (max-width: 767px) {
+  .totake .lifecycle-dialog > .totake-operation-scope {
+    padding: 16px;
+  }
+  .totake .lifecycle-dialog > [role="alert"],
+  .totake .lifecycle-dialog > p[role="status"] {
+    margin-inline: 16px;
+  }
+}
+.totake .registered-description {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .totake dialog {
   color: var(--wuff-foreground);
