@@ -134,3 +134,10 @@ this spacing-only change; actual rendered measurements/screenshots verify it.
 [320px popup](screenshots/totake-lifecycle-dialog-320.png) ·
 [390px popup](screenshots/totake-lifecycle-dialog-390.png) ·
 [Desktop popup](screenshots/totake-lifecycle-dialog-1280.png).
+
+## Saved-status spacing follow-up
+
+User review requested a gap between the saved-account confirmation and the card
+below it. The nonempty main Totake status paragraph now has a 16px bottom margin.
+The empty live region remains in place without adding empty spacing. This scoped
+CSS change does not change saves, dialogs or medication actions.

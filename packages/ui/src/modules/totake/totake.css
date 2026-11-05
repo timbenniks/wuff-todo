@@ -2325,6 +2325,9 @@
 .totake .groups {
   margin-top: 16px;
 }
+.totake .totake-main > p[role="status"]:not(:empty) {
+  margin-bottom: 16px;
+}
 .totake .tracked-item {
   flex-wrap: wrap;
 }
