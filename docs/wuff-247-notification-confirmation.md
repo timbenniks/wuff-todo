@@ -13,14 +13,14 @@ the current contributor/product/architecture/development/verification and module
 surface guides apply. Empire owns the shared push worker; Totake owns the guarded
 recording operation. Branch: `codex/wuff-247-no-confirmation-notification`.
 
-- [ ] Successful Taken/Done and Confirm all close the original reminder without
-  showing a replacement success notification or opening Wuff.
-- [ ] An uncertain reply retries the identical operation once, preserving exactly
-  one record/stock deduction per selected item.
-- [ ] Failed, stale, unauthorized or unconfirmed actions still show recovery
-  feedback and open the account-pinned review page; unavailable OS feedback must
-  still allow review.
-- [ ] Existing Snooze/Skip feedback and reminder delivery remain unchanged.
+- [x] Successful Taken/Done and Confirm all close the original reminder without
+      showing a replacement success notification or opening Wuff.
+- [x] An uncertain reply retries the identical operation once, preserving exactly
+      one record/stock deduction per selected item.
+- [x] Failed, stale, unauthorized or unconfirmed actions still show recovery
+      feedback and open the account-pinned review page; unavailable OS feedback must
+      still allow review.
+- [x] Existing Snooze/Skip feedback and reminder delivery remain unchanged.
 
 ## Surface contract and scope
 
@@ -46,7 +46,43 @@ the worker/MCP bundle and a browser service-worker check with isolated synthetic
 responses. Record actual results here and in the draft PR. Real Android/watch
 delivery and production release remain separate checks.
 
-Implementation and verification pending.
+The typed worker returns quietly only after `actionRequest` verifies successful
+single/group recording. It no longer attempts OS feedback or automatic navigation
+on that success path, even if notification permission changed. Failure recovery
+and Snooze/Skip feedback still use the existing paths. The generated public worker
+was rebuilt using `corepack pnpm build:mcp` (passed).
+
+- Before the fix, `node --import tsx --test --test-name-pattern "successful
+Taken/Done|actual grouped worker confirms" tests/totake-notification-actions.test.ts
+tests/totake-group-notifications.test.ts` failed both cases with two displayed
+notifications instead of one (exit 1).
+- After the fix, `node --import tsx --test
+tests/totake-notification-actions.test.ts tests/totake-group-notifications.test.ts
+tests/web-notifications.test.ts` passed all 30 cases, no skips. Checks include
+  medication/equipment dismissal, quiet single/group committed-reply retry,
+  one record/stock deduction, snooze/skip feedback, partial/unconfirmed responses,
+  stale/account/unauthorized/conflict recovery and denied OS feedback.
+- `corepack pnpm typecheck` passed all workspaces and root scripts/tests, including
+  the new browser verification script.
+- `corepack pnpm test` ran all 40 discovered files: 211 passed, 3 failed, no skips.
+  Unchanged existing Windows-incompatible tests are the blockers:
+  `tests/empire-modules.test.ts` and `tests/mcp-tool-choices.test.ts` dynamically
+  import Windows filesystem paths (`ERR_UNSUPPORTED_ESM_URL_SCHEME`, protocol c:);
+  `tests/unit-discovery.test.mjs` expects slash-separated paths while Windows
+  `path.relative` returns backslashes. No tests or runner settings were weakened.
+- `node --import tsx scripts/verify-totake-quiet-recording.ts` passed five cases
+  in an isolated headless Chrome service-worker runtime using the shipped generated
+  worker: medication, equipment, group lost-reply retry, failed recording and
+  denied-feedback recovery. The fixture serves loopback-only content on an
+  ephemeral port, simulates authenticated responses and OS display, and closes
+  its browser/server. It contacts no live database/API or push provider. Initial
+  harness execution needed the existing tsx serialized-function naming helper;
+  all five checks passed after supplying it in the test instrumentation.
+
+No actual Android lock-screen/watch display or real provider receipt is claimed.
+HTTP/MCP integration writes were not run: no server/domain/contract change, and
+this checkout's existing backend is live main. The PR stays draft because the
+complete local unit suite is blocked and final current-head review is pending.
 
 ## WUFF-246: full-screen lock-screen alerts
 

@@ -2,6 +2,23 @@
 
 Updated: October 25, 2026. Older sections retain their milestone-specific evidence and test counts.
 
+## Totake quiet recording — November 5, 2026
+
+[Draft PR #49](https://github.com/timbenniks/wuff-todo/pull/49) implements WUFF-247:
+Taken/Done and Confirm all close quietly after authoritative readback, preserving
+stock/retries and failed-action recovery. Both regression cases failed before the
+fix; all 30 focused notification tests, workspace/root TypeScript, worker/MCP
+bundling and five isolated Chrome worker scenarios passed afterward.
+
+The full local unit command reports 211 passed / 3 failed / no skips: existing
+Windows filesystem-import failures in empire-modules/mcp-tool-choices and a
+slash/backslash assertion in unit-discovery. No tests/configuration were weakened.
+No live backend writes or provider sends, no phone/watch/lock-screen proof, and
+no production operations. WUFF-246's full-screen lock-screen request is documented
+as unavailable to the current web/PWA architecture. [Detailed cases, commands and
+limits](wuff-247-notification-confirmation.md). Latest-head review pending; draft
+retained.
+
 ## Todo appearance/menu follow-up — October 31, 2026
 
 Tim’s local feedback restores the original themed light surfaces, with explicit
