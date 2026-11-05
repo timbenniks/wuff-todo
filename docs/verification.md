@@ -16,8 +16,12 @@ slash/backslash assertion in unit-discovery. No tests/configuration were weakene
 No live backend writes or provider sends, no phone/watch/lock-screen proof, and
 no production operations. WUFF-246's full-screen lock-screen request is documented
 as unavailable to the current web/PWA architecture. [Detailed cases, commands and
-limits](wuff-247-notification-confirmation.md). Latest-head review pending; draft
-retained.
+limits](wuff-247-notification-confirmation.md). Hosted Verify
+[42084469436](https://github.com/timbenniks/wuff-todo/actions/runs/42084469436)
+passed TypeScript and all 229 units on Linux for code `25ebc1d`; Codex review of
+that code completed without findings, and all threads were inspected. Later
+documentation records evidence only; reviewed code is unchanged. Draft retained
+with the Windows limitation explicit.
 
 ## Todo appearance/menu follow-up — October 31, 2026
 

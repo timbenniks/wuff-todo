@@ -12,8 +12,9 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
   extra success notification after Taken/Done and Confirm all, preserving guarded
   recording/retries and failure review. WUFF-246's automatic full-screen lock-screen
   alert requires native platform capabilities outside the supported PWA. Local
-  worker/browser checks pass; existing Windows unit-suite blockers and review
-  remain explicit. [Scope and evidence](wuff-247-notification-confirmation.md).
+  worker/browser checks pass; hosted TypeScript/all 229 units pass and Codex
+  review found no issues. Existing Windows unit-suite blockers remain explicit.
+  [Scope and evidence](wuff-247-notification-confirmation.md).
 
 - **Totake item lifecycle (November 5, draft PR #48):** separate Pause/Resume,
   Archive/Restore and confirmed Delete keep past records and stock history, stop

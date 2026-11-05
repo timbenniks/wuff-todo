@@ -82,7 +82,17 @@ tests/web-notifications.test.ts` passed all 30 cases, no skips. Checks include
 No actual Android lock-screen/watch display or real provider receipt is claimed.
 HTTP/MCP integration writes were not run: no server/domain/contract change, and
 this checkout's existing backend is live main. The PR stays draft because the
-complete local unit suite is blocked and final current-head review is pending.
+complete local unit suite is blocked on Windows.
+
+Hosted [Verify run 42084469436](https://github.com/timbenniks/wuff-todo/actions/runs/42084469436)
+passed TypeScript and all 229 unit tests on Linux (no failures/skips) for code
+commit `25ebc1d51156192ddfe5e1ca609d4dcc1126f242`. The different count reflects
+the two test modules that cannot load on Windows, plus discovery succeeding.
+[Codex review](https://github.com/timbenniks/wuff-todo/pull/49#issuecomment-6665914743)
+completed on that same commit with no findings; the summary, receipt and all
+inline/human threads were inspected. No actionable findings or code fixes were
+needed. Subsequent documentation only records these results; the reviewed code
+is unchanged. Passing hosted tests/review does not prove real phone delivery.
 
 ## WUFF-246: full-screen lock-screen alerts
 
