@@ -223,6 +223,14 @@ sw.addEventListener("notificationclick", (event) => {
         } catch {
           /* Unconfirmed writes always require authoritative review. */
         }
+        // Taken/Done and Confirm all finish quietly after authoritative readback.
+        // Keep feedback and review recovery for failed or unconfirmed recording.
+        if (
+          accepted &&
+          (event.action === "totake-record" ||
+            event.action === "totake-group-record")
+        )
+          return;
         try {
           await sw.registration.showNotification("Wuff Totake", {
             body: accepted
@@ -230,9 +238,7 @@ sw.addEventListener("notificationclick", (event) => {
                 ? "Snoozed for 30 minutes."
                 : event.action === "totake-snooze-15"
                   ? "Snoozed for 15 minutes."
-                  : event.action === "totake-group-skip"
-                    ? "Skipped. Open Wuff to review or undo."
-                    : "Recorded. Open Wuff to review or undo."
+                  : "Skipped. Open Wuff to review or undo."
               : "Couldn’t confirm this action. Open Wuff to check before trying again.",
             tag: event.notification.tag,
             data: { path: data.path },

@@ -1,5 +1,10 @@
 # Totake web notification actions — October 25
 
+November 5 follow-up: [WUFF-247](wuff-247-notification-confirmation.md) removes
+the extra success notification after Taken/Done and Confirm all. Authoritative
+readback, exact retries and failure recovery remain; earlier confirmation-display
+descriptions below record the original implementation.
+
 October 26 follow-up: [grouped notifications](totake-group-notifications.md) extends
 the original single-item design below with exact group confirmation, 30-minute
 snooze, supported third-button Skip all and informative count/time titles.

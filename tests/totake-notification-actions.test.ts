@@ -301,6 +301,55 @@ function reply(value: unknown, status = 200) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+test("successful Taken/Done dismisses the reminder without a replacement notification or opening Wuff", async () => {
+  for (const kind of ["medication", "equipment"] as const) {
+    const f = fixture(kind),
+      w = notificationWorker();
+    let current = f.snapshot,
+      closed = 0;
+    await w.dispatch("push", {
+      data: { json: () => ({ path: f.path, totake: f.notice }) },
+    });
+    w.setFetch(async (_url, options) => {
+      if (options.method !== "PUT") return reply(current);
+      const input = totakeMutationSchema.parse(
+        JSON.parse(options.body as string),
+      );
+      current = {
+        ...current,
+        version: current.version + 1,
+        state: applyTotakeAction(
+          current.state,
+          input.change,
+          input.operationId,
+          Date.now(),
+        ),
+      };
+      return reply(current);
+    });
+    const event = click(w.shown[0][1].data, "totake-record");
+    event.notification.close = () => {
+      closed++;
+    };
+    await w.dispatch("notificationclick", event);
+    assert.equal(closed, 1);
+    assert.equal(
+      w.shown.length,
+      1,
+      "only the original reminder should be displayed",
+    );
+    assert.equal(w.opened.length, 0);
+    assert.equal(
+      w.requests.filter((r) => r.options.method === "PUT").length,
+      1,
+    );
+    const group = current.state.groups.find((g) => g.id === f.group.id)!;
+    assert.equal(group.records.length, 1);
+    assert.equal(group.records[0].outcome, "taken");
+    assert.equal(current.state.treatments![0].inventory.current, "9");
+  }
+});
 test("actual worker limits buttons, uses Taken/Done correctly and gives grouped/private or unsupported browsers a review fallback", async () => {
   for (const kind of ["medication", "equipment"] as const) {
     const f = fixture(kind),
@@ -389,7 +438,7 @@ test("worker records via fresh account-pinned API and retries an uncertain commi
     current.state.groups.find((g) => g.id === f.group.id)!.records.length,
     1,
   );
-  assert(w.shown.at(-1)[1].body.startsWith("Recorded."));
+  assert.equal(w.shown.length, 0);
   assert.equal(w.opened.length, 0);
 });
 test("worker snooze preserves stock and original due time and cannot imply completion", async () => {
@@ -500,7 +549,7 @@ test("an expired shortcut does not expire the unresolved medicine occurrence", (
   );
 });
 
-test("revoked OS display permission still opens authoritative review without repeating a successful mutation", async () => {
+test("revoked OS display permission keeps successful recording quiet and still opens review for failures without repeating the mutation", async () => {
   for (const accepted of [true, false]) {
     const f = fixture(),
       w = notificationWorker();
@@ -527,7 +576,8 @@ test("revoked OS display permission still opens authoritative review without rep
       click({ path: f.path, totake: f.notice }, "totake-record"),
     );
     assert.equal(writes, 1);
-    assert.equal(w.opened.length, 1);
+    assert.equal(w.opened.length, accepted ? 0 : 1);
+    assert.equal(w.shown.length, 0);
   }
 });
 
@@ -597,10 +647,9 @@ test("worker retries HTTP 5xx writes identically once and does not report unreso
       assert.equal(bodies.length, 2);
       assert.equal(bodies[0], bodies[1]);
     }
-    assert.equal(
-      w.shown.at(-1)[1].body.startsWith("Recorded."),
-      mode === "recover",
-    );
+    assert.equal(w.shown.length, mode === "recover" ? 0 : 1);
+    if (mode !== "recover")
+      assert.match(w.shown[0][1].body, /Couldn’t confirm/);
     assert.equal(w.opened.length, mode === "recover" ? 0 : 1);
   }
 });

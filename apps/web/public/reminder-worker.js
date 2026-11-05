@@ -248,9 +248,11 @@
             accepted = true;
           } catch {
           }
+          if (accepted && (event.action === "totake-record" || event.action === "totake-group-record"))
+            return;
           try {
             await sw.registration.showNotification("Wuff Totake", {
-              body: accepted ? event.action === "totake-group-snooze-30" ? "Snoozed for 30 minutes." : event.action === "totake-snooze-15" ? "Snoozed for 15 minutes." : event.action === "totake-group-skip" ? "Skipped. Open Wuff to review or undo." : "Recorded. Open Wuff to review or undo." : "Couldn\u2019t confirm this action. Open Wuff to check before trying again.",
+              body: accepted ? event.action === "totake-group-snooze-30" ? "Snoozed for 30 minutes." : event.action === "totake-snooze-15" ? "Snoozed for 15 minutes." : "Skipped. Open Wuff to review or undo." : "Couldn\u2019t confirm this action. Open Wuff to check before trying again.",
               tag: event.notification.tag,
               data: { path: data.path },
               icon: "/icons/app-192.png"

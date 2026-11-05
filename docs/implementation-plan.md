@@ -8,6 +8,13 @@ The web/API/MCP foundation and existing-account sharing are implemented and depl
 
 ## Current status and handoff
 
+- **Totake quiet recording (November 5, draft PR #49):** WUFF-247 removes the
+  extra success notification after Taken/Done and Confirm all, preserving guarded
+  recording/retries and failure review. WUFF-246's automatic full-screen lock-screen
+  alert requires native platform capabilities outside the supported PWA. Local
+  worker/browser checks pass; existing Windows unit-suite blockers and review
+  remain explicit. [Scope and evidence](wuff-247-notification-confirmation.md).
+
 - **Totake item lifecycle (November 5, draft PR #48):** separate Pause/Resume,
   Archive/Restore and confirmed Delete keep past records and stock history, stop
   inactive reminders and resume the saved schedule without backfill. Existing

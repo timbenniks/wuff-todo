@@ -337,7 +337,11 @@ test("actual grouped worker confirms once after a lost committed response and va
     state.treatments!.map((t) => t.inventory.current),
     ["9", "9"],
   );
-  assert.match(w.shown.at(-1)[1].body, /Recorded/);
+  assert.equal(
+    w.shown.length,
+    1,
+    "Confirm all must not replace the original reminder with a success notification",
+  );
   assert.equal(w.opened.length, 0);
 });
 
@@ -374,6 +378,12 @@ test("group snooze and skip preserve stock; partial or stale results never repor
         ),
       );
     else assert(group.records.every((r) => r.outcome === "skipped"));
+    assert.equal(w.shown.length, 2);
+    assert.match(
+      w.shown[1][1].body,
+      action.includes("snooze") ? /Snoozed for 30 minutes/ : /Skipped/,
+    );
+    assert.equal(w.opened.length, 0);
   }
   for (const mode of ["partial", "stale", "account"] as const) {
     const f = fixture(),
