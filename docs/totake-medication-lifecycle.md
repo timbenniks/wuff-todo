@@ -97,3 +97,14 @@ writes while offline and exposed an enabled Load latest data control outside the
 page fieldset. After reconnect, the retained confirmation saved successfully.
 Committed-response loss was not simulated in the browser; exact retry is covered
 by the real adapters. A fresh latest-head review is required after this fix.
+
+## Refill-history review fix
+
+Codex review of 422a5bf identified [inactive status resolving a refill]
+(https://github.com/timbenniks/wuff-todo/pull/48#discussion_r4475229763).
+Lifecycle no longer changes the balance-based refill condition; inactive warnings
+remain suppressed only in the warning/summary projection. A new regression fails
+before the fix and passes after it: Pause/Resume and Archive/Restore preserve the
+entire stock state, while an actual stock correction resolves the existing refill
+once. Deletion also leaves that history unchanged. All 14 lifecycle and 21 existing
+Totake cases pass (35 total). Full verification is rerun for the new head.

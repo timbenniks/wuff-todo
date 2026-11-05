@@ -120,7 +120,7 @@ for (const value of ["paused", "archived", "deleted"] as const) {
     assert.equal(next.groups.flatMap(e.pending).length, 0);
     assert.equal(totakeNeedsScheduler(next), false);
     assert.deepEqual(next.audit, s.audit);
-    assert.deepEqual(next.stock!.movements, s.stock!.movements);
+    assert.deepEqual(next.stock, s.stock);
     assert.equal(next.treatments![0].inventory.current, "10");
     assert.deepEqual(e.lowStockWarnings(next), []);
     assert.equal(
@@ -164,6 +164,30 @@ test("pausing one grouped item retains another item's exact snooze/repeat state"
   assert.deepEqual(remaining.reminders[secondId], before.reminders[secondId]);
   assert.equal(remaining.interval, before.interval);
   assert.equal(totakeNeedsScheduler(next), true);
+});
+
+test("lifecycle-only changes preserve refill history until a real stock correction", () => {
+  let { s, t } = fixture();
+  const original = structuredClone(s.stock);
+  assert.equal(original!.refills.length, 1);
+  for (const value of ["paused", "active", "archived", "active"] as const) {
+    s = status(s, t.id, value);
+    assert.deepEqual(s.stock, original);
+    assert.equal(e.lowStockWarnings(s).length, value === "active" ? 1 : 0);
+  }
+  s = change(s, {
+    action: "adjust_stock",
+    treatmentId: t.id,
+    kind: "correct",
+    quantity: "30",
+  });
+  assert.notEqual(s.stock!.refills[0].resolvedAt, undefined);
+  assert.equal(s.stock!.refills.length, 1);
+  const corrected = structuredClone(s.stock);
+  s = status(s, t.id, "paused");
+  s = status(s, t.id, "active");
+  s = change(s, { action: "delete_treatment", treatmentId: t.id });
+  assert.deepEqual(s.stock, corrected);
 });
 
 for (const value of ["paused", "archived", "deleted"] as const) {
