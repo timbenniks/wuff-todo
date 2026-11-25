@@ -50,6 +50,10 @@ retries return the same copy after checking current access to the source.
 Private image copies have independent asset IDs that reference the same immutable
 blob. Any future physical purge must check all asset references to that blob.
 
+Verification for PR #51 covers concurrent retry, privacy and two-way HTTP/MCP
+readback on isolated development data. Chrome verified keyboard and retry behavior
+at 320, 390 and 1280px, and the local MCP Apps SDK host verified duplication at 390px.
+
 ## Data and surfaces
 
 Prepare additive Drizzle tables owned by Notes: notes, memberships, personal note
