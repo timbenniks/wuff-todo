@@ -54,6 +54,10 @@ Verification for PR #51 covers concurrent retry, privacy and two-way HTTP/MCP
 readback on isolated development data. Chrome verified keyboard and retry behavior
 at 320, 390 and 1280px, and the local MCP Apps SDK host verified duplication at 390px.
 
+The PR also updates Next.js from 16.4.1 to 16.4.6 to resolve the local production
+build advisory. The pnpm frozen-lockfile install and `pnpm build` both passed
+with the patched dependency.
+
 ## Data and surfaces
 
 Prepare additive Drizzle tables owned by Notes: notes, memberships, personal note
