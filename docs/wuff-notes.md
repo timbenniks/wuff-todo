@@ -58,6 +58,11 @@ The PR also updates Next.js from 16.4.1 to 16.4.6 to resolve the local productio
 build advisory. The pnpm frozen-lockfile install and `pnpm build` both passed
 with the patched dependency.
 
+Notes takes the account lock before reserving an operation ID for creation,
+duplication and settings. An isolated integration regression reproduced the
+conflict before the fix and verified that both create/settings and
+duplicate/settings races now return an idempotency conflict without a deadlock.
+
 ## Data and surfaces
 
 Prepare additive Drizzle tables owned by Notes: notes, memberships, personal note

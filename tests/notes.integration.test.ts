@@ -1,6 +1,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { setTimeout as delay } from "node:timers/promises";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import {
   database,
@@ -55,6 +56,108 @@ const [first, second] = JSON.parse(
 const a: Actor = { id: first.id, scopes },
   b: Actor = { id: second.id, scopes };
 after(() => database().pool.end());
+test("concurrent note creation or duplication and settings reject a shared operation ID without deadlocking", async () => {
+  const { db, pool } = database();
+  const seedOperation = crypto.randomUUID();
+  const source = await createNote(a, {
+    title: "Notes lock-order fixture",
+    operationId: seedOperation,
+  });
+  const ids = [source.id],
+    operations = [seedOperation];
+  const [settingsBefore] = await db
+    .select()
+    .from(notesSettings)
+    .where(eq(notesSettings.userId, a.id));
+  try {
+    for (const action of ["create", "duplicate"] as const) {
+      const operationId = crypto.randomUUID();
+      operations.push(operationId);
+      const settings = await getNotesSettings(a);
+      const gate = await pool.connect();
+      const requests: Promise<unknown>[] = [];
+      let outcomes: PromiseSettledResult<unknown>[];
+      try {
+        await gate.query("begin");
+        const {
+          rows: [{ pid: gatePid }],
+        } = await gate.query<{ pid: number }>("select pg_backend_pid() as pid");
+        await gate.query(
+          "select pg_advisory_xact_lock(hashtextextended($1, 0))",
+          [a.id + ":" + operationId],
+        );
+        const waitForBlockedRequest = async (
+          blockers: number[],
+          excluded: number,
+        ) => {
+          const deadline = Date.now() + 10_000;
+          do {
+            const { rows } = await gate.query<{ pid: number }>(
+              `select distinct pid from pg_locks
+               where not granted and pid <> $2
+                 and pg_blocking_pids(pid) && $1::integer[]`,
+              [blockers, excluded],
+            );
+            if (rows.length === 1) return rows[0].pid;
+            await delay(20);
+          } while (Date.now() < deadline);
+          assert.fail("The fixture requests did not both wait on a lock.");
+        };
+        requests.push(
+          (action === "create"
+            ? createNote(a, {
+                title: "Notes concurrent create fixture",
+                operationId,
+              })
+            : updateNote(a, {
+                noteId: source.id,
+                version: source.version,
+                operationId,
+                change: { action: "duplicate" },
+              })
+          ).then((note) => {
+            assert("id" in note);
+            ids.push(note.id);
+            return note;
+          }),
+        );
+        // Register rejection handlers before polling or releasing the gate.
+        void requests[0].catch(() => {});
+        const firstPid = await waitForBlockedRequest([gatePid], gatePid);
+        requests.push(
+          updateNotesSettings(a, {
+            operationId,
+            version: settings.version,
+            settings: settings.settings,
+          }),
+        );
+        void requests[1].catch(() => {});
+        await waitForBlockedRequest([gatePid, firstPid], firstPid);
+      } finally {
+        await gate.query("rollback");
+        gate.release();
+        outcomes = await Promise.allSettled(requests);
+      }
+      assert.equal(outcomes[0].status, "fulfilled");
+      const second = outcomes[1];
+      assert.equal(second.status, "rejected");
+      assert.equal(second.reason.code, "idempotency_conflict");
+    }
+  } finally {
+    await db.delete(notes).where(inArray(notes.id, ids));
+    await db
+      .delete(receipts)
+      .where(
+        and(
+          eq(receipts.actorId, a.id),
+          inArray(receipts.operationId, operations),
+        ),
+      );
+    await db.delete(notesSettings).where(eq(notesSettings.userId, a.id));
+    if (settingsBefore) await db.insert(notesSettings).values(settingsBefore);
+  }
+});
+
 test("Notes domain enforces private/sharing/link/board boundaries, personal state, concurrency and atomic Todo export", async () => {
   const db = database().db,
     ids: string[] = [],

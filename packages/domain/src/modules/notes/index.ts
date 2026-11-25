@@ -98,7 +98,8 @@ async function admitted(db: Db | Tx, actor: Actor, scope = "notes:read") {
 async function access(db: Db | Tx, actor: Actor, id: string, lock = false) {
   await admitted(db, actor);
   const query = db.select().from(notes).where(eq(notes.id, id));
-  const [row] = await (lock ? query.for("update") : query);
+  // Serialize Notes writes while allowing other notes to reference this row.
+  const [row] = await (lock ? query.for("no key update") : query);
   if (!row) fail("not_found", "Note not found.", 404);
   const [member] =
     row.ownerId === actor.id
@@ -482,13 +483,15 @@ function version(row: Row, expected: number) {
       409,
     );
 }
-async function reserveNoteSlot(tx: Tx, ownerId: string) {
-  // Serialize capacity checks without blocking foreign keys to the account.
+async function lockNoteAccount(tx: Tx, ownerId: string) {
+  // Account locks precede receipts without blocking foreign keys to the account.
   await tx
     .select({ id: users.id })
     .from(users)
     .where(eq(users.id, ownerId))
     .for("no key update");
+}
+async function assertNoteCapacity(tx: Tx, ownerId: string) {
   const [{ count }] = await tx
     .select({ count: sql<number>`count(*)::integer` })
     .from(notes)
@@ -501,8 +504,9 @@ export async function createNote(actor: Actor, data: unknown) {
     db = database().db;
   const result = await db.transaction(async (tx) => {
     await admitted(tx, actor, "notes:write");
+    await lockNoteAccount(tx, actor.id);
     return receipt(tx, actor, { ...input, kind: "create_note" }, async () => {
-      await reserveNoteSlot(tx, actor.id);
+      await assertNoteCapacity(tx, actor.id);
       const [savedDefaults] = await tx
         .select()
         .from(notesSettings)
@@ -523,7 +527,7 @@ export async function createNote(actor: Actor, data: unknown) {
   return getNote(actor, result.id);
 }
 async function duplicateNote(tx: Tx, actor: Actor, source: Row) {
-  await reserveNoteSlot(tx, actor.id);
+  await assertNoteCapacity(tx, actor.id);
   const [copy] = await tx
     .insert(notes)
     .values({ ...duplicateNoteFields(source), ownerId: actor.id })
@@ -635,7 +639,7 @@ export async function updateNote(actor: Actor, data: unknown) {
         .select({ id: notes.id })
         .from(notes)
         .where(eq(notes.id, input.noteId))
-        .for("update");
+        .for("no key update");
       await receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
         const { row, role } = await access(tx, actor, input.noteId);
         active(row);
@@ -665,6 +669,7 @@ export async function updateNote(actor: Actor, data: unknown) {
       fail("owner_required", "Only the owner can duplicate this note.", 403);
     if (change.action !== "preference" && !management) editor(role);
     if (change.action !== "restore" && change.action !== "trash") active(row);
+    if (change.action === "duplicate") await lockNoteAccount(tx, actor.id);
     return receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
       if (change.action !== "preference") version(row, input.version);
       if (change.action === "duplicate") return duplicateNote(tx, actor, row);
@@ -827,11 +832,7 @@ export async function updateNotesSettings(actor: Actor, data: unknown) {
   const input = updateNotesSettingsSchema.parse(data);
   await database().db.transaction(async (tx) => {
     await admitted(tx, actor, "notes:write");
-    await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, actor.id))
-      .for("update");
+    await lockNoteAccount(tx, actor.id);
     await receipt(tx, actor, { ...input, kind: "notes_settings" }, async () => {
       const [row] = await tx
         .select()
