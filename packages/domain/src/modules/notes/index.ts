@@ -34,6 +34,7 @@ import {
   noteMutationReceiptPolicy,
   noteRoleCanEdit,
   noteRoleCanManage,
+  noteRoleCanDuplicate,
   projectNoteCards,
   createNoteSchema,
   noteMutationSchema,
@@ -68,6 +69,7 @@ import {
   imageStorageConfigured,
 } from "../../platform/image-storage";
 import { createTaskInTransaction, getTask } from "../todo";
+import { duplicateNoteCards, duplicateNoteFields } from "./duplicate";
 const fail = (code: string, message: string, status = 400): never => {
   throw new AppError(code, message, status);
 };
@@ -480,23 +482,27 @@ function version(row: Row, expected: number) {
       409,
     );
 }
+async function reserveNoteSlot(tx: Tx, ownerId: string) {
+  // Serialize capacity checks without blocking foreign keys to the account.
+  await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, ownerId))
+    .for("no key update");
+  const [{ count }] = await tx
+    .select({ count: sql<number>`count(*)::integer` })
+    .from(notes)
+    .where(eq(notes.ownerId, ownerId));
+  if (count >= 1000)
+    fail("limit_reached", "You can keep up to 1,000 notes.", 400);
+}
 export async function createNote(actor: Actor, data: unknown) {
   const input = createNoteSchema.parse(data),
     db = database().db;
   const result = await db.transaction(async (tx) => {
     await admitted(tx, actor, "notes:write");
-    await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, actor.id))
-      .for("update");
     return receipt(tx, actor, { ...input, kind: "create_note" }, async () => {
-      const [{ count }] = await tx
-        .select({ count: sql<number>`count(*)::integer` })
-        .from(notes)
-        .where(eq(notes.ownerId, actor.id));
-      if (count >= 1000)
-        fail("limit_reached", "You can keep up to 1,000 notes.", 400);
+      await reserveNoteSlot(tx, actor.id);
       const [savedDefaults] = await tx
         .select()
         .from(notesSettings)
@@ -515,6 +521,67 @@ export async function createNote(actor: Actor, data: unknown) {
     });
   });
   return getNote(actor, result.id);
+}
+async function duplicateNote(tx: Tx, actor: Actor, source: Row) {
+  await reserveNoteSlot(tx, actor.id);
+  const [copy] = await tx
+    .insert(notes)
+    .values({ ...duplicateNoteFields(source), ownerId: actor.id })
+    .returning({ id: notes.id });
+  const cards = await tx
+    .select()
+    .from(noteCards)
+    .where(eq(noteCards.noteId, source.id))
+    .orderBy(asc(noteCards.position), asc(noteCards.id));
+  const links = await tx
+    .select({ targetId: noteLinks.targetId })
+    .from(noteLinks)
+    .where(eq(noteLinks.sourceId, source.id));
+  const targets = await references(tx, actor, [
+    ...links.map((link) => link.targetId),
+    ...cards.flatMap(({ body }) =>
+      body.kind === "note" ? [body.targetId] : [],
+    ),
+  ]);
+  const visibleTargets = new Set(targets.map(({ id }) => id));
+  const assets = await tx
+    .select()
+    .from(noteAssets)
+    .where(and(eq(noteAssets.noteId, source.id), eq(noteAssets.ready, true)));
+  const assetIds = new Map<string, string>();
+  const copiedAssets = assets.map(
+    ({ id, pathname, digest, width, height, bytes }) => {
+      const copyId = randomUUID();
+      assetIds.set(id, copyId);
+      // The blob is immutable. Its new asset ID is authorized against the copy.
+      return {
+        id: copyId,
+        noteId: copy.id,
+        uploaderId: actor.id,
+        operationId: copyId,
+        pathname,
+        digest,
+        width,
+        height,
+        bytes,
+        ready: true,
+      };
+    },
+  );
+  if (copiedAssets.length) await tx.insert(noteAssets).values(copiedAssets);
+  const copiedCards = duplicateNoteCards(cards, assetIds, visibleTargets);
+  if (copiedCards.length)
+    await tx
+      .insert(noteCards)
+      .values(copiedCards.map((card) => ({ ...card, noteId: copy.id })));
+  const copiedLinks = links.filter(({ targetId }) =>
+    visibleTargets.has(targetId),
+  );
+  if (copiedLinks.length)
+    await tx
+      .insert(noteLinks)
+      .values(copiedLinks.map((link) => ({ ...link, sourceId: copy.id })));
+  return copy;
 }
 async function validateCard(
   tx: Tx,
@@ -582,7 +649,7 @@ export async function updateNote(actor: Actor, data: unknown) {
     });
     return { left: true as const };
   }
-  await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const { row, role } = await access(tx, actor, input.noteId, true);
     const management = ["share", "unshare", "trash", "restore"].includes(
       change.action,
@@ -594,10 +661,13 @@ export async function updateNote(actor: Actor, data: unknown) {
         "Only the owner can manage sharing or trash.",
         403,
       );
+    if (change.action === "duplicate" && !noteRoleCanDuplicate(role))
+      fail("owner_required", "Only the owner can duplicate this note.", 403);
     if (change.action !== "preference" && !management) editor(role);
     if (change.action !== "restore" && change.action !== "trash") active(row);
-    await receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
+    return receipt(tx, actor, { ...input, kind: "update_note" }, async () => {
       if (change.action !== "preference") version(row, input.version);
+      if (change.action === "duplicate") return duplicateNote(tx, actor, row);
       if (change.action === "save") {
         const { action, ...fields } = change;
         await tx
@@ -738,7 +808,7 @@ export async function updateNote(actor: Actor, data: unknown) {
       return { id: row.id };
     });
   });
-  return getNote(actor, input.noteId);
+  return getNote(actor, result.id);
 }
 export async function getNotesSettings(actor: Actor): Promise<NotesSettings> {
   const db = database().db;

@@ -736,7 +736,110 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
       note: task.note,
       task: task.task,
     });
+    await mutation({
+      action: "add_card",
+      body: {
+        kind: "image",
+        assetId: uploaded.image.id,
+        caption: "Private swatch",
+      },
+    });
+    await mutation({ action: "link", targetId: linked.id });
+    await mutation(
+      { action: "share", email: second.email, role: "editor" },
+      "manage_note",
+    );
+    const duplicate = {
+      noteId: n.id,
+      version: n.version,
+      operationId: op(),
+      change: { action: "duplicate" },
+    };
+    assert.equal(
+      (
+        await api("/" + n.id, "PUT", duplicate, {
+          ...headers,
+          Cookie: otherCookie,
+          "X-Wuff-User": second.id,
+        })
+      ).status,
+      403,
+    );
+    const [copyResponse, retryResponse] = await Promise.all([
+      api("/" + n.id, "PUT", duplicate),
+      api("/" + n.id, "PUT", duplicate),
+    ]);
+    assert.equal(copyResponse.status, 200);
+    const copy: NoteDetail = await copyResponse.json();
+    ids.push(copy.id);
+    assert.equal(retryResponse.status, 200);
+    assert.deepEqual(await retryResponse.json(), copy);
+    assert.deepEqual(
+      (await invoke("get_note", { noteId: copy.id })).note,
+      copy,
+    );
+    assert.notEqual(copy.id, n.id);
+    assert.equal(copy.title, "Copy of " + n.title);
+    assert.equal(copy.content, n.content);
+    assert.deepEqual(copy.tags, n.tags);
+    assert.equal(copy.mode, n.mode);
+    assert.equal(copy.theme, n.theme);
+    assert.equal(copy.shared, false);
+    assert.equal(copy.pinned, false);
+    assert.equal(copy.version, 0);
+    assert.deepEqual(copy.members, []);
+    assert.deepEqual(copy.tasks, []);
+    assert.deepEqual(copy.links, n.links);
+    assert.deepEqual(
+      copy.cards.map(({ body }) => body.kind),
+      ["link", "image"],
+    );
+    assert.notEqual(copy.cards[0].id, n.cards[0].id);
+    const copyAsset = copy.assets[0];
+    assert.notEqual(copyAsset.id, uploaded.image.id);
+    assert.deepEqual(copy.cards[1].body, {
+      kind: "image",
+      assetId: copyAsset.id,
+      caption: "Private swatch",
+    });
+    const copyImage = await api("/images/" + copyAsset.id);
+    assert.equal(copyImage.status, 200);
+    assert.equal(
+      Buffer.from(await copyImage.arrayBuffer()).toString("base64"),
+      imageMcp.result.content[0].data,
+    );
+    assert.equal(
+      (
+        await api("/images/" + copyAsset.id, "GET", undefined, {
+          Cookie: otherCookie,
+        })
+      ).status,
+      404,
+    );
+    assert.deepEqual(await (await api("/" + n.id)).json(), n);
+    const mcpCopy = (
+      await invoke("update_note", { ...duplicate, operationId: op() })
+    ).note;
+    ids.push(mcpCopy.id);
+    assert.notEqual(mcpCopy.id, copy.id);
+    assert.deepEqual(await (await api("/" + mcpCopy.id)).json(), mcpCopy);
+    assert.equal(
+      (await api("/" + n.id, "PUT", { ...duplicate, version: n.version - 1 }))
+        .status,
+      409,
+    );
+    assert.equal(
+      (
+        await api("/" + n.id, "PUT", {
+          ...duplicate,
+          version: n.version - 1,
+          operationId: op(),
+        })
+      ).status,
+      409,
+    );
     await mutation({ action: "trash" }, "manage_note");
+    assert.equal((await api("/" + n.id, "PUT", duplicate)).status, 409);
     assert(
       (await (await api("?filter=trash")).json()).notes.some(
         (row: { id: string }) => row.id === n.id,
@@ -771,6 +874,10 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
     });
     assert.equal(revoke.status, 200);
     assert.equal(
+      (await empireMcp(mcp.access_token, "update_note", duplicate)).status,
+      401,
+    );
+    assert.equal(
       (await empireMcp(mcp.access_token, "update_note", save)).status,
       401,
     );
@@ -781,13 +888,14 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
     assert.equal(invalidPage.status, 200);
     assert((await invalidPage.text()).includes("Note unavailable"));
   } finally {
-    for (const row of ids.length
+    const assets = ids.length
       ? await db
           .select()
           .from(noteAssets)
           .where(inArray(noteAssets.noteId, ids))
-      : [])
-      await eraseTaskImage(row.pathname);
+      : [];
+    for (const pathname of new Set(assets.map((row) => row.pathname)))
+      await eraseTaskImage(pathname);
     if (listId) {
       const list = await getList(a, listId);
       await deleteList(a, { listId, version: list.version, operationId: op() });

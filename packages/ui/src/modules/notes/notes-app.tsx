@@ -23,6 +23,7 @@ import {
   ChevronDown,
   Settings,
   ExternalLink,
+  Copy,
   Check,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ import { listThemeVariables, listPalette } from "@wuff/design";
 import {
   notePath,
   noteExcerpt,
+  noteRoleCanDuplicate,
   type NoteDetail,
   type NoteFields,
   type NotesResult,
@@ -314,6 +316,7 @@ export function NotesApp({
     pendingAck.current = onAck;
     try {
       const value = await api<any>(request.path, request.method, request.body);
+      state.current.pending = null;
       setPending(null);
       onAck(value);
       setFeedback("Saved to your Wuff account.");
@@ -730,6 +733,20 @@ export function NotesApp({
               {note.canEdit && (
                 <Button disabled={locked} onClick={() => setEditing(true)}>
                   Edit note
+                </Button>
+              )}
+              {note.canEdit && noteRoleCanDuplicate(note.role) && (
+                <Button
+                  variant="outline"
+                  disabled={locked || dirty}
+                  onClick={() =>
+                    mutate({ action: "duplicate" }, (copy) =>
+                      runtime.navigate(notePath(copy.id)),
+                    )
+                  }
+                >
+                  <Copy size={16} aria-hidden />
+                  Duplicate note
                 </Button>
               )}
               {note.canManage && (

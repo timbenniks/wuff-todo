@@ -37,6 +37,19 @@ move controls. Notes and moodboard modes preserve each other's content. Private
 images use the existing isolated private Blob store and shared image normalization;
 no remote image URLs load automatically. Trash is reversible and owner-controlled.
 
+Owners can use **Duplicate note** between **Edit note** and **Share** to open a
+private copy of an active note or moodboard. The copy keeps the saved content,
+tags, format, theme, accessible outgoing links and ordered cards with ready images.
+Shares, pin/archive choices, incoming links and Todo references belong to the
+source. Unsaved changes must be saved or canceled before duplicating.
+
+Web/PWA, HTTP `PUT /api/v1/notes/:id` and MCP `update_note` use the same
+`duplicate` mutation with the source version and an operation ID. The embedded
+MCP view exposes the action with existing Notes read/write scopes. Identical
+retries return the same copy after checking current access to the source.
+Private image copies have independent asset IDs that reference the same immutable
+blob. Any future physical purge must check all asset references to that blob.
+
 ## Data and surfaces
 
 Prepare additive Drizzle tables owned by Notes: notes, memberships, personal note
