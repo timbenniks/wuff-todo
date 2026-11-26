@@ -1,5 +1,6 @@
 import {
   notePath,
+  noteRoleCanDuplicate,
   type NotesResult,
   type NoteDetail,
   type NotesSettings,
@@ -259,6 +260,21 @@ export function renderNotesMcp(
       !data.canEdit,
     ),
   );
+  if (data.canEdit && noteRoleCanDuplicate(data.role)) {
+    const duplicate = button("Duplicate note", () =>
+      change({ action: "duplicate" }),
+    );
+    const editorFields = [title, tags, mode, palette, content];
+    const savedValues = editorFields.map((field) => field.value);
+    for (const field of editorFields) {
+      field.addEventListener("input", () => {
+        duplicate.disabled = editorFields.some(
+          (control, i) => control.value !== savedValues[i],
+        );
+      });
+    }
+    root.append(duplicate);
+  }
   root.append(
     button(
       data.pinned ? "Unpin" : "Pin",

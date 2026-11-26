@@ -2,6 +2,7 @@ import type { NoteCard, NoteReference, BoardBody } from "./index";
 export const noteRoleCanEdit = (role: string) =>
   role === "owner" || role === "editor";
 export const noteRoleCanManage = (role: string) => role === "owner";
+export const noteRoleCanDuplicate = (role: string) => role === "owner";
 export function noteCapabilities(
   role: string,
   trashed: boolean,

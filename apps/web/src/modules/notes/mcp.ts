@@ -75,7 +75,7 @@ export function registerNotesMcp({
         description:
           name === "manage_note"
             ? "Owner only: explicitly share/unshare an existing active Empire account as viewer/editor, or move to trash/restore. Requires notes:manage and notes:read. Read get_note first; current version and operationId. Sharing does NOT share linked notes, tasks, images in other modules or provider credentials. Changes must follow explicit user intent."
-            : "Edit an accessible note/board as owner/editor, link/unlink another accessible note, add/update/remove/reorder cards, or change your own pin/archive choices. Viewers may change only their personal choices or leave. Requires notes:read/write. Read get_note first; current version (and preferenceVersion for personal choices), fresh operationId. Retry uncertain outcomes IDENTICALLY. Mode changes retain both content and cards. Never replace an unavailable linked-note card with inferred content.",
+            : "Edit an accessible note/board as owner/editor, link/unlink another accessible note, add/update/remove/reorder cards, or change your own pin/archive choices. Owners can duplicate an active note or moodboard into a new private copy, returned as note. Viewers may change only their personal choices or leave. Requires notes:read/write. Read get_note first; current version (and preferenceVersion for personal choices), fresh operationId. Retry uncertain outcomes IDENTICALLY. Mode changes retain both content and cards. Never replace an unavailable linked-note card with inferred content.",
         inputSchema:
           name === "manage_note"
             ? noteManageSchema.shape

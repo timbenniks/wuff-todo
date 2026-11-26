@@ -37,6 +37,32 @@ move controls. Notes and moodboard modes preserve each other's content. Private
 images use the existing isolated private Blob store and shared image normalization;
 no remote image URLs load automatically. Trash is reversible and owner-controlled.
 
+Owners can use **Duplicate note** between **Edit note** and **Share** to open a
+private copy of an active note or moodboard. The copy keeps the saved content,
+tags, format, theme, accessible outgoing links and ordered cards with ready images.
+Shares, pin/archive choices, incoming links and Todo references belong to the
+source. Unsaved changes must be saved or canceled before duplicating.
+
+Web/PWA, HTTP `PUT /api/v1/notes/:id` and MCP `update_note` use the same
+`duplicate` mutation with the source version and an operation ID. The embedded
+MCP view exposes the action with existing Notes read/write scopes. Identical
+retries return the same copy after checking current access to the source.
+Private image copies have independent asset IDs that reference the same immutable
+blob. Any future physical purge must check all asset references to that blob.
+
+Verification for PR #51 covers concurrent retry, privacy and two-way HTTP/MCP
+readback on isolated development data. Chrome verified keyboard and retry behavior
+at 320, 390 and 1280px, and the local MCP Apps SDK host verified duplication at 390px.
+
+The PR also updates Next.js from 16.4.1 to 16.4.6 to resolve the local production
+build advisory. The pnpm frozen-lockfile install and `pnpm build` both passed
+with the patched dependency.
+
+Notes takes the account lock before reserving an operation ID for creation,
+duplication and settings. An isolated integration regression reproduced the
+conflict before the fix and verified that both create/settings and
+duplicate/settings races now return an idempotency conflict without a deadlock.
+
 ## Data and surfaces
 
 Prepare additive Drizzle tables owned by Notes: notes, memberships, personal note

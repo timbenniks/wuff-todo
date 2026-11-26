@@ -116,6 +116,7 @@ export const noteMutationSchema = operationSchema
         })
         .strict(),
       z.object({ action: z.literal("leave") }).strict(),
+      z.object({ action: z.literal("duplicate") }).strict(),
       z.object({ action: z.literal("trash") }).strict(),
       z.object({ action: z.literal("restore") }).strict(),
       z.object({ action: z.literal("link"), targetId: idSchema }).strict(),

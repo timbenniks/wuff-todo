@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   createNoteSchema,
   noteMutationSchema,
+  noteEditSchema,
+  noteManageSchema,
+  noteRoleCanDuplicate,
   noteTagsSchema,
   noteQuerySchema,
   boardBodySchema,
@@ -22,7 +25,79 @@ import {
   uncertainNotesError,
   canReplaceNoteDraft,
 } from "../packages/ui/src/modules/notes/recovery";
+import {
+  duplicateNoteCards,
+  duplicateNoteFields,
+} from "../packages/domain/src/modules/notes/duplicate";
 const id = () => crypto.randomUUID();
+test("duplication uses the edit tool and only the source owner can make a copy", () => {
+  const input = {
+    operationId: id(),
+    noteId: id(),
+    version: 2,
+    change: { action: "duplicate" },
+  };
+  assert.deepEqual(noteEditSchema.parse(input), input);
+  assert(!noteManageSchema.safeParse(input).success);
+  assert(!noteEditSchema.safeParse({ ...input, version: -1 }).success);
+  assert(
+    !noteEditSchema.safeParse({
+      ...input,
+      change: { action: "duplicate", ownerId: id() },
+    }).success,
+  );
+  assert(noteRoleCanDuplicate("owner"));
+  for (const role of ["editor", "viewer", "outsider"])
+    assert(!noteRoleCanDuplicate(role));
+});
+
+test("duplication preserves saved fields and keeps long Unicode titles valid", () => {
+  const source = {
+    title: "Studio",
+    content: "**Ideas**",
+    tags: ["home"],
+    mode: "moodboard",
+    theme: "peach",
+  } as const;
+  const fields = { ...source, tags: [...source.tags] };
+  assert.deepEqual(duplicateNoteFields(fields), {
+    ...fields,
+    title: "Copy of Studio",
+  });
+  const long = duplicateNoteFields({
+    ...fields,
+    title: "A" + "🐶".repeat(149),
+  });
+  assert.equal(long.title, "Copy of A" + "🐶".repeat(145));
+  assert(createNoteSchema.safeParse({ ...long, operationId: id() }).success);
+});
+
+test("duplicate moodboard cards keep order, remap images and omit unavailable references", () => {
+  const oldAsset = id(),
+    newAsset = id(),
+    target = id();
+  const text = { kind: "text", title: "Ideas", text: "One" } as const;
+  const image = { kind: "image", assetId: oldAsset, caption: "Two" } as const;
+  const note = { kind: "note", targetId: target } as const;
+  assert.deepEqual(
+    duplicateNoteCards(
+      [
+        { body: text },
+        { body: { ...image, assetId: id() } },
+        { body: image },
+        { body: { kind: "note", targetId: id() } },
+        { body: note },
+      ],
+      new Map([[oldAsset, newAsset]]),
+      new Set([target]),
+    ),
+    [
+      { body: text, position: 0 },
+      { body: { ...image, assetId: newAsset }, position: 1 },
+      { body: note, position: 2 },
+    ],
+  );
+});
 test("Notes creation validates content/title/mode/theme, normalizes tags and starts with explicit private fields", () => {
   const note = createNoteSchema.parse({
     title: "  An idea  ",

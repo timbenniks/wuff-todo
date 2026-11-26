@@ -1,6 +1,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { setTimeout as delay } from "node:timers/promises";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import {
   database,
@@ -55,6 +56,108 @@ const [first, second] = JSON.parse(
 const a: Actor = { id: first.id, scopes },
   b: Actor = { id: second.id, scopes };
 after(() => database().pool.end());
+test("concurrent note creation or duplication and settings reject a shared operation ID without deadlocking", async () => {
+  const { db, pool } = database();
+  const seedOperation = crypto.randomUUID();
+  const source = await createNote(a, {
+    title: "Notes lock-order fixture",
+    operationId: seedOperation,
+  });
+  const ids = [source.id],
+    operations = [seedOperation];
+  const [settingsBefore] = await db
+    .select()
+    .from(notesSettings)
+    .where(eq(notesSettings.userId, a.id));
+  try {
+    for (const action of ["create", "duplicate"] as const) {
+      const operationId = crypto.randomUUID();
+      operations.push(operationId);
+      const settings = await getNotesSettings(a);
+      const gate = await pool.connect();
+      const requests: Promise<unknown>[] = [];
+      let outcomes: PromiseSettledResult<unknown>[];
+      try {
+        await gate.query("begin");
+        const {
+          rows: [{ pid: gatePid }],
+        } = await gate.query<{ pid: number }>("select pg_backend_pid() as pid");
+        await gate.query(
+          "select pg_advisory_xact_lock(hashtextextended($1, 0))",
+          [a.id + ":" + operationId],
+        );
+        const waitForBlockedRequest = async (
+          blockers: number[],
+          excluded: number,
+        ) => {
+          const deadline = Date.now() + 10_000;
+          do {
+            const { rows } = await gate.query<{ pid: number }>(
+              `select distinct pid from pg_locks
+               where not granted and pid <> $2
+                 and pg_blocking_pids(pid) && $1::integer[]`,
+              [blockers, excluded],
+            );
+            if (rows.length === 1) return rows[0].pid;
+            await delay(20);
+          } while (Date.now() < deadline);
+          assert.fail("The fixture requests did not both wait on a lock.");
+        };
+        requests.push(
+          (action === "create"
+            ? createNote(a, {
+                title: "Notes concurrent create fixture",
+                operationId,
+              })
+            : updateNote(a, {
+                noteId: source.id,
+                version: source.version,
+                operationId,
+                change: { action: "duplicate" },
+              })
+          ).then((note) => {
+            assert("id" in note);
+            ids.push(note.id);
+            return note;
+          }),
+        );
+        // Register rejection handlers before polling or releasing the gate.
+        void requests[0].catch(() => {});
+        const firstPid = await waitForBlockedRequest([gatePid], gatePid);
+        requests.push(
+          updateNotesSettings(a, {
+            operationId,
+            version: settings.version,
+            settings: settings.settings,
+          }),
+        );
+        void requests[1].catch(() => {});
+        await waitForBlockedRequest([gatePid, firstPid], firstPid);
+      } finally {
+        await gate.query("rollback");
+        gate.release();
+        outcomes = await Promise.allSettled(requests);
+      }
+      assert.equal(outcomes[0].status, "fulfilled");
+      const second = outcomes[1];
+      assert.equal(second.status, "rejected");
+      assert.equal(second.reason.code, "idempotency_conflict");
+    }
+  } finally {
+    await db.delete(notes).where(inArray(notes.id, ids));
+    await db
+      .delete(receipts)
+      .where(
+        and(
+          eq(receipts.actorId, a.id),
+          inArray(receipts.operationId, operations),
+        ),
+      );
+    await db.delete(notesSettings).where(eq(notesSettings.userId, a.id));
+    if (settingsBefore) await db.insert(notesSettings).values(settingsBefore);
+  }
+});
+
 test("Notes domain enforces private/sharing/link/board boundaries, personal state, concurrency and atomic Todo export", async () => {
   const db = database().db,
     ids: string[] = [],
@@ -736,7 +839,110 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
       note: task.note,
       task: task.task,
     });
+    await mutation({
+      action: "add_card",
+      body: {
+        kind: "image",
+        assetId: uploaded.image.id,
+        caption: "Private swatch",
+      },
+    });
+    await mutation({ action: "link", targetId: linked.id });
+    await mutation(
+      { action: "share", email: second.email, role: "editor" },
+      "manage_note",
+    );
+    const duplicate = {
+      noteId: n.id,
+      version: n.version,
+      operationId: op(),
+      change: { action: "duplicate" },
+    };
+    assert.equal(
+      (
+        await api("/" + n.id, "PUT", duplicate, {
+          ...headers,
+          Cookie: otherCookie,
+          "X-Wuff-User": second.id,
+        })
+      ).status,
+      403,
+    );
+    const [copyResponse, retryResponse] = await Promise.all([
+      api("/" + n.id, "PUT", duplicate),
+      api("/" + n.id, "PUT", duplicate),
+    ]);
+    assert.equal(copyResponse.status, 200);
+    const copy: NoteDetail = await copyResponse.json();
+    ids.push(copy.id);
+    assert.equal(retryResponse.status, 200);
+    assert.deepEqual(await retryResponse.json(), copy);
+    assert.deepEqual(
+      (await invoke("get_note", { noteId: copy.id })).note,
+      copy,
+    );
+    assert.notEqual(copy.id, n.id);
+    assert.equal(copy.title, "Copy of " + n.title);
+    assert.equal(copy.content, n.content);
+    assert.deepEqual(copy.tags, n.tags);
+    assert.equal(copy.mode, n.mode);
+    assert.equal(copy.theme, n.theme);
+    assert.equal(copy.shared, false);
+    assert.equal(copy.pinned, false);
+    assert.equal(copy.version, 0);
+    assert.deepEqual(copy.members, []);
+    assert.deepEqual(copy.tasks, []);
+    assert.deepEqual(copy.links, n.links);
+    assert.deepEqual(
+      copy.cards.map(({ body }) => body.kind),
+      ["link", "image"],
+    );
+    assert.notEqual(copy.cards[0].id, n.cards[0].id);
+    const copyAsset = copy.assets[0];
+    assert.notEqual(copyAsset.id, uploaded.image.id);
+    assert.deepEqual(copy.cards[1].body, {
+      kind: "image",
+      assetId: copyAsset.id,
+      caption: "Private swatch",
+    });
+    const copyImage = await api("/images/" + copyAsset.id);
+    assert.equal(copyImage.status, 200);
+    assert.equal(
+      Buffer.from(await copyImage.arrayBuffer()).toString("base64"),
+      imageMcp.result.content[0].data,
+    );
+    assert.equal(
+      (
+        await api("/images/" + copyAsset.id, "GET", undefined, {
+          Cookie: otherCookie,
+        })
+      ).status,
+      404,
+    );
+    assert.deepEqual(await (await api("/" + n.id)).json(), n);
+    const mcpCopy = (
+      await invoke("update_note", { ...duplicate, operationId: op() })
+    ).note;
+    ids.push(mcpCopy.id);
+    assert.notEqual(mcpCopy.id, copy.id);
+    assert.deepEqual(await (await api("/" + mcpCopy.id)).json(), mcpCopy);
+    assert.equal(
+      (await api("/" + n.id, "PUT", { ...duplicate, version: n.version - 1 }))
+        .status,
+      409,
+    );
+    assert.equal(
+      (
+        await api("/" + n.id, "PUT", {
+          ...duplicate,
+          version: n.version - 1,
+          operationId: op(),
+        })
+      ).status,
+      409,
+    );
     await mutation({ action: "trash" }, "manage_note");
+    assert.equal((await api("/" + n.id, "PUT", duplicate)).status, 409);
     assert(
       (await (await api("?filter=trash")).json()).notes.some(
         (row: { id: string }) => row.id === n.id,
@@ -771,6 +977,10 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
     });
     assert.equal(revoke.status, 200);
     assert.equal(
+      (await empireMcp(mcp.access_token, "update_note", duplicate)).status,
+      401,
+    );
+    assert.equal(
       (await empireMcp(mcp.access_token, "update_note", save)).status,
       401,
     );
@@ -781,13 +991,14 @@ test("Notes HTTP and MCP adapters preserve consent, mutations, images, account p
     assert.equal(invalidPage.status, 200);
     assert((await invalidPage.text()).includes("Note unavailable"));
   } finally {
-    for (const row of ids.length
+    const assets = ids.length
       ? await db
           .select()
           .from(noteAssets)
           .where(inArray(noteAssets.noteId, ids))
-      : [])
-      await eraseTaskImage(row.pathname);
+      : [];
+    for (const pathname of new Set(assets.map((row) => row.pathname)))
+      await eraseTaskImage(pathname);
     if (listId) {
       const list = await getList(a, listId);
       await deleteList(a, { listId, version: list.version, operationId: op() });
